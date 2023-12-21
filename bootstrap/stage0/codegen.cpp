@@ -66,7 +66,7 @@ if ((returns_void && (!(func_can_throw)))){
 return __jakt_format((StringView::from_string_literal("JaktInternal::ExplicitValueOrControlFlow<{}, void>()"sv)),cpp_match_result_type);
 }
 else {
-return (ByteString::must_from_utf8("_jakt_value.release_return()"sv));
+return (ByteString::from_utf8_without_validation("_jakt_value.release_return()"sv));
 }
 
 }
@@ -84,7 +84,7 @@ return __jakt_format((StringView::from_string_literal("({{\n    auto&& _jakt_val
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<ByteString>>{
 auto __jakt_enum_value = (((*this).is_match_nested()));
 if (__jakt_enum_value == false) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("_jakt_value.release_return()"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("_jakt_value.release_return()"sv)));
 }
 else if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(codegen::ControlFlowState::nested_release_return_expr(func_return_type,func_can_throw,cpp_match_result_type));
@@ -127,7 +127,7 @@ TRY((((*this).gather_line_spans())));
 }
 size_t const file_idx = ((((span).file_id)).id);
 if ((!(((((*this).line_spans)).contains(file_idx))))){
-return (ByteString::must_from_utf8(""sv));
+return (ByteString::from_utf8_without_validation(""sv));
 }
 size_t line_index = static_cast<size_t>(0ULL);
 while ([](size_t const& self, size_t rhs) -> bool {
@@ -167,7 +167,7 @@ return __jakt_format((StringView::from_string_literal("{} \"{}\""sv)),JaktIntern
 }
 ((line_index) += (static_cast<size_t>(1ULL)));
 }
-utility::panic((ByteString::must_from_utf8("Reached end of file and could not find index"sv)));
+utility::panic((ByteString::from_utf8_without_validation("Reached end of file and could not find index"sv)));
 }
 }
 
@@ -182,7 +182,7 @@ break;
 }
 JaktInternal::Tuple<ByteString,utility::FileId> file = (_magic_value.value());
 {
-if (((((file).template get<0>())) == ((ByteString::must_from_utf8("__prelude__"sv))))){
+if (((((file).template get<0>())) == ((ByteString::from_utf8_without_validation("__prelude__"sv))))){
 continue;
 }
 TRY((((((*this).compiler))->set_current_file(((file).template get<1>())))));
@@ -265,9 +265,9 @@ builder.append(")"sv);return builder.to_string(); }
 ByteString codegen::CodeGenerator::current_error_handler() const {
 {
 if ((((*this).inside_defer) || ((((((*this).current_function)).has_value()) && (((((((*this).current_function).value()))->return_type_id)).equals(types::never_type_id()))) && (!(((((*this).control_flow_state)).passes_through_try)))))){
-return (ByteString::must_from_utf8("MUST"sv));
+return (ByteString::from_utf8_without_validation("MUST"sv));
 }
-return (ByteString::must_from_utf8("TRY"sv));
+return (ByteString::from_utf8_without_validation("TRY"sv));
 }
 }
 
@@ -364,51 +364,51 @@ if (((module_in_degrees) == (static_cast<i64>(1LL)))){
 if (((((sorted_modules).size())) == (((((((*this).program))->modules)).size())))){
 return sorted_modules;
 }
-utility::panic((ByteString::must_from_utf8("Cyclic module imports"sv)));
+utility::panic((ByteString::from_utf8_without_validation("Cyclic module imports"sv)));
 }
 }
 
 ErrorOr<JaktInternal::Dictionary<ByteString,JaktInternal::Tuple<ByteString,ByteString>>> codegen::CodeGenerator::generate(NonnullRefPtr<compiler::Compiler> const compiler,NonnullRefPtr<types::CheckedProgram> const program,bool const debug_info) {
 {
-codegen::CodeGenerator generator = codegen::CodeGenerator(compiler,program,codegen::ControlFlowState(codegen::AllowedControlExits::Nothing(),false,false,static_cast<size_t>(0ULL)),DynamicArray<JaktInternal::Tuple<ByteString,ByteString>>::create_with({}),(ByteString::must_from_utf8(""sv)),JaktInternal::OptionalNone(),false,codegen::CodegenDebugInfo(compiler,Dictionary<size_t, JaktInternal::DynamicArray<codegen::LineSpan>>::create_with_entries({}),debug_info),DynamicArray<ByteString>::create_with({}),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),JaktInternal::OptionalNone(),JaktInternal::OptionalNone());
+codegen::CodeGenerator generator = codegen::CodeGenerator(compiler,program,codegen::ControlFlowState(codegen::AllowedControlExits::Nothing(),false,false,static_cast<size_t>(0ULL)),DynamicArray<JaktInternal::Tuple<ByteString,ByteString>>::create_with({}),(ByteString::from_utf8_without_validation(""sv)),JaktInternal::OptionalNone(),false,codegen::CodegenDebugInfo(compiler,Dictionary<size_t, JaktInternal::DynamicArray<codegen::LineSpan>>::create_with_entries({}),debug_info),DynamicArray<ByteString>::create_with({}),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),JaktInternal::OptionalNone(),JaktInternal::OptionalNone());
 JaktInternal::Dictionary<ByteString,JaktInternal::Tuple<ByteString,ByteString>> result = Dictionary<ByteString, JaktInternal::Tuple<ByteString,ByteString>>::create_with_entries({});
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("#pragma once\n"sv)));
+(output,(ByteString::from_utf8_without_validation("#pragma once\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("#include <lib.h>\n"sv)));
+(output,(ByteString::from_utf8_without_validation("#include <lib.h>\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("#ifdef _WIN32\n"sv)));
+(output,(ByteString::from_utf8_without_validation("#ifdef _WIN32\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("extern \"C\" __cdecl int SetConsoleOutputCP(unsigned int code_page);\n"sv)));
+(output,(ByteString::from_utf8_without_validation("extern \"C\" __cdecl int SetConsoleOutputCP(unsigned int code_page);\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("const unsigned int CP_UTF8 = 65001;\n"sv)));
+(output,(ByteString::from_utf8_without_validation("const unsigned int CP_UTF8 = 65001;\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("#endif\n"sv)));
+(output,(ByteString::from_utf8_without_validation("#endif\n"sv)));
 JaktInternal::DynamicArray<ids::ModuleId> const sorted_modules = ((generator).topologically_sort_modules());
 JaktInternal::Dictionary<ByteString,JaktInternal::Tuple<ByteString,ByteString>> imported_paths = Dictionary<ByteString, JaktInternal::Tuple<ByteString,ByteString>>::create_with_entries({});
 {
@@ -443,8 +443,8 @@ ids::ScopeId child = (_magic_value.value());
 
 if (((((scope)->import_path_if_extern)).has_value())){
 ByteString const path = (((scope)->import_path_if_extern).value());
-ByteString before = (ByteString::must_from_utf8(""sv));
-ByteString after = (ByteString::must_from_utf8(""sv));
+ByteString before = (ByteString::from_utf8_without_validation(""sv));
+ByteString after = (ByteString::from_utf8_without_validation(""sv));
 {
 JaktInternal::ArrayIterator<parser::IncludeAction> _magic = ((((scope)->before_extern_include)).iterator());
 for (;;){
@@ -479,7 +479,7 @@ ByteString const& value = __jakt_match_value.value;
 (self = ((self) + (rhs)));
 }
 }
-(before,(ByteString::must_from_utf8("#endif\n"sv)));
+(before,(ByteString::from_utf8_without_validation("#endif\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -509,7 +509,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.Undefine;ByteString const& n
 (self = ((self) + (rhs)));
 }
 }
-(before,(ByteString::must_from_utf8("#endif\n"sv)));
+(before,(ByteString::from_utf8_without_validation("#endif\n"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -563,7 +563,7 @@ ByteString const& value = __jakt_match_value.value;
 (self = ((self) + (rhs)));
 }
 }
-(after,(ByteString::must_from_utf8("#endif\n"sv)));
+(after,(ByteString::from_utf8_without_validation("#endif\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -593,7 +593,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.Undefine;ByteString const& n
 (self = ((self) + (rhs)));
 }
 }
-(after,(ByteString::must_from_utf8("#endif\n"sv)));
+(after,(ByteString::from_utf8_without_validation("#endif\n"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -662,7 +662,7 @@ JaktInternal::Tuple<ByteString,ByteString> const actions = ((jakt__path__actions
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("namespace Jakt {\n"sv)));
+(output,(ByteString::from_utf8_without_validation("namespace Jakt {\n"sv)));
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(((sorted_modules).size())),static_cast<size_t>(static_cast<size_t>(0ULL))});
 for (;;){
@@ -696,8 +696,8 @@ NonnullRefPtr<types::Scope> const scope = ((((generator).program))->get_scope(sc
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("} // namespace Jakt\n"sv)));
-((result).set((ByteString::must_from_utf8("__unified_forward.h"sv)),(Tuple{output, (((((compiler)->current_file_path()).value())).to_string())})));
+(output,(ByteString::from_utf8_without_validation("} // namespace Jakt\n"sv)));
+((result).set((ByteString::from_utf8_without_validation("__unified_forward.h"sv)),(Tuple{output, (((((compiler)->current_file_path()).value())).to_string())})));
 {
 JaktInternal::ArrayIterator<bool> _magic = ((DynamicArray<bool>::create_with({true, false})).iterator());
 for (;;){
@@ -725,13 +725,13 @@ NonnullRefPtr<types::Module> const module = ((((((generator).program))->modules)
 ByteString const header_name = __jakt_format((StringView::from_string_literal("{}.h"sv)),((module)->name));
 ByteString const impl_name = __jakt_format((StringView::from_string_literal("{}.cpp"sv)),((module)->name));
 if (as_forward){
-(output = (ByteString::must_from_utf8("#pragma once\n"sv)));
+(output = (ByteString::from_utf8_without_validation("#pragma once\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("#include \"__unified_forward.h\"\n"sv)));
+(output,(ByteString::from_utf8_without_validation("#include \"__unified_forward.h\"\n"sv)));
 }
 else {
 (output = __jakt_format((StringView::from_string_literal("#include \"{}\"\n"sv)),header_name));
@@ -794,7 +794,7 @@ ByteString const& value = __jakt_match_value.value;
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("#endif\n"sv)));
+(output,(ByteString::from_utf8_without_validation("#endif\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -824,7 +824,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.Undefine;ByteString const& n
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("#endif\n"sv)));
+(output,(ByteString::from_utf8_without_validation("#endif\n"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -884,7 +884,7 @@ ByteString const& value = __jakt_match_value.value;
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("#endif\n"sv)));
+(output,(ByteString::from_utf8_without_validation("#endif\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -914,7 +914,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.Undefine;ByteString const& n
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("#endif\n"sv)));
+(output,(ByteString::from_utf8_without_validation("#endif\n"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -940,7 +940,7 @@ if (has_name){
 (self = ((self) + (rhs)));
 }
 }
-(output,(((((ByteString::must_from_utf8(" } // namespace "sv))) + ((((scope)->namespace_name).value())))) + ((ByteString::must_from_utf8("\n"sv)))));
+(output,(((((ByteString::from_utf8_without_validation(" } // namespace "sv))) + ((((scope)->namespace_name).value())))) + ((ByteString::from_utf8_without_validation("\n"sv)))));
 }
 }
 }
@@ -975,7 +975,7 @@ NonnullRefPtr<types::Module> const module = ((((((generator).program))->modules)
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("namespace Jakt {\n"sv)));
+(output,(ByteString::from_utf8_without_validation("namespace Jakt {\n"sv)));
 if ((!(((module)->is_root)))){
 ((((generator).namespace_stack)).push(((module)->name)));
 }
@@ -994,13 +994,13 @@ JaktInternal::Optional<ByteString> const dummy = ((((generator).namespace_stack)
 }
 }
 (output,((generator).deferred_output));
-(((generator).deferred_output) = (ByteString::must_from_utf8(""sv)));
+(((generator).deferred_output) = (ByteString::from_utf8_without_validation(""sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("} // namespace Jakt\n"sv)));
+(output,(ByteString::from_utf8_without_validation("} // namespace Jakt\n"sv)));
 if (as_forward){
 ((result).set(header_name,(Tuple{output, ((module)->resolved_import_path)})));
 }
@@ -1032,7 +1032,7 @@ NonnullRefPtr<types::Module> const module = ((((((generator).program))->modules)
 ByteString const header_name = __jakt_format((StringView::from_string_literal("{}.h"sv)),((module)->name));
 ByteString const impl_name = __jakt_format((StringView::from_string_literal("{}_specializations.cpp"sv)),((module)->name));
 if (((i) == (static_cast<size_t>(0ULL)))){
-(output = (ByteString::must_from_utf8(""sv)));
+(output = (ByteString::from_utf8_without_validation(""sv)));
 }
 else {
 (output = __jakt_format((StringView::from_string_literal("#include \"{}\"\n"sv)),header_name));
@@ -1069,7 +1069,7 @@ NonnullRefPtr<types::Scope> const scope = ((((generator).program))->get_scope(sc
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("namespace Jakt {\n"sv)));
+(output,(ByteString::from_utf8_without_validation("namespace Jakt {\n"sv)));
 if ((!(((module)->is_root)))){
 ((((generator).namespace_stack)).push(((module)->name)));
 }
@@ -1088,13 +1088,13 @@ JaktInternal::Optional<ByteString> const dummy = ((((generator).namespace_stack)
 }
 }
 (output,((generator).deferred_output));
-(((generator).deferred_output) = (ByteString::must_from_utf8(""sv)));
+(((generator).deferred_output) = (ByteString::from_utf8_without_validation(""sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("} // namespace Jakt\n"sv)));
+(output,(ByteString::from_utf8_without_validation("} // namespace Jakt\n"sv)));
 ((result).set(impl_name,(Tuple{output, ((module)->resolved_import_path)})));
 }
 
@@ -1367,7 +1367,7 @@ if ((((((struct_).definition_linkage)).__jakt_init_index() == 1 /* External */) 
 return (!(((self) == (rhs))));
 }
 }
-(((struct_).name),(ByteString::must_from_utf8("Optional"sv))))){
+(((struct_).name),(ByteString::from_utf8_without_validation("Optional"sv))))){
 return dependencies;
 }
 if ((((((struct_).record_type)).__jakt_init_index() == 1 /* Class */) && (!(top_level)))){
@@ -1538,10 +1538,10 @@ return JaktInternal::ExplicitValue(false);
 }))))){
 return JaktInternal::OptionalNone();
 }
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 bool const is_full_respecialization = ((*this).is_full_respecialization(((((((function)->generics))->specializations))[(((function)->specialization_index).value())])));
 if ((define_pass && is_full_respecialization)){
-(output = (ByteString::must_from_utf8("template<"sv)));
+(output = (ByteString::from_utf8_without_validation("template<"sv)));
 bool first = true;
 {
 JaktInternal::ArrayIterator<ids::TypeId> _magic = ((((((((function)->generics))->specializations))[(((function)->specialization_index).value())])).iterator());
@@ -1563,7 +1563,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(", "sv)));
+(output,(ByteString::from_utf8_without_validation(", "sv)));
 }
 
 [](ByteString& self, ByteString rhs) -> void {
@@ -1583,7 +1583,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(">\n"sv)));
+(output,(ByteString::from_utf8_without_validation(">\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -1619,14 +1619,14 @@ ids::TypeId arg = (_magic_value.value());
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("\ntemplate<> "sv)));
+(output,(ByteString::from_utf8_without_validation("\ntemplate<> "sv)));
 if (((((function)->return_type_id)).equals(types::never_type_id()))){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("[[noreturn]] "sv)));
+(output,(ByteString::from_utf8_without_validation("[[noreturn]] "sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
@@ -1653,7 +1653,7 @@ VERIFY_NOT_REACHED();
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" "sv)));
+(output,(ByteString::from_utf8_without_validation(" "sv)));
 ByteString const qualifier = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<JaktInternal::Optional<ByteString>>>{
 auto __jakt_enum_value = (((containing_struct).has_value()));
@@ -1661,7 +1661,7 @@ if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(TRY((((*this).codegen_type_possibly_as_namespace((containing_struct.value()),true)))));
 }
 else if (__jakt_enum_value == false) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(""sv)));
 }
 VERIFY_NOT_REACHED();
 }());
@@ -1681,7 +1681,7 @@ if ((!(((qualifier).is_empty())))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("::"sv)));
+(output,(ByteString::from_utf8_without_validation("::"sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
@@ -1694,7 +1694,7 @@ if ((!(((qualifier).is_empty())))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("<"sv)));
+(output,(ByteString::from_utf8_without_validation("<"sv)));
 bool first = true;
 {
 JaktInternal::ArrayIterator<ids::TypeId> _magic = ((((((((function)->generics))->specializations))[(((function)->specialization_index).value())])).iterator());
@@ -1714,7 +1714,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(", "sv)));
+(output,(ByteString::from_utf8_without_validation(", "sv)));
 }
 
 [](ByteString& self, ByteString rhs) -> void {
@@ -1733,7 +1733,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(">("sv)));
+(output,(ByteString::from_utf8_without_validation(">("sv)));
 (first = true);
 {
 JaktInternal::ArrayIterator<types::CheckedParameter> _magic = ((((function)->params)).iterator());
@@ -1745,7 +1745,7 @@ break;
 types::CheckedParameter param = (_magic_value.value());
 {
 NonnullRefPtr<types::CheckedVariable> const variable = ((param).variable);
-if (((((variable)->name)) == ((ByteString::must_from_utf8("this"sv))))){
+if (((((variable)->name)) == ((ByteString::from_utf8_without_validation("this"sv))))){
 continue;
 }
 if ((!(first))){
@@ -1754,7 +1754,7 @@ if ((!(first))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(","sv)));
+(output,(ByteString::from_utf8_without_validation(","sv)));
 }
 else {
 (first = false);
@@ -1772,14 +1772,14 @@ NonnullRefPtr<typename types::Type> const variable_type = ((((*this).program))->
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" "sv)));
+(output,(ByteString::from_utf8_without_validation(" "sv)));
 if (((!(((variable)->is_mutable))) && (!((((variable_type)->__jakt_init_index() == 28 /* Reference */) || ((variable_type)->__jakt_init_index() == 29 /* MutableReference */)))))){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("const "sv)));
+(output,(ByteString::from_utf8_without_validation("const "sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
@@ -1797,21 +1797,21 @@ if (((!(((variable)->is_mutable))) && (!((((variable_type)->__jakt_init_index() 
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(")"sv)));
+(output,(ByteString::from_utf8_without_validation(")"sv)));
 if (((!(((function)->is_static()))) && (!(((function)->is_mutating()))))){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" const"sv)));
+(output,(ByteString::from_utf8_without_validation(" const"sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(";\n"sv)));
+(output,(ByteString::from_utf8_without_validation(";\n"sv)));
 }
 else {
 (output = __jakt_format((StringView::from_string_literal("\n/* specialisation {} of function {} omitted, not fully specialized: {} */\n"sv)),(((function)->specialization_index).value()),((function)->name),((((((function)->generics))->specializations))[(((function)->specialization_index).value())])));
@@ -1824,17 +1824,17 @@ return output;
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_namespace_specializations(NonnullRefPtr<types::Scope> const scope,NonnullRefPtr<types::Module> const current_module) {
 {
 if ((((((scope)->alias_path)).has_value()) || ((((scope)->import_path_if_extern)).has_value()))){
-return (ByteString::must_from_utf8(""sv));
+return (ByteString::from_utf8_without_validation(""sv));
 }
 JaktInternal::Set<ids::TypeId> seen_types = Set<ids::TypeId>::create_with_values({});
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 if (((((scope)->namespace_name)).has_value())){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(((((ByteString::must_from_utf8("namespace "sv))) + ((((scope)->namespace_name).value())))) + ((ByteString::must_from_utf8(" {\n"sv)))));
+(output,(((((ByteString::from_utf8_without_validation("namespace "sv))) + ((((scope)->namespace_name).value())))) + ((ByteString::from_utf8_without_validation(" {\n"sv)))));
 }
 {
 JaktInternal::ArrayIterator<bool> _magic = ((DynamicArray<bool>::create_with({false, true})).iterator());
@@ -2057,7 +2057,7 @@ if (((((scope)->namespace_name)).has_value())){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("}\n"sv)));
+(output,(ByteString::from_utf8_without_validation("}\n"sv)));
 }
 return output;
 }
@@ -2066,18 +2066,18 @@ return output;
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_namespace(NonnullRefPtr<types::Scope> const scope,NonnullRefPtr<types::Module> const current_module,bool const as_forward) {
 {
 if ((((((scope)->alias_path)).has_value()) || ((((scope)->import_path_if_extern)).has_value()))){
-return (ByteString::must_from_utf8(""sv));
+return (ByteString::from_utf8_without_validation(""sv));
 }
 JaktInternal::Set<ids::TypeId> seen_types = Set<ids::TypeId>::create_with_values({});
 if (as_forward){
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 if (((((scope)->namespace_name)).has_value())){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(((((ByteString::must_from_utf8("namespace "sv))) + ((((scope)->namespace_name).value())))) + ((ByteString::must_from_utf8(" {\n"sv)))));
+(output,(((((ByteString::from_utf8_without_validation("namespace "sv))) + ((((scope)->namespace_name).value())))) + ((ByteString::from_utf8_without_validation(" {\n"sv)))));
 }
 JaktInternal::Dictionary<ids::TypeId,JaktInternal::DynamicArray<ids::TypeId>> const dependency_graph = TRY((((*this).produce_codegen_dependency_graph(scope))));
 {
@@ -2207,7 +2207,7 @@ continue;
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("\n"sv)));
+(output,(ByteString::from_utf8_without_validation("\n"sv)));
 }
 
 }
@@ -2244,7 +2244,7 @@ continue;
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("\n"sv)));
+(output,(ByteString::from_utf8_without_validation("\n"sv)));
 }
 
 }
@@ -2340,18 +2340,18 @@ if (((((scope)->namespace_name)).has_value())){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("}\n"sv)));
+(output,(ByteString::from_utf8_without_validation("}\n"sv)));
 }
 return output;
 }
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 if (((((scope)->namespace_name)).has_value())){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(((((ByteString::must_from_utf8("namespace "sv))) + ((((scope)->namespace_name).value())))) + ((ByteString::must_from_utf8(" {\n"sv)))));
+(output,(((((ByteString::from_utf8_without_validation("namespace "sv))) + ((((scope)->namespace_name).value())))) + ((ByteString::from_utf8_without_validation(" {\n"sv)))));
 }
 {
 JaktInternal::DictionaryIterator<ByteString,JaktInternal::DynamicArray<ids::FunctionId>> _magic = ((((scope)->functions)).iterator());
@@ -2402,7 +2402,7 @@ if (((((((function)->generics))->params)).is_empty())){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("\n"sv)));
+(output,(ByteString::from_utf8_without_validation("\n"sv)));
 }
 }
 
@@ -2487,7 +2487,7 @@ if (((((function)->type)).__jakt_init_index() == 2 /* ImplicitConstructor */)){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("\n"sv)));
+(output,(ByteString::from_utf8_without_validation("\n"sv)));
 }
 else if (((((function)->type)).__jakt_init_index() == 1 /* Destructor */)){
 [](ByteString& self, ByteString rhs) -> void {
@@ -2501,7 +2501,7 @@ else if (((((function)->type)).__jakt_init_index() == 1 /* Destructor */)){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("\n"sv)));
+(output,(ByteString::from_utf8_without_validation("\n"sv)));
 }
 else if (((!(((((function)->type)).__jakt_init_index() == 3 /* ImplicitEnumConstructor */))) && ((!(((function)->is_comptime))) && ((((((function)->generics))->params)).is_empty())))){
 [](ByteString& self, ByteString rhs) -> void {
@@ -2515,7 +2515,7 @@ else if (((!(((((function)->type)).__jakt_init_index() == 3 /* ImplicitEnumConst
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("\n"sv)));
+(output,(ByteString::from_utf8_without_validation("\n"sv)));
 }
 }
 
@@ -2591,7 +2591,7 @@ JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,JaktInternal::DynamicA
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("}\n"sv)));
+(output,(ByteString::from_utf8_without_validation("}\n"sv)));
 }
 NonnullRefPtr<types::Scope> const scope = ((((*this).program))->get_scope(((enum_).scope_id)));
 {
@@ -2634,7 +2634,7 @@ if (((!(((((function)->type)).__jakt_init_index() == 2 /* ImplicitConstructor */
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("\n"sv)));
+(output,(ByteString::from_utf8_without_validation("\n"sv)));
 }
 }
 
@@ -2683,7 +2683,7 @@ if (((((scope)->namespace_name)).has_value())){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("}\n"sv)));
+(output,(ByteString::from_utf8_without_validation("}\n"sv)));
 }
 return output;
 }
@@ -2692,16 +2692,16 @@ return output;
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_namespace_predecl(NonnullRefPtr<types::Scope> const scope,NonnullRefPtr<types::Module> const current_module) {
 {
 if ((((((scope)->alias_path)).has_value()) || ((((scope)->import_path_if_extern)).has_value()))){
-return (ByteString::must_from_utf8(""sv));
+return (ByteString::from_utf8_without_validation(""sv));
 }
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 if (((((scope)->namespace_name)).has_value())){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("namespace "sv)));
+(output,(ByteString::from_utf8_without_validation("namespace "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -2713,7 +2713,7 @@ if (((((scope)->namespace_name)).has_value())){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" {\n"sv)));
+(output,(ByteString::from_utf8_without_validation(" {\n"sv)));
 }
 {
 JaktInternal::DictionaryIterator<ByteString,ids::StructId> _magic = ((((scope)->structs)).iterator());
@@ -2743,7 +2743,7 @@ types::CheckedStruct const struct_ = ((((*this).program))->get_struct(struct_id)
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("\n"sv)));
+(output,(ByteString::from_utf8_without_validation("\n"sv)));
 }
 
 }
@@ -2777,7 +2777,7 @@ types::CheckedEnum const enum_ = ((((*this).program))->get_enum(enum_id));
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("\n"sv)));
+(output,(ByteString::from_utf8_without_validation("\n"sv)));
 }
 
 }
@@ -2842,7 +2842,7 @@ if (((!(((((function)->type)).__jakt_init_index() == 2 /* ImplicitConstructor */
 return (!(((self) == (rhs))));
 }
 }
-(((((function)->name_for_codegen())).as_name_for_use()),(ByteString::must_from_utf8("main"sv))) && ((((((function)->generics))->params)).is_empty()))))){
+(((((function)->name_for_codegen())).as_name_for_use()),(ByteString::from_utf8_without_validation("main"sv))) && ((((((function)->generics))->params)).is_empty()))))){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -2854,7 +2854,7 @@ return (!(((self) == (rhs))));
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("\n"sv)));
+(output,(ByteString::from_utf8_without_validation("\n"sv)));
 }
 }
 
@@ -2872,7 +2872,7 @@ if (((((scope)->namespace_name)).has_value())){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("}\n"sv)));
+(output,(ByteString::from_utf8_without_validation("}\n"sv)));
 }
 return output;
 }
@@ -2938,7 +2938,7 @@ return TRY((((*this).codegen_template_parameter_names(parameters,((names))))));
 
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_template_parameter_names(JaktInternal::DynamicArray<ids::TypeId> const parameters,JaktInternal::DynamicArray<ByteString>& names) {
 {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 bool first = true;
 {
 JaktInternal::ArrayIterator<ids::TypeId> _magic = ((parameters).iterator());
@@ -2958,7 +2958,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(","sv)));
+(output,(ByteString::from_utf8_without_validation(","sv)));
 }
 
 if (((((((*this).program))->get_type(id)))->__jakt_init_index() == 18 /* TypeVariable */)){
@@ -2969,7 +2969,7 @@ if (is_value){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("auto "sv)));
+(output,(ByteString::from_utf8_without_validation("auto "sv)));
 }
 else {
 [](ByteString& self, ByteString rhs) -> void {
@@ -2977,7 +2977,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("typename "sv)));
+(output,(ByteString::from_utf8_without_validation("typename "sv)));
 }
 
 }
@@ -2987,7 +2987,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("typename "sv)));
+(output,(ByteString::from_utf8_without_validation("typename "sv)));
 }
 
 ByteString const name = TRY((((*this).codegen_type(id))));
@@ -3009,14 +3009,14 @@ return output;
 
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_function_generic_parameters(NonnullRefPtr<types::CheckedFunction> const function) {
 {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 if ((!(((((((function)->generics))->params)).is_empty())))){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("template <"sv)));
+(output,(ByteString::from_utf8_without_validation("template <"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -3028,7 +3028,7 @@ if ((!(((((((function)->generics))->params)).is_empty())))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(">\n"sv)));
+(output,(ByteString::from_utf8_without_validation(">\n"sv)));
 }
 return output;
 }
@@ -3036,18 +3036,18 @@ return output;
 
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_function_predecl(NonnullRefPtr<types::CheckedFunction> const function,bool const as_method,bool const allow_generics) {
 {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 if (((allow_generics || (!(((((((function)->generics))->params)).is_empty())))) && ((((function)->linkage)).__jakt_init_index() == 1 /* External */))){
-return (ByteString::must_from_utf8(""sv));
+return (ByteString::from_utf8_without_validation(""sv));
 }
 if (((function)->is_comptime)){
-return (ByteString::must_from_utf8(""sv));
+return (ByteString::from_utf8_without_validation(""sv));
 }
 if (((((function)->force_inline)).__jakt_init_index() == 2 /* ForceInline */)){
-return (ByteString::must_from_utf8(""sv));
+return (ByteString::from_utf8_without_validation(""sv));
 }
 if (((((function)->type)).__jakt_init_index() == 2 /* ImplicitConstructor */)){
-return (ByteString::must_from_utf8(""sv));
+return (ByteString::from_utf8_without_validation(""sv));
 }
 if (((((function)->linkage)).__jakt_init_index() == 1 /* External */)){
 [](ByteString& self, ByteString rhs) -> void {
@@ -3055,7 +3055,7 @@ if (((((function)->linkage)).__jakt_init_index() == 1 /* External */)){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("extern "sv)));
+(output,(ByteString::from_utf8_without_validation("extern "sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
@@ -3069,15 +3069,15 @@ if (((((function)->return_type_id)).equals(types::never_type_id()))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("[[noreturn]] "sv)));
+(output,(ByteString::from_utf8_without_validation("[[noreturn]] "sv)));
 }
-if (((TRY((((((function)->name_for_codegen())).as_name_for_definition())))) == ((ByteString::must_from_utf8("main"sv))))){
+if (((TRY((((((function)->name_for_codegen())).as_name_for_definition())))) == ((ByteString::from_utf8_without_validation("main"sv))))){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("ErrorOr<int>"sv)));
+(output,(ByteString::from_utf8_without_validation("ErrorOr<int>"sv)));
 }
 else {
 if ((as_method && ((function)->is_static()))){
@@ -3086,7 +3086,7 @@ if ((as_method && ((function)->is_static()))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("static "sv)));
+(output,(ByteString::from_utf8_without_validation("static "sv)));
 }
 if (((function)->is_virtual)){
 [](ByteString& self, ByteString rhs) -> void {
@@ -3094,7 +3094,7 @@ if (((function)->is_virtual)){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("virtual "sv)));
+(output,(ByteString::from_utf8_without_validation("virtual "sv)));
 }
 ByteString const naked_return_type = TRY((((*this).codegen_type(((function)->return_type_id)))));
 ByteString const return_type = ({
@@ -3125,7 +3125,7 @@ VERIFY_NOT_REACHED();
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" "sv)));
+(output,(ByteString::from_utf8_without_validation(" "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -3137,7 +3137,7 @@ VERIFY_NOT_REACHED();
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("("sv)));
+(output,(ByteString::from_utf8_without_validation("("sv)));
 bool first = true;
 {
 JaktInternal::ArrayIterator<types::CheckedParameter> _magic = ((((function)->params)).iterator());
@@ -3148,7 +3148,7 @@ break;
 }
 types::CheckedParameter param = (_magic_value.value());
 {
-if ((first && ((((((param).variable))->name)) == ((ByteString::must_from_utf8("this"sv)))))){
+if ((first && ((((((param).variable))->name)) == ((ByteString::from_utf8_without_validation("this"sv)))))){
 continue;
 }
 if (first){
@@ -3160,7 +3160,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(", "sv)));
+(output,(ByteString::from_utf8_without_validation(", "sv)));
 }
 
 NonnullRefPtr<typename types::Type> const param_type = ((((*this).program))->get_type(((((param).variable))->type_id)));
@@ -3175,14 +3175,14 @@ NonnullRefPtr<typename types::Type> const param_type = ((((*this).program))->get
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" "sv)));
+(output,(ByteString::from_utf8_without_validation(" "sv)));
 if (((!(((((param).variable))->is_mutable))) && (!((((param_type)->__jakt_init_index() == 28 /* Reference */) || ((param_type)->__jakt_init_index() == 29 /* MutableReference */)))))){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("const "sv)));
+(output,(ByteString::from_utf8_without_validation("const "sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
@@ -3200,14 +3200,14 @@ if (((!(((((param).variable))->is_mutable))) && (!((((param_type)->__jakt_init_i
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(")"sv)));
+(output,(ByteString::from_utf8_without_validation(")"sv)));
 if (((!(((function)->is_static()))) && (!(((function)->is_mutating()))))){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" const"sv)));
+(output,(ByteString::from_utf8_without_validation(" const"sv)));
 }
 if (((function)->is_override)){
 [](ByteString& self, ByteString rhs) -> void {
@@ -3215,20 +3215,20 @@ if (((function)->is_override)){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" override"sv)));
+(output,(ByteString::from_utf8_without_validation(" override"sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(";"sv)));
+(output,(ByteString::from_utf8_without_validation(";"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("\n"sv)));
+(output,(ByteString::from_utf8_without_validation("\n"sv)));
 return output;
 }
 }
@@ -3236,16 +3236,16 @@ return output;
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_struct_predecl(types::CheckedStruct const struct_) {
 {
 if (((((struct_).definition_linkage)).__jakt_init_index() == 1 /* External */)){
-return (ByteString::must_from_utf8(""sv));
+return (ByteString::from_utf8_without_validation(""sv));
 }
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 if ((!(((((struct_).generic_parameters)).is_empty())))){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("template <"sv)));
+(output,(ByteString::from_utf8_without_validation("template <"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -3257,7 +3257,7 @@ if ((!(((((struct_).generic_parameters)).is_empty())))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(">"sv)));
+(output,(ByteString::from_utf8_without_validation(">"sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
@@ -3269,13 +3269,13 @@ if ((!(((((struct_).generic_parameters)).is_empty())))){
 auto&& __jakt_match_variant = ((struct_).record_type);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 1 /* Class */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("class "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("class "sv)));
 };/*case end*/
 case 0 /* Struct */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("struct "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("struct "sv)));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(""sv)));
 };/*case end*/
 }/*switch end*/
 }()
@@ -3295,20 +3295,20 @@ return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(";"sv)));
+(output,(ByteString::from_utf8_without_validation(";"sv)));
 return output;
 }
 }
 
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_struct(types::CheckedStruct const struct_) {
 {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 if (((((struct_).definition_linkage)).__jakt_init_index() == 1 /* External */)){
-return (ByteString::must_from_utf8(""sv));
+return (ByteString::from_utf8_without_validation(""sv));
 }
 bool struct_is_generic = false;
 JaktInternal::DynamicArray<ByteString> generic_parameter_names = DynamicArray<ByteString>::create_with({});
-ByteString template_parameters = (ByteString::must_from_utf8(""sv));
+ByteString template_parameters = (ByteString::from_utf8_without_validation(""sv));
 if ((!(((((struct_).generic_parameters)).is_empty())))){
 (struct_is_generic = true);
 (template_parameters = TRY((((*this).codegen_template_parameter_names(((struct_).generic_parameters),((generic_parameter_names)))))));
@@ -3325,7 +3325,7 @@ auto&& __jakt_match_variant = ((struct_).record_type);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 1 /* Class */: {
 {
-ByteString class_name_with_generics = (ByteString::must_from_utf8(""sv));
+ByteString class_name_with_generics = (ByteString::from_utf8_without_validation(""sv));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -3348,7 +3348,7 @@ if ((!(first))){
 (self = ((self) + (rhs)));
 }
 }
-(class_name_with_generics,(ByteString::must_from_utf8(", "sv)));
+(class_name_with_generics,(ByteString::from_utf8_without_validation(", "sv)));
 }
 else {
 [](ByteString& self, ByteString rhs) -> void {
@@ -3356,7 +3356,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(class_name_with_generics,(ByteString::must_from_utf8("<"sv)));
+(class_name_with_generics,(ByteString::from_utf8_without_validation("<"sv)));
 (first = false);
 }
 
@@ -3377,7 +3377,7 @@ if ((!(((((struct_).generic_parameters)).is_empty())))){
 (self = ((self) + (rhs)));
 }
 }
-(class_name_with_generics,(ByteString::must_from_utf8(">"sv)));
+(class_name_with_generics,(ByteString::from_utf8_without_validation(">"sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
@@ -3415,7 +3415,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("{\n"sv)));
+(output,(ByteString::from_utf8_without_validation("{\n"sv)));
 NonnullRefPtr<types::Scope> const scope = ((((*this).program))->get_scope(((struct_).scope_id)));
 bool has_destructor = false;
 {
@@ -3460,7 +3460,7 @@ if ((!(has_destructor))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  public:\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  public:\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -3492,25 +3492,25 @@ if (((((struct_).super_struct_id)).has_value())){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" {\n"sv)));
+(output,(ByteString::from_utf8_without_validation(" {\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  public:\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  public:\n"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 case 3 /* SumEnum */: {
 {
-utility::todo((ByteString::must_from_utf8("codegen_struct SumEnum"sv)));
+utility::todo((ByteString::from_utf8_without_validation("codegen_struct SumEnum"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 case 2 /* ValueEnum */: {
 {
-utility::todo((ByteString::must_from_utf8("codegen_struct ValueEnum"sv)));
+utility::todo((ByteString::from_utf8_without_validation("codegen_struct ValueEnum"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -3539,7 +3539,7 @@ case 2 /* Restricted */: {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("public: "sv)));
+(output,(ByteString::from_utf8_without_validation("public: "sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -3550,7 +3550,7 @@ case 0 /* Public */: {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("public: "sv)));
+(output,(ByteString::from_utf8_without_validation("public: "sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -3561,7 +3561,7 @@ case 1 /* Private */: {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("private: "sv)));
+(output,(ByteString::from_utf8_without_validation("private: "sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -3598,7 +3598,7 @@ TRY((set_access_level(((variable)->visibility))));
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" "sv)));
+(output,(ByteString::from_utf8_without_validation(" "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -3610,7 +3610,7 @@ TRY((set_access_level(((variable)->visibility))));
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(";"sv)));
+(output,(ByteString::from_utf8_without_validation(";"sv)));
 }
 
 }
@@ -3669,7 +3669,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("\n"sv)));
+(output,(ByteString::from_utf8_without_validation("\n"sv)));
 }
 else if (((((function)->type)).__jakt_init_index() == 2 /* ImplicitConstructor */)){
 if (((((struct_).generic_parameters)).is_empty())){
@@ -3694,7 +3694,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("\n"sv)));
+(output,(ByteString::from_utf8_without_validation("\n"sv)));
 }
 else if (((((function)->force_inline)).__jakt_init_index() == 1 /* MakeDefinitionAvailable */)){
 [](ByteString& self, ByteString rhs) -> void {
@@ -3739,7 +3739,7 @@ if (((((struct_).generic_parameters)).is_empty())){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("ByteString debug_description() const;\n"sv)));
+(output,(ByteString::from_utf8_without_validation("ByteString debug_description() const;\n"sv)));
 }
 else {
 [](ByteString& self, ByteString rhs) -> void {
@@ -3755,7 +3755,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("};"sv)));
+(output,(ByteString::from_utf8_without_validation("};"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -3768,7 +3768,7 @@ return output;
 
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_enum_predecl(types::CheckedEnum const enum_) {
 {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 if ([](ids::TypeId const& self, ids::TypeId rhs) -> bool {
 {
 return (!(((self).equals(rhs))));
@@ -3779,7 +3779,7 @@ if (((((*this).program))->is_integer(((enum_).underlying_type_id)))){
 return __jakt_format((StringView::from_string_literal("enum class {}: {};"sv)),((enum_).name),TRY((((*this).codegen_type(((enum_).underlying_type_id))))));
 }
 else {
-utility::todo((ByteString::must_from_utf8("Enums with a non-integer underlying type"sv)));
+utility::todo((ByteString::from_utf8_without_validation("Enums with a non-integer underlying type"sv)));
 }
 
 }
@@ -3805,7 +3805,7 @@ return output;
 
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_enum(types::CheckedEnum const enum_) {
 {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 if ([](ids::TypeId const& self, ids::TypeId rhs) -> bool {
 {
 return (!(((self).equals(rhs))));
@@ -3818,7 +3818,7 @@ if (((((*this).program))->is_integer(((enum_).underlying_type_id)))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(((((((((ByteString::must_from_utf8("enum class "sv))) + (((enum_).name)))) + ((ByteString::must_from_utf8(": "sv))))) + (TRY((((*this).codegen_type(((enum_).underlying_type_id)))))))) + ((ByteString::must_from_utf8(" {\n"sv)))));
+(output,(((((((((ByteString::from_utf8_without_validation("enum class "sv))) + (((enum_).name)))) + ((ByteString::from_utf8_without_validation(": "sv))))) + (TRY((((*this).codegen_type(((enum_).underlying_type_id)))))))) + ((ByteString::from_utf8_without_validation(" {\n"sv)))));
 {
 JaktInternal::ArrayIterator<types::CheckedEnumVariant> _magic = ((((enum_).variants)).iterator());
 for (;;){
@@ -3840,7 +3840,7 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 2 /* WithValue */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.WithValue;ByteString const& name = __jakt_match_value.name;
 NonnullRefPtr<typename types::CheckedExpression> const& expr = __jakt_match_value.expr;
-return JaktInternal::ExplicitValue(((((((name) + ((ByteString::must_from_utf8(" = "sv))))) + (TRY((((*this).codegen_expression(expr))))))) + ((ByteString::must_from_utf8(",\n"sv)))));
+return JaktInternal::ExplicitValue(((((((name) + ((ByteString::from_utf8_without_validation(" = "sv))))) + (TRY((((*this).codegen_expression(expr))))))) + ((ByteString::from_utf8_without_validation(",\n"sv)))));
 };/*case end*/
 default: {
 {
@@ -3863,24 +3863,24 @@ utility::todo(__jakt_format((StringView::from_string_literal("codegen_enum can't
 }
 }
 
-return ((output) + ((ByteString::must_from_utf8("};\n"sv))));
+return ((output) + ((ByteString::from_utf8_without_validation("};\n"sv))));
 }
 else {
-utility::todo((ByteString::must_from_utf8("Enums with a non-integer underlying type"sv)));
+utility::todo((ByteString::from_utf8_without_validation("Enums with a non-integer underlying type"sv)));
 }
 
 }
 bool const is_generic = (!(((((enum_).generic_parameters)).is_empty())));
 JaktInternal::DynamicArray<ByteString> generic_parameter_names = DynamicArray<ByteString>::create_with({});
 ByteString template_args = TRY((((*this).codegen_template_parameter_names(((enum_).generic_parameters),((generic_parameter_names))))));
-ByteString const generic_parameter_list = utility::join(generic_parameter_names,(ByteString::must_from_utf8(", "sv)));
+ByteString const generic_parameter_list = utility::join(generic_parameter_names,(ByteString::from_utf8_without_validation(", "sv)));
 if (is_generic){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(((((ByteString::must_from_utf8("template<"sv))) + (template_args))) + ((ByteString::must_from_utf8(">\n"sv)))));
+(output,(((((ByteString::from_utf8_without_validation("template<"sv))) + (template_args))) + ((ByteString::from_utf8_without_validation(">\n"sv)))));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
@@ -3901,36 +3901,36 @@ if (is_generic){
 (self = ((self) + (rhs)));
 }
 }
-(output,__jakt_format((StringView::from_string_literal("<{}>"sv)),utility::join(generic_parameter_names,(ByteString::must_from_utf8(", "sv)))));
+(output,__jakt_format((StringView::from_string_literal("<{}>"sv)),utility::join(generic_parameter_names,(ByteString::from_utf8_without_validation(", "sv)))));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(">"sv)));
+(output,(ByteString::from_utf8_without_validation(">"sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" {\n"sv)));
+(output,(ByteString::from_utf8_without_validation(" {\n"sv)));
 size_t const max_index_value = ((((enum_).variants)).size());
 ByteString const index_type = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<ByteString>>{
 auto __jakt_enum_value = (max_index_value);
 if (__jakt_enum_value >= static_cast<size_t>(0ULL)&& __jakt_enum_value < static_cast<size_t>(256ULL)) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("u8"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("u8"sv)));
 }
 else if (__jakt_enum_value >= static_cast<size_t>(256ULL)&& __jakt_enum_value < static_cast<size_t>(65536ULL)) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("u16"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("u16"sv)));
 }
 else if (__jakt_enum_value >= static_cast<size_t>(65536ULL)&& __jakt_enum_value < static_cast<size_t>(4294967296ULL)) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("u32"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("u32"sv)));
 }
 else {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("size_t"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("size_t"sv)));
 }
 }());
     if (_jakt_value.is_return())
@@ -3953,19 +3953,19 @@ if ((!(((common_fields).is_empty())))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("union CommonData {\n"sv)));
+(output,(ByteString::from_utf8_without_validation("union CommonData {\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("u8 __jakt_uninit_common;\n"sv)));
+(output,(ByteString::from_utf8_without_validation("u8 __jakt_uninit_common;\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("struct {\n"sv)));
+(output,(ByteString::from_utf8_without_validation("struct {\n"sv)));
 {
 JaktInternal::ArrayIterator<JaktInternal::Tuple<ByteString,ByteString>> _magic = ((common_fields).iterator());
 for (;;){
@@ -3995,38 +3995,38 @@ ByteString const type = ((jakt__field_name__type__).template get<1>());
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("} init_common;\n"sv)));
+(output,(ByteString::from_utf8_without_validation("} init_common;\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("constexpr CommonData() {}\n"sv)));
+(output,(ByteString::from_utf8_without_validation("constexpr CommonData() {}\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("~CommonData() {}\n"sv)));
+(output,(ByteString::from_utf8_without_validation("~CommonData() {}\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("} common;\n"sv)));
+(output,(ByteString::from_utf8_without_validation("} common;\n"sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("union VariantData {\n"sv)));
+(output,(ByteString::from_utf8_without_validation("union VariantData {\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("u8 __jakt_uninit_value;\n"sv)));
+(output,(ByteString::from_utf8_without_validation("u8 __jakt_uninit_value;\n"sv)));
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((((enum_).variants)).size()))});
 for (;;){
@@ -4044,7 +4044,7 @@ if ((!(((fields).is_empty())))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("struct {\n"sv)));
+(output,(ByteString::from_utf8_without_validation("struct {\n"sv)));
 {
 JaktInternal::ArrayIterator<JaktInternal::Tuple<ByteString,ByteString>> _magic = ((fields).iterator());
 for (;;){
@@ -4086,19 +4086,19 @@ ByteString const field_type = ((jakt__field_name__field_type__).template get<1>(
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("constexpr VariantData() {}\n"sv)));
+(output,(ByteString::from_utf8_without_validation("constexpr VariantData() {}\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("~VariantData() {}\n"sv)));
+(output,(ByteString::from_utf8_without_validation("~VariantData() {}\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("} as;\n"sv)));
+(output,(ByteString::from_utf8_without_validation("} as;\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -4111,7 +4111,7 @@ if (((((enum_).generic_parameters)).is_empty())){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("ByteString debug_description() const;\n"sv)));
+(output,(ByteString::from_utf8_without_validation("ByteString debug_description() const;\n"sv)));
 }
 else {
 [](ByteString& self, ByteString rhs) -> void {
@@ -4141,20 +4141,20 @@ if (is_generic){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("private: void __jakt_destroy_variant() {\n"sv)));
+(output,(ByteString::from_utf8_without_validation("private: void __jakt_destroy_variant() {\n"sv)));
 ((*this).codegen_enum_destroy_variant(enum_,((output))));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("}\n"sv)));
+(output,(ByteString::from_utf8_without_validation("}\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("public:\n"sv)));
+(output,(ByteString::from_utf8_without_validation("public:\n"sv)));
 }
 else {
 {
@@ -4176,7 +4176,7 @@ codegen::CodeGenerator::codegen_enum_constructor_decl(((enum_).name),variant_nam
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(";\n"sv)));
+(output,(ByteString::from_utf8_without_validation(";\n"sv)));
 }
 
 }
@@ -4217,13 +4217,13 @@ codegen::CodeGenerator::codegen_enum_constructor_decl(((enum_).name),variant_nam
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("private: void __jakt_destroy_variant();\n"sv)));
+(output,(ByteString::from_utf8_without_validation("private: void __jakt_destroy_variant();\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("public:\n"sv)));
+(output,(ByteString::from_utf8_without_validation("public:\n"sv)));
 }
 
 NonnullRefPtr<types::Scope> const enum_scope = ((((*this).program))->get_scope(((enum_).scope_id)));
@@ -4298,7 +4298,7 @@ continue;
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("};\n"sv)));
+(output,(ByteString::from_utf8_without_validation("};\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -4316,7 +4316,7 @@ void codegen::CodeGenerator::codegen_enum_constructor_decl(ByteString const enum
 (self = ((self) + (rhs)));
 }
 }
-(((output)),(ByteString::must_from_utf8("[[nodiscard]] "sv)));
+(((output)),(ByteString::from_utf8_without_validation("[[nodiscard]] "sv)));
 if (is_inline){
 [](ByteString& self, ByteString rhs) -> void {
 {
@@ -4436,7 +4436,7 @@ ByteString const type = ((name_type_).template get<1>());
 (self = ((self) + (rhs)));
 }
 }
-(((output)),(ByteString::must_from_utf8(")"sv)));
+(((output)),(ByteString::from_utf8_without_validation(")"sv)));
 }
 }
 
@@ -4613,14 +4613,14 @@ ByteString const name = ((((variable)->name_for_codegen())).as_name_for_use());
 }
 
 if (is_constructor){
-((*this).codegen_for_enum_variants(((enum_)),((placement_new)),(ByteString::must_from_utf8("rhs.__jakt_init_index()"sv)),((builder))));
+((*this).codegen_for_enum_variants(((enum_)),((placement_new)),(ByteString::from_utf8_without_validation("rhs.__jakt_init_index()"sv)),((builder))));
 }
 else {
 ((builder).append((StringView::from_string_literal("if (this->__jakt_variant_index != rhs.__jakt_variant_index) {\n"sv))));
 ((builder).append((StringView::from_string_literal("this->__jakt_destroy_variant();\n"sv))));
-((*this).codegen_for_enum_variants(((enum_)),((placement_new)),(ByteString::must_from_utf8("rhs.__jakt_init_index()"sv)),((builder))));
+((*this).codegen_for_enum_variants(((enum_)),((placement_new)),(ByteString::from_utf8_without_validation("rhs.__jakt_init_index()"sv)),((builder))));
 ((builder).append((StringView::from_string_literal("} else {\n"sv))));
-((*this).codegen_for_enum_variants(((enum_)),((assign)),(ByteString::must_from_utf8("rhs.__jakt_init_index()"sv)),((builder))));
+((*this).codegen_for_enum_variants(((enum_)),((assign)),(ByteString::from_utf8_without_validation("rhs.__jakt_init_index()"sv)),((builder))));
 ((builder).append((StringView::from_string_literal("}\n"sv))));
 }
 
@@ -4632,7 +4632,7 @@ return ((builder).to_string());
 
 ByteString codegen::CodeGenerator::codegen_enum_constructors(types::CheckedEnum const enum_,bool const is_inside_struct,JaktInternal::Optional<ByteString> const generic_parameter_list,JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,ByteString>>>> const variant_field_list,JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,ByteString>> const common_fields) const {
 {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 bool const is_generic = (!(((((enum_).generic_parameters)).is_empty())));
 ByteString const ctor_result_type = codegen::CodeGenerator::enum_constructor_result_type(enum_,generic_parameter_list);
 ByteString const ctor_type = ({
@@ -4654,10 +4654,10 @@ JaktInternal::Tuple<ByteString,ByteString> const declare_uninit_deref_uninit_ = 
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Tuple<ByteString,ByteString>,ByteString>{
 auto __jakt_enum_value = (((enum_).is_boxed));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue((Tuple{__jakt_format((StringView::from_string_literal("NonnullRefPtr<{0}> __jakt_uninit_enum = adopt_ref(*new {0});\n"sv)),ctor_type), (ByteString::must_from_utf8("__jakt_uninit_enum->"sv))}));
+return JaktInternal::ExplicitValue((Tuple{__jakt_format((StringView::from_string_literal("NonnullRefPtr<{0}> __jakt_uninit_enum = adopt_ref(*new {0});\n"sv)),ctor_type), (ByteString::from_utf8_without_validation("__jakt_uninit_enum->"sv))}));
 }
 else if (__jakt_enum_value == false) {
-return JaktInternal::ExplicitValue((Tuple{__jakt_format((StringView::from_string_literal("{} __jakt_uninit_enum;\n"sv)),((enum_).name)), (ByteString::must_from_utf8("__jakt_uninit_enum."sv))}));
+return JaktInternal::ExplicitValue((Tuple{__jakt_format((StringView::from_string_literal("{} __jakt_uninit_enum;\n"sv)),((enum_).name)), (ByteString::from_utf8_without_validation("__jakt_uninit_enum."sv))}));
 }
 VERIFY_NOT_REACHED();
 }());
@@ -4694,7 +4694,7 @@ codegen::CodeGenerator::codegen_enum_constructor_decl(((enum_).name),variant_nam
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("{\n"sv)));
+(output,(ByteString::from_utf8_without_validation("{\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -4754,13 +4754,13 @@ ByteString const name = ((field).template get<0>());
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("return __jakt_uninit_enum;\n"sv)));
+(output,(ByteString::from_utf8_without_validation("return __jakt_uninit_enum;\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("}\n"sv)));
+(output,(ByteString::from_utf8_without_validation("}\n"sv)));
 }
 
 }
@@ -4788,7 +4788,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("{\n"sv)));
+(output,(ByteString::from_utf8_without_validation("{\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -4800,13 +4800,13 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("return *this;\n"sv)));
+(output,(ByteString::from_utf8_without_validation("return *this;\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("}\n"sv)));
+(output,(ByteString::from_utf8_without_validation("}\n"sv)));
 if (is_inside_struct){
 [](ByteString& self, ByteString rhs) -> void {
 {
@@ -4852,7 +4852,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("{\n"sv)));
+(output,(ByteString::from_utf8_without_validation("{\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -4864,13 +4864,13 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("return *this;\n"sv)));
+(output,(ByteString::from_utf8_without_validation("return *this;\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("}\n"sv)));
+(output,(ByteString::from_utf8_without_validation("}\n"sv)));
 if (is_inside_struct){
 [](ByteString& self, ByteString rhs) -> void {
 {
@@ -4893,7 +4893,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("{\n"sv)));
+(output,(ByteString::from_utf8_without_validation("{\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -4905,11 +4905,11 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("}\n"sv)));
+(output,(ByteString::from_utf8_without_validation("}\n"sv)));
 return output;
 }
 else {
-utility::panic((ByteString::must_from_utf8("Out of line constructor cannot be generated for generic enum"sv)));
+utility::panic((ByteString::from_utf8_without_validation("Out of line constructor cannot be generated for generic enum"sv)));
 }
 
 }
@@ -4989,7 +4989,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.Typed;ByteString const& name
 ids::TypeId const& type_id = __jakt_match_value.type_id;
 return JaktInternal::ExplicitValue(({ Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,ByteString>>> __jakt_var_620; {
 JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,ByteString>> fields = DynamicArray<JaktInternal::Tuple<ByteString,ByteString>>::create_with({});
-((fields).push((Tuple{(ByteString::must_from_utf8("value"sv)), TRY((((*this).codegen_type(type_id))))})));
+((fields).push((Tuple{(ByteString::from_utf8_without_validation("value"sv)), TRY((((*this).codegen_type(type_id))))})));
 __jakt_var_620 = fields; goto __jakt_label_521;
 
 }
@@ -5028,7 +5028,7 @@ return ({
 auto&& __jakt_match_variant = *((((*this).program))->get_type(id));
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 13 /* JaktString */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("ByteString"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("ByteString"sv)));
 };/*case end*/
 case 20 /* GenericInstance */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.GenericInstance;ids::StructId const& id = __jakt_match_value.id;
@@ -5038,7 +5038,7 @@ __jakt_var_621 = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<ByteString>,JaktInternal::Optional<ByteString>>{
 auto __jakt_enum_value = (((((struct_).record_type)).__jakt_init_index() == 1 /* Class */));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("NonnullRefPtr"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("NonnullRefPtr"sv)));
 }
 else if (__jakt_enum_value == false) {
 return JaktInternal::ExplicitValue(((((struct_).name_for_codegen())).as_name_for_use()));
@@ -5061,7 +5061,7 @@ __jakt_var_622 = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<ByteString>,JaktInternal::Optional<ByteString>>{
 auto __jakt_enum_value = (((((struct_).record_type)).__jakt_init_index() == 1 /* Class */));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("NonnullRefPtr"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("NonnullRefPtr"sv)));
 }
 else if (__jakt_enum_value == false) {
 return JaktInternal::ExplicitValue(((((struct_).name_for_codegen())).as_name_for_use()));
@@ -5084,7 +5084,7 @@ __jakt_var_623 = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<ByteString>,JaktInternal::Optional<ByteString>>{
 auto __jakt_enum_value = (((((struct_).record_type)).__jakt_init_index() == 1 /* Class */));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("NonnullRefPtr"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("NonnullRefPtr"sv)));
 }
 else if (__jakt_enum_value == false) {
 return JaktInternal::ExplicitValue(((((struct_).name_for_codegen())).as_name_for_use()));
@@ -5111,7 +5111,7 @@ __jakt_var_624 = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<ByteString>,JaktInternal::Optional<ByteString>>{
 auto __jakt_enum_value = (((enum_).is_boxed));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("NonnullRefPtr"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("NonnullRefPtr"sv)));
 }
 else if (__jakt_enum_value == false) {
 return JaktInternal::ExplicitValue(((enum_).name));
@@ -5134,7 +5134,7 @@ __jakt_var_625 = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<ByteString>,JaktInternal::Optional<ByteString>>{
 auto __jakt_enum_value = (((enum_).is_boxed));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("NonnullRefPtr"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("NonnullRefPtr"sv)));
 }
 else if (__jakt_enum_value == false) {
 return JaktInternal::ExplicitValue(((enum_).name));
@@ -5188,7 +5188,7 @@ size_t const common_field_count = ((((enum_).fields)).size());
 (self = ((self) + (rhs)));
 }
 }
-(((output)),(ByteString::must_from_utf8("switch (this->__jakt_init_index()) {\n"sv)));
+(((output)),(ByteString::from_utf8_without_validation("switch (this->__jakt_init_index()) {\n"sv)));
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((((enum_).variants)).size()))});
 for (;;){
@@ -5283,7 +5283,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 (self = ((self) + (rhs)));
 }
 }
-(((output)),(ByteString::must_from_utf8("break;\n"sv)));
+(((output)),(ByteString::from_utf8_without_validation("break;\n"sv)));
 }
 
 }
@@ -5294,7 +5294,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 (self = ((self) + (rhs)));
 }
 }
-(((output)),(ByteString::must_from_utf8("}\n"sv)));
+(((output)),(ByteString::from_utf8_without_validation("}\n"sv)));
 }
 }
 
@@ -5305,13 +5305,13 @@ void codegen::CodeGenerator::codegen_enum_destructor_body(types::CheckedEnum con
 (self = ((self) + (rhs)));
 }
 }
-(((output)),(ByteString::must_from_utf8("{\n"sv)));
+(((output)),(ByteString::from_utf8_without_validation("{\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(((output)),(ByteString::must_from_utf8("if (this->__jakt_variant_index == 0) return;\n"sv)));
+(((output)),(ByteString::from_utf8_without_validation("if (this->__jakt_variant_index == 0) return;\n"sv)));
 size_t const common_field_count = ((((enum_).fields)).size());
 {
 JaktInternal::ArrayIterator<types::CheckedField> _magic = ((((enum_).fields)).iterator());
@@ -5343,26 +5343,26 @@ ByteString const name = (ds.value());
 (self = ((self) + (rhs)));
 }
 }
-(((output)),(ByteString::must_from_utf8("this->__jakt_destroy_variant();\n"sv)));
+(((output)),(ByteString::from_utf8_without_validation("this->__jakt_destroy_variant();\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(((output)),(ByteString::must_from_utf8("}\n"sv)));
+(((output)),(ByteString::from_utf8_without_validation("}\n"sv)));
 }
 }
 
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_debug_description_getter(types::CheckedStruct const struct_,bool const is_inline) {
 {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 if (((!(is_inline)) && (!(((((struct_).generic_parameters)).is_empty()))))){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("template <"sv)));
+(output,(ByteString::from_utf8_without_validation("template <"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -5374,14 +5374,14 @@ if (((!(is_inline)) && (!(((((struct_).generic_parameters)).is_empty()))))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(">\n"sv)));
+(output,(ByteString::from_utf8_without_validation(">\n"sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("ByteString "sv)));
+(output,(ByteString::from_utf8_without_validation("ByteString "sv)));
 if ((!(is_inline))){
 [](ByteString& self, ByteString rhs) -> void {
 {
@@ -5394,20 +5394,20 @@ if ((!(is_inline))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("::"sv)));
+(output,(ByteString::from_utf8_without_validation("::"sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("debug_description() const { "sv)));
+(output,(ByteString::from_utf8_without_validation("debug_description() const { "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("auto builder = ByteStringBuilder::create();"sv)));
+(output,(ByteString::from_utf8_without_validation("auto builder = ByteStringBuilder::create();"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -5419,13 +5419,13 @@ if ((!(is_inline))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("{\n"sv)));
+(output,(ByteString::from_utf8_without_validation("{\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};\n"sv)));
+(output,(ByteString::from_utf8_without_validation("JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};\n"sv)));
 size_t i = static_cast<size_t>(0ULL);
 {
 JaktInternal::ArrayIterator<types::CheckedField> _magic = ((((struct_).fields)).iterator());
@@ -5442,7 +5442,7 @@ NonnullRefPtr<types::CheckedVariable> const field_var = ((((*this).program))->ge
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("JaktInternal::PrettyPrint::must_output_indentation(builder);\n"sv)));
+(output,(ByteString::from_utf8_without_validation("JaktInternal::PrettyPrint::must_output_indentation(builder);\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -5455,7 +5455,7 @@ if (TRY((((((*this).program))->is_string(((field_var)->type_id)))))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("\\\"{}\\\""sv)));
+(output,(ByteString::from_utf8_without_validation("\\\"{}\\\""sv)));
 }
 else {
 [](ByteString& self, ByteString rhs) -> void {
@@ -5463,7 +5463,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("{}"sv)));
+(output,(ByteString::from_utf8_without_validation("{}"sv)));
 }
 
 if (((i) != (JaktInternal::checked_sub(((((struct_).fields)).size()),static_cast<size_t>(1ULL))))){
@@ -5472,14 +5472,14 @@ if (((i) != (JaktInternal::checked_sub(((((struct_).fields)).size()),static_cast
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(", "sv)));
+(output,(ByteString::from_utf8_without_validation(", "sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("\", "sv)));
+(output,(ByteString::from_utf8_without_validation("\", "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -5496,10 +5496,10 @@ return JaktInternal::ExplicitValue(({
 auto&& __jakt_match_variant = ((((((*this).program))->get_struct(struct_id))).record_type);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 1 /* Class */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("*"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("*"sv)));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(""sv)));
 };/*case end*/
 }/*switch end*/
 }()
@@ -5514,7 +5514,7 @@ return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
 }));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(""sv)));
 };/*case end*/
 }/*switch end*/
 }()
@@ -5532,7 +5532,7 @@ return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
 (self = ((self) + (rhs)));
 }
 }
-(output,((((((field_var)->name_for_codegen())).as_name_for_use())) + ((ByteString::must_from_utf8(");\n"sv)))));
+(output,((((((field_var)->name_for_codegen())).as_name_for_use())) + ((ByteString::from_utf8_without_validation(");\n"sv)))));
 ((i++));
 }
 
@@ -5544,39 +5544,39 @@ return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("}\n"sv)));
+(output,(ByteString::from_utf8_without_validation("}\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("builder.append(\")\"sv);"sv)));
+(output,(ByteString::from_utf8_without_validation("builder.append(\")\"sv);"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("return builder.to_string();"sv)));
+(output,(ByteString::from_utf8_without_validation("return builder.to_string();"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" }\n"sv)));
+(output,(ByteString::from_utf8_without_validation(" }\n"sv)));
 return output;
 }
 }
 
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_enum_debug_description_getter(types::CheckedEnum const enum_,bool const is_inline) {
 {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 if (((!(is_inline)) && (!(((((enum_).generic_parameters)).is_empty()))))){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("template <"sv)));
+(output,(ByteString::from_utf8_without_validation("template <"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -5588,14 +5588,14 @@ if (((!(is_inline)) && (!(((((enum_).generic_parameters)).is_empty()))))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(">\n"sv)));
+(output,(ByteString::from_utf8_without_validation(">\n"sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("ByteString "sv)));
+(output,(ByteString::from_utf8_without_validation("ByteString "sv)));
 if ((!(is_inline))){
 [](ByteString& self, ByteString rhs) -> void {
 {
@@ -5608,26 +5608,26 @@ if ((!(is_inline))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("::"sv)));
+(output,(ByteString::from_utf8_without_validation("::"sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("debug_description() const {\n"sv)));
+(output,(ByteString::from_utf8_without_validation("debug_description() const {\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("auto builder = ByteStringBuilder::create();\n"sv)));
+(output,(ByteString::from_utf8_without_validation("auto builder = ByteStringBuilder::create();\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("switch (this->__jakt_init_index()) {"sv)));
+(output,(ByteString::from_utf8_without_validation("switch (this->__jakt_init_index()) {"sv)));
 size_t const common_field_count = ((((enum_).fields)).size());
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((((enum_).variants)).size()))});
@@ -5670,19 +5670,19 @@ auto&& __jakt_match_value = __jakt_match_variant.as.StructLike;JaktInternal::Dyn
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("builder.append(\"(\"sv);\n"sv)));
+(output,(ByteString::from_utf8_without_validation("builder.append(\"(\"sv);\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("{\n"sv)));
+(output,(ByteString::from_utf8_without_validation("{\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};\n"sv)));
+(output,(ByteString::from_utf8_without_validation("JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};\n"sv)));
 size_t i = static_cast<size_t>(0ULL);
 {
 JaktInternal::ArrayIterator<ids::VarId> _magic = ((fields).iterator());
@@ -5698,7 +5698,7 @@ ids::VarId field = (_magic_value.value());
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("JaktInternal::PrettyPrint::must_output_indentation(builder);\n"sv)));
+(output,(ByteString::from_utf8_without_validation("JaktInternal::PrettyPrint::must_output_indentation(builder);\n"sv)));
 NonnullRefPtr<types::CheckedVariable> const var = ((((*this).program))->get_variable(field));
 if (TRY((((((*this).program))->is_string(((var)->type_id)))))){
 [](ByteString& self, ByteString rhs) -> void {
@@ -5723,7 +5723,7 @@ if (((i) != (JaktInternal::checked_sub(((fields).size()),static_cast<size_t>(1UL
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(", "sv)));
+(output,(ByteString::from_utf8_without_validation(", "sv)));
 }
 if ([](size_t const& self, size_t rhs) -> bool {
 {
@@ -5763,13 +5763,13 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("}\n"sv)));
+(output,(ByteString::from_utf8_without_validation("}\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("builder.append(\")\"sv);\n"sv)));
+(output,(ByteString::from_utf8_without_validation("builder.append(\")\"sv);\n"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -5794,7 +5794,7 @@ if (TRY((((((*this).program))->is_string(type_id))))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("builder.appendff(\"(\\\"{}\\\")\", that.value);\n"sv)));
+(output,(ByteString::from_utf8_without_validation("builder.appendff(\"(\\\"{}\\\")\", that.value);\n"sv)));
 }
 else {
 [](ByteString& self, ByteString rhs) -> void {
@@ -5802,7 +5802,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("builder.appendff(\"({})\", that.value);\n"sv)));
+(output,(ByteString::from_utf8_without_validation("builder.appendff(\"({})\", that.value);\n"sv)));
 }
 
 }
@@ -5835,7 +5835,7 @@ return JaktInternal::ExplicitValue<void>();
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("break;}\n"sv)));
+(output,(ByteString::from_utf8_without_validation("break;}\n"sv)));
 }
 
 }
@@ -5846,16 +5846,16 @@ return JaktInternal::ExplicitValue<void>();
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("}\nreturn builder.to_string();\n}\n"sv)));
+(output,(ByteString::from_utf8_without_validation("}\nreturn builder.to_string();\n}\n"sv)));
 return output;
 }
 }
 
 ByteString codegen::CodeGenerator::codegen_ak_formatter(ByteString const name,JaktInternal::DynamicArray<ByteString> const generic_parameter_names,ByteString const template_args) {
 {
-ByteString output = (ByteString::must_from_utf8(""sv));
-ByteString const generic_type_args = utility::join(generic_parameter_names,(ByteString::must_from_utf8(", "sv)));
-ByteString qualified_name = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
+ByteString const generic_type_args = utility::join(generic_parameter_names,(ByteString::from_utf8_without_validation(", "sv)));
+ByteString qualified_name = (ByteString::from_utf8_without_validation(""sv));
 {
 JaktInternal::ArrayIterator<ByteString> _magic = ((((*this).namespace_stack)).iterator());
 for (;;){
@@ -5895,7 +5895,7 @@ if ((!(((generic_parameter_names).is_empty())))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("} // namespace Jakt\n"sv)));
+(output,(ByteString::from_utf8_without_validation("} // namespace Jakt\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -5913,7 +5913,7 @@ if ((!(((generic_parameter_names).is_empty())))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("{\n"sv)));
+(output,(ByteString::from_utf8_without_validation("{\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -5925,32 +5925,32 @@ if ((!(((generic_parameter_names).is_empty())))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };"sv)));
+(output,(ByteString::from_utf8_without_validation("JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, value.debug_description());"sv)));
+(output,(ByteString::from_utf8_without_validation("Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, value.debug_description());"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("return format_error;"sv)));
+(output,(ByteString::from_utf8_without_validation("return format_error;"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("}\n"sv)));
+(output,(ByteString::from_utf8_without_validation("}\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("};\n"sv)));
-return ((output) + ((ByteString::must_from_utf8("namespace Jakt {\n"sv))));
+(output,(ByteString::from_utf8_without_validation("};\n"sv)));
+return ((output) + ((ByteString::from_utf8_without_validation("namespace Jakt {\n"sv))));
 }
 }
 
@@ -6002,7 +6002,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.Range;JaktInternal::Optional
 JaktInternal::Optional<NonnullRefPtr<typename types::CheckedExpression>> const& to = __jakt_match_value.to;
 ids::TypeId const& type_id = __jakt_match_value.type_id;
 return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_628; {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 NonnullRefPtr<typename types::Type> const type = ((((*this).program))->get_type(type_id));
 ids::TypeId const index_type = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ids::TypeId, ErrorOr<ByteString>>{
@@ -6015,7 +6015,7 @@ return JaktInternal::ExplicitValue(((args)[static_cast<i64>(0LL)]));
 };/*case end*/
 default: {
 {
-utility::panic((ByteString::must_from_utf8("Internal error: range expression doesn't have Range type"sv)));
+utility::panic((ByteString::from_utf8_without_validation("Internal error: range expression doesn't have Range type"sv)));
 }
 };/*case end*/
 }/*switch end*/
@@ -6030,7 +6030,7 @@ utility::panic((ByteString::must_from_utf8("Internal error: range expression doe
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("("sv)));
+(output,(ByteString::from_utf8_without_validation("("sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -6042,13 +6042,13 @@ utility::panic((ByteString::must_from_utf8("Internal error: range expression doe
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("{"sv)));
+(output,(ByteString::from_utf8_without_validation("{"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("static_cast<"sv)));
+(output,(ByteString::from_utf8_without_validation("static_cast<"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -6060,7 +6060,7 @@ utility::panic((ByteString::must_from_utf8("Internal error: range expression doe
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(">("sv)));
+(output,(ByteString::from_utf8_without_validation(">("sv)));
 if (((from).has_value())){
 [](ByteString& self, ByteString rhs) -> void {
 {
@@ -6075,7 +6075,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("0LL"sv)));
+(output,(ByteString::from_utf8_without_validation("0LL"sv)));
 }
 
 [](ByteString& self, ByteString rhs) -> void {
@@ -6083,7 +6083,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("),static_cast<"sv)));
+(output,(ByteString::from_utf8_without_validation("),static_cast<"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -6095,7 +6095,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(">("sv)));
+(output,(ByteString::from_utf8_without_validation(">("sv)));
 if (((to).has_value())){
 [](ByteString& self, ByteString rhs) -> void {
 {
@@ -6110,7 +6110,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("9223372036854775807LL"sv)));
+(output,(ByteString::from_utf8_without_validation("9223372036854775807LL"sv)));
 }
 
 [](ByteString& self, ByteString rhs) -> void {
@@ -6118,41 +6118,41 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(")})"sv)));
+(output,(ByteString::from_utf8_without_validation(")})"sv)));
 __jakt_var_628 = output; goto __jakt_label_528;
 
 }
 __jakt_label_528:; __jakt_var_628.release_value(); }));
 };/*case end*/
 case 25 /* OptionalNone */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("JaktInternal::OptionalNone()"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("JaktInternal::OptionalNone()"sv)));
 };/*case end*/
 case 26 /* OptionalSome */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.OptionalSome;NonnullRefPtr<typename types::CheckedExpression> const& expr = __jakt_match_value.expr;
 ids::TypeId const& type_id = __jakt_match_value.type_id;
-return JaktInternal::ExplicitValue((((((((((ByteString::must_from_utf8("static_cast<"sv))) + (TRY((((*this).codegen_type(type_id))))))) + ((ByteString::must_from_utf8(">("sv))))) + (TRY((((*this).codegen_expression(expr))))))) + ((ByteString::must_from_utf8(")"sv)))));
+return JaktInternal::ExplicitValue((((((((((ByteString::from_utf8_without_validation("static_cast<"sv))) + (TRY((((*this).codegen_type(type_id))))))) + ((ByteString::from_utf8_without_validation(">("sv))))) + (TRY((((*this).codegen_expression(expr))))))) + ((ByteString::from_utf8_without_validation(")"sv)))));
 };/*case end*/
 case 27 /* ForcedUnwrap */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.ForcedUnwrap;NonnullRefPtr<typename types::CheckedExpression> const& expr = __jakt_match_value.expr;
 ids::TypeId const& type_id = __jakt_match_value.type_id;
-return JaktInternal::ExplicitValue((((((ByteString::must_from_utf8("("sv))) + (TRY((((*this).codegen_expression(expr))))))) + ((ByteString::must_from_utf8(".value())"sv)))));
+return JaktInternal::ExplicitValue((((((ByteString::from_utf8_without_validation("("sv))) + (TRY((((*this).codegen_expression(expr))))))) + ((ByteString::from_utf8_without_validation(".value())"sv)))));
 };/*case end*/
 case 2 /* QuotedString */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.QuotedString;types::CheckedStringLiteral const& val = __jakt_match_value.val;
 return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_629; {
 ByteString const original_string = ((val).to_string());
-ByteString const escaped_value = ((original_string).replace((ByteString::must_from_utf8("\n"sv)),(ByteString::must_from_utf8("\\n"sv))));
+ByteString const escaped_value = ((original_string).replace((ByteString::from_utf8_without_validation("\n"sv)),(ByteString::from_utf8_without_validation("\\n"sv))));
 __jakt_var_629 = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<ByteString>>{
 auto __jakt_enum_value = (((((val).type_id)).equals(types::builtin(types::BuiltinType::JaktString()))));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue((((((ByteString::must_from_utf8("Jakt::ByteString(\""sv))) + (escaped_value))) + ((ByteString::must_from_utf8("\"sv)"sv)))));
+return JaktInternal::ExplicitValue((((((ByteString::from_utf8_without_validation("Jakt::ByteString(\""sv))) + (escaped_value))) + ((ByteString::from_utf8_without_validation("\"sv)"sv)))));
 }
 else if (__jakt_enum_value == false) {
 return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_630; {
-JaktInternal::Optional<JaktInternal::DynamicArray<ids::FunctionId>> const ids = TRY((((((*this).program))->find_functions_with_name_in_scope(((((*this).program))->find_type_scope_id(((val).type_id))),(ByteString::must_from_utf8("from_string_literal"sv)),false,JaktInternal::OptionalNone()))));
+JaktInternal::Optional<JaktInternal::DynamicArray<ids::FunctionId>> const ids = TRY((((((*this).program))->find_functions_with_name_in_scope(((((*this).program))->find_type_scope_id(((val).type_id))),(ByteString::from_utf8_without_validation("from_string_literal"sv)),false,JaktInternal::OptionalNone()))));
 if (((!(((ids).has_value()))) || (((ids.value())).is_empty()))){
-utility::panic((ByteString::must_from_utf8("Internal error: couldn't find a 'from_string_literal' function despite passing typecheck"sv)));
+utility::panic((ByteString::from_utf8_without_validation("Internal error: couldn't find a 'from_string_literal' function despite passing typecheck"sv)));
 }
 ByteString const name = ((((((((*this).program))->get_function((((ids.value()))[static_cast<i64>(0LL)]))))->name_for_codegen())).as_name_for_use());
 ByteString const error_handler = ({
@@ -6162,7 +6162,7 @@ if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(((*this).current_error_handler()));
 }
 else {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(""sv)));
 }
 }());
     if (_jakt_value.is_return())
@@ -6186,15 +6186,15 @@ __jakt_label_529:; __jakt_var_629.release_value(); }));
 };/*case end*/
 case 3 /* ByteConstant */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.ByteConstant;ByteString const& val = __jakt_match_value.val;
-return JaktInternal::ExplicitValue((((((ByteString::must_from_utf8("static_cast<u8>(u8'"sv))) + (val))) + ((ByteString::must_from_utf8("')"sv)))));
+return JaktInternal::ExplicitValue((((((ByteString::from_utf8_without_validation("static_cast<u8>(u8'"sv))) + (val))) + ((ByteString::from_utf8_without_validation("')"sv)))));
 };/*case end*/
 case 5 /* CCharacterConstant */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.CCharacterConstant;ByteString const& val = __jakt_match_value.val;
-return JaktInternal::ExplicitValue((((((ByteString::must_from_utf8("'"sv))) + (val))) + ((ByteString::must_from_utf8("'"sv)))));
+return JaktInternal::ExplicitValue((((((ByteString::from_utf8_without_validation("'"sv))) + (val))) + ((ByteString::from_utf8_without_validation("'"sv)))));
 };/*case end*/
 case 4 /* CharacterConstant */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.CharacterConstant;ByteString const& val = __jakt_match_value.val;
-return JaktInternal::ExplicitValue((((((ByteString::must_from_utf8("static_cast<u32>(U'"sv))) + (val))) + ((ByteString::must_from_utf8("')"sv)))));
+return JaktInternal::ExplicitValue((((((ByteString::from_utf8_without_validation("static_cast<u32>(U'"sv))) + (val))) + ((ByteString::from_utf8_without_validation("')"sv)))));
 };/*case end*/
 case 24 /* Var */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Var;NonnullRefPtr<types::CheckedVariable> const& var = __jakt_match_value.var;
@@ -6203,8 +6203,8 @@ ByteString const name = ((((var)->name_for_codegen())).as_name_for_use());
 __jakt_var_631 = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<ByteString>>{
 auto __jakt_enum_value = (name);
-if (__jakt_enum_value == (ByteString::must_from_utf8("this"sv))) {
-return JaktInternal::ExplicitValue(TRY((((*this).this_replacement).try_value_or_lazy_evaluated([&]() -> ErrorOr<ByteString> { return (ByteString::must_from_utf8("*this"sv)); }))));
+if (__jakt_enum_value == (ByteString::from_utf8_without_validation("this"sv))) {
+return JaktInternal::ExplicitValue(TRY((((*this).this_replacement).try_value_or_lazy_evaluated([&]() -> ErrorOr<ByteString> { return (ByteString::from_utf8_without_validation("*this"sv)); }))));
 }
 else {
 return JaktInternal::ExplicitValue(name);
@@ -6221,12 +6221,12 @@ __jakt_label_531:; __jakt_var_631.release_value(); }));
 case 13 /* IndexedExpression */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.IndexedExpression;NonnullRefPtr<typename types::CheckedExpression> const& expr = __jakt_match_value.expr;
 NonnullRefPtr<typename types::CheckedExpression> const& index = __jakt_match_value.index;
-return JaktInternal::ExplicitValue((((((((((ByteString::must_from_utf8("(("sv))) + (TRY((((*this).codegen_expression(expr))))))) + ((ByteString::must_from_utf8(")["sv))))) + (TRY((((*this).codegen_expression(index))))))) + ((ByteString::must_from_utf8("])"sv)))));
+return JaktInternal::ExplicitValue((((((((((ByteString::from_utf8_without_validation("(("sv))) + (TRY((((*this).codegen_expression(expr))))))) + ((ByteString::from_utf8_without_validation(")["sv))))) + (TRY((((*this).codegen_expression(index))))))) + ((ByteString::from_utf8_without_validation("])"sv)))));
 };/*case end*/
 case 14 /* IndexedDictionary */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.IndexedDictionary;NonnullRefPtr<typename types::CheckedExpression> const& expr = __jakt_match_value.expr;
 NonnullRefPtr<typename types::CheckedExpression> const& index = __jakt_match_value.index;
-return JaktInternal::ExplicitValue((((((((((ByteString::must_from_utf8("(("sv))) + (TRY((((*this).codegen_expression(expr))))))) + ((ByteString::must_from_utf8(")["sv))))) + (TRY((((*this).codegen_expression(index))))))) + ((ByteString::must_from_utf8("])"sv)))));
+return JaktInternal::ExplicitValue((((((((((ByteString::from_utf8_without_validation("(("sv))) + (TRY((((*this).codegen_expression(expr))))))) + ((ByteString::from_utf8_without_validation(")["sv))))) + (TRY((((*this).codegen_expression(index))))))) + ((ByteString::from_utf8_without_validation("])"sv)))));
 };/*case end*/
 case 15 /* IndexedTuple */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.IndexedTuple;NonnullRefPtr<typename types::CheckedExpression> const& expr = __jakt_match_value.expr;
@@ -6254,14 +6254,14 @@ ByteString const& name = __jakt_match_value.name;
 JaktInternal::Optional<ids::VarId> const& index = __jakt_match_value.index;
 bool const& is_optional = __jakt_match_value.is_optional;
 return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_632; {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 ByteString const object = TRY((((*this).codegen_expression(expr))));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("(("sv)));
+(output,(ByteString::from_utf8_without_validation("(("sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -6273,7 +6273,7 @@ ByteString const object = TRY((((*this).codegen_expression(expr))));
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(")"sv)));
+(output,(ByteString::from_utf8_without_validation(")"sv)));
 ByteString const var_name = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<ByteString>>{
 auto __jakt_enum_value = (((index).has_value()));
@@ -6301,7 +6301,7 @@ case 26 /* RawPtr */: {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("->"sv)));
+(output,(ByteString::from_utf8_without_validation("->"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -6314,13 +6314,13 @@ if ((((((structure).record_type)).__jakt_init_index() == 1 /* Class */) && [](By
 return (!(((self) == (rhs))));
 }
 }
-(object,(ByteString::must_from_utf8("*this"sv))))){
+(object,(ByteString::from_utf8_without_validation("*this"sv))))){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("->"sv)));
+(output,(ByteString::from_utf8_without_validation("->"sv)));
 }
 else {
 [](ByteString& self, ByteString rhs) -> void {
@@ -6328,7 +6328,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("."sv)));
+(output,(ByteString::from_utf8_without_validation("."sv)));
 }
 
 }
@@ -6343,13 +6343,13 @@ if ((((((structure).record_type)).__jakt_init_index() == 1 /* Class */) && [](By
 return (!(((self) == (rhs))));
 }
 }
-(object,(ByteString::must_from_utf8("*this"sv))))){
+(object,(ByteString::from_utf8_without_validation("*this"sv))))){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("->"sv)));
+(output,(ByteString::from_utf8_without_validation("->"sv)));
 }
 else {
 [](ByteString& self, ByteString rhs) -> void {
@@ -6357,7 +6357,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("."sv)));
+(output,(ByteString::from_utf8_without_validation("."sv)));
 }
 
 }
@@ -6370,7 +6370,7 @@ default: {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("."sv)));
+(output,(ByteString::from_utf8_without_validation("."sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -6387,8 +6387,8 @@ if (is_optional){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("map([](auto& _value) { return _value"sv)));
-ByteString access_operator = (ByteString::must_from_utf8("."sv));
+(output,(ByteString::from_utf8_without_validation("map([](auto& _value) { return _value"sv)));
+ByteString access_operator = (ByteString::from_utf8_without_validation("."sv));
 if (((expression_type)->__jakt_init_index() == 20 /* GenericInstance */)){
 JaktInternal::DynamicArray<ids::TypeId> const args = (expression_type)->as.GenericInstance.args;
 if ([](size_t const& self, size_t rhs) -> bool {
@@ -6410,7 +6410,7 @@ case 24 /* Struct */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Struct;ids::StructId const& id = __jakt_match_value.value;
 {
 if (((((((((*this).program))->get_struct(id))).record_type)).__jakt_init_index() == 1 /* Class */)){
-(access_operator = (ByteString::must_from_utf8("->"sv)));
+(access_operator = (ByteString::from_utf8_without_validation("->"sv)));
 }
 }
 return JaktInternal::ExplicitValue<void>();
@@ -6419,7 +6419,7 @@ case 20 /* GenericInstance */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.GenericInstance;ids::StructId const& id = __jakt_match_value.id;
 {
 if (((((((((*this).program))->get_struct(id))).record_type)).__jakt_init_index() == 1 /* Class */)){
-(access_operator = (ByteString::must_from_utf8("->"sv)));
+(access_operator = (ByteString::from_utf8_without_validation("->"sv)));
 }
 }
 return JaktInternal::ExplicitValue<void>();
@@ -6455,7 +6455,7 @@ return JaktInternal::ExplicitValue<void>();
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("; })"sv)));
+(output,(ByteString::from_utf8_without_validation("; })"sv)));
 }
 else {
 [](ByteString& self, ByteString rhs) -> void {
@@ -6471,7 +6471,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(")"sv)));
+(output,(ByteString::from_utf8_without_validation(")"sv)));
 __jakt_var_632 = output; goto __jakt_label_532;
 
 }
@@ -6482,14 +6482,14 @@ auto&& __jakt_match_value = __jakt_match_variant.as.IndexedCommonEnumMember;Nonn
 ByteString const& index = __jakt_match_value.index;
 bool const& is_optional = __jakt_match_value.is_optional;
 return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_633; {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 ByteString const object = TRY((((*this).codegen_expression(expr))));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("(("sv)));
+(output,(ByteString::from_utf8_without_validation("(("sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -6501,7 +6501,7 @@ ByteString const object = TRY((((*this).codegen_expression(expr))));
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(")"sv)));
+(output,(ByteString::from_utf8_without_validation(")"sv)));
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<ByteString>>{
 auto&& __jakt_match_variant = *((((*this).program))->get_type(((expr)->type())));
@@ -6513,7 +6513,7 @@ case 26 /* RawPtr */: {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("->"sv)));
+(output,(ByteString::from_utf8_without_validation("->"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -6528,13 +6528,13 @@ if ((is_boxed && [](ByteString const& self, ByteString rhs) -> bool {
 return (!(((self) == (rhs))));
 }
 }
-(object,(ByteString::must_from_utf8("*this"sv))))){
+(object,(ByteString::from_utf8_without_validation("*this"sv))))){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("->common.init_common."sv)));
+(output,(ByteString::from_utf8_without_validation("->common.init_common."sv)));
 }
 else {
 [](ByteString& self, ByteString rhs) -> void {
@@ -6542,7 +6542,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(".common.init_common."sv)));
+(output,(ByteString::from_utf8_without_validation(".common.init_common."sv)));
 }
 
 }
@@ -6552,7 +6552,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(".common.init_common."sv)));
+(output,(ByteString::from_utf8_without_validation(".common.init_common."sv)));
 }
 
 }
@@ -6569,13 +6569,13 @@ if ((is_boxed && [](ByteString const& self, ByteString rhs) -> bool {
 return (!(((self) == (rhs))));
 }
 }
-(object,(ByteString::must_from_utf8("*this"sv))))){
+(object,(ByteString::from_utf8_without_validation("*this"sv))))){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("->common.init_common."sv)));
+(output,(ByteString::from_utf8_without_validation("->common.init_common."sv)));
 }
 else {
 [](ByteString& self, ByteString rhs) -> void {
@@ -6583,7 +6583,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(".common.init_common."sv)));
+(output,(ByteString::from_utf8_without_validation(".common.init_common."sv)));
 }
 
 }
@@ -6593,7 +6593,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(".common.init_common."sv)));
+(output,(ByteString::from_utf8_without_validation(".common.init_common."sv)));
 }
 
 }
@@ -6606,7 +6606,7 @@ default: {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("."sv)));
+(output,(ByteString::from_utf8_without_validation("."sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -6623,7 +6623,7 @@ if (is_optional){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("map([](auto& _value) { return _value."sv)));
+(output,(ByteString::from_utf8_without_validation("map([](auto& _value) { return _value."sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -6635,7 +6635,7 @@ if (is_optional){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("; })"sv)));
+(output,(ByteString::from_utf8_without_validation("; })"sv)));
 }
 else {
 [](ByteString& self, ByteString rhs) -> void {
@@ -6651,7 +6651,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(")"sv)));
+(output,(ByteString::from_utf8_without_validation(")"sv)));
 __jakt_var_633 = output; goto __jakt_label_533;
 
 }
@@ -6659,7 +6659,7 @@ __jakt_label_533:; __jakt_var_633.release_value(); }));
 };/*case end*/
 case 18 /* ComptimeIndex */: {
 {
-utility::panic((ByteString::must_from_utf8("Internal error: ComptimeIndex should have been replaced by now"sv)));
+utility::panic((ByteString::from_utf8_without_validation("Internal error: ComptimeIndex should have been replaced by now"sv)));
 }
 };/*case end*/
 case 28 /* Block */: {
@@ -6682,10 +6682,10 @@ return JaktInternal::ExplicitValue(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<ByteString>>{
 auto __jakt_enum_value = (val);
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("true"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("true"sv)));
 }
 else {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("false"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("false"sv)));
 }
 }());
     if (_jakt_value.is_return())
@@ -6698,7 +6698,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.UnaryOp;NonnullRefPtr<typena
 types::CheckedUnaryOperator const& op = __jakt_match_value.op;
 ids::TypeId const& type_id = __jakt_match_value.type_id;
 return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_634; {
-ByteString output = (ByteString::must_from_utf8("("sv));
+ByteString output = (ByteString::from_utf8_without_validation("("sv));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -6709,13 +6709,13 @@ ByteString output = (ByteString::must_from_utf8("("sv));
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* PreIncrement */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("++"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("++"sv)));
 };/*case end*/
 case 2 /* PreDecrement */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("--"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("--"sv)));
 };/*case end*/
 case 4 /* Negate */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("-"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("-"sv)));
 };/*case end*/
 case 5 /* Dereference */: {
 return JaktInternal::ExplicitValue(({
@@ -6723,10 +6723,10 @@ return JaktInternal::ExplicitValue(({
 auto&& __jakt_match_variant = *((((*this).program))->get_type(((expr)->type())));
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 26 /* RawPtr */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("*"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("*"sv)));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(""sv)));
 };/*case end*/
 }/*switch end*/
 }()
@@ -6741,10 +6741,10 @@ return JaktInternal::ExplicitValue(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<ByteString>>{
 auto __jakt_enum_value = (((((((*this).program))->get_type(((expr)->type()))))->is_boxed(((*this).program))));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue((((((((ByteString::must_from_utf8("const_cast<"sv))) + (TRY((((*this).codegen_type_possibly_as_namespace(type_id,true))))))) + ((ByteString::must_from_utf8(">("sv))))) + ((ByteString::must_from_utf8("&*"sv)))));
+return JaktInternal::ExplicitValue((((((((ByteString::from_utf8_without_validation("const_cast<"sv))) + (TRY((((*this).codegen_type_possibly_as_namespace(type_id,true))))))) + ((ByteString::from_utf8_without_validation(">("sv))))) + ((ByteString::from_utf8_without_validation("&*"sv)))));
 }
 else if (__jakt_enum_value == false) {
-return JaktInternal::ExplicitValue((((((((ByteString::must_from_utf8("const_cast<"sv))) + (TRY((((*this).codegen_type(type_id))))))) + ((ByteString::must_from_utf8(">("sv))))) + ((ByteString::must_from_utf8("&"sv)))));
+return JaktInternal::ExplicitValue((((((((ByteString::from_utf8_without_validation("const_cast<"sv))) + (TRY((((*this).codegen_type(type_id))))))) + ((ByteString::from_utf8_without_validation(">("sv))))) + ((ByteString::from_utf8_without_validation("&"sv)))));
 }
 VERIFY_NOT_REACHED();
 }());
@@ -6754,13 +6754,13 @@ VERIFY_NOT_REACHED();
 }));
 };/*case end*/
 case 9 /* LogicalNot */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("!"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("!"sv)));
 };/*case end*/
 case 10 /* BitwiseNot */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("~"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("~"sv)));
 };/*case end*/
 case 16 /* Sizeof */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("sizeof"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("sizeof"sv)));
 };/*case end*/
 case 12 /* Is */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Is;ids::TypeId const& type_id = __jakt_match_value.value;
@@ -6788,13 +6788,13 @@ return JaktInternal::ExplicitValue(TRY((((*this).codegen_type(type_id)))));
         return _jakt_value.release_return();
     _jakt_value.release_value();
 });
-__jakt_var_635 = (((((ByteString::must_from_utf8("is<"sv))) + (is_type))) + ((ByteString::must_from_utf8(">("sv)))); goto __jakt_label_535;
+__jakt_var_635 = (((((ByteString::from_utf8_without_validation("is<"sv))) + (is_type))) + ((ByteString::from_utf8_without_validation(">("sv)))); goto __jakt_label_535;
 
 }
 __jakt_label_535:; __jakt_var_635.release_value(); }));
 };/*case end*/
 case 15 /* IsNone */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("!"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("!"sv)));
 };/*case end*/
 case 11 /* TypeCast */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.TypeCast;types::CheckedTypeCast const& cast = __jakt_match_value.value;
@@ -6817,7 +6817,7 @@ return JaktInternal::ExplicitValue(((args)[static_cast<i64>(0LL)]));
 };/*case end*/
 default: {
 {
-utility::panic((ByteString::must_from_utf8("Fallible type cast must have Optional result."sv)));
+utility::panic((ByteString::from_utf8_without_validation("Fallible type cast must have Optional result."sv)));
 }
 };/*case end*/
 }/*switch end*/
@@ -6827,21 +6827,21 @@ utility::panic((ByteString::must_from_utf8("Fallible type cast must have Optiona
         return _jakt_value.release_return();
     _jakt_value.release_value();
 });
-ByteString cast_type = (ByteString::must_from_utf8("dynamic_cast"sv));
+ByteString cast_type = (ByteString::from_utf8_without_validation("dynamic_cast"sv));
 if (((((((*this).program))->get_type(type_id)))->__jakt_init_index() == 24 /* Struct */)){
 ids::StructId const struct_id = (((((*this).program))->get_type(type_id)))->as.Struct.value;
 if (((((((((*this).program))->get_struct(struct_id))).record_type)).__jakt_init_index() == 1 /* Class */)){
 (final_type_id = type_id);
-(cast_type = (ByteString::must_from_utf8("fallible_class_cast"sv)));
+(cast_type = (ByteString::from_utf8_without_validation("fallible_class_cast"sv)));
 }
 else if (((((*this).program))->is_integer(type_id))){
 (final_type_id = type_id);
-(cast_type = (ByteString::must_from_utf8("fallible_integer_cast"sv)));
+(cast_type = (ByteString::from_utf8_without_validation("fallible_integer_cast"sv)));
 }
 }
 else if (((((*this).program))->is_integer(type_id))){
 (final_type_id = type_id);
-(cast_type = (ByteString::must_from_utf8("fallible_integer_cast"sv)));
+(cast_type = (ByteString::from_utf8_without_validation("fallible_integer_cast"sv)));
 }
 __jakt_var_638 = cast_type; goto __jakt_label_538;
 
@@ -6850,29 +6850,29 @@ __jakt_label_538:; __jakt_var_638.release_value(); }));
 };/*case end*/
 case 1 /* Infallible */: {
 return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_639; {
-ByteString cast_type = (ByteString::must_from_utf8("verify_cast"sv));
+ByteString cast_type = (ByteString::from_utf8_without_validation("verify_cast"sv));
 if (((((expr)->type())).equals(types::unknown_type_id()))){
-(cast_type = (ByteString::must_from_utf8("assert_type"sv)));
+(cast_type = (ByteString::from_utf8_without_validation("assert_type"sv)));
 }
 else if (((type)->is_boxed(((*this).program)))){
-(cast_type = (ByteString::must_from_utf8("infallible_class_cast"sv)));
+(cast_type = (ByteString::from_utf8_without_validation("infallible_class_cast"sv)));
 }
 else if (((((*this).program))->is_integer(type_id))){
-(cast_type = (ByteString::must_from_utf8("infallible_integer_cast"sv)));
+(cast_type = (ByteString::from_utf8_without_validation("infallible_integer_cast"sv)));
 }
 else if (((type)->__jakt_init_index() == 25 /* Enum */)){
 ids::EnumId const enum_id = (type)->as.Enum.value;
 if (((((*this).program))->is_integer(((((((*this).program))->get_enum(enum_id))).underlying_type_id)))){
-(cast_type = (ByteString::must_from_utf8("infallible_enum_cast"sv)));
+(cast_type = (ByteString::from_utf8_without_validation("infallible_enum_cast"sv)));
 }
 else if (((type)->__jakt_init_index() == 26 /* RawPtr */)){
 ids::TypeId const inner = (type)->as.RawPtr.value;
-(cast_type = (ByteString::must_from_utf8("reinterpret_cast"sv)));
+(cast_type = (ByteString::from_utf8_without_validation("reinterpret_cast"sv)));
 }
 }
 else if (((type)->__jakt_init_index() == 26 /* RawPtr */)){
 ids::TypeId const inner = (type)->as.RawPtr.value;
-(cast_type = (ByteString::must_from_utf8("reinterpret_cast"sv)));
+(cast_type = (ByteString::from_utf8_without_validation("reinterpret_cast"sv)));
 }
 __jakt_var_639 = cast_type; goto __jakt_label_539;
 
@@ -6886,13 +6886,13 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
         return _jakt_value.release_return();
     _jakt_value.release_value();
 });
-__jakt_var_637 = ((((((cast_type) + ((ByteString::must_from_utf8("<"sv))))) + (TRY((((*this).codegen_type(final_type_id))))))) + ((ByteString::must_from_utf8(">("sv)))); goto __jakt_label_537;
+__jakt_var_637 = ((((((cast_type) + ((ByteString::from_utf8_without_validation("<"sv))))) + (TRY((((*this).codegen_type(final_type_id))))))) + ((ByteString::from_utf8_without_validation(">("sv)))); goto __jakt_label_537;
 
 }
 __jakt_label_537:; __jakt_var_637.release_value(); }));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(""sv)));
 };/*case end*/
 }/*switch end*/
 }()
@@ -6906,7 +6906,7 @@ return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("("sv)));
+(output,(ByteString::from_utf8_without_validation("("sv)));
 ByteString const object = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString, ErrorOr<ByteString>>{
 auto&& __jakt_match_variant = op;
@@ -6941,23 +6941,23 @@ return JaktInternal::ExplicitValue(TRY((((*this).codegen_expression(expr)))));
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 1 /* PostIncrement */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("++)"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("++)"sv)));
 };/*case end*/
 case 3 /* PostDecrement */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("--)"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("--)"sv)));
 };/*case end*/
 case 11 /* TypeCast */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("))"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("))"sv)));
 };/*case end*/
 case 12 /* Is */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("))"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("))"sv)));
 };/*case end*/
 case 13 /* IsEnumVariant */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.IsEnumVariant;types::CheckedEnumVariant const& enum_variant = __jakt_match_value.enum_variant;
 ids::TypeId const& enum_type_id = __jakt_match_value.type_id;
 return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_640; {
 ByteString const name = ((enum_variant).name());
-ByteString suffix = (ByteString::must_from_utf8(")"sv));
+ByteString suffix = (ByteString::from_utf8_without_validation(")"sv));
 types::CheckedEnum const enum_ = ((((*this).program))->get_enum(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ids::EnumId, ErrorOr<ByteString>>{
 auto&& __jakt_match_variant = *((((*this).program))->get_type(enum_type_id));
@@ -6994,13 +6994,13 @@ if ((is_boxed && [](ByteString const& self, ByteString rhs) -> bool {
 return (!(((self) == (rhs))));
 }
 }
-(object,(ByteString::must_from_utf8("*this"sv))))){
+(object,(ByteString::from_utf8_without_validation("*this"sv))))){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(suffix,(ByteString::must_from_utf8("->"sv)));
+(suffix,(ByteString::from_utf8_without_validation("->"sv)));
 }
 else {
 [](ByteString& self, ByteString rhs) -> void {
@@ -7008,7 +7008,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(suffix,(ByteString::must_from_utf8("."sv)));
+(suffix,(ByteString::from_utf8_without_validation("."sv)));
 }
 
 i64 variant_index = static_cast<i64>(0LL);
@@ -7069,16 +7069,16 @@ __jakt_var_640 = suffix; goto __jakt_label_540;
 __jakt_label_540:; __jakt_var_640.release_value(); }));
 };/*case end*/
 case 14 /* IsSome */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(").has_value()"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(").has_value()"sv)));
 };/*case end*/
 case 15 /* IsNone */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(").has_value()"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(").has_value()"sv)));
 };/*case end*/
 case 6 /* RawAddress */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("))"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("))"sv)));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(")"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(")"sv)));
 };/*case end*/
 }/*switch end*/
 }()
@@ -7092,7 +7092,7 @@ return JaktInternal::ExplicitValue((ByteString::must_from_utf8(")"sv)));
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(")"sv)));
+(output,(ByteString::from_utf8_without_validation(")"sv)));
 __jakt_var_634 = output; goto __jakt_label_534;
 
 }
@@ -7114,16 +7114,16 @@ ByteString const suffix = ({
 auto&& __jakt_match_variant = val;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 3 /* I64 */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("LL"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("LL"sv)));
 };/*case end*/
 case 7 /* U64 */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("ULL"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("ULL"sv)));
 };/*case end*/
 case 8 /* USize */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("ULL"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("ULL"sv)));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(""sv)));
 };/*case end*/
 }/*switch end*/
 }()
@@ -7137,7 +7137,7 @@ ByteString const type_name = ({
 auto&& __jakt_match_variant = val;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 8 /* USize */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("size_t"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("size_t"sv)));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(TRY((((*this).codegen_type(type_id)))));
@@ -7212,7 +7212,7 @@ case 23 /* NamespacedVar */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.NamespacedVar;JaktInternal::DynamicArray<types::CheckedNamespace> const& namespaces = __jakt_match_value.namespaces;
 NonnullRefPtr<types::CheckedVariable> const& var = __jakt_match_value.var;
 return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_642; {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 if (((((var)->name_for_codegen())).is_scopable())){
 if (((((var)->owner_scope)).has_value())){
 (output = TRY((((*this).codegen_namespace_qualifier((((var)->owner_scope).value()),false,JaktInternal::OptionalNone(),JaktInternal::OptionalNone())))));
@@ -7232,7 +7232,7 @@ types::CheckedNamespace ns = (_magic_value.value());
 (self = ((self) + (rhs)));
 }
 }
-(output,((((ns).name)) + ((ByteString::must_from_utf8("::"sv)))));
+(output,((((ns).name)) + ((ByteString::from_utf8_without_validation("::"sv)))));
 }
 
 }
@@ -7261,7 +7261,7 @@ return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_643; {
 ByteString const var_name = TRY((((*this).codegen_expression(expr))));
 ByteString const enum_type = TRY((((*this).codegen_type_possibly_as_namespace(((expr)->type()),true))));
 ByteString const variant_name = ((enum_variant).name());
-ByteString arg_name = (ByteString::must_from_utf8("value"sv));
+ByteString arg_name = (ByteString::from_utf8_without_validation("value"sv));
 if (((enum_variant).__jakt_init_index() == 3 /* StructLike */)){
 (arg_name = ((arg).name).value_or_lazy_evaluated([&] { return ((arg).binding); }));
 }
@@ -7270,10 +7270,10 @@ ByteString const cpp_deref_operator = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<ByteString>>{
 auto __jakt_enum_value = (((enum_).is_boxed));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("->"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("->"sv)));
 }
 else {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("."sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("."sv)));
 }
 }());
     if (_jakt_value.is_return())
@@ -7292,7 +7292,7 @@ types::CheckedField field = (_magic_value.value());
 {
 ByteString const field_name = ((((((((*this).program))->get_variable(((field).variable_id))))->name_for_codegen())).as_name_for_use());
 if (((field_name) == (arg_name))){
-(section = (ByteString::must_from_utf8("common.init_common"sv)));
+(section = (ByteString::from_utf8_without_validation("common.init_common"sv)));
 }
 }
 
@@ -7311,7 +7311,7 @@ utility::Span const& span = __jakt_match_value.span;
 ids::TypeId const& type_id = __jakt_match_value.type_id;
 ids::TypeId const& inner_type_id = __jakt_match_value.inner_type_id;
 return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_644; {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 if (((repeat).has_value())){
 NonnullRefPtr<typename types::CheckedExpression> const repeat_val = ((repeat).value());
 [](ByteString& self, ByteString rhs) -> void {
@@ -7319,7 +7319,7 @@ NonnullRefPtr<typename types::CheckedExpression> const repeat_val = ((repeat).va
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("DynamicArray<"sv)));
+(output,(ByteString::from_utf8_without_validation("DynamicArray<"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -7331,7 +7331,7 @@ NonnullRefPtr<typename types::CheckedExpression> const repeat_val = ((repeat).va
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(">::filled("sv)));
+(output,(ByteString::from_utf8_without_validation(">::filled("sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -7343,7 +7343,7 @@ NonnullRefPtr<typename types::CheckedExpression> const repeat_val = ((repeat).va
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(", "sv)));
+(output,(ByteString::from_utf8_without_validation(", "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -7355,7 +7355,7 @@ NonnullRefPtr<typename types::CheckedExpression> const repeat_val = ((repeat).va
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(")"sv)));
+(output,(ByteString::from_utf8_without_validation(")"sv)));
 }
 else {
 [](ByteString& self, ByteString rhs) -> void {
@@ -7363,7 +7363,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("DynamicArray<"sv)));
+(output,(ByteString::from_utf8_without_validation("DynamicArray<"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -7375,7 +7375,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(">::create_with({"sv)));
+(output,(ByteString::from_utf8_without_validation(">::create_with({"sv)));
 bool first = true;
 {
 JaktInternal::ArrayIterator<NonnullRefPtr<typename types::CheckedExpression>> _magic = ((vals).iterator());
@@ -7392,7 +7392,7 @@ if ((!(first))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(", "sv)));
+(output,(ByteString::from_utf8_without_validation(", "sv)));
 }
 else {
 (first = false);
@@ -7414,7 +7414,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("})"sv)));
+(output,(ByteString::from_utf8_without_validation("})"sv)));
 }
 
 __jakt_var_644 = output; goto __jakt_label_544;
@@ -7450,7 +7450,7 @@ if ((!(first))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(", "sv)));
+(output,(ByteString::from_utf8_without_validation(", "sv)));
 }
 else {
 (first = false);
@@ -7461,7 +7461,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("{"sv)));
+(output,(ByteString::from_utf8_without_validation("{"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -7473,7 +7473,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(", "sv)));
+(output,(ByteString::from_utf8_without_validation(", "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -7485,7 +7485,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("}"sv)));
+(output,(ByteString::from_utf8_without_validation("}"sv)));
 }
 
 }
@@ -7496,7 +7496,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("})"sv)));
+(output,(ByteString::from_utf8_without_validation("})"sv)));
 __jakt_var_645 = output; goto __jakt_label_545;
 
 }
@@ -7508,7 +7508,7 @@ utility::Span const& span = __jakt_match_value.span;
 ids::TypeId const& type_id = __jakt_match_value.type_id;
 ids::TypeId const& inner_type_id = __jakt_match_value.inner_type_id;
 return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_646; {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -7531,7 +7531,7 @@ if ((!(first))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(", "sv)));
+(output,(ByteString::from_utf8_without_validation(", "sv)));
 }
 else {
 (first = false);
@@ -7553,7 +7553,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("})"sv)));
+(output,(ByteString::from_utf8_without_validation("})"sv)));
 __jakt_var_646 = output; goto __jakt_label_546;
 
 }
@@ -7564,13 +7564,13 @@ auto&& __jakt_match_value = __jakt_match_variant.as.JaktTuple;JaktInternal::Dyna
 utility::Span const& span = __jakt_match_value.span;
 ids::TypeId const& type_id = __jakt_match_value.type_id;
 return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_647; {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("(Tuple{"sv)));
+(output,(ByteString::from_utf8_without_validation("(Tuple{"sv)));
 bool first = true;
 {
 JaktInternal::ArrayIterator<NonnullRefPtr<typename types::CheckedExpression>> _magic = ((vals).iterator());
@@ -7587,7 +7587,7 @@ if ((!(first))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(", "sv)));
+(output,(ByteString::from_utf8_without_validation(", "sv)));
 }
 else {
 (first = false);
@@ -7609,7 +7609,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("})"sv)));
+(output,(ByteString::from_utf8_without_validation("})"sv)));
 __jakt_var_647 = output; goto __jakt_label_547;
 
 }
@@ -7617,7 +7617,7 @@ __jakt_label_547:; __jakt_var_647.release_value(); }));
 };/*case end*/
 case 30 /* DependentFunction */: {
 {
-((((*this).compiler))->panic((ByteString::must_from_utf8("Dependent functions should have been resolved by now"sv))));
+((((*this).compiler))->panic((ByteString::from_utf8_without_validation("Dependent functions should have been resolved by now"sv))));
 }
 };/*case end*/
 case 29 /* Function */: {
@@ -7646,7 +7646,7 @@ case 0 /* ByValue */: {
 return JaktInternal::ExplicitValue(((capture).common.init_common.name));
 };/*case end*/
 case 4 /* AllByReference */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("&"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("&"sv)));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(__jakt_format((StringView::from_string_literal("&{}"sv)),((capture).common.init_common.name)));
@@ -7703,7 +7703,7 @@ codegen::ControlFlowState const last_control_flow = ((*this).control_flow_state)
 ScopeGuard __jakt_var_649([&] {
 (((*this).control_flow_state) = last_control_flow);
 });
-ByteString block_output = (ByteString::must_from_utf8(""sv));
+ByteString block_output = (ByteString::from_utf8_without_validation(""sv));
 if (((pseudo_function_id).has_value())){
 NonnullRefPtr<types::CheckedFunction> const function = ((((*this).program))->get_function((pseudo_function_id.value())));
 JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> const previous_function = ((*this).current_function);
@@ -7717,7 +7717,7 @@ else {
 (block_output = TRY((((*this).codegen_lambda_block(can_throw,block,return_type_id)))));
 }
 
-__jakt_var_648 = __jakt_format((StringView::from_string_literal("[{}]({}) -> {} {}"sv)),utility::join(generated_captures,(ByteString::must_from_utf8(", "sv))),utility::join(generated_params,(ByteString::must_from_utf8(", "sv))),return_type,block_output); goto __jakt_label_548;
+__jakt_var_648 = __jakt_format((StringView::from_string_literal("[{}]({}) -> {} {}"sv)),utility::join(generated_captures,(ByteString::from_utf8_without_validation(", "sv))),utility::join(generated_params,(ByteString::from_utf8_without_validation(", "sv))),return_type,block_output); goto __jakt_label_548;
 
 }
 __jakt_label_548:; __jakt_var_648.release_value(); }));
@@ -7728,14 +7728,14 @@ ByteString const& error_name = __jakt_match_value.error_name;
 types::CheckedBlock const& catch_block = __jakt_match_value.catch_block;
 utility::Span const& span = __jakt_match_value.span;
 return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_651; {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 ByteString const try_var = ((*this).fresh_var());
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("auto "sv)));
+(output,(ByteString::from_utf8_without_validation("auto "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -7747,7 +7747,7 @@ ByteString const try_var = ((*this).fresh_var());
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" = [&]() -> ErrorOr<void> {"sv)));
+(output,(ByteString::from_utf8_without_validation(" = [&]() -> ErrorOr<void> {"sv)));
 codegen::ControlFlowState const last_control_flow = ((*this).control_flow_state);
 (((((*this).control_flow_state)).passes_through_match) = false);
 (((((*this).control_flow_state)).passes_through_try) = true);
@@ -7762,25 +7762,25 @@ codegen::ControlFlowState const last_control_flow = ((*this).control_flow_state)
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(";"sv)));
+(output,(ByteString::from_utf8_without_validation(";"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("return {};"sv)));
+(output,(ByteString::from_utf8_without_validation("return {};"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("}();\n"sv)));
+(output,(ByteString::from_utf8_without_validation("}();\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("if ("sv)));
+(output,(ByteString::from_utf8_without_validation("if ("sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -7792,14 +7792,14 @@ codegen::ControlFlowState const last_control_flow = ((*this).control_flow_state)
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(".is_error()) {"sv)));
+(output,(ByteString::from_utf8_without_validation(".is_error()) {"sv)));
 if ((!(((error_name).is_empty())))){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("auto "sv)));
+(output,(ByteString::from_utf8_without_validation("auto "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -7811,7 +7811,7 @@ if ((!(((error_name).is_empty())))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" = "sv)));
+(output,(ByteString::from_utf8_without_validation(" = "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -7823,7 +7823,7 @@ if ((!(((error_name).is_empty())))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(".release_error();"sv)));
+(output,(ByteString::from_utf8_without_validation(".release_error();"sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
@@ -7837,7 +7837,7 @@ if ((!(((error_name).is_empty())))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("}"sv)));
+(output,(ByteString::from_utf8_without_validation("}"sv)));
 __jakt_var_651 = output; goto __jakt_label_549;
 
 }
@@ -7851,7 +7851,7 @@ utility::Span const& span = __jakt_match_value.span;
 ids::TypeId const& type_id = __jakt_match_value.type_id;
 ids::TypeId const& inner_type_id = __jakt_match_value.inner_type_id;
 return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_652; {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 ByteString const fresh_var = ((*this).fresh_var());
 bool const is_void = ((inner_type_id).equals(types::void_type_id()));
 ByteString const try_var = ((*this).fresh_var());
@@ -7870,7 +7870,7 @@ if ((!(is_void))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("({ Optional<"sv)));
+(output,(ByteString::from_utf8_without_validation("({ Optional<"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -7882,7 +7882,7 @@ if ((!(is_void))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("> "sv)));
+(output,(ByteString::from_utf8_without_validation("> "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -7894,14 +7894,14 @@ if ((!(is_void))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(";\n"sv)));
+(output,(ByteString::from_utf8_without_validation(";\n"sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("auto "sv)));
+(output,(ByteString::from_utf8_without_validation("auto "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -7913,7 +7913,7 @@ if ((!(is_void))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" = [&]() -> ErrorOr<"sv)));
+(output,(ByteString::from_utf8_without_validation(" = [&]() -> ErrorOr<"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -7925,7 +7925,7 @@ if ((!(is_void))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("> { return "sv)));
+(output,(ByteString::from_utf8_without_validation("> { return "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -7938,21 +7938,21 @@ if (is_void){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(", ErrorOr<void>{}"sv)));
+(output,(ByteString::from_utf8_without_validation(", ErrorOr<void>{}"sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("; }();\n"sv)));
+(output,(ByteString::from_utf8_without_validation("; }();\n"sv)));
 if (((catch_block).has_value())){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("if ("sv)));
+(output,(ByteString::from_utf8_without_validation("if ("sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -7964,14 +7964,14 @@ if (((catch_block).has_value())){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(".is_error()) {"sv)));
+(output,(ByteString::from_utf8_without_validation(".is_error()) {"sv)));
 if (((catch_name).has_value())){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("auto "sv)));
+(output,(ByteString::from_utf8_without_validation("auto "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -7983,7 +7983,7 @@ if (((catch_name).has_value())){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" = "sv)));
+(output,(ByteString::from_utf8_without_validation(" = "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -7995,7 +7995,7 @@ if (((catch_name).has_value())){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(".release_error();\n"sv)));
+(output,(ByteString::from_utf8_without_validation(".release_error();\n"sv)));
 }
 if ((((((catch_block.value())).yielded_type)).has_value())){
 [](ByteString& self, ByteString rhs) -> void {
@@ -8009,7 +8009,7 @@ if ((((((catch_block.value())).yielded_type)).has_value())){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" = ("sv)));
+(output,(ByteString::from_utf8_without_validation(" = ("sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -8021,7 +8021,7 @@ if ((((((catch_block.value())).yielded_type)).has_value())){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(");\n"sv)));
+(output,(ByteString::from_utf8_without_validation(");\n"sv)));
 }
 else {
 [](ByteString& self, ByteString rhs) -> void {
@@ -8038,7 +8038,7 @@ if ((!(is_void))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("} else {"sv)));
+(output,(ByteString::from_utf8_without_validation("} else {"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -8050,7 +8050,7 @@ if ((!(is_void))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" = "sv)));
+(output,(ByteString::from_utf8_without_validation(" = "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -8062,14 +8062,14 @@ if ((!(is_void))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(".release_value();\n"sv)));
+(output,(ByteString::from_utf8_without_validation(".release_value();\n"sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("}\n"sv)));
+(output,(ByteString::from_utf8_without_validation("}\n"sv)));
 }
 else if ((!(is_void))){
 [](ByteString& self, ByteString rhs) -> void {
@@ -8077,7 +8077,7 @@ else if ((!(is_void))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("if (!"sv)));
+(output,(ByteString::from_utf8_without_validation("if (!"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -8089,7 +8089,7 @@ else if ((!(is_void))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(".is_error()) "sv)));
+(output,(ByteString::from_utf8_without_validation(".is_error()) "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -8101,7 +8101,7 @@ else if ((!(is_void))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" = "sv)));
+(output,(ByteString::from_utf8_without_validation(" = "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -8113,7 +8113,7 @@ else if ((!(is_void))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(".release_value();\n"sv)));
+(output,(ByteString::from_utf8_without_validation(".release_value();\n"sv)));
 }
 if ((!(is_void))){
 [](ByteString& self, ByteString rhs) -> void {
@@ -8128,14 +8128,14 @@ if (((catch_block).has_value())){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(".release_value()"sv)));
+(output,(ByteString::from_utf8_without_validation(".release_value()"sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("; })"sv)));
+(output,(ByteString::from_utf8_without_validation("; })"sv)));
 }
 __jakt_var_652 = output; goto __jakt_label_550;
 
@@ -8162,7 +8162,7 @@ ErrorOr<ByteString> codegen::CodeGenerator::codegen_match(NonnullRefPtr<typename
 {
 codegen::ControlFlowState const last_control_flow = ((*this).control_flow_state);
 (((*this).control_flow_state) = ((((*this).control_flow_state)).enter_match()));
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 NonnullRefPtr<typename types::Type> const expr_type = ((((*this).program))->get_type(((expr)->type())));
 if (((expr_type)->__jakt_init_index() == 25 /* Enum */)){
 ids::EnumId const enum_id = (expr_type)->as.Enum.value;
@@ -8189,7 +8189,7 @@ return output;
 
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_generic_match(NonnullRefPtr<typename types::CheckedExpression> const expr,JaktInternal::DynamicArray<types::CheckedMatchCase> const cases,ids::TypeId const return_type_id,bool const all_variants_constant) {
 {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 bool is_generic_enum = false;
 {
 JaktInternal::ArrayIterator<types::CheckedMatchCase> _magic = ((cases).iterator());
@@ -8216,14 +8216,14 @@ ByteString const cpp_match_result_type = TRY((((*this).codegen_type(return_type_
 (self = ((self) + (rhs)));
 }
 }
-(output,((__jakt_format((StringView::from_string_literal("([&]() -> JaktInternal::ExplicitValueOrControlFlow<{},{}>"sv)),cpp_match_result_type,TRY((((*this).codegen_function_return_type((((*this).current_function).value()))))))) + ((ByteString::must_from_utf8("{\n"sv)))));
+(output,((__jakt_format((StringView::from_string_literal("([&]() -> JaktInternal::ExplicitValueOrControlFlow<{},{}>"sv)),cpp_match_result_type,TRY((((*this).codegen_function_return_type((((*this).current_function).value()))))))) + ((ByteString::from_utf8_without_validation("{\n"sv)))));
 if (is_generic_enum){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("auto&& __jakt_enum_value = JaktInternal::deref_if_ref_pointer("sv)));
+(output,(ByteString::from_utf8_without_validation("auto&& __jakt_enum_value = JaktInternal::deref_if_ref_pointer("sv)));
 }
 else {
 [](ByteString& self, ByteString rhs) -> void {
@@ -8231,7 +8231,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("auto __jakt_enum_value = ("sv)));
+(output,(ByteString::from_utf8_without_validation("auto __jakt_enum_value = ("sv)));
 }
 
 [](ByteString& self, ByteString rhs) -> void {
@@ -8245,7 +8245,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(");\n"sv)));
+(output,(ByteString::from_utf8_without_validation(");\n"sv)));
 bool has_default = false;
 bool first = true;
 {
@@ -8322,7 +8322,7 @@ break;
 }
 }
 (output,__jakt_format((StringView::from_string_literal("if (__jakt_enum_value.__jakt_init_index() == {} /* {} */) {{\n"sv)),variant_index,name));
-ByteString variant_type_name = (ByteString::must_from_utf8(""sv));
+ByteString variant_type_name = (ByteString::from_utf8_without_validation(""sv));
 ByteString const qualifier = TRY((((*this).codegen_type_possibly_as_namespace(subject_type_id,true))));
 if ((!(((qualifier).is_empty())))){
 [](ByteString& self, ByteString rhs) -> void {
@@ -8330,7 +8330,7 @@ if ((!(((qualifier).is_empty())))){
 (self = ((self) + (rhs)));
 }
 }
-(variant_type_name,(ByteString::must_from_utf8("typename JaktInternal::RemoveRefPtr<"sv)));
+(variant_type_name,(ByteString::from_utf8_without_validation("typename JaktInternal::RemoveRefPtr<"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -8342,7 +8342,7 @@ if ((!(((qualifier).is_empty())))){
 (self = ((self) + (rhs)));
 }
 }
-(variant_type_name,(ByteString::must_from_utf8(">::"sv)));
+(variant_type_name,(ByteString::from_utf8_without_validation(">::"sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
@@ -8356,7 +8356,7 @@ if ((!(((args).is_empty())))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("auto& __jakt_match_value = __jakt_enum_value.as."sv)));
+(output,(ByteString::from_utf8_without_validation("auto& __jakt_match_value = __jakt_enum_value.as."sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -8368,7 +8368,7 @@ if ((!(((args).is_empty())))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(";\n"sv)));
+(output,(ByteString::from_utf8_without_validation(";\n"sv)));
 {
 JaktInternal::ArrayIterator<parser::EnumVariantPatternArgument> _magic = ((args).iterator());
 for (;;){
@@ -8383,7 +8383,7 @@ parser::EnumVariantPatternArgument arg = (_magic_value.value());
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("auto& "sv)));
+(output,(ByteString::from_utf8_without_validation("auto& "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -8395,19 +8395,19 @@ parser::EnumVariantPatternArgument arg = (_magic_value.value());
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" = __jakt_match_value."sv)));
+(output,(ByteString::from_utf8_without_validation(" = __jakt_match_value."sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,TRY((((arg).name).try_value_or_lazy_evaluated([&]() -> ErrorOr<ByteString> { return (ByteString::must_from_utf8("value"sv)); }))));
+(output,TRY((((arg).name).try_value_or_lazy_evaluated([&]() -> ErrorOr<ByteString> { return (ByteString::from_utf8_without_validation("value"sv)); }))));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(";\n"sv)));
+(output,(ByteString::from_utf8_without_validation(";\n"sv)));
 }
 
 }
@@ -8445,7 +8445,7 @@ NonnullRefPtr<typename types::CheckedStatement> default_ = (_magic_value.value()
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("}\n"sv)));
+(output,(ByteString::from_utf8_without_validation("}\n"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -8455,7 +8455,7 @@ types::CheckedMatchBody const& body = __jakt_match_value.body;
 utility::Span const& marker_span = __jakt_match_value.marker_span;
 {
 if (has_arguments){
-utility::panic((ByteString::must_from_utf8("Bindings should not be present in a generic else"sv)));
+utility::panic((ByteString::from_utf8_without_validation("Bindings should not be present in a generic else"sv)));
 }
 (has_default = true);
 if (first){
@@ -8464,7 +8464,7 @@ if (first){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("{"sv)));
+(output,(ByteString::from_utf8_without_validation("{"sv)));
 }
 else {
 [](ByteString& self, ByteString rhs) -> void {
@@ -8472,7 +8472,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("else {\n"sv)));
+(output,(ByteString::from_utf8_without_validation("else {\n"sv)));
 }
 
 {
@@ -8506,7 +8506,7 @@ NonnullRefPtr<typename types::CheckedStatement> default_ = (_magic_value.value()
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("}\n"sv)));
+(output,(ByteString::from_utf8_without_validation("}\n"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -8521,7 +8521,7 @@ if ((!(first))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("else "sv)));
+(output,(ByteString::from_utf8_without_validation("else "sv)));
 }
 if (((expression)->__jakt_init_index() == 9 /* Range */)){
 JaktInternal::Optional<NonnullRefPtr<typename types::CheckedExpression>> const from = (expression)->as.Range.from;
@@ -8531,14 +8531,14 @@ JaktInternal::Optional<NonnullRefPtr<typename types::CheckedExpression>> const t
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("if (__jakt_enum_value"sv)));
+(output,(ByteString::from_utf8_without_validation("if (__jakt_enum_value"sv)));
 if (((from).has_value())){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" >= "sv)));
+(output,(ByteString::from_utf8_without_validation(" >= "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -8553,14 +8553,14 @@ if (((from).has_value())){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("&& __jakt_enum_value "sv)));
+(output,(ByteString::from_utf8_without_validation("&& __jakt_enum_value "sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("< "sv)));
+(output,(ByteString::from_utf8_without_validation("< "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -8575,7 +8575,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("if (__jakt_enum_value == "sv)));
+(output,(ByteString::from_utf8_without_validation("if (__jakt_enum_value == "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -8589,7 +8589,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(") {\n"sv)));
+(output,(ByteString::from_utf8_without_validation(") {\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -8601,7 +8601,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("}\n"sv)));
+(output,(ByteString::from_utf8_without_validation("}\n"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -8623,7 +8623,7 @@ ByteString const type_name = TRY((((*this).codegen_type_possibly_as_namespace(ty
 (self = ((self) + (rhs)));
 }
 }
-(output,__jakt_format((StringView::from_string_literal("auto {} = NonnullRefPtr {{ *static_cast<RawPtr<{}>>(__jakt_enum_value.ptr()) }};\n"sv)),TRY((((rebind_name).map([](auto& _value) { return _value.name; })).try_value_or_lazy_evaluated([&]() -> ErrorOr<ByteString> { return (ByteString::must_from_utf8("__jakt_match_value"sv)); }))),type_name));
+(output,__jakt_format((StringView::from_string_literal("auto {} = NonnullRefPtr {{ *static_cast<RawPtr<{}>>(__jakt_enum_value.ptr()) }};\n"sv)),TRY((((rebind_name).map([](auto& _value) { return _value.name; })).try_value_or_lazy_evaluated([&]() -> ErrorOr<ByteString> { return (ByteString::from_utf8_without_validation("__jakt_match_value"sv)); }))),type_name));
 {
 JaktInternal::ArrayIterator<NonnullRefPtr<typename types::CheckedStatement>> _magic = ((defaults).iterator());
 for (;;){
@@ -8655,7 +8655,7 @@ NonnullRefPtr<typename types::CheckedStatement> default_ = (_magic_value.value()
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("}\n"sv)));
+(output,(ByteString::from_utf8_without_validation("}\n"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -8682,7 +8682,7 @@ if ((((return_type_id).equals(types::void_type_id())) || ((return_type_id).equal
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("return JaktInternal::ExplicitValue<void>();\n"sv)));
+(output,(ByteString::from_utf8_without_validation("return JaktInternal::ExplicitValue<void>();\n"sv)));
 }
 else if ((!(has_default))){
 [](ByteString& self, ByteString rhs) -> void {
@@ -8690,28 +8690,28 @@ else if ((!(has_default))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("VERIFY_NOT_REACHED();\n"sv)));
+(output,(ByteString::from_utf8_without_validation("VERIFY_NOT_REACHED();\n"sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("}())"sv)));
+(output,(ByteString::from_utf8_without_validation("}())"sv)));
 return TRY((((((*this).control_flow_state)).apply_control_flow_macro(output,(((((*this).current_function).value()))->return_type_id),(((((*this).current_function).value()))->can_throw),cpp_match_result_type))));
 }
 }
 
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_enum_match(types::CheckedEnum const enum_,NonnullRefPtr<typename types::CheckedExpression> const expr,JaktInternal::DynamicArray<types::CheckedMatchCase> const match_cases,ids::TypeId const type_id,bool const all_variants_constant) {
 {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 ByteString const subject = TRY((((*this).codegen_expression(expr))));
 bool const needs_deref = (((enum_).is_boxed) && [](ByteString const& self, ByteString rhs) -> bool {
 {
 return (!(((self) == (rhs))));
 }
 }
-(subject,(ByteString::must_from_utf8("*this"sv))));
+(subject,(ByteString::from_utf8_without_validation("*this"sv))));
 ByteString const cpp_match_result_type = TRY((((*this).codegen_type(type_id))));
 if (((((enum_).underlying_type_id)).equals(types::void_type_id()))){
 [](ByteString& self, ByteString rhs) -> void {
@@ -8719,7 +8719,7 @@ if (((((enum_).underlying_type_id)).equals(types::void_type_id()))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("([&]() -> JaktInternal::ExplicitValueOrControlFlow<"sv)));
+(output,(ByteString::from_utf8_without_validation("([&]() -> JaktInternal::ExplicitValueOrControlFlow<"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -8731,7 +8731,7 @@ if (((((enum_).underlying_type_id)).equals(types::void_type_id()))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(", "sv)));
+(output,(ByteString::from_utf8_without_validation(", "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -8743,33 +8743,33 @@ if (((((enum_).underlying_type_id)).equals(types::void_type_id()))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(">{\n"sv)));
+(output,(ByteString::from_utf8_without_validation(">{\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("auto&& __jakt_match_variant = "sv)));
+(output,(ByteString::from_utf8_without_validation("auto&& __jakt_match_variant = "sv)));
 if (needs_deref){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("*"sv)));
+(output,(ByteString::from_utf8_without_validation("*"sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,((TRY((((*this).codegen_expression(expr))))) + ((ByteString::must_from_utf8(";\n"sv)))));
+(output,((TRY((((*this).codegen_expression(expr))))) + ((ByteString::from_utf8_without_validation(";\n"sv)))));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("switch(__jakt_match_variant.__jakt_init_index()) {\n"sv)));
+(output,(ByteString::from_utf8_without_validation("switch(__jakt_match_variant.__jakt_init_index()) {\n"sv)));
 bool has_default = false;
 {
 JaktInternal::ArrayIterator<types::CheckedMatchCase> _magic = ((match_cases).iterator());
@@ -8803,7 +8803,7 @@ return JaktInternal::ExplicitValue(id);
 };/*case end*/
 default: {
 {
-utility::panic((ByteString::must_from_utf8("Expected enum type"sv)));
+utility::panic((ByteString::from_utf8_without_validation("Expected enum type"sv)));
 }
 };/*case end*/
 }/*switch end*/
@@ -8824,7 +8824,7 @@ types::CheckedEnumVariant const variant = ((((match_case_enum).variants))[index]
 (self = ((self) + (rhs)));
 }
 }
-(output,((__jakt_format((StringView::from_string_literal("case {} /* {} */: "sv)),index,((variant).name()))) + ((ByteString::must_from_utf8("{\n"sv)))));
+(output,((__jakt_format((StringView::from_string_literal("case {} /* {} */: "sv)),index,((variant).name()))) + ((ByteString::from_utf8_without_validation("{\n"sv)))));
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<ByteString>>{
 auto&& __jakt_match_variant = variant;
@@ -8860,14 +8860,14 @@ if ((!(((var)->is_mutable)))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" const"sv)));
+(output,(ByteString::from_utf8_without_validation(" const"sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("& "sv)));
+(output,(ByteString::from_utf8_without_validation("& "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -8879,7 +8879,7 @@ if ((!(((var)->is_mutable)))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" = __jakt_match_value.value;\n"sv)));
+(output,(ByteString::from_utf8_without_validation(" = __jakt_match_value.value;\n"sv)));
 }
 }
 return JaktInternal::ExplicitValue<void>();
@@ -8917,14 +8917,14 @@ if ((!(((var)->is_mutable)))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" const"sv)));
+(output,(ByteString::from_utf8_without_validation(" const"sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("& "sv)));
+(output,(ByteString::from_utf8_without_validation("& "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -8936,7 +8936,7 @@ if ((!(((var)->is_mutable)))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" = __jakt_match_value."sv)));
+(output,(ByteString::from_utf8_without_validation(" = __jakt_match_value."sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -8948,7 +8948,7 @@ if ((!(((var)->is_mutable)))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(";\n"sv)));
+(output,(ByteString::from_utf8_without_validation(";\n"sv)));
 }
 
 }
@@ -9006,7 +9006,7 @@ NonnullRefPtr<typename types::CheckedStatement> default_ = (_magic_value.value()
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("};/*case end*/\n"sv)));
+(output,(ByteString::from_utf8_without_validation("};/*case end*/\n"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -9019,7 +9019,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.CatchAll;types::CheckedMatch
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("default: {\n"sv)));
+(output,(ByteString::from_utf8_without_validation("default: {\n"sv)));
 {
 JaktInternal::ArrayIterator<NonnullRefPtr<typename types::CheckedStatement>> _magic = ((((match_case).common.init_common.defaults)).iterator());
 for (;;){
@@ -9051,13 +9051,13 @@ NonnullRefPtr<typename types::CheckedStatement> default_ = (_magic_value.value()
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("};/*case end*/\n"sv)));
+(output,(ByteString::from_utf8_without_validation("};/*case end*/\n"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-utility::panic((ByteString::must_from_utf8("Matching enum subject with non-enum value"sv)));
+utility::panic((ByteString::from_utf8_without_validation("Matching enum subject with non-enum value"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -9079,27 +9079,27 @@ return JaktInternal::ExplicitValue<void>();
 
 if ((!(has_default))){
 if (((((((enum_).variants)).size())) != (((match_cases).size())))){
-utility::panic((ByteString::must_from_utf8("Inexhaustive match statement"sv)));
+utility::panic((ByteString::from_utf8_without_validation("Inexhaustive match statement"sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("default: VERIFY_NOT_REACHED();"sv)));
+(output,(ByteString::from_utf8_without_validation("default: VERIFY_NOT_REACHED();"sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("}/*switch end*/\n"sv)));
+(output,(ByteString::from_utf8_without_validation("}/*switch end*/\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("}()\n)"sv)));
+(output,(ByteString::from_utf8_without_validation("}()\n)"sv)));
 }
 else {
 [](ByteString& self, ByteString rhs) -> void {
@@ -9107,7 +9107,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("([&]() -> JaktInternal::ExplicitValueOrControlFlow<"sv)));
+(output,(ByteString::from_utf8_without_validation("([&]() -> JaktInternal::ExplicitValueOrControlFlow<"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -9119,7 +9119,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(", "sv)));
+(output,(ByteString::from_utf8_without_validation(", "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -9131,13 +9131,13 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(">{\n"sv)));
+(output,(ByteString::from_utf8_without_validation(">{\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(((((ByteString::must_from_utf8("switch ("sv))) + (TRY((((*this).codegen_expression(expr))))))) + ((ByteString::must_from_utf8(") {\n"sv)))));
+(output,(((((ByteString::from_utf8_without_validation("switch ("sv))) + (TRY((((*this).codegen_expression(expr))))))) + ((ByteString::from_utf8_without_validation(") {\n"sv)))));
 {
 JaktInternal::ArrayIterator<types::CheckedMatchCase> _magic = ((match_cases).iterator());
 for (;;){
@@ -9160,7 +9160,7 @@ types::CheckedMatchBody const& body = __jakt_match_value.body;
 (self = ((self) + (rhs)));
 }
 }
-(output,(((((((((ByteString::must_from_utf8("case "sv))) + (((enum_).name)))) + ((ByteString::must_from_utf8("::"sv))))) + (name))) + ((ByteString::must_from_utf8(": {\n"sv)))));
+(output,(((((((((ByteString::from_utf8_without_validation("case "sv))) + (((enum_).name)))) + ((ByteString::from_utf8_without_validation("::"sv))))) + (name))) + ((ByteString::from_utf8_without_validation(": {\n"sv)))));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -9172,7 +9172,7 @@ types::CheckedMatchBody const& body = __jakt_match_value.body;
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("}\n"sv)));
+(output,(ByteString::from_utf8_without_validation("}\n"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -9184,7 +9184,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.CatchAll;types::CheckedMatch
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("default: {\n"sv)));
+(output,(ByteString::from_utf8_without_validation("default: {\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -9196,7 +9196,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.CatchAll;types::CheckedMatch
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("}\n"sv)));
+(output,(ByteString::from_utf8_without_validation("}\n"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -9227,13 +9227,13 @@ return JaktInternal::ExplicitValue<void>();
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("}/*switch end*/\n"sv)));
+(output,(ByteString::from_utf8_without_validation("}/*switch end*/\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("}()\n)"sv)));
+(output,(ByteString::from_utf8_without_validation("}()\n)"sv)));
 }
 
 return TRY((((((*this).control_flow_state)).apply_control_flow_macro(output,(((((*this).current_function).value()))->return_type_id),(((((*this).current_function).value()))->can_throw),cpp_match_result_type))));
@@ -9242,7 +9242,7 @@ return TRY((((((*this).control_flow_state)).apply_control_flow_macro(output,((((
 
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_match_body(types::CheckedMatchBody const body,ids::TypeId const return_type_id) {
 {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<ByteString>>{
 auto&& __jakt_match_variant = body;
@@ -9262,7 +9262,7 @@ if ((((return_type_id).equals(types::void_type_id())) || ((return_type_id).equal
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("return JaktInternal::ExplicitValue<void>();\n"sv)));
+(output,(ByteString::from_utf8_without_validation("return JaktInternal::ExplicitValue<void>();\n"sv)));
 }
 }
 return JaktInternal::ExplicitValue<void>();
@@ -9276,7 +9276,7 @@ if (((((((expr)->type())).equals(types::void_type_id())) || ((((expr)->type())).
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("return ("sv)));
+(output,(ByteString::from_utf8_without_validation("return ("sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -9288,7 +9288,7 @@ if (((((((expr)->type())).equals(types::void_type_id())) || ((((expr)->type())).
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("), JaktInternal::ExplicitValue<void>();\n"sv)));
+(output,(ByteString::from_utf8_without_validation("), JaktInternal::ExplicitValue<void>();\n"sv)));
 }
 else {
 [](ByteString& self, ByteString rhs) -> void {
@@ -9296,7 +9296,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("return JaktInternal::ExplicitValue("sv)));
+(output,(ByteString::from_utf8_without_validation("return JaktInternal::ExplicitValue("sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -9308,7 +9308,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(");\n"sv)));
+(output,(ByteString::from_utf8_without_validation(");\n"sv)));
 }
 
 }
@@ -9327,8 +9327,8 @@ return output;
 
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_function_return_type(NonnullRefPtr<types::CheckedFunction> const function) {
 {
-if ((((function)->is_static()) && ((((((function)->name_for_codegen())).as_name_for_use())) == ((ByteString::must_from_utf8("main"sv)))))){
-return (ByteString::must_from_utf8("ErrorOr<int>"sv));
+if ((((function)->is_static()) && ((((((function)->name_for_codegen())).as_name_for_use())) == ((ByteString::from_utf8_without_validation("main"sv)))))){
+return (ByteString::from_utf8_without_validation("ErrorOr<int>"sv));
 }
 ByteString const type_name = TRY((((*this).codegen_type(((function)->return_type_id)))));
 if (((function)->can_throw)){
@@ -9348,7 +9348,7 @@ if (((((op).op)).__jakt_init_index() == 20 /* NoneCoalescing */)){
 ids::TypeId const rhs_type_id = ((rhs)->type());
 NonnullRefPtr<typename types::Type> const rhs_type = ((((*this).program))->get_type(rhs_type_id));
 bool const rhs_can_throw = ((rhs)->can_throw());
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 if (rhs_can_throw){
 [](ByteString& self, ByteString rhs) -> void {
 {
@@ -9361,7 +9361,7 @@ if (rhs_can_throw){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("(("sv)));
+(output,(ByteString::from_utf8_without_validation("(("sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
@@ -9371,14 +9371,14 @@ if (rhs_can_throw){
 (output,TRY((((*this).codegen_expression(lhs)))));
 if (((rhs_type)->__jakt_init_index() == 20 /* GenericInstance */)){
 ids::StructId const id = (rhs_type)->as.GenericInstance.id;
-if (((TRY((((((((((*this).program))->get_struct(id))).name_for_codegen())).as_name_for_definition())))) == ((ByteString::must_from_utf8("Optional"sv))))){
+if (((TRY((((((((((*this).program))->get_struct(id))).name_for_codegen())).as_name_for_definition())))) == ((ByteString::from_utf8_without_validation("Optional"sv))))){
 if (rhs_can_throw){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(".try_value_or_lazy_evaluated_optional"sv)));
+(output,(ByteString::from_utf8_without_validation(".try_value_or_lazy_evaluated_optional"sv)));
 }
 else {
 [](ByteString& self, ByteString rhs) -> void {
@@ -9386,28 +9386,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(".value_or_lazy_evaluated_optional"sv)));
-}
-
-}
-else {
-if (rhs_can_throw){
-[](ByteString& self, ByteString rhs) -> void {
-{
-(self = ((self) + (rhs)));
-}
-}
-(output,(ByteString::must_from_utf8(".try_value_or_lazy_evaluated"sv)));
-}
-else {
-[](ByteString& self, ByteString rhs) -> void {
-{
-(self = ((self) + (rhs)));
-}
-}
-(output,(ByteString::must_from_utf8(".value_or_lazy_evaluated"sv)));
-}
-
+(output,(ByteString::from_utf8_without_validation(".value_or_lazy_evaluated_optional"sv)));
 }
 
 }
@@ -9418,7 +9397,7 @@ if (rhs_can_throw){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(".try_value_or_lazy_evaluated"sv)));
+(output,(ByteString::from_utf8_without_validation(".try_value_or_lazy_evaluated"sv)));
 }
 else {
 [](ByteString& self, ByteString rhs) -> void {
@@ -9426,7 +9405,28 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(".value_or_lazy_evaluated"sv)));
+(output,(ByteString::from_utf8_without_validation(".value_or_lazy_evaluated"sv)));
+}
+
+}
+
+}
+else {
+if (rhs_can_throw){
+[](ByteString& self, ByteString rhs) -> void {
+{
+(self = ((self) + (rhs)));
+}
+}
+(output,(ByteString::from_utf8_without_validation(".try_value_or_lazy_evaluated"sv)));
+}
+else {
+[](ByteString& self, ByteString rhs) -> void {
+{
+(self = ((self) + (rhs)));
+}
+}
+(output,(ByteString::from_utf8_without_validation(".value_or_lazy_evaluated"sv)));
 }
 
 }
@@ -9437,7 +9437,7 @@ if (rhs_can_throw){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("([&]() -> ErrorOr<"sv)));
+(output,(ByteString::from_utf8_without_validation("([&]() -> ErrorOr<"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -9449,7 +9449,7 @@ if (rhs_can_throw){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("> { return "sv)));
+(output,(ByteString::from_utf8_without_validation("> { return "sv)));
 }
 else {
 [](ByteString& self, ByteString rhs) -> void {
@@ -9457,7 +9457,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("([&] { return "sv)));
+(output,(ByteString::from_utf8_without_validation("([&] { return "sv)));
 }
 
 [](ByteString& self, ByteString rhs) -> void {
@@ -9471,14 +9471,14 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("; })"sv)));
+(output,(ByteString::from_utf8_without_validation("; })"sv)));
 if (rhs_can_throw){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("))"sv)));
+(output,(ByteString::from_utf8_without_validation("))"sv)));
 }
 return output;
 }
@@ -9487,7 +9487,7 @@ ByteString const var = ((*this).fresh_var());
 return __jakt_format((StringView::from_string_literal("({{ auto&& {0} = {1}; if (!{0}.has_value()) {0} = {2}; }})"sv)),var,TRY((((*this).codegen_expression(lhs)))),TRY((((*this).codegen_expression(rhs)))));
 }
 if (((((op).op)).__jakt_init_index() == 17 /* ArithmeticRightShift */)){
-ByteString output = (ByteString::must_from_utf8("JaktInternal::arithmetic_shift_right("sv));
+ByteString output = (ByteString::from_utf8_without_validation("JaktInternal::arithmetic_shift_right("sv));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -9499,7 +9499,7 @@ ByteString output = (ByteString::must_from_utf8("JaktInternal::arithmetic_shift_
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(","sv)));
+(output,(ByteString::from_utf8_without_validation(","sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -9511,7 +9511,7 @@ ByteString output = (ByteString::must_from_utf8("JaktInternal::arithmetic_shift_
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(")"sv)));
+(output,(ByteString::from_utf8_without_validation(")"sv)));
 return output;
 }
 if ((((((op).op)).__jakt_init_index() == 21 /* Assign */) && ((lhs)->__jakt_init_index() == 14 /* IndexedDictionary */))){
@@ -9527,10 +9527,10 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
 {
 if (((((*this).compiler))->optimize)){
-return (((((ByteString::must_from_utf8("("sv))) + (TRY((((*this).codegen_unchecked_binary_op(lhs,rhs,((op).op),type_id))))))) + ((ByteString::must_from_utf8(")"sv))));
+return (((((ByteString::from_utf8_without_validation("("sv))) + (TRY((((*this).codegen_unchecked_binary_op(lhs,rhs,((op).op),type_id))))))) + ((ByteString::from_utf8_without_validation(")"sv))));
 }
 else {
-return (((((ByteString::must_from_utf8("("sv))) + (TRY((((*this).codegen_checked_binary_op(lhs,rhs,((op).op),type_id))))))) + ((ByteString::must_from_utf8(")"sv))));
+return (((((ByteString::from_utf8_without_validation("("sv))) + (TRY((((*this).codegen_checked_binary_op(lhs,rhs,((op).op),type_id))))))) + ((ByteString::from_utf8_without_validation(")"sv))));
 }
 
 }
@@ -9539,10 +9539,10 @@ return JaktInternal::ExplicitValue<void>();
 case 1 /* Subtract */: {
 {
 if (((((*this).compiler))->optimize)){
-return (((((ByteString::must_from_utf8("("sv))) + (TRY((((*this).codegen_unchecked_binary_op(lhs,rhs,((op).op),type_id))))))) + ((ByteString::must_from_utf8(")"sv))));
+return (((((ByteString::from_utf8_without_validation("("sv))) + (TRY((((*this).codegen_unchecked_binary_op(lhs,rhs,((op).op),type_id))))))) + ((ByteString::from_utf8_without_validation(")"sv))));
 }
 else {
-return (((((ByteString::must_from_utf8("("sv))) + (TRY((((*this).codegen_checked_binary_op(lhs,rhs,((op).op),type_id))))))) + ((ByteString::must_from_utf8(")"sv))));
+return (((((ByteString::from_utf8_without_validation("("sv))) + (TRY((((*this).codegen_checked_binary_op(lhs,rhs,((op).op),type_id))))))) + ((ByteString::from_utf8_without_validation(")"sv))));
 }
 
 }
@@ -9551,10 +9551,10 @@ return JaktInternal::ExplicitValue<void>();
 case 2 /* Multiply */: {
 {
 if (((((*this).compiler))->optimize)){
-return (((((ByteString::must_from_utf8("("sv))) + (TRY((((*this).codegen_unchecked_binary_op(lhs,rhs,((op).op),type_id))))))) + ((ByteString::must_from_utf8(")"sv))));
+return (((((ByteString::from_utf8_without_validation("("sv))) + (TRY((((*this).codegen_unchecked_binary_op(lhs,rhs,((op).op),type_id))))))) + ((ByteString::from_utf8_without_validation(")"sv))));
 }
 else {
-return (((((ByteString::must_from_utf8("("sv))) + (TRY((((*this).codegen_checked_binary_op(lhs,rhs,((op).op),type_id))))))) + ((ByteString::must_from_utf8(")"sv))));
+return (((((ByteString::from_utf8_without_validation("("sv))) + (TRY((((*this).codegen_checked_binary_op(lhs,rhs,((op).op),type_id))))))) + ((ByteString::from_utf8_without_validation(")"sv))));
 }
 
 }
@@ -9563,10 +9563,10 @@ return JaktInternal::ExplicitValue<void>();
 case 3 /* Divide */: {
 {
 if (((((*this).compiler))->optimize)){
-return (((((ByteString::must_from_utf8("("sv))) + (TRY((((*this).codegen_unchecked_binary_op(lhs,rhs,((op).op),type_id))))))) + ((ByteString::must_from_utf8(")"sv))));
+return (((((ByteString::from_utf8_without_validation("("sv))) + (TRY((((*this).codegen_unchecked_binary_op(lhs,rhs,((op).op),type_id))))))) + ((ByteString::from_utf8_without_validation(")"sv))));
 }
 else {
-return (((((ByteString::must_from_utf8("("sv))) + (TRY((((*this).codegen_checked_binary_op(lhs,rhs,((op).op),type_id))))))) + ((ByteString::must_from_utf8(")"sv))));
+return (((((ByteString::from_utf8_without_validation("("sv))) + (TRY((((*this).codegen_checked_binary_op(lhs,rhs,((op).op),type_id))))))) + ((ByteString::from_utf8_without_validation(")"sv))));
 }
 
 }
@@ -9575,10 +9575,10 @@ return JaktInternal::ExplicitValue<void>();
 case 4 /* Modulo */: {
 {
 if (((((*this).compiler))->optimize)){
-return (((((ByteString::must_from_utf8("("sv))) + (TRY((((*this).codegen_unchecked_binary_op(lhs,rhs,((op).op),type_id))))))) + ((ByteString::must_from_utf8(")"sv))));
+return (((((ByteString::from_utf8_without_validation("("sv))) + (TRY((((*this).codegen_unchecked_binary_op(lhs,rhs,((op).op),type_id))))))) + ((ByteString::from_utf8_without_validation(")"sv))));
 }
 else {
-return (((((ByteString::must_from_utf8("("sv))) + (TRY((((*this).codegen_checked_binary_op(lhs,rhs,((op).op),type_id))))))) + ((ByteString::must_from_utf8(")"sv))));
+return (((((ByteString::from_utf8_without_validation("("sv))) + (TRY((((*this).codegen_checked_binary_op(lhs,rhs,((op).op),type_id))))))) + ((ByteString::from_utf8_without_validation(")"sv))));
 }
 
 }
@@ -9587,10 +9587,10 @@ return JaktInternal::ExplicitValue<void>();
 case 27 /* AddAssign */: {
 {
 if (((((*this).compiler))->optimize)){
-return (((((ByteString::must_from_utf8("("sv))) + (TRY((((*this).codegen_unchecked_binary_op_assignment(lhs,rhs,((op).op),type_id))))))) + ((ByteString::must_from_utf8(")"sv))));
+return (((((ByteString::from_utf8_without_validation("("sv))) + (TRY((((*this).codegen_unchecked_binary_op_assignment(lhs,rhs,((op).op),type_id))))))) + ((ByteString::from_utf8_without_validation(")"sv))));
 }
 else {
-return (((((ByteString::must_from_utf8("("sv))) + (TRY((((*this).codegen_checked_binary_op_assignment(lhs,rhs,((op).op),type_id))))))) + ((ByteString::must_from_utf8(")"sv))));
+return (((((ByteString::from_utf8_without_validation("("sv))) + (TRY((((*this).codegen_checked_binary_op_assignment(lhs,rhs,((op).op),type_id))))))) + ((ByteString::from_utf8_without_validation(")"sv))));
 }
 
 }
@@ -9599,10 +9599,10 @@ return JaktInternal::ExplicitValue<void>();
 case 28 /* SubtractAssign */: {
 {
 if (((((*this).compiler))->optimize)){
-return (((((ByteString::must_from_utf8("("sv))) + (TRY((((*this).codegen_unchecked_binary_op_assignment(lhs,rhs,((op).op),type_id))))))) + ((ByteString::must_from_utf8(")"sv))));
+return (((((ByteString::from_utf8_without_validation("("sv))) + (TRY((((*this).codegen_unchecked_binary_op_assignment(lhs,rhs,((op).op),type_id))))))) + ((ByteString::from_utf8_without_validation(")"sv))));
 }
 else {
-return (((((ByteString::must_from_utf8("("sv))) + (TRY((((*this).codegen_checked_binary_op_assignment(lhs,rhs,((op).op),type_id))))))) + ((ByteString::must_from_utf8(")"sv))));
+return (((((ByteString::from_utf8_without_validation("("sv))) + (TRY((((*this).codegen_checked_binary_op_assignment(lhs,rhs,((op).op),type_id))))))) + ((ByteString::from_utf8_without_validation(")"sv))));
 }
 
 }
@@ -9611,10 +9611,10 @@ return JaktInternal::ExplicitValue<void>();
 case 29 /* MultiplyAssign */: {
 {
 if (((((*this).compiler))->optimize)){
-return (((((ByteString::must_from_utf8("("sv))) + (TRY((((*this).codegen_unchecked_binary_op_assignment(lhs,rhs,((op).op),type_id))))))) + ((ByteString::must_from_utf8(")"sv))));
+return (((((ByteString::from_utf8_without_validation("("sv))) + (TRY((((*this).codegen_unchecked_binary_op_assignment(lhs,rhs,((op).op),type_id))))))) + ((ByteString::from_utf8_without_validation(")"sv))));
 }
 else {
-return (((((ByteString::must_from_utf8("("sv))) + (TRY((((*this).codegen_checked_binary_op_assignment(lhs,rhs,((op).op),type_id))))))) + ((ByteString::must_from_utf8(")"sv))));
+return (((((ByteString::from_utf8_without_validation("("sv))) + (TRY((((*this).codegen_checked_binary_op_assignment(lhs,rhs,((op).op),type_id))))))) + ((ByteString::from_utf8_without_validation(")"sv))));
 }
 
 }
@@ -9623,10 +9623,10 @@ return JaktInternal::ExplicitValue<void>();
 case 31 /* DivideAssign */: {
 {
 if (((((*this).compiler))->optimize)){
-return (((((ByteString::must_from_utf8("("sv))) + (TRY((((*this).codegen_unchecked_binary_op_assignment(lhs,rhs,((op).op),type_id))))))) + ((ByteString::must_from_utf8(")"sv))));
+return (((((ByteString::from_utf8_without_validation("("sv))) + (TRY((((*this).codegen_unchecked_binary_op_assignment(lhs,rhs,((op).op),type_id))))))) + ((ByteString::from_utf8_without_validation(")"sv))));
 }
 else {
-return (((((ByteString::must_from_utf8("("sv))) + (TRY((((*this).codegen_checked_binary_op_assignment(lhs,rhs,((op).op),type_id))))))) + ((ByteString::must_from_utf8(")"sv))));
+return (((((ByteString::from_utf8_without_validation("("sv))) + (TRY((((*this).codegen_checked_binary_op_assignment(lhs,rhs,((op).op),type_id))))))) + ((ByteString::from_utf8_without_validation(")"sv))));
 }
 
 }
@@ -9635,10 +9635,10 @@ return JaktInternal::ExplicitValue<void>();
 case 30 /* ModuloAssign */: {
 {
 if (((((*this).compiler))->optimize)){
-return (((((ByteString::must_from_utf8("("sv))) + (TRY((((*this).codegen_unchecked_binary_op_assignment(lhs,rhs,((op).op),type_id))))))) + ((ByteString::must_from_utf8(")"sv))));
+return (((((ByteString::from_utf8_without_validation("("sv))) + (TRY((((*this).codegen_unchecked_binary_op_assignment(lhs,rhs,((op).op),type_id))))))) + ((ByteString::from_utf8_without_validation(")"sv))));
 }
 else {
-return (((((ByteString::must_from_utf8("("sv))) + (TRY((((*this).codegen_checked_binary_op_assignment(lhs,rhs,((op).op),type_id))))))) + ((ByteString::must_from_utf8(")"sv))));
+return (((((ByteString::from_utf8_without_validation("("sv))) + (TRY((((*this).codegen_checked_binary_op_assignment(lhs,rhs,((op).op),type_id))))))) + ((ByteString::from_utf8_without_validation(")"sv))));
 }
 
 }
@@ -9657,7 +9657,7 @@ return JaktInternal::ExplicitValue<void>();
     _jakt_value.release_value();
 });
 }
-ByteString output = (ByteString::must_from_utf8("("sv));
+ByteString output = (ByteString::from_utf8_without_validation("("sv));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -9674,94 +9674,94 @@ ByteString output = (ByteString::must_from_utf8("("sv));
 auto&& __jakt_match_variant = ((op).op);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" + "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" + "sv)));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" - "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" - "sv)));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" * "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" * "sv)));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" % "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" % "sv)));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" / "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" / "sv)));
 };/*case end*/
 case 21 /* Assign */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" = "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" = "sv)));
 };/*case end*/
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" += "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" += "sv)));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" -= "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" -= "sv)));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" *= "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" *= "sv)));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" %= "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" %= "sv)));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" /= "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" /= "sv)));
 };/*case end*/
 case 22 /* BitwiseAndAssign */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" &= "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" &= "sv)));
 };/*case end*/
 case 23 /* BitwiseOrAssign */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" |= "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" |= "sv)));
 };/*case end*/
 case 24 /* BitwiseXorAssign */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" ^= "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" ^= "sv)));
 };/*case end*/
 case 25 /* BitwiseLeftShiftAssign */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" <<= "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" <<= "sv)));
 };/*case end*/
 case 26 /* BitwiseRightShiftAssign */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" >>= "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" >>= "sv)));
 };/*case end*/
 case 9 /* Equal */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" == "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" == "sv)));
 };/*case end*/
 case 10 /* NotEqual */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" != "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" != "sv)));
 };/*case end*/
 case 5 /* LessThan */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" < "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" < "sv)));
 };/*case end*/
 case 6 /* LessThanOrEqual */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" <= "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" <= "sv)));
 };/*case end*/
 case 7 /* GreaterThan */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" > "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" > "sv)));
 };/*case end*/
 case 8 /* GreaterThanOrEqual */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" >= "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" >= "sv)));
 };/*case end*/
 case 18 /* LogicalAnd */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" && "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" && "sv)));
 };/*case end*/
 case 19 /* LogicalOr */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" || "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" || "sv)));
 };/*case end*/
 case 11 /* BitwiseAnd */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" & "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" & "sv)));
 };/*case end*/
 case 13 /* BitwiseOr */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" | "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" | "sv)));
 };/*case end*/
 case 12 /* BitwiseXor */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" ^ "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" ^ "sv)));
 };/*case end*/
 case 16 /* ArithmeticLeftShift */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" << "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" << "sv)));
 };/*case end*/
 case 14 /* BitwiseLeftShift */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" << "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" << "sv)));
 };/*case end*/
 case 15 /* BitwiseRightShift */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" >> "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" >> "sv)));
 };/*case end*/
 default: {
 {
@@ -9786,14 +9786,14 @@ utility::todo(__jakt_format((StringView::from_string_literal("codegen_binary_exp
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(")"sv)));
+(output,(ByteString::from_utf8_without_validation(")"sv)));
 return output;
 }
 }
 
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_unchecked_binary_op(NonnullRefPtr<typename types::CheckedExpression> const lhs,NonnullRefPtr<typename types::CheckedExpression> const rhs,parser::BinaryOperator const op,ids::TypeId const type_id) {
 {
-ByteString output = (ByteString::must_from_utf8("static_cast<"sv));
+ByteString output = (ByteString::from_utf8_without_validation("static_cast<"sv));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -9805,7 +9805,7 @@ ByteString output = (ByteString::must_from_utf8("static_cast<"sv));
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(">("sv)));
+(output,(ByteString::from_utf8_without_validation(">("sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -9822,19 +9822,19 @@ ByteString output = (ByteString::must_from_utf8("static_cast<"sv));
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" + "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" + "sv)));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" - "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" - "sv)));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" * "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" * "sv)));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" / "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" / "sv)));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" % "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" % "sv)));
 };/*case end*/
 default: {
 {
@@ -9859,20 +9859,20 @@ utility::panic(__jakt_format((StringView::from_string_literal("Checked binary op
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(")"sv)));
+(output,(ByteString::from_utf8_without_validation(")"sv)));
 return output;
 }
 }
 
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_checked_binary_op(NonnullRefPtr<typename types::CheckedExpression> const lhs,NonnullRefPtr<typename types::CheckedExpression> const rhs,parser::BinaryOperator const op,ids::TypeId const type_id) {
 {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("JaktInternal::"sv)));
+(output,(ByteString::from_utf8_without_validation("JaktInternal::"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -9883,19 +9883,19 @@ ByteString output = (ByteString::must_from_utf8(""sv));
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Add */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("checked_add"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("checked_add"sv)));
 };/*case end*/
 case 1 /* Subtract */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("checked_sub"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("checked_sub"sv)));
 };/*case end*/
 case 2 /* Multiply */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("checked_mul"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("checked_mul"sv)));
 };/*case end*/
 case 3 /* Divide */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("checked_div"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("checked_div"sv)));
 };/*case end*/
 case 4 /* Modulo */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("checked_mod"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("checked_mod"sv)));
 };/*case end*/
 default: {
 {
@@ -9914,7 +9914,7 @@ utility::panic(__jakt_format((StringView::from_string_literal("Checked binary op
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("<"sv)));
+(output,(ByteString::from_utf8_without_validation("<"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -9926,7 +9926,7 @@ utility::panic(__jakt_format((StringView::from_string_literal("Checked binary op
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(">("sv)));
+(output,(ByteString::from_utf8_without_validation(">("sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -9938,7 +9938,7 @@ utility::panic(__jakt_format((StringView::from_string_literal("Checked binary op
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(","sv)));
+(output,(ByteString::from_utf8_without_validation(","sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -9950,26 +9950,26 @@ utility::panic(__jakt_format((StringView::from_string_literal("Checked binary op
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(")"sv)));
+(output,(ByteString::from_utf8_without_validation(")"sv)));
 return output;
 }
 }
 
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_unchecked_binary_op_assignment(NonnullRefPtr<typename types::CheckedExpression> const lhs,NonnullRefPtr<typename types::CheckedExpression> const rhs,parser::BinaryOperator const op,ids::TypeId const type_id) {
 {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("{"sv)));
+(output,(ByteString::from_utf8_without_validation("{"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("auto& _jakt_ref = "sv)));
+(output,(ByteString::from_utf8_without_validation("auto& _jakt_ref = "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -9981,13 +9981,13 @@ ByteString output = (ByteString::must_from_utf8(""sv));
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(";"sv)));
+(output,(ByteString::from_utf8_without_validation(";"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("_jakt_ref = static_cast<"sv)));
+(output,(ByteString::from_utf8_without_validation("_jakt_ref = static_cast<"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -9999,7 +9999,7 @@ ByteString output = (ByteString::must_from_utf8(""sv));
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(">(_jakt_ref "sv)));
+(output,(ByteString::from_utf8_without_validation(">(_jakt_ref "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -10010,19 +10010,19 @@ ByteString output = (ByteString::must_from_utf8(""sv));
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" + "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" + "sv)));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" - "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" - "sv)));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" * "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" * "sv)));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" / "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" / "sv)));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" % "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" % "sv)));
 };/*case end*/
 default: {
 {
@@ -10047,32 +10047,32 @@ utility::panic(__jakt_format((StringView::from_string_literal("Checked binary op
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(");"sv)));
+(output,(ByteString::from_utf8_without_validation(");"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("}"sv)));
+(output,(ByteString::from_utf8_without_validation("}"sv)));
 return output;
 }
 }
 
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_checked_binary_op_assignment(NonnullRefPtr<typename types::CheckedExpression> const lhs,NonnullRefPtr<typename types::CheckedExpression> const rhs,parser::BinaryOperator const op,ids::TypeId const type_id) {
 {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("{"sv)));
+(output,(ByteString::from_utf8_without_validation("{"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("auto& _jakt_ref = "sv)));
+(output,(ByteString::from_utf8_without_validation("auto& _jakt_ref = "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -10084,13 +10084,13 @@ ByteString output = (ByteString::must_from_utf8(""sv));
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(";"sv)));
+(output,(ByteString::from_utf8_without_validation(";"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("_jakt_ref = JaktInternal::"sv)));
+(output,(ByteString::from_utf8_without_validation("_jakt_ref = JaktInternal::"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -10101,19 +10101,19 @@ ByteString output = (ByteString::must_from_utf8(""sv));
 auto&& __jakt_match_variant = op;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 27 /* AddAssign */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("checked_add"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("checked_add"sv)));
 };/*case end*/
 case 28 /* SubtractAssign */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("checked_sub"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("checked_sub"sv)));
 };/*case end*/
 case 29 /* MultiplyAssign */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("checked_mul"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("checked_mul"sv)));
 };/*case end*/
 case 31 /* DivideAssign */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("checked_div"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("checked_div"sv)));
 };/*case end*/
 case 30 /* ModuloAssign */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("checked_mod"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("checked_mod"sv)));
 };/*case end*/
 default: {
 {
@@ -10132,7 +10132,7 @@ utility::panic(__jakt_format((StringView::from_string_literal("Checked binary op
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("<"sv)));
+(output,(ByteString::from_utf8_without_validation("<"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -10144,7 +10144,7 @@ utility::panic(__jakt_format((StringView::from_string_literal("Checked binary op
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(">(_jakt_ref, "sv)));
+(output,(ByteString::from_utf8_without_validation(">(_jakt_ref, "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -10156,20 +10156,20 @@ utility::panic(__jakt_format((StringView::from_string_literal("Checked binary op
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(");"sv)));
+(output,(ByteString::from_utf8_without_validation(");"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("}"sv)));
+(output,(ByteString::from_utf8_without_validation("}"sv)));
 return output;
 }
 }
 
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_method_call(NonnullRefPtr<typename types::CheckedExpression> const expr,types::CheckedCall const call,bool const is_optional) {
 {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 if (((call).callee_throws)){
 [](ByteString& self, ByteString rhs) -> void {
 {
@@ -10182,7 +10182,7 @@ if (((call).callee_throws)){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("(("sv)));
+(output,(ByteString::from_utf8_without_validation("(("sv)));
 }
 ByteString const object = TRY((((*this).codegen_expression_and_deref_if_generic_and_needed(expr))));
 if ((((((call).function_id)).has_value()) && ((((call).force_inline)).__jakt_init_index() == 2 /* ForceInline */))){
@@ -10203,7 +10203,7 @@ VERIFY_NOT_REACHED();
         return _jakt_value.release_return();
     _jakt_value.release_value();
 });
-NonnullRefPtr<types::CheckedVariable> const var = types::CheckedVariable::__jakt_create((ByteString::must_from_utf8("self"sv)),((((*this).program))->find_or_add_type_id(reference_type,((((expr)->type())).module),false)),is_mutable,((expr)->span()),JaktInternal::OptionalNone(),types::CheckedVisibility::Public(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone());
+NonnullRefPtr<types::CheckedVariable> const var = types::CheckedVariable::__jakt_create((ByteString::from_utf8_without_validation("self"sv)),((((*this).program))->find_or_add_type_id(reference_type,((((expr)->type())).module),false)),is_mutable,((expr)->span()),JaktInternal::OptionalNone(),types::CheckedVisibility::Public(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone());
 JaktInternal::DynamicArray<types::CheckedParameter> params = DynamicArray<types::CheckedParameter>::create_with({types::CheckedParameter(false,var,JaktInternal::OptionalNone())});
 {
 JaktInternal::ArrayIterator<types::CheckedParameter> _magic = ((((((function)->params))[(JaktInternal::Range<i64>{static_cast<i64>(static_cast<i64>(1LL)),static_cast<i64>(9223372036854775807LL)})])).iterator());
@@ -10226,7 +10226,7 @@ abort();
 }
 NonnullRefPtr<typename types::CheckedExpression> const lambda = types::CheckedExpression::Function(JaktInternal::OptionalNone(),DynamicArray<types::CheckedCapture>::create_with({}),params,((function)->can_throw),((function)->return_type_id),((function)->block),((expr)->span()),types::unknown_type_id(),((call).function_id),((function)->function_scope_id));
 JaktInternal::Optional<ByteString> const old_this_replacement = ((*this).this_replacement);
-(((*this).this_replacement) = (ByteString::must_from_utf8("self"sv)));
+(((*this).this_replacement) = (ByteString::from_utf8_without_validation("self"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -10239,7 +10239,7 @@ JaktInternal::Optional<ByteString> const old_this_replacement = ((*this).this_re
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("("sv)));
+(output,(ByteString::from_utf8_without_validation("("sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -10264,7 +10264,7 @@ NonnullRefPtr<typename types::CheckedExpression> const arg = ((jakt_____arg__).t
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(","sv)));
+(output,(ByteString::from_utf8_without_validation(","sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -10281,14 +10281,14 @@ NonnullRefPtr<typename types::CheckedExpression> const arg = ((jakt_____arg__).t
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(")"sv)));
+(output,(ByteString::from_utf8_without_validation(")"sv)));
 if (((call).callee_throws)){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("))"sv)));
+(output,(ByteString::from_utf8_without_validation("))"sv)));
 }
 return output;
 }
@@ -10299,7 +10299,7 @@ ByteString const field_accessor = ({
 auto&& __jakt_match_variant = name;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 2 /* Operator */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(""sv)));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(({
@@ -10307,7 +10307,7 @@ return JaktInternal::ExplicitValue(({
 auto&& __jakt_match_variant = *expression_type;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 26 /* RawPtr */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("->"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("->"sv)));
 };/*case end*/
 case 24 /* Struct */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Struct;ids::StructId const& id = __jakt_match_value.value;
@@ -10318,12 +10318,12 @@ auto __jakt_enum_value = ((((((((((*this).program))->get_struct(id))).record_typ
 return (!(((self) == (rhs))));
 }
 }
-(object,(ByteString::must_from_utf8("*this"sv)))));
+(object,(ByteString::from_utf8_without_validation("*this"sv)))));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("->"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("->"sv)));
 }
 else if (__jakt_enum_value == false) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("."sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("."sv)));
 }
 VERIFY_NOT_REACHED();
 }());
@@ -10341,12 +10341,12 @@ auto __jakt_enum_value = ((((((((((*this).program))->get_struct(id))).record_typ
 return (!(((self) == (rhs))));
 }
 }
-(object,(ByteString::must_from_utf8("*this"sv)))));
+(object,(ByteString::from_utf8_without_validation("*this"sv)))));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("->"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("->"sv)));
 }
 else if (__jakt_enum_value == false) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("."sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("."sv)));
 }
 VERIFY_NOT_REACHED();
 }());
@@ -10364,12 +10364,12 @@ auto __jakt_enum_value = ((((((((*this).program))->get_enum(id))).is_boxed) && [
 return (!(((self) == (rhs))));
 }
 }
-(object,(ByteString::must_from_utf8("*this"sv)))));
+(object,(ByteString::from_utf8_without_validation("*this"sv)))));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("->"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("->"sv)));
 }
 else if (__jakt_enum_value == false) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("."sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("."sv)));
 }
 VERIFY_NOT_REACHED();
 }());
@@ -10383,10 +10383,10 @@ return JaktInternal::ExplicitValue(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<ByteString>>{
 auto __jakt_enum_value = ((((expression_type)->is_builtin()) && (!(((expression_type)->__jakt_init_index() == 13 /* JaktString */)))));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(""sv)));
 }
 else if (__jakt_enum_value == false) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("."sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("."sv)));
 }
 VERIFY_NOT_REACHED();
 }());
@@ -10428,7 +10428,7 @@ if ((!(((generic_parameters).is_empty())))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("template "sv)));
+(output,(ByteString::from_utf8_without_validation("template "sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
@@ -10458,7 +10458,7 @@ ids::TypeId gen_param = (_magic_value.value());
 (self = ((self) + (rhs)));
 }
 }
-(output,__jakt_format((StringView::from_string_literal("<{}>"sv)),utility::join(types,(ByteString::must_from_utf8(", "sv)))));
+(output,__jakt_format((StringView::from_string_literal("<{}>"sv)),utility::join(types,(ByteString::from_utf8_without_validation(", "sv)))));
 }
 }
 return {};
@@ -10471,7 +10471,7 @@ if (is_called_as_method){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("(("sv)));
+(output,(ByteString::from_utf8_without_validation("(("sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -10483,7 +10483,7 @@ if (is_called_as_method){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(")"sv)));
+(output,(ByteString::from_utf8_without_validation(")"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -10498,7 +10498,7 @@ TRY((generate_method_name()));
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("("sv)));
+(output,(ByteString::from_utf8_without_validation("("sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -10513,8 +10513,8 @@ if (is_optional){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("map([&](auto& _value) { return _value"sv)));
-ByteString access_operator = (ByteString::must_from_utf8("."sv));
+(output,(ByteString::from_utf8_without_validation("map([&](auto& _value) { return _value"sv)));
+ByteString access_operator = (ByteString::from_utf8_without_validation("."sv));
 if (((expression_type)->__jakt_init_index() == 20 /* GenericInstance */)){
 JaktInternal::DynamicArray<ids::TypeId> const args = (expression_type)->as.GenericInstance.args;
 if ([](size_t const& self, size_t rhs) -> bool {
@@ -10536,7 +10536,7 @@ case 24 /* Struct */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Struct;ids::StructId const& id = __jakt_match_value.value;
 {
 if (((((((((*this).program))->get_struct(id))).record_type)).__jakt_init_index() == 1 /* Class */)){
-(access_operator = (ByteString::must_from_utf8("->"sv)));
+(access_operator = (ByteString::from_utf8_without_validation("->"sv)));
 }
 }
 return JaktInternal::ExplicitValue<void>();
@@ -10545,7 +10545,7 @@ case 20 /* GenericInstance */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.GenericInstance;ids::StructId const& id = __jakt_match_value.id;
 {
 if (((((((((*this).program))->get_struct(id))).record_type)).__jakt_init_index() == 1 /* Class */)){
-(access_operator = (ByteString::must_from_utf8("->"sv)));
+(access_operator = (ByteString::from_utf8_without_validation("->"sv)));
 }
 }
 return JaktInternal::ExplicitValue<void>();
@@ -10578,7 +10578,7 @@ TRY((generate_method_name()));
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("("sv)));
+(output,(ByteString::from_utf8_without_validation("("sv)));
 }
 bool first = is_called_as_method;
 {
@@ -10603,7 +10603,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(","sv)));
+(output,(ByteString::from_utf8_without_validation(","sv)));
 }
 
 [](ByteString& self, ByteString rhs) -> void {
@@ -10623,7 +10623,7 @@ if (is_called_as_method){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(")"sv)));
+(output,(ByteString::from_utf8_without_validation(")"sv)));
 }
 if (is_optional){
 [](ByteString& self, ByteString rhs) -> void {
@@ -10631,21 +10631,21 @@ if (is_optional){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("; })"sv)));
+(output,(ByteString::from_utf8_without_validation("; })"sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(")"sv)));
+(output,(ByteString::from_utf8_without_validation(")"sv)));
 if (((call).callee_throws)){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("))"sv)));
+(output,(ByteString::from_utf8_without_validation("))"sv)));
 }
 return output;
 }
@@ -10653,7 +10653,7 @@ return output;
 
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_call(types::CheckedCall const call) {
 {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 if ((((((call).function_id)).has_value()) && ((((((*this).program))->get_function((((call).function_id).value()))))->is_comptime))){
 return __jakt_format((StringView::from_string_literal("fail_comptime_call<{}, \"Comptime function {} called outside Jakt compiler\">()"sv)),TRY((((*this).codegen_type(((call).return_type))))),((call).name));
 }
@@ -10669,33 +10669,33 @@ if (((call).callee_throws)){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("(("sv)));
+(output,(ByteString::from_utf8_without_validation("(("sv)));
 }
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<ByteString>>{
 auto __jakt_enum_value = (((call).name));
-if (__jakt_enum_value == (ByteString::must_from_utf8("print"sv))) {
+if (__jakt_enum_value == (ByteString::from_utf8_without_validation("print"sv))) {
 {
 ByteString const helper = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<ByteString>>{
 auto __jakt_enum_value = (((call).name));
-if (__jakt_enum_value == (ByteString::must_from_utf8("print"sv))) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("out"sv)));
+if (__jakt_enum_value == (ByteString::from_utf8_without_validation("print"sv))) {
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("out"sv)));
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("println"sv))) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("outln"sv)));
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("println"sv))) {
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("outln"sv)));
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("eprint"sv))) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("warn"sv)));
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("eprint"sv))) {
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("warn"sv)));
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("eprintln"sv))) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("warnln"sv)));
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("eprintln"sv))) {
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("warnln"sv)));
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("format"sv))) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("__jakt_format"sv)));
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("format"sv))) {
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("__jakt_format"sv)));
 }
 else {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(""sv)));
 }
 }());
     if (_jakt_value.is_return())
@@ -10713,7 +10713,7 @@ return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("("sv)));
+(output,(ByteString::from_utf8_without_validation("("sv)));
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((((call).args)).size()))});
 for (;;){
@@ -10739,7 +10739,7 @@ if (((i) != (JaktInternal::checked_sub(((((call).args)).size()),static_cast<size
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(","sv)));
+(output,(ByteString::from_utf8_without_validation(","sv)));
 }
 }
 
@@ -10751,32 +10751,32 @@ if (((i) != (JaktInternal::checked_sub(((((call).args)).size()),static_cast<size
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(")"sv)));
+(output,(ByteString::from_utf8_without_validation(")"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("println"sv))) {
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("println"sv))) {
 {
 ByteString const helper = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<ByteString>>{
 auto __jakt_enum_value = (((call).name));
-if (__jakt_enum_value == (ByteString::must_from_utf8("print"sv))) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("out"sv)));
+if (__jakt_enum_value == (ByteString::from_utf8_without_validation("print"sv))) {
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("out"sv)));
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("println"sv))) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("outln"sv)));
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("println"sv))) {
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("outln"sv)));
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("eprint"sv))) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("warn"sv)));
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("eprint"sv))) {
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("warn"sv)));
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("eprintln"sv))) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("warnln"sv)));
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("eprintln"sv))) {
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("warnln"sv)));
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("format"sv))) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("__jakt_format"sv)));
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("format"sv))) {
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("__jakt_format"sv)));
 }
 else {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(""sv)));
 }
 }());
     if (_jakt_value.is_return())
@@ -10794,7 +10794,7 @@ return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("("sv)));
+(output,(ByteString::from_utf8_without_validation("("sv)));
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((((call).args)).size()))});
 for (;;){
@@ -10820,7 +10820,7 @@ if (((i) != (JaktInternal::checked_sub(((((call).args)).size()),static_cast<size
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(","sv)));
+(output,(ByteString::from_utf8_without_validation(","sv)));
 }
 }
 
@@ -10832,32 +10832,32 @@ if (((i) != (JaktInternal::checked_sub(((((call).args)).size()),static_cast<size
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(")"sv)));
+(output,(ByteString::from_utf8_without_validation(")"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("eprintln"sv))) {
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("eprintln"sv))) {
 {
 ByteString const helper = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<ByteString>>{
 auto __jakt_enum_value = (((call).name));
-if (__jakt_enum_value == (ByteString::must_from_utf8("print"sv))) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("out"sv)));
+if (__jakt_enum_value == (ByteString::from_utf8_without_validation("print"sv))) {
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("out"sv)));
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("println"sv))) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("outln"sv)));
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("println"sv))) {
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("outln"sv)));
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("eprint"sv))) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("warn"sv)));
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("eprint"sv))) {
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("warn"sv)));
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("eprintln"sv))) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("warnln"sv)));
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("eprintln"sv))) {
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("warnln"sv)));
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("format"sv))) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("__jakt_format"sv)));
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("format"sv))) {
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("__jakt_format"sv)));
 }
 else {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(""sv)));
 }
 }());
     if (_jakt_value.is_return())
@@ -10875,7 +10875,7 @@ return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("("sv)));
+(output,(ByteString::from_utf8_without_validation("("sv)));
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((((call).args)).size()))});
 for (;;){
@@ -10901,7 +10901,7 @@ if (((i) != (JaktInternal::checked_sub(((((call).args)).size()),static_cast<size
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(","sv)));
+(output,(ByteString::from_utf8_without_validation(","sv)));
 }
 }
 
@@ -10913,32 +10913,32 @@ if (((i) != (JaktInternal::checked_sub(((((call).args)).size()),static_cast<size
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(")"sv)));
+(output,(ByteString::from_utf8_without_validation(")"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("eprint"sv))) {
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("eprint"sv))) {
 {
 ByteString const helper = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<ByteString>>{
 auto __jakt_enum_value = (((call).name));
-if (__jakt_enum_value == (ByteString::must_from_utf8("print"sv))) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("out"sv)));
+if (__jakt_enum_value == (ByteString::from_utf8_without_validation("print"sv))) {
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("out"sv)));
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("println"sv))) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("outln"sv)));
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("println"sv))) {
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("outln"sv)));
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("eprint"sv))) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("warn"sv)));
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("eprint"sv))) {
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("warn"sv)));
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("eprintln"sv))) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("warnln"sv)));
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("eprintln"sv))) {
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("warnln"sv)));
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("format"sv))) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("__jakt_format"sv)));
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("format"sv))) {
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("__jakt_format"sv)));
 }
 else {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(""sv)));
 }
 }());
     if (_jakt_value.is_return())
@@ -10956,7 +10956,7 @@ return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("("sv)));
+(output,(ByteString::from_utf8_without_validation("("sv)));
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((((call).args)).size()))});
 for (;;){
@@ -10982,7 +10982,7 @@ if (((i) != (JaktInternal::checked_sub(((((call).args)).size()),static_cast<size
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(","sv)));
+(output,(ByteString::from_utf8_without_validation(","sv)));
 }
 }
 
@@ -10994,32 +10994,32 @@ if (((i) != (JaktInternal::checked_sub(((((call).args)).size()),static_cast<size
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(")"sv)));
+(output,(ByteString::from_utf8_without_validation(")"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("format"sv))) {
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("format"sv))) {
 {
 ByteString const helper = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<ByteString>>{
 auto __jakt_enum_value = (((call).name));
-if (__jakt_enum_value == (ByteString::must_from_utf8("print"sv))) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("out"sv)));
+if (__jakt_enum_value == (ByteString::from_utf8_without_validation("print"sv))) {
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("out"sv)));
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("println"sv))) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("outln"sv)));
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("println"sv))) {
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("outln"sv)));
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("eprint"sv))) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("warn"sv)));
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("eprint"sv))) {
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("warn"sv)));
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("eprintln"sv))) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("warnln"sv)));
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("eprintln"sv))) {
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("warnln"sv)));
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("format"sv))) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("__jakt_format"sv)));
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("format"sv))) {
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("__jakt_format"sv)));
 }
 else {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(""sv)));
 }
 }());
     if (_jakt_value.is_return())
@@ -11037,7 +11037,7 @@ return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("("sv)));
+(output,(ByteString::from_utf8_without_validation("("sv)));
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((((call).args)).size()))});
 for (;;){
@@ -11063,7 +11063,7 @@ if (((i) != (JaktInternal::checked_sub(((((call).args)).size()),static_cast<size
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(","sv)));
+(output,(ByteString::from_utf8_without_validation(","sv)));
 }
 }
 
@@ -11075,7 +11075,7 @@ if (((i) != (JaktInternal::checked_sub(((((call).args)).size()),static_cast<size
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(")"sv)));
+(output,(ByteString::from_utf8_without_validation(")"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 }
@@ -11115,7 +11115,7 @@ if (((((struct_).record_type)).__jakt_init_index() == 1 /* Class */)){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("::__jakt_create"sv)));
+(output,(ByteString::from_utf8_without_validation("::__jakt_create"sv)));
 }
 else {
 [](ByteString& self, ByteString rhs) -> void {
@@ -11146,7 +11146,7 @@ if (((((struct_).record_type)).__jakt_init_index() == 1 /* Class */)){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("<"sv)));
+(output,(ByteString::from_utf8_without_validation("<"sv)));
 bool first = true;
 {
 JaktInternal::ArrayIterator<ids::TypeId> _magic = ((args).iterator());
@@ -11163,7 +11163,7 @@ if ((!(first))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(", "sv)));
+(output,(ByteString::from_utf8_without_validation(", "sv)));
 }
 else {
 (first = false);
@@ -11185,7 +11185,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(">::__jakt_create"sv)));
+(output,(ByteString::from_utf8_without_validation(">::__jakt_create"sv)));
 }
 else {
 [](ByteString& self, ByteString rhs) -> void {
@@ -11199,7 +11199,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("<"sv)));
+(output,(ByteString::from_utf8_without_validation("<"sv)));
 bool first = true;
 {
 JaktInternal::ArrayIterator<ids::TypeId> _magic = ((args).iterator());
@@ -11216,7 +11216,7 @@ if ((!(first))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(", "sv)));
+(output,(ByteString::from_utf8_without_validation(", "sv)));
 }
 else {
 (first = false);
@@ -11238,7 +11238,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(">"sv)));
+(output,(ByteString::from_utf8_without_validation(">"sv)));
 }
 
 }
@@ -11246,7 +11246,7 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-utility::panic((ByteString::must_from_utf8("Should be unreachable"sv)));
+utility::panic((ByteString::from_utf8_without_validation("Should be unreachable"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -11279,20 +11279,20 @@ NonnullRefPtr<types::Module> const enum_type_module = ((((*this).program))->get_
 (self = ((self) + (rhs)));
 }
 }
-(output,(((ByteString::must_from_utf8("::"sv))) + (((((call).name_for_codegen())).as_name_for_use()))));
+(output,(((ByteString::from_utf8_without_validation("::"sv))) + (((((call).name_for_codegen())).as_name_for_use()))));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 case 21 /* GenericEnumInstance */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.GenericEnumInstance;ids::EnumId const& id = __jakt_match_value.id;
 {
-utility::todo((ByteString::must_from_utf8("codegen generic enum instance"sv)));
+utility::todo((ByteString::from_utf8_without_validation("codegen generic enum instance"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 default: {
 {
-utility::panic((ByteString::must_from_utf8("constructor expected enum type"sv)));
+utility::panic((ByteString::from_utf8_without_validation("constructor expected enum type"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -11358,7 +11358,7 @@ ids::TypeId gen_param = (_magic_value.value());
 (self = ((self) + (rhs)));
 }
 }
-(output,__jakt_format((StringView::from_string_literal("<{}>"sv)),utility::join(types,(ByteString::must_from_utf8(", "sv)))));
+(output,__jakt_format((StringView::from_string_literal("<{}>"sv)),utility::join(types,(ByteString::from_utf8_without_validation(", "sv)))));
 }
 JaktInternal::DynamicArray<ByteString> arguments = DynamicArray<ByteString>::create_with({});
 {
@@ -11381,7 +11381,7 @@ JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>
 (self = ((self) + (rhs)));
 }
 }
-(output,__jakt_format((StringView::from_string_literal("({})"sv)),utility::join(arguments,(ByteString::must_from_utf8(","sv)))));
+(output,__jakt_format((StringView::from_string_literal("({})"sv)),utility::join(arguments,(ByteString::from_utf8_without_validation(","sv)))));
 }
 return JaktInternal::ExplicitValue<void>();
 }
@@ -11397,7 +11397,7 @@ if (((call).callee_throws)){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("))"sv)));
+(output,(ByteString::from_utf8_without_validation("))"sv)));
 }
 return output;
 }
@@ -11411,7 +11411,7 @@ if (((((func)->owner_scope)).has_value())){
 return TRY((((*this).codegen_namespace_qualifier((((func)->owner_scope).value()),false,((((call).name_for_codegen())).as_name_for_use()),((func)->owner_scope_generics)))));
 }
 }
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 size_t index = static_cast<size_t>(0ULL);
 {
 JaktInternal::ArrayIterator<types::ResolvedNamespace> _magic = ((((call).namespace_)).iterator());
@@ -11437,7 +11437,7 @@ if (((((namespace_).generic_parameters)).has_value())){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("<"sv)));
+(output,(ByteString::from_utf8_without_validation("<"sv)));
 size_t i = static_cast<size_t>(0ULL);
 {
 JaktInternal::ArrayIterator<ids::TypeId> _magic = (((((namespace_).generic_parameters).value())).iterator());
@@ -11460,7 +11460,7 @@ if (((i) != (JaktInternal::checked_sub((((((namespace_).generic_parameters).valu
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(","sv)));
+(output,(ByteString::from_utf8_without_validation(","sv)));
 }
 (++(i));
 }
@@ -11473,14 +11473,14 @@ if (((i) != (JaktInternal::checked_sub((((((namespace_).generic_parameters).valu
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(">"sv)));
+(output,(ByteString::from_utf8_without_validation(">"sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("::"sv)));
+(output,(ByteString::from_utf8_without_validation("::"sv)));
 (++(index));
 }
 
@@ -11493,7 +11493,7 @@ return output;
 
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_block(types::CheckedBlock const block) {
 {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 if (((((block).yielded_type)).has_value())){
 ids::TypeId const yielded_type = (((block).yielded_type).value());
 ByteString const type_output = TRY((((*this).codegen_type(yielded_type))));
@@ -11505,7 +11505,7 @@ ByteString const fresh_label = ((*this).fresh_label());
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("({ Optional<"sv)));
+(output,(ByteString::from_utf8_without_validation("({ Optional<"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -11517,7 +11517,7 @@ ByteString const fresh_label = ((*this).fresh_label());
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("> "sv)));
+(output,(ByteString::from_utf8_without_validation("> "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -11529,14 +11529,14 @@ ByteString const fresh_label = ((*this).fresh_label());
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("; "sv)));
+(output,(ByteString::from_utf8_without_validation("; "sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("{\n"sv)));
+(output,(ByteString::from_utf8_without_validation("{\n"sv)));
 {
 JaktInternal::ArrayIterator<NonnullRefPtr<typename types::CheckedStatement>> _magic = ((((block).statements)).iterator());
 for (;;){
@@ -11562,7 +11562,7 @@ NonnullRefPtr<typename types::CheckedStatement> statement = (_magic_value.value(
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("}\n"sv)));
+(output,(ByteString::from_utf8_without_validation("}\n"sv)));
 if (((((block).yielded_type)).has_value())){
 JaktInternal::Tuple<ByteString,ByteString> const var_label_ = (((((*this).entered_yieldable_blocks)).pop()).value());
 ByteString const var = ((var_label_).template get<0>());
@@ -11579,7 +11579,7 @@ ByteString const label = ((var_label_).template get<1>());
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(":; "sv)));
+(output,(ByteString::from_utf8_without_validation(":; "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -11592,14 +11592,14 @@ if ((!(((block).yielded_none)))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(".release_value()"sv)));
+(output,(ByteString::from_utf8_without_validation(".release_value()"sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("; })"sv)));
+(output,(ByteString::from_utf8_without_validation("; })"sv)));
 }
 return output;
 }
@@ -11608,7 +11608,7 @@ return output;
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_statement(NonnullRefPtr<typename types::CheckedStatement> const statement) {
 {
 bool add_newline = true;
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 if ((((((*this).debug_info)).statement_span_comments) && (((((statement)->span())).has_value()) && add_newline))){
 [](ByteString& self, ByteString rhs) -> void {
 {
@@ -11628,17 +11628,17 @@ auto&& __jakt_match_variant = *statement;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 11 /* Throw */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Throw;NonnullRefPtr<typename types::CheckedExpression> const& expr = __jakt_match_value.expr;
-return JaktInternal::ExplicitValue((((((ByteString::must_from_utf8("return "sv))) + (TRY((((*this).codegen_expression(expr))))))) + ((ByteString::must_from_utf8(";"sv)))));
+return JaktInternal::ExplicitValue((((((ByteString::from_utf8_without_validation("return "sv))) + (TRY((((*this).codegen_expression(expr))))))) + ((ByteString::from_utf8_without_validation(";"sv)))));
 };/*case end*/
 case 10 /* Continue */: {
 return JaktInternal::ExplicitValue(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<ByteString>>{
 auto __jakt_enum_value = (((((*this).control_flow_state)).passes_through_match));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("return JaktInternal::LoopContinue{};"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("return JaktInternal::LoopContinue{};"sv)));
 }
 else if (__jakt_enum_value == false) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("continue;"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("continue;"sv)));
 }
 VERIFY_NOT_REACHED();
 }());
@@ -11652,10 +11652,10 @@ return JaktInternal::ExplicitValue(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<ByteString>>{
 auto __jakt_enum_value = (((((*this).control_flow_state)).passes_through_match));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("return JaktInternal::LoopBreak{};"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("return JaktInternal::LoopBreak{};"sv)));
 }
 else if (__jakt_enum_value == false) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("break;"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("break;"sv)));
 }
 VERIFY_NOT_REACHED();
 }());
@@ -11666,18 +11666,18 @@ VERIFY_NOT_REACHED();
 };/*case end*/
 case 0 /* Expression */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Expression;NonnullRefPtr<typename types::CheckedExpression> const& expr = __jakt_match_value.expr;
-return JaktInternal::ExplicitValue(((TRY((((*this).codegen_expression(expr))))) + ((ByteString::must_from_utf8(";"sv)))));
+return JaktInternal::ExplicitValue(((TRY((((*this).codegen_expression(expr))))) + ((ByteString::from_utf8_without_validation(";"sv)))));
 };/*case end*/
 case 1 /* Defer */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Defer;NonnullRefPtr<typename types::CheckedStatement> const& statement = __jakt_match_value.statement;
 return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_654; {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("ScopeGuard "sv)));
+(output,(ByteString::from_utf8_without_validation("ScopeGuard "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -11689,7 +11689,7 @@ ByteString output = (ByteString::must_from_utf8(""sv));
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("([&] {\n"sv)));
+(output,(ByteString::from_utf8_without_validation("([&] {\n"sv)));
 codegen::ControlFlowState const last_control_flow = ((*this).control_flow_state);
 bool const old_inside_defer = ((*this).inside_defer);
 (((((*this).control_flow_state)).passes_through_match) = false);
@@ -11705,7 +11705,7 @@ bool const old_inside_defer = ((*this).inside_defer);
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("});"sv)));
+(output,(ByteString::from_utf8_without_validation("});"sv)));
 (((*this).control_flow_state) = last_control_flow);
 (((*this).inside_defer) = old_inside_defer);
 __jakt_var_654 = output; goto __jakt_label_551;
@@ -11725,21 +11725,21 @@ auto __jakt_enum_value = ((((((*this).current_function).value()))->can_throw));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_655; {
 NonnullRefPtr<typename types::Type> const type = ((((*this).program))->get_type((((val.value()))->type())));
-ByteString result = (ByteString::must_from_utf8(""sv));
+ByteString result = (ByteString::from_utf8_without_validation(""sv));
 if ((((type)->__jakt_init_index() == 0 /* Void */) || ((type)->__jakt_init_index() == 17 /* Never */))){
-(result = ((TRY((((*this).codegen_expression((val.value())))))) + ((ByteString::must_from_utf8("; return {}"sv)))));
+(result = ((TRY((((*this).codegen_expression((val.value())))))) + ((ByteString::from_utf8_without_validation("; return {}"sv)))));
 }
 else {
-(result = (((ByteString::must_from_utf8("return "sv))) + (TRY((((*this).codegen_expression((val.value()))))))));
+(result = (((ByteString::from_utf8_without_validation("return "sv))) + (TRY((((*this).codegen_expression((val.value()))))))));
 }
 
-__jakt_var_655 = ((result) + ((ByteString::must_from_utf8(";"sv)))); goto __jakt_label_552;
+__jakt_var_655 = ((result) + ((ByteString::from_utf8_without_validation(";"sv)))); goto __jakt_label_552;
 
 }
 __jakt_label_552:; __jakt_var_655.release_value(); }));
 }
 else if (__jakt_enum_value == false) {
-return JaktInternal::ExplicitValue((((((ByteString::must_from_utf8("return "sv))) + (TRY((((*this).codegen_expression((val.value())))))))) + ((ByteString::must_from_utf8(";"sv)))));
+return JaktInternal::ExplicitValue((((((ByteString::from_utf8_without_validation("return "sv))) + (TRY((((*this).codegen_expression((val.value())))))))) + ((ByteString::from_utf8_without_validation(";"sv)))));
 }
 VERIFY_NOT_REACHED();
 }());
@@ -11754,10 +11754,10 @@ __jakt_var_656 = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<ByteString>>{
 auto __jakt_enum_value = ((((((*this).current_function).value()))->can_throw));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("return {};"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("return {};"sv)));
 }
 else if (__jakt_enum_value == false) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("return;"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("return;"sv)));
 }
 VERIFY_NOT_REACHED();
 }());
@@ -11779,7 +11779,7 @@ VERIFY_NOT_REACHED();
 case 6 /* Loop */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Loop;types::CheckedBlock const& block = __jakt_match_value.block;
 return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_657; {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 if ((((((*this).debug_info)).statement_span_comments) && ((((statement)->span())).has_value()))){
 [](ByteString& self, ByteString rhs) -> void {
 {
@@ -11793,7 +11793,7 @@ if ((((((*this).debug_info)).statement_span_comments) && ((((statement)->span())
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("for (;;)"sv)));
+(output,(ByteString::from_utf8_without_validation("for (;;)"sv)));
 (add_newline = false);
 codegen::ControlFlowState const last_control_flow = ((*this).control_flow_state);
 (((*this).control_flow_state) = ((last_control_flow).enter_loop()));
@@ -11814,7 +11814,7 @@ case 7 /* While */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.While;NonnullRefPtr<typename types::CheckedExpression> const& condition = __jakt_match_value.condition;
 types::CheckedBlock const& block = __jakt_match_value.block;
 return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_658; {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 if ((((((*this).debug_info)).statement_span_comments) && ((((statement)->span())).has_value()))){
 [](ByteString& self, ByteString rhs) -> void {
 {
@@ -11828,7 +11828,7 @@ if ((((((*this).debug_info)).statement_span_comments) && ((((statement)->span())
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("while ("sv)));
+(output,(ByteString::from_utf8_without_validation("while ("sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -11840,7 +11840,7 @@ if ((((((*this).debug_info)).statement_span_comments) && ((((statement)->span())
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(")"sv)));
+(output,(ByteString::from_utf8_without_validation(")"sv)));
 {
 codegen::ControlFlowState const last_control_flow = ((*this).control_flow_state);
 (((*this).control_flow_state) = ((last_control_flow).enter_loop()));
@@ -11866,14 +11866,14 @@ return JaktInternal::ExplicitValue(TRY((((*this).codegen_block(block)))));
 };/*case end*/
 case 14 /* Garbage */: {
 {
-utility::panic((ByteString::must_from_utf8("Garbage statement in codegen"sv)));
+utility::panic((ByteString::from_utf8_without_validation("Garbage statement in codegen"sv)));
 }
 };/*case end*/
 case 2 /* DestructuringAssignment */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.DestructuringAssignment;JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> const& vars = __jakt_match_value.vars;
 NonnullRefPtr<typename types::CheckedStatement> const& var_decl = __jakt_match_value.var_decl;
 return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_659; {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -11910,7 +11910,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.VarDecl;ids::VarId const& va
 NonnullRefPtr<typename types::CheckedExpression> const& init = __jakt_match_value.init;
 return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_660; {
 NonnullRefPtr<types::CheckedVariable> const var = ((((*this).program))->get_variable(var_id));
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 NonnullRefPtr<typename types::Type> const var_type = ((((*this).program))->get_type(((var)->type_id)));
 [](ByteString& self, ByteString rhs) -> void {
 {
@@ -11923,14 +11923,14 @@ NonnullRefPtr<typename types::Type> const var_type = ((((*this).program))->get_t
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" "sv)));
+(output,(ByteString::from_utf8_without_validation(" "sv)));
 if (((!(((var)->is_mutable))) && (!((((var_type)->__jakt_init_index() == 28 /* Reference */) || ((var_type)->__jakt_init_index() == 29 /* MutableReference */)))))){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("const "sv)));
+(output,(ByteString::from_utf8_without_validation("const "sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
@@ -11943,7 +11943,7 @@ if (((!(((var)->is_mutable))) && (!((((var_type)->__jakt_init_index() == 28 /* R
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" = "sv)));
+(output,(ByteString::from_utf8_without_validation(" = "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -11955,7 +11955,7 @@ if (((!(((var)->is_mutable))) && (!((((var_type)->__jakt_init_index() == 28 /* R
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(";"sv)));
+(output,(ByteString::from_utf8_without_validation(";"sv)));
 __jakt_var_660 = output; goto __jakt_label_557;
 
 }
@@ -11964,7 +11964,7 @@ __jakt_label_557:; __jakt_var_660.release_value(); }));
 case 13 /* InlineCpp */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.InlineCpp;JaktInternal::DynamicArray<ByteString> const& lines = __jakt_match_value.lines;
 return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_661; {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 {
 JaktInternal::ArrayIterator<ByteString> _magic = ((lines).iterator());
 for (;;){
@@ -11975,8 +11975,8 @@ break;
 ByteString line = (_magic_value.value());
 {
 ByteString escaped_line = line;
-(escaped_line = ((escaped_line).replace((ByteString::must_from_utf8("\\\""sv)),(ByteString::must_from_utf8("\""sv)))));
-(escaped_line = ((escaped_line).replace((ByteString::must_from_utf8("\\\\"sv)),(ByteString::must_from_utf8("\\"sv)))));
+(escaped_line = ((escaped_line).replace((ByteString::from_utf8_without_validation("\\\""sv)),(ByteString::from_utf8_without_validation("\""sv)))));
+(escaped_line = ((escaped_line).replace((ByteString::from_utf8_without_validation("\\\\"sv)),(ByteString::from_utf8_without_validation("\\"sv)))));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -11998,7 +11998,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.If;NonnullRefPtr<typename ty
 types::CheckedBlock const& then_block = __jakt_match_value.then_block;
 JaktInternal::Optional<NonnullRefPtr<typename types::CheckedStatement>> const& else_statement = __jakt_match_value.else_statement;
 return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_662; {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 if ((((((*this).debug_info)).statement_span_comments) && ((((statement)->span())).has_value()))){
 [](ByteString& self, ByteString rhs) -> void {
 {
@@ -12012,7 +12012,7 @@ if ((((((*this).debug_info)).statement_span_comments) && ((((statement)->span())
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("if ("sv)));
+(output,(ByteString::from_utf8_without_validation("if ("sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -12024,7 +12024,7 @@ if ((((((*this).debug_info)).statement_span_comments) && ((((statement)->span())
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(")"sv)));
+(output,(ByteString::from_utf8_without_validation(")"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -12040,10 +12040,10 @@ if ((((((*this).debug_info)).statement_span_comments) && ((((statement)->span())
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<ByteString>>{
 auto __jakt_enum_value = (((else_statement).has_value()));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue((((ByteString::must_from_utf8("else "sv))) + (TRY((((*this).codegen_statement((else_statement.value()))))))));
+return JaktInternal::ExplicitValue((((ByteString::from_utf8_without_validation("else "sv))) + (TRY((((*this).codegen_statement((else_statement.value()))))))));
 }
 else if (__jakt_enum_value == false) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(""sv)));
 }
 VERIFY_NOT_REACHED();
 }());
@@ -12061,9 +12061,9 @@ case 12 /* Yield */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Yield;NonnullRefPtr<typename types::CheckedExpression> const& expr = __jakt_match_value.expr;
 utility::Span const& span = __jakt_match_value.span;
 return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_663; {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 if (((((((*this).entered_yieldable_blocks)).size())) == (static_cast<size_t>(0ULL)))){
-utility::panic((ByteString::must_from_utf8("Must be in a block to yield"sv)));
+utility::panic((ByteString::from_utf8_without_validation("Must be in a block to yield"sv)));
 }
 JaktInternal::Tuple<ByteString,ByteString> const var_name_end_label_ = (((((*this).entered_yieldable_blocks)).last()).value());
 ByteString const var_name = ((var_name_end_label_).template get<0>());
@@ -12080,7 +12080,7 @@ ByteString const end_label = ((var_name_end_label_).template get<1>());
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" = "sv)));
+(output,(ByteString::from_utf8_without_validation(" = "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -12092,7 +12092,7 @@ ByteString const end_label = ((var_name_end_label_).template get<1>());
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("; goto "sv)));
+(output,(ByteString::from_utf8_without_validation("; goto "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -12104,7 +12104,7 @@ ByteString const end_label = ((var_name_end_label_).template get<1>());
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(";\n"sv)));
+(output,(ByteString::from_utf8_without_validation(";\n"sv)));
 __jakt_var_663 = output; goto __jakt_label_560;
 
 }
@@ -12123,7 +12123,7 @@ if (add_newline){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("\n"sv)));
+(output,(ByteString::from_utf8_without_validation("\n"sv)));
 }
 return output;
 }
@@ -12137,14 +12137,14 @@ return TRY((((*this).codegen_type_possibly_as_namespace(type_id,false))));
 
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_type_possibly_as_namespace(ids::TypeId const type_id,bool const as_namespace) {
 {
-ByteString qualifiers = (ByteString::must_from_utf8(""sv));
+ByteString qualifiers = (ByteString::from_utf8_without_validation(""sv));
 if (((!(as_namespace)) && ((((((((*this).program))->get_type(type_id)))->common.init_common.qualifiers)).is_immutable))){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(qualifiers,(ByteString::must_from_utf8(" const"sv)));
+(qualifiers,(ByteString::from_utf8_without_validation(" const"sv)));
 }
 if (((((*this).generic_inferences)).has_value())){
 JaktInternal::Dictionary<ids::TypeId,ids::TypeId> const mappings = (((*this).generic_inferences).value());
@@ -12158,55 +12158,55 @@ return ((({
 auto&& __jakt_match_variant = *((((*this).program))->get_type(type_id));
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Void */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("void"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("void"sv)));
 };/*case end*/
 case 1 /* Bool */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("bool"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("bool"sv)));
 };/*case end*/
 case 2 /* U8 */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("u8"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("u8"sv)));
 };/*case end*/
 case 3 /* U16 */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("u16"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("u16"sv)));
 };/*case end*/
 case 4 /* U32 */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("u32"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("u32"sv)));
 };/*case end*/
 case 5 /* U64 */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("u64"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("u64"sv)));
 };/*case end*/
 case 6 /* I8 */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("i8"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("i8"sv)));
 };/*case end*/
 case 7 /* I16 */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("i16"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("i16"sv)));
 };/*case end*/
 case 8 /* I32 */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("i32"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("i32"sv)));
 };/*case end*/
 case 9 /* I64 */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("i64"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("i64"sv)));
 };/*case end*/
 case 10 /* F32 */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("f32"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("f32"sv)));
 };/*case end*/
 case 11 /* F64 */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("f64"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("f64"sv)));
 };/*case end*/
 case 12 /* Usize */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("size_t"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("size_t"sv)));
 };/*case end*/
 case 13 /* JaktString */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("ByteString"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("ByteString"sv)));
 };/*case end*/
 case 14 /* CChar */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("char"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("char"sv)));
 };/*case end*/
 case 15 /* CInt */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("int"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("int"sv)));
 };/*case end*/
 case 17 /* Never */: {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("void"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("void"sv)));
 };/*case end*/
 case 32 /* Const */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Const;types::Value const& value = __jakt_match_value.value;
@@ -12234,10 +12234,10 @@ return JaktInternal::ExplicitValue(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<ByteString>>{
 auto __jakt_enum_value = (((((((*this).program))->get_type(type_id)))->is_boxed(((*this).program))));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue(((TRY((((*this).codegen_type_possibly_as_namespace(type_id,true))))) + ((ByteString::must_from_utf8("*"sv)))));
+return JaktInternal::ExplicitValue(((TRY((((*this).codegen_type_possibly_as_namespace(type_id,true))))) + ((ByteString::from_utf8_without_validation("*"sv)))));
 }
 else if (__jakt_enum_value == false) {
-return JaktInternal::ExplicitValue(((TRY((((*this).codegen_type(type_id))))) + ((ByteString::must_from_utf8("*"sv)))));
+return JaktInternal::ExplicitValue(((TRY((((*this).codegen_type(type_id))))) + ((ByteString::from_utf8_without_validation("*"sv)))));
 }
 VERIFY_NOT_REACHED();
 }());
@@ -12248,11 +12248,11 @@ VERIFY_NOT_REACHED();
 };/*case end*/
 case 28 /* Reference */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Reference;ids::TypeId const& type_id = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(((TRY((((*this).codegen_type(type_id))))) + ((ByteString::must_from_utf8(" const&"sv)))));
+return JaktInternal::ExplicitValue(((TRY((((*this).codegen_type(type_id))))) + ((ByteString::from_utf8_without_validation(" const&"sv)))));
 };/*case end*/
 case 29 /* MutableReference */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.MutableReference;ids::TypeId const& type_id = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(((TRY((((*this).codegen_type(type_id))))) + ((ByteString::must_from_utf8("&"sv)))));
+return JaktInternal::ExplicitValue(((TRY((((*this).codegen_type(type_id))))) + ((ByteString::from_utf8_without_validation("&"sv)))));
 };/*case end*/
 case 23 /* GenericResolvedType */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.GenericResolvedType;ids::StructId const& id = __jakt_match_value.id;
@@ -12305,14 +12305,14 @@ auto&& __jakt_match_value = __jakt_match_variant.as.Function;JaktInternal::Dynam
 bool const& can_throw = __jakt_match_value.can_throw;
 ids::TypeId const& return_type_id = __jakt_match_value.return_type_id;
 return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_666; {
-ByteString output = (ByteString::must_from_utf8("Function<"sv));
+ByteString output = (ByteString::from_utf8_without_validation("Function<"sv));
 if (can_throw){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("ErrorOr<"sv)));
+(output,(ByteString::from_utf8_without_validation("ErrorOr<"sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
@@ -12326,14 +12326,14 @@ if (can_throw){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(">"sv)));
+(output,(ByteString::from_utf8_without_validation(">"sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("("sv)));
+(output,(ByteString::from_utf8_without_validation("("sv)));
 bool first = true;
 {
 JaktInternal::ArrayIterator<ids::TypeId> _magic = ((params).iterator());
@@ -12353,7 +12353,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(", "sv)));
+(output,(ByteString::from_utf8_without_validation(", "sv)));
 }
 
 [](ByteString& self, ByteString rhs) -> void {
@@ -12372,7 +12372,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(")>"sv)));
+(output,(ByteString::from_utf8_without_validation(")>"sv)));
 __jakt_var_666 = output; goto __jakt_label_563;
 
 }
@@ -12380,12 +12380,12 @@ __jakt_label_563:; __jakt_var_666.release_value(); }));
 };/*case end*/
 case 22 /* GenericTraitInstance */: {
 {
-utility::panic((ByteString::must_from_utf8("Generic trait instance in codegen"sv)));
+utility::panic((ByteString::from_utf8_without_validation("Generic trait instance in codegen"sv)));
 }
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_667; {
-__jakt_var_667 = (ByteString::must_from_utf8("auto"sv)); goto __jakt_label_564;
+__jakt_var_667 = (ByteString::from_utf8_without_validation("auto"sv)); goto __jakt_label_564;
 
 }
 __jakt_label_564:; __jakt_var_667.release_value(); }));
@@ -12402,16 +12402,16 @@ __jakt_label_564:; __jakt_var_667.release_value(); }));
 
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_generic_type_instance(ids::StructId const id,JaktInternal::DynamicArray<ids::TypeId> const args,bool const as_namespace) {
 {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 NonnullRefPtr<types::Module> const type_module = ((((*this).program))->get_module(((id).module)));
-ByteString namespace_ = (ByteString::must_from_utf8(""sv));
+ByteString namespace_ = (ByteString::from_utf8_without_validation(""sv));
 if (((type_module)->is_prelude())){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(namespace_,(ByteString::must_from_utf8("JaktInternal::"sv)));
+(namespace_,(ByteString::from_utf8_without_validation("JaktInternal::"sv)));
 }
 JaktInternal::Optional<ids::StructId> const inner_weak_ptr_struct_id = TRY((((((*this).program))->check_and_extract_weak_ptr(id,args))));
 if (((inner_weak_ptr_struct_id).has_value())){
@@ -12420,7 +12420,7 @@ if (((inner_weak_ptr_struct_id).has_value())){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("WeakPtr<"sv)));
+(output,(ByteString::from_utf8_without_validation("WeakPtr<"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -12446,7 +12446,7 @@ types::CheckedStruct const struct_ = ((((*this).program))->get_struct(inner_stru
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(">"sv)));
+(output,(ByteString::from_utf8_without_validation(">"sv)));
 }
 else {
 types::CheckedStruct const struct_ = ((((*this).program))->get_struct(id));
@@ -12457,7 +12457,7 @@ if (acquired_by_ref){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("NonnullRefPtr<"sv)));
+(output,(ByteString::from_utf8_without_validation("NonnullRefPtr<"sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
@@ -12482,7 +12482,7 @@ if (acquired_by_ref){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("<"sv)));
+(output,(ByteString::from_utf8_without_validation("<"sv)));
 bool first = true;
 {
 JaktInternal::ArrayIterator<ids::TypeId> _magic = ((args).iterator());
@@ -12499,7 +12499,7 @@ if ((!(first))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(","sv)));
+(output,(ByteString::from_utf8_without_validation(","sv)));
 }
 else {
 (first = false);
@@ -12521,14 +12521,14 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(">"sv)));
+(output,(ByteString::from_utf8_without_validation(">"sv)));
 if (acquired_by_ref){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(">"sv)));
+(output,(ByteString::from_utf8_without_validation(">"sv)));
 }
 }
 
@@ -12538,7 +12538,7 @@ return output;
 
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_generic_enum_instance(ids::EnumId const id,JaktInternal::DynamicArray<ids::TypeId> const args,bool const as_namespace) {
 {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 bool close_tag = false;
 types::CheckedEnum const enum_ = ((((*this).program))->get_enum(id));
 if (((!(as_namespace)) && ((enum_).is_boxed))){
@@ -12547,7 +12547,7 @@ if (((!(as_namespace)) && ((enum_).is_boxed))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("NonnullRefPtr<"sv)));
+(output,(ByteString::from_utf8_without_validation("NonnullRefPtr<"sv)));
 ByteString const qualifier = TRY((((*this).codegen_namespace_qualifier(((enum_).scope_id),true,JaktInternal::OptionalNone(),JaktInternal::OptionalNone()))));
 if ((!(((qualifier).is_empty())))){
 [](ByteString& self, ByteString rhs) -> void {
@@ -12555,7 +12555,7 @@ if ((!(((qualifier).is_empty())))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("typename "sv)));
+(output,(ByteString::from_utf8_without_validation("typename "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -12580,7 +12580,7 @@ if ((!(as_namespace))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("typename "sv)));
+(output,(ByteString::from_utf8_without_validation("typename "sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
@@ -12602,7 +12602,7 @@ if ((!(as_namespace))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("<"sv)));
+(output,(ByteString::from_utf8_without_validation("<"sv)));
 bool first = true;
 {
 JaktInternal::ArrayIterator<ids::TypeId> _magic = ((args).iterator());
@@ -12619,7 +12619,7 @@ if ((!(first))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(", "sv)));
+(output,(ByteString::from_utf8_without_validation(", "sv)));
 }
 else {
 (first = false);
@@ -12641,14 +12641,14 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(">"sv)));
+(output,(ByteString::from_utf8_without_validation(">"sv)));
 if (close_tag){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(">"sv)));
+(output,(ByteString::from_utf8_without_validation(">"sv)));
 }
 return output;
 }
@@ -12656,7 +12656,7 @@ return output;
 
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_namespace_qualifier(ids::ScopeId const scope_id,bool const skip_current,JaktInternal::Optional<ByteString> const possible_constructor_name,JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> const generic_mappings) {
 {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 JaktInternal::Optional<ids::ScopeId> current_scope_id = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<ids::ScopeId>,ErrorOr<ByteString>>{
 auto __jakt_enum_value = (skip_current);
@@ -12694,7 +12694,7 @@ ByteString const args = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<ByteString>>{
 auto __jakt_enum_value = (((((scope)->relevant_type_id)).has_value()));
 if (__jakt_enum_value == false) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(""sv)));
 }
 else if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_669; {
@@ -12772,7 +12772,7 @@ return type_id;
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_function(NonnullRefPtr<types::CheckedFunction> const function,bool const as_method) {
 {
 if (((function)->is_comptime)){
-return (ByteString::must_from_utf8(""sv));
+return (ByteString::from_utf8_without_validation(""sv));
 }
 return TRY((((*this).codegen_function_in_namespace(function,JaktInternal::OptionalNone(),as_method,false,JaktInternal::OptionalNone()))));
 }
@@ -12780,7 +12780,7 @@ return TRY((((*this).codegen_function_in_namespace(function,JaktInternal::Option
 
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_struct_type(ids::StructId const id,bool const as_namespace) {
 {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 NonnullRefPtr<types::Module> const type_module = ((((*this).program))->get_module(((id).module)));
 types::CheckedStruct const checked_struct = ((((*this).program))->get_struct(id));
 if (((!(as_namespace)) && ((((checked_struct).record_type)).__jakt_init_index() == 1 /* Class */))){
@@ -12789,7 +12789,7 @@ if (((!(as_namespace)) && ((((checked_struct).record_type)).__jakt_init_index() 
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("NonnullRefPtr<"sv)));
+(output,(ByteString::from_utf8_without_validation("NonnullRefPtr<"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -12807,7 +12807,7 @@ if (((!(as_namespace)) && ((((checked_struct).record_type)).__jakt_init_index() 
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(">"sv)));
+(output,(ByteString::from_utf8_without_validation(">"sv)));
 }
 else {
 [](ByteString& self, ByteString rhs) -> void {
@@ -12830,7 +12830,7 @@ return output;
 
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_enum_type(ids::EnumId const id,bool const as_namespace) {
 {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 NonnullRefPtr<types::Module> const type_module = ((((*this).program))->get_module(((id).module)));
 types::CheckedEnum const checked_enum = ((((*this).program))->get_enum(id));
 if (((!(as_namespace)) && ((checked_enum).is_boxed))){
@@ -12839,7 +12839,7 @@ if (((!(as_namespace)) && ((checked_enum).is_boxed))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("NonnullRefPtr<"sv)));
+(output,(ByteString::from_utf8_without_validation("NonnullRefPtr<"sv)));
 ByteString const qualifier = TRY((((*this).codegen_namespace_qualifier(((checked_enum).scope_id),true,JaktInternal::OptionalNone(),JaktInternal::OptionalNone()))));
 if ((!(((qualifier).is_empty())))){
 [](ByteString& self, ByteString rhs) -> void {
@@ -12847,7 +12847,7 @@ if ((!(((qualifier).is_empty())))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("typename "sv)));
+(output,(ByteString::from_utf8_without_validation("typename "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -12866,7 +12866,7 @@ if ((!(((qualifier).is_empty())))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(">"sv)));
+(output,(ByteString::from_utf8_without_validation(">"sv)));
 }
 else {
 ByteString const qualifier = TRY((((*this).codegen_namespace_qualifier(((checked_enum).scope_id),true,JaktInternal::OptionalNone(),JaktInternal::OptionalNone()))));
@@ -12892,26 +12892,26 @@ return output;
 
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_destructor_predecl(types::CheckedStruct const& struct_) {
 {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("public:\n"sv)));
+(output,(ByteString::from_utf8_without_validation("public:\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(((((ByteString::must_from_utf8("    ~"sv))) + (TRY((((((((struct_))).name_for_codegen())).as_name_for_definition())))))) + ((ByteString::must_from_utf8("();\n"sv)))));
+(output,(((((ByteString::from_utf8_without_validation("    ~"sv))) + (TRY((((((((struct_))).name_for_codegen())).as_name_for_definition())))))) + ((ByteString::from_utf8_without_validation("();\n"sv)))));
 return output;
 }
 }
 
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_destructor(types::CheckedStruct const& struct_,NonnullRefPtr<types::CheckedFunction> const& function,bool const is_inline) {
 {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 ByteString const qualified_name = TRY((((*this).codegen_type_possibly_as_namespace(((((struct_))).type_id),true))));
 if (((!(is_inline)) && (!(((((((struct_))).generic_parameters)).is_empty()))))){
 [](ByteString& self, ByteString rhs) -> void {
@@ -12919,7 +12919,7 @@ if (((!(is_inline)) && (!(((((((struct_))).generic_parameters)).is_empty()))))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("template <"sv)));
+(output,(ByteString::from_utf8_without_validation("template <"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -12931,7 +12931,7 @@ if (((!(is_inline)) && (!(((((((struct_))).generic_parameters)).is_empty()))))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(">\n"sv)));
+(output,(ByteString::from_utf8_without_validation(">\n"sv)));
 }
 if (is_inline){
 [](ByteString& self, ByteString rhs) -> void {
@@ -12968,13 +12968,13 @@ if (((type_)->__jakt_init_index() == 24 /* Struct */)){
 ids::StructId const struct_id = (type_)->as.Struct.value;
 types::CheckedStruct const structure = ((((*this).program))->get_struct(struct_id));
 if (((((structure).record_type)).__jakt_init_index() == 1 /* Class */)){
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("protected:\n"sv)));
+(output,(ByteString::from_utf8_without_validation("protected:\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -12997,7 +12997,7 @@ if ((!(first))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(", "sv)));
+(output,(ByteString::from_utf8_without_validation(", "sv)));
 }
 else {
 (first = false);
@@ -13015,7 +13015,7 @@ ids::TypeId const param_type_id = ((((param).variable))->type_id);
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" a_"sv)));
+(output,(ByteString::from_utf8_without_validation(" a_"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -13032,8 +13032,8 @@ ids::TypeId const param_type_id = ((((param).variable))->type_id);
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(");\n"sv)));
-ByteString class_name_with_generics = (ByteString::must_from_utf8(""sv));
+(output,(ByteString::from_utf8_without_validation(");\n"sv)));
+ByteString class_name_with_generics = (ByteString::from_utf8_without_validation(""sv));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -13056,7 +13056,7 @@ if ((!(first))){
 (self = ((self) + (rhs)));
 }
 }
-(class_name_with_generics,(ByteString::must_from_utf8(", "sv)));
+(class_name_with_generics,(ByteString::from_utf8_without_validation(", "sv)));
 }
 else {
 [](ByteString& self, ByteString rhs) -> void {
@@ -13064,7 +13064,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(class_name_with_generics,(ByteString::must_from_utf8("<"sv)));
+(class_name_with_generics,(ByteString::from_utf8_without_validation("<"sv)));
 (first = false);
 }
 
@@ -13085,14 +13085,14 @@ if ((!(((((structure).generic_parameters)).is_empty())))){
 (self = ((self) + (rhs)));
 }
 }
-(class_name_with_generics,(ByteString::must_from_utf8(">"sv)));
+(class_name_with_generics,(ByteString::from_utf8_without_validation(">"sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("public:\n"sv)));
+(output,(ByteString::from_utf8_without_validation("public:\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -13104,7 +13104,7 @@ if ((!(((((structure).generic_parameters)).is_empty())))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("("sv)));
+(output,(ByteString::from_utf8_without_validation("("sv)));
 (first = true);
 {
 JaktInternal::ArrayIterator<types::CheckedParameter> _magic = ((((function)->params)).iterator());
@@ -13121,7 +13121,7 @@ if ((!(first))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(", "sv)));
+(output,(ByteString::from_utf8_without_validation(", "sv)));
 }
 else {
 (first = false);
@@ -13138,7 +13138,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" "sv)));
+(output,(ByteString::from_utf8_without_validation(" "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -13155,10 +13155,10 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(");\n"sv)));
+(output,(ByteString::from_utf8_without_validation(");\n"sv)));
 return output;
 }
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -13170,7 +13170,7 @@ ByteString output = (ByteString::must_from_utf8(""sv));
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("("sv)));
+(output,(ByteString::from_utf8_without_validation("("sv)));
 bool first = true;
 {
 JaktInternal::ArrayIterator<types::CheckedParameter> _magic = ((((function)->params)).iterator());
@@ -13187,7 +13187,7 @@ if ((!(first))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(", "sv)));
+(output,(ByteString::from_utf8_without_validation(", "sv)));
 }
 else {
 (first = false);
@@ -13204,7 +13204,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" a_"sv)));
+(output,(ByteString::from_utf8_without_validation(" a_"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -13221,11 +13221,11 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(");\n"sv)));
+(output,(ByteString::from_utf8_without_validation(");\n"sv)));
 return output;
 }
 else {
-utility::panic((ByteString::must_from_utf8("internal error: call to a constructor, but not a struct/class type"sv)));
+utility::panic((ByteString::from_utf8_without_validation("internal error: call to a constructor, but not a struct/class type"sv)));
 }
 
 }
@@ -13239,14 +13239,14 @@ if (((type_)->__jakt_init_index() == 24 /* Struct */)){
 ids::StructId const struct_id = (type_)->as.Struct.value;
 types::CheckedStruct const structure = ((((*this).program))->get_struct(struct_id));
 ByteString const qualified_name = TRY((((*this).codegen_type_possibly_as_namespace(type_id,true))));
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 if (((!(is_inline)) && (!(((((structure).generic_parameters)).is_empty()))))){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("template <"sv)));
+(output,(ByteString::from_utf8_without_validation("template <"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -13258,7 +13258,7 @@ if (((!(is_inline)) && (!(((((structure).generic_parameters)).is_empty()))))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(">\n"sv)));
+(output,(ByteString::from_utf8_without_validation(">\n"sv)));
 }
 if ((((((structure).record_type)).__jakt_init_index() == 1 /* Class */) || ((((structure).record_type)).__jakt_init_index() == 0 /* Struct */))){
 if (is_inline){
@@ -13273,7 +13273,7 @@ if (is_inline){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("("sv)));
+(output,(ByteString::from_utf8_without_validation("("sv)));
 }
 else {
 [](ByteString& self, ByteString rhs) -> void {
@@ -13300,7 +13300,7 @@ if ((!(first))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(", "sv)));
+(output,(ByteString::from_utf8_without_validation(", "sv)));
 }
 else {
 (first = false);
@@ -13318,7 +13318,7 @@ ids::TypeId const param_type_id = ((((param).variable))->type_id);
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" a_"sv)));
+(output,(ByteString::from_utf8_without_validation(" a_"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -13335,14 +13335,14 @@ ids::TypeId const param_type_id = ((((param).variable))->type_id);
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(")"sv)));
+(output,(ByteString::from_utf8_without_validation(")"sv)));
 if ((!(((((function)->params)).is_empty())))){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(": "sv)));
+(output,(ByteString::from_utf8_without_validation(": "sv)));
 JaktInternal::DynamicArray<ByteString> initializers = DynamicArray<ByteString>::create_with({});
 size_t const parent_constructor_parameter_count = JaktInternal::checked_sub(((((function)->params)).size()),((((structure).fields)).size()));
 if ([](size_t const& self, size_t rhs) -> bool {
@@ -13356,7 +13356,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 }
 (parent_constructor_parameter_count,static_cast<size_t>(0ULL))){
-ByteString parent_initializer = (ByteString::must_from_utf8(""sv));
+ByteString parent_initializer = (ByteString::from_utf8_without_validation(""sv));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -13368,7 +13368,7 @@ ByteString parent_initializer = (ByteString::must_from_utf8(""sv));
 (self = ((self) + (rhs)));
 }
 }
-(parent_initializer,(ByteString::must_from_utf8("("sv)));
+(parent_initializer,(ByteString::from_utf8_without_validation("("sv)));
 JaktInternal::DynamicArray<ByteString> strings = DynamicArray<ByteString>::create_with({});
 {
 JaktInternal::ArrayIterator<types::CheckedParameter> _magic = ((((((function)->params))[(JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(parent_constructor_parameter_count)})])).iterator());
@@ -13379,7 +13379,7 @@ break;
 }
 types::CheckedParameter param = (_magic_value.value());
 {
-((strings).push((((((ByteString::must_from_utf8("move(a_"sv))) + (((((((param).variable))->name_for_codegen())).as_name_for_use())))) + ((ByteString::must_from_utf8(")"sv))))));
+((strings).push((((((ByteString::from_utf8_without_validation("move(a_"sv))) + (((((((param).variable))->name_for_codegen())).as_name_for_use())))) + ((ByteString::from_utf8_without_validation(")"sv))))));
 }
 
 }
@@ -13390,13 +13390,13 @@ types::CheckedParameter param = (_magic_value.value());
 (self = ((self) + (rhs)));
 }
 }
-(parent_initializer,utility::join(strings,(ByteString::must_from_utf8(", "sv))));
+(parent_initializer,utility::join(strings,(ByteString::from_utf8_without_validation(", "sv))));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(parent_initializer,(ByteString::must_from_utf8(")"sv)));
+(parent_initializer,(ByteString::from_utf8_without_validation(")"sv)));
 ((initializers).push(parent_initializer));
 }
 {
@@ -13409,7 +13409,7 @@ break;
 size_t i = (_magic_value.value());
 {
 types::CheckedParameter const param = ((((function)->params))[i]);
-((initializers).push(((((((((((((param).variable))->name_for_codegen())).as_name_for_use())) + ((ByteString::must_from_utf8("(move(a_"sv))))) + (((((((param).variable))->name_for_codegen())).as_name_for_use())))) + ((ByteString::must_from_utf8("))"sv))))));
+((initializers).push(((((((((((((param).variable))->name_for_codegen())).as_name_for_use())) + ((ByteString::from_utf8_without_validation("(move(a_"sv))))) + (((((((param).variable))->name_for_codegen())).as_name_for_use())))) + ((ByteString::from_utf8_without_validation("))"sv))))));
 }
 
 }
@@ -13420,16 +13420,16 @@ types::CheckedParameter const param = ((((function)->params))[i]);
 (self = ((self) + (rhs)));
 }
 }
-(output,utility::join(initializers,(ByteString::must_from_utf8(", "sv))));
+(output,utility::join(initializers,(ByteString::from_utf8_without_validation(", "sv))));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("{}\n"sv)));
+(output,(ByteString::from_utf8_without_validation("{}\n"sv)));
 if (((((structure).record_type)).__jakt_init_index() == 1 /* Class */)){
-ByteString class_name_with_generics = (ByteString::must_from_utf8(""sv));
+ByteString class_name_with_generics = (ByteString::from_utf8_without_validation(""sv));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -13452,7 +13452,7 @@ if ((!(first))){
 (self = ((self) + (rhs)));
 }
 }
-(class_name_with_generics,(ByteString::must_from_utf8(", "sv)));
+(class_name_with_generics,(ByteString::from_utf8_without_validation(", "sv)));
 }
 else {
 [](ByteString& self, ByteString rhs) -> void {
@@ -13460,7 +13460,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(class_name_with_generics,(ByteString::must_from_utf8("<"sv)));
+(class_name_with_generics,(ByteString::from_utf8_without_validation("<"sv)));
 (first = false);
 }
 
@@ -13481,7 +13481,7 @@ if ((!(((((structure).generic_parameters)).is_empty())))){
 (self = ((self) + (rhs)));
 }
 }
-(class_name_with_generics,(ByteString::must_from_utf8(">"sv)));
+(class_name_with_generics,(ByteString::from_utf8_without_validation(">"sv)));
 }
 if (is_inline){
 [](ByteString& self, ByteString rhs) -> void {
@@ -13489,16 +13489,16 @@ if (is_inline){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("static "sv)));
+(output,(ByteString::from_utf8_without_validation("static "sv)));
 }
 ByteString const qualified_namespace = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<ByteString>>{
 auto __jakt_enum_value = (is_inline);
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(""sv)));
 }
 else if (__jakt_enum_value == false) {
-return JaktInternal::ExplicitValue(((qualified_name) + ((ByteString::must_from_utf8("::"sv)))));
+return JaktInternal::ExplicitValue(((qualified_name) + ((ByteString::from_utf8_without_validation("::"sv)))));
 }
 VERIFY_NOT_REACHED();
 }());
@@ -13517,7 +13517,7 @@ VERIFY_NOT_REACHED();
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("("sv)));
+(output,(ByteString::from_utf8_without_validation("("sv)));
 (first = true);
 {
 JaktInternal::ArrayIterator<types::CheckedParameter> _magic = ((((function)->params)).iterator());
@@ -13534,7 +13534,7 @@ if ((!(first))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(", "sv)));
+(output,(ByteString::from_utf8_without_validation(", "sv)));
 }
 else {
 (first = false);
@@ -13551,7 +13551,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" "sv)));
+(output,(ByteString::from_utf8_without_validation(" "sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -13585,7 +13585,7 @@ if ((!(first))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(", "sv)));
+(output,(ByteString::from_utf8_without_validation(", "sv)));
 }
 else {
 (first = false);
@@ -13596,7 +13596,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("move("sv)));
+(output,(ByteString::from_utf8_without_validation("move("sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -13608,7 +13608,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(")"sv)));
+(output,(ByteString::from_utf8_without_validation(")"sv)));
 }
 
 }
@@ -13619,7 +13619,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(")); return o; }"sv)));
+(output,(ByteString::from_utf8_without_validation(")); return o; }"sv)));
 }
 return output;
 }
@@ -13635,7 +13635,7 @@ if ((!(is_inline))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("::"sv)));
+(output,(ByteString::from_utf8_without_validation("::"sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
@@ -13648,7 +13648,7 @@ if ((!(is_inline))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("("sv)));
+(output,(ByteString::from_utf8_without_validation("("sv)));
 bool first = true;
 {
 JaktInternal::ArrayIterator<types::CheckedParameter> _magic = ((((function)->params)).iterator());
@@ -13665,7 +13665,7 @@ if ((!(first))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(", "sv)));
+(output,(ByteString::from_utf8_without_validation(", "sv)));
 }
 else {
 (first = false);
@@ -13682,7 +13682,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" a_"sv)));
+(output,(ByteString::from_utf8_without_validation(" a_"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -13699,14 +13699,14 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(") "sv)));
+(output,(ByteString::from_utf8_without_validation(") "sv)));
 if ((!(((((function)->params)).is_empty())))){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(":"sv)));
+(output,(ByteString::from_utf8_without_validation(":"sv)));
 }
 (first = true);
 {
@@ -13724,7 +13724,7 @@ if ((!(first))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(", "sv)));
+(output,(ByteString::from_utf8_without_validation(", "sv)));
 }
 else {
 (first = false);
@@ -13741,7 +13741,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("(move(a_"sv)));
+(output,(ByteString::from_utf8_without_validation("(move(a_"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -13753,7 +13753,7 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("))"sv)));
+(output,(ByteString::from_utf8_without_validation("))"sv)));
 }
 
 }
@@ -13764,11 +13764,11 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("{}\n"sv)));
+(output,(ByteString::from_utf8_without_validation("{}\n"sv)));
 return output;
 }
 else {
-utility::panic((ByteString::must_from_utf8("internal error: call to a constructor, but not a struct/class type"sv)));
+utility::panic((ByteString::from_utf8_without_validation("internal error: call to a constructor, but not a struct/class type"sv)));
 }
 
 }
@@ -13778,13 +13778,13 @@ ErrorOr<ByteString> codegen::CodeGenerator::codegen_function_in_namespace(Nonnul
 {
 if ((!(((((((function)->generics))->params)).is_empty())))){
 if (((((function)->linkage)).__jakt_init_index() == 1 /* External */)){
-return (ByteString::must_from_utf8(""sv));
+return (ByteString::from_utf8_without_validation(""sv));
 }
 }
 if (((((function)->force_inline)).__jakt_init_index() == 2 /* ForceInline */)){
-return (ByteString::must_from_utf8(""sv));
+return (ByteString::from_utf8_without_validation(""sv));
 }
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 if ((!(skip_template))){
 [](ByteString& self, ByteString rhs) -> void {
 {
@@ -13793,14 +13793,14 @@ if ((!(skip_template))){
 }
 (output,TRY((((*this).codegen_function_generic_parameters(function)))));
 }
-bool const is_main = (((((((function)->name_for_codegen())).as_name_for_use())) == ((ByteString::must_from_utf8("main"sv)))) && (!(((containing_struct).has_value()))));
+bool const is_main = (((((((function)->name_for_codegen())).as_name_for_use())) == ((ByteString::from_utf8_without_validation("main"sv)))) && (!(((containing_struct).has_value()))));
 if (((((function)->force_inline)).__jakt_init_index() == 1 /* MakeDefinitionAvailable */)){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("__attribute__((always_inline)) inline "sv)));
+(output,(ByteString::from_utf8_without_validation("__attribute__((always_inline)) inline "sv)));
 }
 if (((((function)->return_type_id)).equals(types::never_type_id()))){
 [](ByteString& self, ByteString rhs) -> void {
@@ -13808,7 +13808,7 @@ if (((((function)->return_type_id)).equals(types::never_type_id()))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("[[noreturn]] "sv)));
+(output,(ByteString::from_utf8_without_validation("[[noreturn]] "sv)));
 }
 if (is_main){
 [](ByteString& self, ByteString rhs) -> void {
@@ -13816,7 +13816,7 @@ if (is_main){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("ErrorOr<int>"sv)));
+(output,(ByteString::from_utf8_without_validation("ErrorOr<int>"sv)));
 }
 else {
 if ((as_method && ((function)->is_static()))){
@@ -13825,7 +13825,7 @@ if ((as_method && ((function)->is_static()))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("static "sv)));
+(output,(ByteString::from_utf8_without_validation("static "sv)));
 }
 if ((!(((((function)->type)).__jakt_init_index() == 1 /* Destructor */)))){
 [](ByteString& self, ByteString rhs) -> void {
@@ -13856,14 +13856,14 @@ VERIFY_NOT_REACHED();
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" "sv)));
+(output,(ByteString::from_utf8_without_validation(" "sv)));
 if (is_main){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("main"sv)));
+(output,(ByteString::from_utf8_without_validation("main"sv)));
 }
 else {
 ByteString const qualifier = ({
@@ -13873,7 +13873,7 @@ if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(TRY((((*this).codegen_type_possibly_as_namespace((containing_struct.value()),true)))));
 }
 else if (__jakt_enum_value == false) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(""sv)));
 }
 VERIFY_NOT_REACHED();
 }());
@@ -13893,7 +13893,7 @@ if ((!(((qualifier).is_empty())))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("::"sv)));
+(output,(ByteString::from_utf8_without_validation("::"sv)));
 }
 if (((((function)->type)).__jakt_init_index() == 1 /* Destructor */)){
 if (((((((*this).program))->get_type((containing_struct.value()))))->__jakt_init_index() == 24 /* Struct */)){
@@ -13903,10 +13903,10 @@ ids::StructId const struct_id = (((((*this).program))->get_type((containing_stru
 (self = ((self) + (rhs)));
 }
 }
-(output,(((ByteString::must_from_utf8("~"sv))) + (TRY((((((((((*this).program))->get_struct(struct_id))).name_for_codegen())).as_name_for_definition()))))));
+(output,(((ByteString::from_utf8_without_validation("~"sv))) + (TRY((((((((((*this).program))->get_struct(struct_id))).name_for_codegen())).as_name_for_definition()))))));
 }
 else {
-utility::panic((ByteString::must_from_utf8("Destructor doesn't have a containing struct"sv)));
+utility::panic((ByteString::from_utf8_without_validation("Destructor doesn't have a containing struct"sv)));
 }
 
 }
@@ -13927,7 +13927,7 @@ if (((explicit_generic_instantiation).has_value())){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("<"sv)));
+(output,(ByteString::from_utf8_without_validation("<"sv)));
 bool first = true;
 {
 JaktInternal::ArrayIterator<ids::TypeId> _magic = (((explicit_generic_instantiation.value())).iterator());
@@ -13944,7 +13944,7 @@ if ((!(first))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(", "sv)));
+(output,(ByteString::from_utf8_without_validation(", "sv)));
 }
 else {
 (first = false);
@@ -13966,21 +13966,21 @@ else {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(">"sv)));
+(output,(ByteString::from_utf8_without_validation(">"sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("("sv)));
+(output,(ByteString::from_utf8_without_validation("("sv)));
 if ((is_main && ((((function)->params)).is_empty()))){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("DynamicArray<ByteString>"sv)));
+(output,(ByteString::from_utf8_without_validation("DynamicArray<ByteString>"sv)));
 }
 bool first = true;
 {
@@ -13993,7 +13993,7 @@ break;
 types::CheckedParameter param = (_magic_value.value());
 {
 NonnullRefPtr<types::CheckedVariable> const variable = ((param).variable);
-if (((((variable)->name)) == ((ByteString::must_from_utf8("this"sv))))){
+if (((((variable)->name)) == ((ByteString::from_utf8_without_validation("this"sv))))){
 continue;
 }
 if ((!(first))){
@@ -14002,7 +14002,7 @@ if ((!(first))){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(","sv)));
+(output,(ByteString::from_utf8_without_validation(","sv)));
 }
 else {
 (first = false);
@@ -14020,14 +14020,14 @@ NonnullRefPtr<typename types::Type> const variable_type = ((((*this).program))->
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" "sv)));
+(output,(ByteString::from_utf8_without_validation(" "sv)));
 if (((!(((variable)->is_mutable))) && (!((((variable_type)->__jakt_init_index() == 28 /* Reference */) || ((variable_type)->__jakt_init_index() == 29 /* MutableReference */)))))){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("const "sv)));
+(output,(ByteString::from_utf8_without_validation("const "sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
@@ -14045,28 +14045,28 @@ if (((!(((variable)->is_mutable))) && (!((((variable_type)->__jakt_init_index() 
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(")"sv)));
+(output,(ByteString::from_utf8_without_validation(")"sv)));
 if (((!(((function)->is_static()))) && (!(((function)->is_mutating()))))){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" const"sv)));
+(output,(ByteString::from_utf8_without_validation(" const"sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8(" {\n"sv)));
+(output,(ByteString::from_utf8_without_validation(" {\n"sv)));
 if (is_main){
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("\n\n            #ifdef _WIN32\n            SetConsoleOutputCP(CP_UTF8);\n            // Enable buffering to prevent VS from chopping up UTF-8 byte sequences\n            setvbuf(stdout, nullptr, _IOFBF, 1000);\n            #endif\n"sv)));
+(output,(ByteString::from_utf8_without_validation("\n\n            #ifdef _WIN32\n            SetConsoleOutputCP(CP_UTF8);\n            // Enable buffering to prevent VS from chopping up UTF-8 byte sequences\n            setvbuf(stdout, nullptr, _IOFBF, 1000);\n            #endif\n"sv)));
 }
 codegen::ControlFlowState const last_control_flow = ((*this).control_flow_state);
 (((*this).control_flow_state) = ((last_control_flow).enter_function()));
@@ -14084,7 +14084,7 @@ if (is_main){
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("return 0;\n"sv)));
+(output,(ByteString::from_utf8_without_validation("return 0;\n"sv)));
 }
 else {
 if ((((function)->can_throw) && ((((function)->return_type_id)).equals(types::builtin(types::BuiltinType::Void()))))){
@@ -14093,7 +14093,7 @@ if ((((function)->can_throw) && ((((function)->return_type_id)).equals(types::bu
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("return {};\n"sv)));
+(output,(ByteString::from_utf8_without_validation("return {};\n"sv)));
 }
 }
 
@@ -14102,14 +14102,14 @@ if ((((function)->can_throw) && ((((function)->return_type_id)).equals(types::bu
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("}\n"sv)));
+(output,(ByteString::from_utf8_without_validation("}\n"sv)));
 return output;
 }
 }
 
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_lambda_block(bool const can_throw,types::CheckedBlock const block,ids::TypeId const return_type_id) {
 {
-ByteString output = (ByteString::must_from_utf8("{\n"sv));
+ByteString output = (ByteString::from_utf8_without_validation("{\n"sv));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
@@ -14122,14 +14122,14 @@ if ((can_throw && ((return_type_id).equals(types::builtin(types::BuiltinType::Vo
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("return {};\n"sv)));
+(output,(ByteString::from_utf8_without_validation("return {};\n"sv)));
 }
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("}\n"sv)));
+(output,(ByteString::from_utf8_without_validation("}\n"sv)));
 return output;
 }
 }

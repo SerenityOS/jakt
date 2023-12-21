@@ -3,7 +3,7 @@ namespace Jakt {
 namespace jakt__platform__utility {
 ErrorOr<ByteString> join(JaktInternal::DynamicArray<ByteString> const strings,ByteString const separator) {
 {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 size_t i = static_cast<size_t>(0ULL);
 {
 JaktInternal::ArrayIterator<ByteString> _magic = ((strings).iterator());

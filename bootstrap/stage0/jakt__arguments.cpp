@@ -178,7 +178,7 @@ break;
 }
 ByteString arg = (_magic_value.value());
 {
-if (((arg) == ((ByteString::must_from_utf8("--"sv))))){
+if (((arg) == ((ByteString::from_utf8_without_validation("--"sv))))){
 (((parser).definitely_positional_args) = ((((((parser).args))[(JaktInternal::Range<size_t>{static_cast<size_t>(JaktInternal::checked_add(i,static_cast<size_t>(1ULL))),static_cast<size_t>(((((parser).args)).size()))})])).to_array()));
 (((parser).args) = ((((((parser).args))[(JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(i)})])).to_array()));
 break;

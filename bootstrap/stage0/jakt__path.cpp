@@ -17,7 +17,7 @@ return path;
 
 jakt__path::Path jakt__path::Path::from_parts(JaktInternal::DynamicArray<ByteString> const parts) {
 {
-jakt__path::Path path = jakt__path::Path((ByteString::must_from_utf8("."sv)));
+jakt__path::Path path = jakt__path::Path((ByteString::from_utf8_without_validation("."sv)));
 {
 JaktInternal::ArrayIterator<ByteString> _magic = ((parts).iterator());
 for (;;){
@@ -76,7 +76,7 @@ return ((*this).path);
 
 jakt__path::Path jakt__path::Path::join(ByteString const path) const {
 {
-if ((((((*this).path)) == ((ByteString::must_from_utf8("."sv)))) || ((((((*this).path)).length())) == (static_cast<size_t>(0ULL))))){
+if ((((((*this).path)) == ((ByteString::from_utf8_without_validation("."sv)))) || ((((((*this).path)).length())) == (static_cast<size_t>(0ULL))))){
 return jakt__path::Path(path);
 }
 if (((path).is_empty())){
@@ -104,7 +104,7 @@ return ((*this).join(((path).path)));
 
 bool jakt__path::Path::is_dot() const {
 {
-return (((((*this).path)) == ((ByteString::must_from_utf8("."sv)))) || ((((*this).path)) == ((ByteString::must_from_utf8(".."sv)))));
+return (((((*this).path)) == ((ByteString::from_utf8_without_validation("."sv)))) || ((((*this).path)) == ((ByteString::from_utf8_without_validation(".."sv)))));
 }
 }
 
@@ -131,7 +131,7 @@ return ((((*this).path)).substring(JaktInternal::checked_add(i,static_cast<size_
 }
 }
 
-return (ByteString::must_from_utf8(""sv));
+return (ByteString::from_utf8_without_validation(""sv));
 }
 }
 
@@ -166,11 +166,11 @@ ByteString const basename = ((*this).basename(true));
 ByteString const extension = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<jakt__path::Path>>{
 auto __jakt_enum_value = (new_extension);
-if (__jakt_enum_value == (ByteString::must_from_utf8(""sv))) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
+if (__jakt_enum_value == (ByteString::from_utf8_without_validation(""sv))) {
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(""sv)));
 }
 else {
-return JaktInternal::ExplicitValue((((ByteString::must_from_utf8("."sv))) + (new_extension)));
+return JaktInternal::ExplicitValue((((ByteString::from_utf8_without_validation("."sv))) + (new_extension)));
 }
 }());
     if (_jakt_value.is_return())
@@ -184,8 +184,8 @@ return jakt__path::Path::from_parts(DynamicArray<ByteString>::create_with({((par
 jakt__path::Path jakt__path::Path::parent() const {
 {
 JaktInternal::Tuple<ByteString,ByteString> const parts = ((*this).split_at_last_slash());
-if (((((parts).template get<0>())) == ((ByteString::must_from_utf8(""sv))))){
-return jakt__path::Path((ByteString::must_from_utf8("."sv)));
+if (((((parts).template get<0>())) == ((ByteString::from_utf8_without_validation(""sv))))){
+return jakt__path::Path((ByteString::from_utf8_without_validation("."sv)));
 }
 return jakt__path::Path(((parts).template get<0>()));
 }
@@ -220,7 +220,7 @@ continue;
 }
 else {
 if (((i) == (static_cast<size_t>(0ULL)))){
-((parts).push((ByteString::must_from_utf8("/"sv))));
+((parts).push((ByteString::from_utf8_without_validation("/"sv))));
 }
 else {
 ((parts).push(((((*this).path)).substring(static_cast<size_t>(0ULL),i))));
@@ -267,7 +267,7 @@ ByteString const dir = ((((*this).path)).substring(static_cast<size_t>(0ULL),(la
 ByteString const base = ((((*this).path)).substring(JaktInternal::checked_add((last_slash.value()),static_cast<size_t>(1ULL)),JaktInternal::checked_sub(JaktInternal::checked_sub(len,(last_slash.value())),static_cast<size_t>(1ULL))));
 return (Tuple{dir, base});
 }
-return (Tuple{(ByteString::must_from_utf8(""sv)), ((*this).path)});
+return (Tuple{(ByteString::from_utf8_without_validation(""sv)), ((*this).path)});
 }
 }
 

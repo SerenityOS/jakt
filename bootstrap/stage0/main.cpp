@@ -2,428 +2,428 @@
 namespace Jakt {
 ByteString usage() {
 {
-return (ByteString::must_from_utf8("usage: jakt [cross] [-h] [OPTIONS] <filename>"sv));
+return (ByteString::from_utf8_without_validation("usage: jakt [cross] [-h] [OPTIONS] <filename>"sv));
 }
 }
 
 ByteString help() {
 {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("Non-cross mode:\n"sv)));
+(output,(ByteString::from_utf8_without_validation("Non-cross mode:\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("= General:\n"sv)));
+(output,(ByteString::from_utf8_without_validation("= General:\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  -h,--help\t\t\t\tPrint this help and exit.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  -h,--help\t\t\t\tPrint this help and exit.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  -v,--version\t\t\t\tPrint the compiler's version and exit.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  -v,--version\t\t\t\tPrint the compiler's version and exit.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  -cr,--compile-run\t\t\tBuild and run an executable file.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  -cr,--compile-run\t\t\tBuild and run an executable file.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  -r,--run\t\t\t\tRun the given file without compiling it (all positional arguments after the file name will be passed to main).\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  -r,--run\t\t\t\tRun the given file without compiling it (all positional arguments after the file name will be passed to main).\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  --repl\t\t\t\tStart a Read-Eval-Print loop session.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  --repl\t\t\t\tStart a Read-Eval-Print loop session.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  --create NAME\t\t\t\tCreate sample project in $PWD/NAME\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  --create NAME\t\t\t\tCreate sample project in $PWD/NAME\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("= Compilation:\n"sv)));
+(output,(ByteString::from_utf8_without_validation("= Compilation:\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  --config KEY=VALUE\t\t\tSet a user configuration value.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  --config KEY=VALUE\t\t\tSet a user configuration value.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  -c,--check-only\t\t\tOnly check the code for errors.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  -c,--check-only\t\t\tOnly check the code for errors.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  -d\t\t\t\t\tInsert debug statement spans in generated C++ code.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  -d\t\t\t\t\tInsert debug statement spans in generated C++ code.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  -O\t\t\t\t\tBuild an optimized executable.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  -O\t\t\t\t\tBuild an optimized executable.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  -S,--emit-cpp-source-only\t\tOnly output source (do not build).\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  -S,--emit-cpp-source-only\t\tOnly output source (do not build).\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  --ak-is-my-only-stdlib\t\tForget about interop, AK is the one and only STL.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  --ak-is-my-only-stdlib\t\tForget about interop, AK is the one and only STL.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  --cxx-compiler-path PATH\t\tPath of the C++ compiler to use when compiling the generated sources.\n\t\t\t\t\tDefaults to clang++.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  --cxx-compiler-path PATH\t\tPath of the C++ compiler to use when compiling the generated sources.\n\t\t\t\t\tDefaults to clang++.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  -M,--dep-file FILE\t\t\tEmit a depfile listing dependencies of the main output.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  -M,--dep-file FILE\t\t\tEmit a depfile listing dependencies of the main output.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  --extra-cpp-flagFLAG\t\t\tPass FLAG to the compiler. Can be specified multiple times.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  --extra-cpp-flagFLAG\t\t\tPass FLAG to the compiler. Can be specified multiple times.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  --use-ccache\t\t\t\tUse ccache when compiling.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  --use-ccache\t\t\t\tUse ccache when compiling.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  -o,--output-filename FILE\t\tName of the output binary.\n\t\t\t\t\tDefaults to the input-filename without the extension.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  -o,--output-filename FILE\t\tName of the output binary.\n\t\t\t\t\tDefaults to the input-filename without the extension.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  -B,--binary-dir PATH\t\t\tOutput directory for compiled files.\n\t\t\t\t\tDefaults to $PWD/build.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  -B,--binary-dir PATH\t\t\tOutput directory for compiled files.\n\t\t\t\t\tDefaults to $PWD/build.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  -I PATH\t\t\t\tAdd PATH to compiler's include list. Can be specified multiple times.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  -I PATH\t\t\t\tAdd PATH to compiler's include list. Can be specified multiple times.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  -J,--jobs NUMBER\t\t\tSpecify the number of jobs to run in parallel, defaults to 2 (1 on windows).\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  -J,--jobs NUMBER\t\t\tSpecify the number of jobs to run in parallel, defaults to 2 (1 on windows).\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  -L PATH\t\t\t\tAdd PATH to linker's search list. Can be specified multiple times.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  -L PATH\t\t\t\tAdd PATH to linker's search list. Can be specified multiple times.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  -l,--link-with LIB\t\t\tLink executable with LIB. Can be specified multiple times.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  -l,--link-with LIB\t\t\tLink executable with LIB. Can be specified multiple times.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  -T,--target-triple TARGET\t\tSpecify the target triple used for the build, defaults to native.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  -T,--target-triple TARGET\t\tSpecify the target triple used for the build, defaults to native.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  -WlARG\t\t\t\tPass ARG to the linker. Can be specified multiple times.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  -WlARG\t\t\t\tPass ARG to the linker. Can be specified multiple times.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  -X FILE\t\t\t\tPass FILE to the compiler. Can be specified multiple times.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  -X FILE\t\t\t\tPass FILE to the compiler. Can be specified multiple times.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("= Debugging:\n"sv)));
+(output,(ByteString::from_utf8_without_validation("= Debugging:\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  -dl\t\t\t\t\tPrint debug info for the lexer.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  -dl\t\t\t\t\tPrint debug info for the lexer.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  -dp\t\t\t\t\tPrint debug info for the parser.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  -dp\t\t\t\t\tPrint debug info for the parser.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  -dt\t\t\t\t\tPrint debug info for the typechecker.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  -dt\t\t\t\t\tPrint debug info for the typechecker.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  -fd,--format-debug\t\t\tOutput debug info for the formatter.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  -fd,--format-debug\t\t\tOutput debug info for the formatter.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  -p,--prettify-cpp-source\t\tRun emitted C++ source through clang-format.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  -p,--prettify-cpp-source\t\tRun emitted C++ source through clang-format.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  -D,--dot-clang-format-path PATH\tPath to the .clang-format file to use.\n\t\t\t\t\tDefaults to none, invoking clangs default .clang-format file handling.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  -D,--dot-clang-format-path PATH\tPath to the .clang-format file to use.\n\t\t\t\t\tDefaults to none, invoking clangs default .clang-format file handling.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  -F,--clang-format-path PATH\t\tPath to clang-format executable.\n\t\t\t\t\tDefaults to clang-format\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  -F,--clang-format-path PATH\t\tPath to clang-format executable.\n\t\t\t\t\tDefaults to clang-format\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  --debug-print\t\t\t\tOutput debug print.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  --debug-print\t\t\t\tOutput debug print.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("= Formatting:\n"sv)));
+(output,(ByteString::from_utf8_without_validation("= Formatting:\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  -f,--format\t\t\t\tFormat a file or directory and output the result.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  -f,--format\t\t\t\tFormat a file or directory and output the result.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  -fi,--format-inplace\t\t\tFormat a file or directory and save the result inplace.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  -fi,--format-inplace\t\t\tFormat a file or directory and save the result inplace.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  -fr,--format-range RANGE\t\tEmit part of the document with formatting applied.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  -fr,--format-range RANGE\t\tEmit part of the document with formatting applied.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("= IDE integration:\n"sv)));
+(output,(ByteString::from_utf8_without_validation("= IDE integration:\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  -e,--hover INDEX\t\t\tReturn the type of element at index.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  -e,--hover INDEX\t\t\tReturn the type of element at index.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  -g,--goto-def INDEX\t\t\tReturn the span for the definition at index.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  -g,--goto-def INDEX\t\t\tReturn the span for the definition at index.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  -H,--type-hints\t\t\tEmit machine-readable type hints (for IDE integration).\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  -H,--type-hints\t\t\tEmit machine-readable type hints (for IDE integration).\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  -m,--completions INDEX\t\tReturn dot completions at index.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  -m,--completions INDEX\t\tReturn dot completions at index.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  --print-symbols\t\t\tEmit a machine-readable (JSON) symbol tree.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  --print-symbols\t\t\tEmit a machine-readable (JSON) symbol tree.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  --try-hints\t\t\t\tEmit machine-readable try hints (for IDE integration).\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  --try-hints\t\t\t\tEmit machine-readable try hints (for IDE integration).\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  -t,--goto-type-def INDEX\t\tReturn the span for the type definition at index.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  -t,--goto-type-def INDEX\t\tReturn the span for the type definition at index.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("= Misc:\n"sv)));
+(output,(ByteString::from_utf8_without_validation("= Misc:\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  --discover\t\t\t\tDiscover all files in the project, print the dependencies and outputs, then exit.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  --discover\t\t\t\tDiscover all files in the project, print the dependencies and outputs, then exit.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  -j,--json-errors\t\t\tEmit machine-readable (JSON) errors.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  -j,--json-errors\t\t\tEmit machine-readable (JSON) errors.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  --runtime-library-path PATH\t\tSpecify the path to the runtime library.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  --runtime-library-path PATH\t\tSpecify the path to the runtime library.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  --runtime-path PATH\t\t\tSpecify the path to the host runtime headers.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  --runtime-path PATH\t\t\tSpecify the path to the host runtime headers.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  -R,--runtime-path PATH\t\tPath of the Jakt runtime headers.\n\t\t\t\t\tDefaults to $PWD/runtime.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  -R,--runtime-path PATH\t\tPath of the Jakt runtime headers.\n\t\t\t\t\tDefaults to $PWD/runtime.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  --assume-main-file-path PATH\t\tAssume the main file is at PATH.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  --assume-main-file-path PATH\t\tAssume the main file is at PATH.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("\nCross mode:\n"sv)));
+(output,(ByteString::from_utf8_without_validation("\nCross mode:\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("All other given options and flags will be passed to the compiler invocation verbatim.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("All other given options and flags will be passed to the compiler invocation verbatim.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  --source-file PATH\t\t\tSpecify the path to the source file to compile.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  --source-file PATH\t\t\tSpecify the path to the source file to compile.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  -T,--target-triple TARGET\t\tSpecify the target triple used for the build, defaults to native.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  -T,--target-triple TARGET\t\tSpecify the target triple used for the build, defaults to native.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  --sysroot PATH\t\t\tSpecify the sysroot used for the build.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  --sysroot PATH\t\t\tSpecify the sysroot used for the build.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  --system-include-dir PATH\t\tSpecify a system include directory to use.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  --system-include-dir PATH\t\tSpecify a system include directory to use.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  --system-lib-dir PATH\t\t\tSpecify a system library directory to use.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  --system-lib-dir PATH\t\t\tSpecify a system library directory to use.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  --compiler-include-dir PATH\t\tSpecify a compiler include directory to use.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  --compiler-include-dir PATH\t\tSpecify a compiler include directory to use.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  --compiler-lib-dir PATH\t\tSpecify a compiler library directory to use.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  --compiler-lib-dir PATH\t\tSpecify a compiler library directory to use.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  --install-root PATH\t\t\tSpecify the root directory to install to.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  --install-root PATH\t\t\tSpecify the root directory to install to.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  --only-support-libs\t\t\tOnly build and install support libraries for the target platform.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  --only-support-libs\t\t\tOnly build and install support libraries for the target platform.\n"sv)));
 [](ByteString& self, ByteString rhs) -> void {
 {
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("  --runtime-lib-path PATH\t\tSpecify the path to the host runtime library.\n"sv)));
+(output,(ByteString::from_utf8_without_validation("  --runtime-lib-path PATH\t\tSpecify the path to the host runtime library.\n"sv)));
 return output;
 }
 }
 
 ByteString indent(size_t const level) {
 {
-ByteString output = (ByteString::must_from_utf8(""sv));
+ByteString output = (ByteString::from_utf8_without_validation(""sv));
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(level)});
 for (;;){
@@ -438,7 +438,7 @@ size_t i = (_magic_value.value());
 (self = ((self) + (rhs)));
 }
 }
-(output,(ByteString::must_from_utf8("    "sv)));
+(output,(ByteString::from_utf8_without_validation("    "sv)));
 }
 
 }
@@ -513,7 +513,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 warnln((StringView::from_string_literal("{}"sv)),usage());
 return static_cast<int>(1);
 }
-if (((((args)[static_cast<i64>(1LL)])) == ((ByteString::must_from_utf8("cross"sv))))){
+if (((((args)[static_cast<i64>(1LL)])) == ((ByteString::from_utf8_without_validation("cross"sv))))){
 return TRY((selfhost_crosscompiler_main(args)));
 }
 return TRY((compiler_main(args)));
@@ -524,7 +524,7 @@ return 0;
 ErrorOr<void> install(jakt__path::Path const from,jakt__path::Path const to) {
 {
 AK::Queue<JaktInternal::Tuple<jakt__path::Path,jakt__path::Path>> directories_to_copy = AK::Queue<JaktInternal::Tuple<jakt__path::Path,jakt__path::Path>>();
-((directories_to_copy).enqueue((Tuple{from, jakt__path::Path::from_string((ByteString::must_from_utf8("."sv)))})));
+((directories_to_copy).enqueue((Tuple{from, jakt__path::Path::from_string((ByteString::from_utf8_without_validation("."sv)))})));
 while ((!(((directories_to_copy).is_empty())))){
 JaktInternal::Tuple<jakt__path::Path,jakt__path::Path> const directory_relative_dir_ = ((directories_to_copy).dequeue());
 jakt__path::Path const directory = ((directory_relative_dir_).template get<0>());
@@ -626,85 +626,85 @@ ByteString const arg = ((args_to_process).dequeue());
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<int>>{
 auto __jakt_enum_value = (arg);
-if (__jakt_enum_value == (ByteString::must_from_utf8("--target-triple"sv))) {
+if (__jakt_enum_value == (ByteString::from_utf8_without_validation("--target-triple"sv))) {
 {
 (target_triple = ((args_to_process).dequeue()));
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("-T"sv))) {
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("-T"sv))) {
 {
 (target_triple = ((args_to_process).dequeue()));
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("--sysroot"sv))) {
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("--sysroot"sv))) {
 {
 (sysroot = ((args_to_process).dequeue()));
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("--system-lib-dir"sv))) {
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("--system-lib-dir"sv))) {
 {
 ((system_lib_dirs).push(((args_to_process).dequeue())));
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("--system-include-dir"sv))) {
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("--system-include-dir"sv))) {
 {
 ((system_include_dirs).push(((args_to_process).dequeue())));
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("--compiler-include-dir"sv))) {
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("--compiler-include-dir"sv))) {
 {
 (compiler_include_dir = ((args_to_process).dequeue()));
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("--compiler-lib-dir"sv))) {
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("--compiler-lib-dir"sv))) {
 {
 (compiler_lib_dir = ((args_to_process).dequeue()));
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("--install-root"sv))) {
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("--install-root"sv))) {
 {
 (install_root = ((args_to_process).dequeue()));
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("--runtime-lib-path"sv))) {
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("--runtime-lib-path"sv))) {
 {
 (runtime_lib_path = jakt__path::Path::from_string(((args_to_process).dequeue())));
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("--runtime-path"sv))) {
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("--runtime-path"sv))) {
 {
 (runtime_path = jakt__path::Path::from_string(((args_to_process).dequeue())));
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("--source-file"sv))) {
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("--source-file"sv))) {
 {
 (source_file = ((args_to_process).dequeue()));
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("--output-filename"sv))) {
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("--output-filename"sv))) {
 {
 (output_filename = ((args_to_process).dequeue()));
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("-o"sv))) {
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("-o"sv))) {
 {
 (output_filename = ((args_to_process).dequeue()));
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::must_from_utf8("--only-support-libs"sv))) {
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("--only-support-libs"sv))) {
 {
 (only_support_libs = true);
 }
@@ -741,32 +741,32 @@ return static_cast<int>(1);
 }
 ByteString const abbreviated_triple = TRY((((TRY((jakt__platform::Target::from_triple((target_triple.value()))))).name(true))));
 jakt__path::Path const install_dir = jakt__path::Path::from_string((install_root.value()));
-jakt__path::Path const install_lib_dir = ((((install_dir).join((ByteString::must_from_utf8("lib"sv))))).join((target_triple.value())));
-jakt__path::Path const install_runtime_dir = ((install_dir).join((ByteString::must_from_utf8("include/runtime"sv))));
-jakt__path::Path const install_bin_dir = ((install_dir).join((ByteString::must_from_utf8("bin"sv))));
+jakt__path::Path const install_lib_dir = ((((install_dir).join((ByteString::from_utf8_without_validation("lib"sv))))).join((target_triple.value())));
+jakt__path::Path const install_runtime_dir = ((install_dir).join((ByteString::from_utf8_without_validation("include/runtime"sv))));
+jakt__path::Path const install_bin_dir = ((install_dir).join((ByteString::from_utf8_without_validation("bin"sv))));
 jakt__path::Path const current_executable_path = jakt__path::Path::from_string(TRY((File::current_executable_path())));
 jakt__path::Path const local_install_base_path = ((((current_executable_path).parent())).parent());
 if ((!(runtime_path).has_value())){
-(runtime_path = ((local_install_base_path).join((ByteString::must_from_utf8("include/runtime"sv)))));
+(runtime_path = ((local_install_base_path).join((ByteString::from_utf8_without_validation("include/runtime"sv)))));
 }
 if ((!(runtime_lib_path).has_value())){
-(runtime_lib_path = ((((local_install_base_path).join((ByteString::must_from_utf8("lib"sv))))).join(TRY((((TRY((jakt__platform::Target::active()))).name(false)))))));
+(runtime_lib_path = ((((local_install_base_path).join((ByteString::from_utf8_without_validation("lib"sv))))).join(TRY((((TRY((jakt__platform::Target::active()))).name(false)))))));
 }
 Function<JaktInternal::DynamicArray<ByteString>()> const compiler_invocation_args = [&compiler_args, &abbreviated_triple, &sysroot, &compiler_include_dir, &compiler_lib_dir, &system_include_dirs, &system_lib_dirs, &runtime_lib_path, &runtime_path]() -> JaktInternal::DynamicArray<ByteString> {
 {
 JaktInternal::DynamicArray<ByteString> args = ((((compiler_args)[(JaktInternal::Range<i64>{static_cast<i64>(0LL),static_cast<i64>(9223372036854775807LL)})])).to_array());
-((args).push((ByteString::must_from_utf8("--target-triple"sv))));
+((args).push((ByteString::from_utf8_without_validation("--target-triple"sv))));
 ((args).push(__jakt_format((StringView::from_string_literal("{}-unknown"sv)),abbreviated_triple)));
 if (((sysroot).has_value())){
-((args).push((ByteString::must_from_utf8("--extra-cpp-flag"sv))));
+((args).push((ByteString::from_utf8_without_validation("--extra-cpp-flag"sv))));
 ((args).push(__jakt_format((StringView::from_string_literal("--sysroot={}"sv)),(sysroot.value()))));
 }
 if (((compiler_include_dir).has_value())){
-((args).push((ByteString::must_from_utf8("-I"sv))));
+((args).push((ByteString::from_utf8_without_validation("-I"sv))));
 ((args).push((compiler_include_dir.value())));
 }
 if (((compiler_lib_dir).has_value())){
-((args).push((ByteString::must_from_utf8("-L"sv))));
+((args).push((ByteString::from_utf8_without_validation("-L"sv))));
 ((args).push((compiler_lib_dir.value())));
 }
 {
@@ -778,7 +778,7 @@ break;
 }
 ByteString system_include_dir = (_magic_value.value());
 {
-((args).push((ByteString::must_from_utf8("-I"sv))));
+((args).push((ByteString::from_utf8_without_validation("-I"sv))));
 ((args).push(system_include_dir));
 }
 
@@ -794,7 +794,7 @@ break;
 }
 ByteString system_lib_dir = (_magic_value.value());
 {
-((args).push((ByteString::must_from_utf8("-L"sv))));
+((args).push((ByteString::from_utf8_without_validation("-L"sv))));
 ((args).push(system_lib_dir));
 }
 
@@ -802,11 +802,11 @@ ByteString system_lib_dir = (_magic_value.value());
 }
 
 if (((runtime_lib_path).has_value())){
-((args).push((ByteString::must_from_utf8("--runtime-library-path"sv))));
+((args).push((ByteString::from_utf8_without_validation("--runtime-library-path"sv))));
 ((args).push((((runtime_lib_path.value())).to_string())));
 }
 if (((runtime_path).has_value())){
-((args).push((ByteString::must_from_utf8("--runtime-path"sv))));
+((args).push((ByteString::from_utf8_without_validation("--runtime-path"sv))));
 ((args).push((((runtime_path.value())).to_string())));
 }
 return args;
@@ -834,33 +834,33 @@ break;
 }
 jakt__path::Path source = (_magic_value.value());
 {
-((invocation_args).push((ByteString::must_from_utf8("-X"sv))));
+((invocation_args).push((ByteString::from_utf8_without_validation("-X"sv))));
 ((invocation_args).push(((source).to_string())));
 }
 
 }
 }
 
-((invocation_args).push((ByteString::must_from_utf8("--static"sv))));
-((invocation_args).push((ByteString::must_from_utf8("--link-archive"sv))));
+((invocation_args).push((ByteString::from_utf8_without_validation("--static"sv))));
+((invocation_args).push((ByteString::from_utf8_without_validation("--link-archive"sv))));
 ((invocation_args).push(((target).to_string())));
-((invocation_args).push((ByteString::must_from_utf8("/dev/null"sv))));
+((invocation_args).push((ByteString::from_utf8_without_validation("/dev/null"sv))));
 return TRY((compiler_main(invocation_args)));
 }
 }
 ;
 if ((!(((runtime_archive_path).exists())))){
 warnln((StringView::from_string_literal("Building jakt runtime for target {}..."sv)),abbreviated_triple);
-JaktInternal::DynamicArray<jakt__path::Path> sources = DynamicArray<jakt__path::Path>::create_with({(((runtime_path.value())).join((ByteString::must_from_utf8("IO/File.cpp"sv))))});
-((sources).push_values(((TRY((find_with_extension((((runtime_path.value())).join((ByteString::must_from_utf8("AK"sv)))),(ByteString::must_from_utf8("cpp"sv)))))))));
-((sources).push_values(((TRY((find_with_extension((((runtime_path.value())).join((ByteString::must_from_utf8("Jakt"sv)))),(ByteString::must_from_utf8("cpp"sv)))))))));
+JaktInternal::DynamicArray<jakt__path::Path> sources = DynamicArray<jakt__path::Path>::create_with({(((runtime_path.value())).join((ByteString::from_utf8_without_validation("IO/File.cpp"sv))))});
+((sources).push_values(((TRY((find_with_extension((((runtime_path.value())).join((ByteString::from_utf8_without_validation("AK"sv)))),(ByteString::from_utf8_without_validation("cpp"sv)))))))));
+((sources).push_values(((TRY((find_with_extension((((runtime_path.value())).join((ByteString::from_utf8_without_validation("Jakt"sv)))),(ByteString::from_utf8_without_validation("cpp"sv)))))))));
 if (((TRY((build_archive(sources,runtime_archive_path)))) != (static_cast<int>(0)))){
 return static_cast<int>(1);
 }
 }
 if ((!(((main_archive_path).exists())))){
 warnln((StringView::from_string_literal("Building jakt main for target {}..."sv)),abbreviated_triple);
-JaktInternal::DynamicArray<jakt__path::Path> sources = DynamicArray<jakt__path::Path>::create_with({(((runtime_path.value())).join((ByteString::must_from_utf8("Main.cpp"sv))))});
+JaktInternal::DynamicArray<jakt__path::Path> sources = DynamicArray<jakt__path::Path>::create_with({(((runtime_path.value())).join((ByteString::from_utf8_without_validation("Main.cpp"sv))))});
 if (((TRY((build_archive(sources,main_archive_path)))) != (static_cast<int>(0)))){
 return static_cast<int>(1);
 }
@@ -871,7 +871,7 @@ if ((!(only_support_libs))){
 JaktInternal::DynamicArray<ByteString> compiler_args = compiler_invocation_args();
 jakt__path::Path const source_path = jakt__path::Path::from_string((source_file.value()));
 ((compiler_args).push(((source_path).to_string())));
-((compiler_args).push((ByteString::must_from_utf8("-o"sv))));
+((compiler_args).push((ByteString::from_utf8_without_validation("-o"sv))));
 ByteString const default_output_filename = ((((install_bin_dir).join(output_filename.value_or_lazy_evaluated([&] { return ((source_path).basename(true)); })))).to_string());
 ((compiler_args).push(default_output_filename));
 return TRY((compiler_main(compiler_args)));
@@ -952,85 +952,85 @@ return files_found;
 
 ByteString escape_for_depfile(ByteString const input) {
 {
-return ((((((input).replace((ByteString::must_from_utf8("$"sv)),(ByteString::must_from_utf8("$$"sv))))).replace((ByteString::must_from_utf8("#"sv)),(ByteString::must_from_utf8("\\#"sv))))).replace((ByteString::must_from_utf8(" "sv)),(ByteString::must_from_utf8("\\ "sv))));
+return ((((((input).replace((ByteString::from_utf8_without_validation("$"sv)),(ByteString::from_utf8_without_validation("$$"sv))))).replace((ByteString::from_utf8_without_validation("#"sv)),(ByteString::from_utf8_without_validation("\\#"sv))))).replace((ByteString::from_utf8_without_validation(" "sv)),(ByteString::from_utf8_without_validation("\\ "sv))));
 }
 }
 
 ErrorOr<int> compiler_main(JaktInternal::DynamicArray<ByteString> const args) {
 {
 jakt__arguments::ArgsParser args_parser = jakt__arguments::ArgsParser::from_args(args);
-if (TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-h"sv)), (ByteString::must_from_utf8("--help"sv))})))))){
+if (TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-h"sv)), (ByteString::from_utf8_without_validation("--help"sv))})))))){
 outln((StringView::from_string_literal("{}\n"sv)),usage());
 outln((StringView::from_string_literal("{}"sv)),help());
 return static_cast<int>(0);
 }
-if (TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-v"sv)), (ByteString::must_from_utf8("--version"sv))})))))){
+if (TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-v"sv)), (ByteString::from_utf8_without_validation("--version"sv))})))))){
 outln((StringView::from_string_literal("{}"sv)),TRY((git::commit_hash())));
 return static_cast<int>(0);
 }
 jakt__path::Path const current_executable_path = jakt__path::Path::from_string(TRY((File::current_executable_path())));
 jakt__path::Path const install_base_path = ((((current_executable_path).parent())).parent());
-jakt__path::Path const default_runtime_path = ((install_base_path).join((ByteString::must_from_utf8("include/runtime"sv))));
-jakt__path::Path const default_runtime_library_path = ((install_base_path).join((ByteString::must_from_utf8("lib"sv))));
+jakt__path::Path const default_runtime_path = ((install_base_path).join((ByteString::from_utf8_without_validation("include/runtime"sv))));
+jakt__path::Path const default_runtime_library_path = ((install_base_path).join((ByteString::from_utf8_without_validation("lib"sv))));
 ByteString const default_compiler_path = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<int>>{
 auto __jakt_enum_value = (false);
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("clang-cl"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("clang-cl"sv)));
 }
 else {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8("clang++"sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("clang++"sv)));
 }
 }());
     if (_jakt_value.is_return())
         return _jakt_value.release_return();
     _jakt_value.release_value();
 });
-bool const optimize = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-O"sv))})))));
-bool const lexer_debug = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-dl"sv))})))));
-bool const parser_debug = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-dp"sv))})))));
-bool const typechecker_debug = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-dt"sv))})))));
-bool const build_executable = (!(TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-S"sv)), (ByteString::must_from_utf8("--emit-cpp-source-only"sv))})))))));
-bool const run_executable = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-cr"sv)), (ByteString::must_from_utf8("--compile-run"sv))})))));
-bool const codegen_debug = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-d"sv))})))));
-bool const debug_print = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("--debug-print"sv))})))));
-bool const prettify_cpp_source = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-p"sv)), (ByteString::must_from_utf8("--prettify-cpp-source"sv))})))));
-bool const json_errors = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-j"sv)), (ByteString::must_from_utf8("--json-errors"sv))})))));
-bool const dump_type_hints = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-H"sv)), (ByteString::must_from_utf8("--type-hints"sv))})))));
-bool const dump_try_hints = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("--try-hints"sv))})))));
-bool const check_only = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-c"sv)), (ByteString::must_from_utf8("--check-only"sv))})))));
-JaktInternal::Optional<ByteString> const generate_depfile = TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-M"sv)), (ByteString::must_from_utf8("--dep-file"sv))})))));
-JaktInternal::Optional<ByteString> const target_triple = TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-T"sv)), (ByteString::must_from_utf8("--target-triple"sv))})))));
-ByteString const runtime_library_path = TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-RLP"sv)), (ByteString::must_from_utf8("--runtime-library-path"sv))}))))).value_or_lazy_evaluated([&] { return ((default_runtime_library_path).to_string()); });
-ByteString compiler_job_count = TRY((TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-J"sv)), (ByteString::must_from_utf8("--jobs"sv))}))))).try_value_or_lazy_evaluated([&]() -> ErrorOr<ByteString> { return (ByteString::must_from_utf8("2"sv)); })));
+bool const optimize = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-O"sv))})))));
+bool const lexer_debug = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-dl"sv))})))));
+bool const parser_debug = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-dp"sv))})))));
+bool const typechecker_debug = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-dt"sv))})))));
+bool const build_executable = (!(TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-S"sv)), (ByteString::from_utf8_without_validation("--emit-cpp-source-only"sv))})))))));
+bool const run_executable = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-cr"sv)), (ByteString::from_utf8_without_validation("--compile-run"sv))})))));
+bool const codegen_debug = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-d"sv))})))));
+bool const debug_print = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("--debug-print"sv))})))));
+bool const prettify_cpp_source = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-p"sv)), (ByteString::from_utf8_without_validation("--prettify-cpp-source"sv))})))));
+bool const json_errors = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-j"sv)), (ByteString::from_utf8_without_validation("--json-errors"sv))})))));
+bool const dump_type_hints = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-H"sv)), (ByteString::from_utf8_without_validation("--type-hints"sv))})))));
+bool const dump_try_hints = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("--try-hints"sv))})))));
+bool const check_only = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-c"sv)), (ByteString::from_utf8_without_validation("--check-only"sv))})))));
+JaktInternal::Optional<ByteString> const generate_depfile = TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-M"sv)), (ByteString::from_utf8_without_validation("--dep-file"sv))})))));
+JaktInternal::Optional<ByteString> const target_triple = TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-T"sv)), (ByteString::from_utf8_without_validation("--target-triple"sv))})))));
+ByteString const runtime_library_path = TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-RLP"sv)), (ByteString::from_utf8_without_validation("--runtime-library-path"sv))}))))).value_or_lazy_evaluated([&] { return ((default_runtime_library_path).to_string()); });
+ByteString compiler_job_count = TRY((TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-J"sv)), (ByteString::from_utf8_without_validation("--jobs"sv))}))))).try_value_or_lazy_evaluated([&]() -> ErrorOr<ByteString> { return (ByteString::from_utf8_without_validation("2"sv)); })));
 if (false){
-(compiler_job_count = (ByteString::must_from_utf8("1"sv)));
+(compiler_job_count = (ByteString::from_utf8_without_validation("1"sv)));
 }
-ByteString const clang_format_path = TRY((TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-F"sv)), (ByteString::must_from_utf8("--clang-format-path"sv))}))))).try_value_or_lazy_evaluated([&]() -> ErrorOr<ByteString> { return (ByteString::must_from_utf8("clang-format"sv)); })));
-ByteString const runtime_path = TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-R"sv)), (ByteString::must_from_utf8("--runtime-path"sv))}))))).value_or_lazy_evaluated([&] { return ((default_runtime_path).to_string()); });
-JaktInternal::Optional<ByteString> const assume_main_file_path = TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("--assume-main-file-path"sv))})))));
-jakt__path::Path const binary_dir = jakt__path::Path::from_string(TRY((TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-B"sv)), (ByteString::must_from_utf8("--binary-dir"sv))}))))).try_value_or_lazy_evaluated([&]() -> ErrorOr<ByteString> { return (ByteString::must_from_utf8("build"sv)); }))));
-JaktInternal::Optional<ByteString> const dot_clang_format_path = TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-D"sv)), (ByteString::must_from_utf8("--dot-clang-format-path"sv))})))));
-ByteString const cxx_compiler_path = TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-C"sv)), (ByteString::must_from_utf8("--cxx-compiler-path"sv))}))))).value_or_lazy_evaluated([&] { return default_compiler_path; });
-JaktInternal::Optional<ByteString> const archiver_path = TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-A"sv)), (ByteString::must_from_utf8("--archiver"sv))})))));
-JaktInternal::Optional<ByteString> const link_archive = TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-a"sv)), (ByteString::must_from_utf8("--link-archive"sv))})))));
-bool const archive_link_support_libs = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("--archive-link-support-libs"sv))})))));
-bool const build_static = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("--static"sv))})))));
-JaktInternal::DynamicArray<ByteString> const extra_include_paths = TRY((((args_parser).option_multiple(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-I"sv))})))));
-JaktInternal::DynamicArray<ByteString> const extra_lib_paths = TRY((((args_parser).option_multiple(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-L"sv))})))));
-JaktInternal::DynamicArray<ByteString> const extra_link_libs = TRY((((args_parser).option_multiple(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-l"sv))})))));
-JaktInternal::DynamicArray<ByteString> const extra_linker_args = TRY((((args_parser).option_multiple(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-Wl"sv))})))));
-JaktInternal::DynamicArray<ByteString> const extra_cpp_files = TRY((((args_parser).option_multiple(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-X"sv))})))));
-JaktInternal::DynamicArray<ByteString> const extra_cpp_flags = TRY((((args_parser).option_multiple(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("--extra-cpp-flag"sv))})))));
-JaktInternal::Optional<ByteString> const set_output_filename = TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-o"sv)), (ByteString::must_from_utf8("--output-filename"sv))})))));
-JaktInternal::Optional<ByteString> const goto_def = TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-g"sv)), (ByteString::must_from_utf8("--goto-def"sv))})))));
-JaktInternal::Optional<ByteString> const goto_type_def = TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-t"sv)), (ByteString::must_from_utf8("--goto-type-def"sv))})))));
-JaktInternal::Optional<ByteString> const hover = TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-e"sv)), (ByteString::must_from_utf8("--hover"sv))})))));
-JaktInternal::Optional<ByteString> const completions = TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-m"sv)), (ByteString::must_from_utf8("--completions"sv))})))));
-bool const print_symbols = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("--print-symbols"sv))})))));
-JaktInternal::Optional<ByteString> const project_name = TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("--create"sv))})))));
-bool const use_ccache = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("--use-ccache"sv))})))));
-JaktInternal::DynamicArray<ByteString> const user_configuration_specs = TRY((((args_parser).option_multiple(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("--config"sv))})))));
+ByteString const clang_format_path = TRY((TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-F"sv)), (ByteString::from_utf8_without_validation("--clang-format-path"sv))}))))).try_value_or_lazy_evaluated([&]() -> ErrorOr<ByteString> { return (ByteString::from_utf8_without_validation("clang-format"sv)); })));
+ByteString const runtime_path = TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-R"sv)), (ByteString::from_utf8_without_validation("--runtime-path"sv))}))))).value_or_lazy_evaluated([&] { return ((default_runtime_path).to_string()); });
+JaktInternal::Optional<ByteString> const assume_main_file_path = TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("--assume-main-file-path"sv))})))));
+jakt__path::Path const binary_dir = jakt__path::Path::from_string(TRY((TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-B"sv)), (ByteString::from_utf8_without_validation("--binary-dir"sv))}))))).try_value_or_lazy_evaluated([&]() -> ErrorOr<ByteString> { return (ByteString::from_utf8_without_validation("build"sv)); }))));
+JaktInternal::Optional<ByteString> const dot_clang_format_path = TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-D"sv)), (ByteString::from_utf8_without_validation("--dot-clang-format-path"sv))})))));
+ByteString const cxx_compiler_path = TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-C"sv)), (ByteString::from_utf8_without_validation("--cxx-compiler-path"sv))}))))).value_or_lazy_evaluated([&] { return default_compiler_path; });
+JaktInternal::Optional<ByteString> const archiver_path = TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-A"sv)), (ByteString::from_utf8_without_validation("--archiver"sv))})))));
+JaktInternal::Optional<ByteString> const link_archive = TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-a"sv)), (ByteString::from_utf8_without_validation("--link-archive"sv))})))));
+bool const archive_link_support_libs = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("--archive-link-support-libs"sv))})))));
+bool const build_static = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("--static"sv))})))));
+JaktInternal::DynamicArray<ByteString> const extra_include_paths = TRY((((args_parser).option_multiple(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-I"sv))})))));
+JaktInternal::DynamicArray<ByteString> const extra_lib_paths = TRY((((args_parser).option_multiple(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-L"sv))})))));
+JaktInternal::DynamicArray<ByteString> const extra_link_libs = TRY((((args_parser).option_multiple(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-l"sv))})))));
+JaktInternal::DynamicArray<ByteString> const extra_linker_args = TRY((((args_parser).option_multiple(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-Wl"sv))})))));
+JaktInternal::DynamicArray<ByteString> const extra_cpp_files = TRY((((args_parser).option_multiple(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-X"sv))})))));
+JaktInternal::DynamicArray<ByteString> const extra_cpp_flags = TRY((((args_parser).option_multiple(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("--extra-cpp-flag"sv))})))));
+JaktInternal::Optional<ByteString> const set_output_filename = TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-o"sv)), (ByteString::from_utf8_without_validation("--output-filename"sv))})))));
+JaktInternal::Optional<ByteString> const goto_def = TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-g"sv)), (ByteString::from_utf8_without_validation("--goto-def"sv))})))));
+JaktInternal::Optional<ByteString> const goto_type_def = TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-t"sv)), (ByteString::from_utf8_without_validation("--goto-type-def"sv))})))));
+JaktInternal::Optional<ByteString> const hover = TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-e"sv)), (ByteString::from_utf8_without_validation("--hover"sv))})))));
+JaktInternal::Optional<ByteString> const completions = TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-m"sv)), (ByteString::from_utf8_without_validation("--completions"sv))})))));
+bool const print_symbols = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("--print-symbols"sv))})))));
+JaktInternal::Optional<ByteString> const project_name = TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("--create"sv))})))));
+bool const use_ccache = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("--use-ccache"sv))})))));
+JaktInternal::DynamicArray<ByteString> const user_configuration_specs = TRY((((args_parser).option_multiple(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("--config"sv))})))));
 JaktInternal::Dictionary<ByteString,ByteString> user_configuration = Dictionary<ByteString, ByteString>::create_with_entries({});
 {
 JaktInternal::ArrayIterator<ByteString> _magic = ((user_configuration_specs).iterator());
@@ -1047,7 +1047,7 @@ JaktInternal::DynamicArray<ByteString> const parts = ((spec).split('='));
 auto __jakt_enum_value = (((parts).size()));
 if (__jakt_enum_value == static_cast<size_t>(1ULL)) {
 {
-user_configuration.set(((parts)[static_cast<i64>(0LL)]), (ByteString::must_from_utf8("true"sv)));
+user_configuration.set(((parts)[static_cast<i64>(0LL)]), (ByteString::from_utf8_without_validation("true"sv)));
 }
 return JaktInternal::ExplicitValue<void>();
 }
@@ -1079,13 +1079,13 @@ return JaktInternal::ExplicitValue<void>();
 }
 }
 
-bool const interpret_run = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-r"sv)), (ByteString::must_from_utf8("--run"sv))})))));
-bool const format = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-f"sv)), (ByteString::must_from_utf8("--format"sv))})))));
-bool const format_inplace = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-fi"sv)), (ByteString::must_from_utf8("--format-inplace"sv))})))));
-bool const format_debug = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-fd"sv)), (ByteString::must_from_utf8("--format-debug"sv))})))));
-ByteString const input_format_range = TRY((TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-fr"sv)), (ByteString::must_from_utf8("--format-range"sv))}))))).try_value_or_lazy_evaluated([&]() -> ErrorOr<ByteString> { return (ByteString::must_from_utf8(""sv)); })));
-bool const ak_stdlib = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("--ak-is-my-only-stdlib"sv))})))));
-bool const discover_only = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("--discover"sv))})))));
+bool const interpret_run = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-r"sv)), (ByteString::from_utf8_without_validation("--run"sv))})))));
+bool const format = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-f"sv)), (ByteString::from_utf8_without_validation("--format"sv))})))));
+bool const format_inplace = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-fi"sv)), (ByteString::from_utf8_without_validation("--format-inplace"sv))})))));
+bool const format_debug = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-fd"sv)), (ByteString::from_utf8_without_validation("--format-debug"sv))})))));
+ByteString const input_format_range = TRY((TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-fr"sv)), (ByteString::from_utf8_without_validation("--format-range"sv))}))))).try_value_or_lazy_evaluated([&]() -> ErrorOr<ByteString> { return (ByteString::from_utf8_without_validation(""sv)); })));
+bool const ak_stdlib = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("--ak-is-my-only-stdlib"sv))})))));
+bool const discover_only = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("--discover"sv))})))));
 size_t const max_concurrent = (infallible_integer_cast<size_t>((({ Optional<u32> __jakt_var_961;
 auto __jakt_var_962 = [&]() -> ErrorOr<u32> { return TRY((value_or_throw<u32>(((compiler_job_count).to_uint())))); }();
 if (__jakt_var_962.is_error()) {{
@@ -1095,8 +1095,8 @@ return static_cast<int>(1);
 } else {__jakt_var_961 = __jakt_var_962.release_value();
 }
 __jakt_var_961.release_value(); }))));
-if (TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("--repl"sv))})))))){
-repl::REPL repl = TRY((repl::REPL::create(jakt__path::Path::from_parts(DynamicArray<ByteString>::create_with({runtime_path, (ByteString::must_from_utf8("jaktlib"sv))})),target_triple,user_configuration)));
+if (TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("--repl"sv))})))))){
+repl::REPL repl = TRY((repl::REPL::create(jakt__path::Path::from_parts(DynamicArray<ByteString>::create_with({runtime_path, (ByteString::from_utf8_without_validation("jaktlib"sv))})),target_triple,user_configuration)));
 TRY((((repl).run())));
 return static_cast<int>(0);
 }
@@ -1152,7 +1152,7 @@ jakt__path::Path const file_path = jakt__path::Path::from_string((file_name.valu
 ByteString const guessed_output_filename = ((file_path).basename(true));
 ByteString const output_filename = ((((binary_dir).join(set_output_filename.value_or_lazy_evaluated([&] { return guessed_output_filename; })))).to_string());
 JaktInternal::DynamicArray<error::JaktError> errors = DynamicArray<error::JaktError>::create_with({});
-NonnullRefPtr<compiler::Compiler> compiler = compiler::Compiler::__jakt_create(DynamicArray<jakt__path::Path>::create_with({}),Dictionary<ByteString, utility::FileId>::create_with_entries({}),DynamicArray<error::JaktError>::create_with({}),JaktInternal::OptionalNone(),DynamicArray<u8>::create_with({}),lexer_debug,parser_debug,false,debug_print,jakt__path::Path::from_parts(DynamicArray<ByteString>::create_with({runtime_path, (ByteString::must_from_utf8("jaktlib"sv))})),extra_include_paths,json_errors,dump_type_hints,dump_try_hints,optimize,target_triple,user_configuration,binary_dir,({
+NonnullRefPtr<compiler::Compiler> compiler = compiler::Compiler::__jakt_create(DynamicArray<jakt__path::Path>::create_with({}),Dictionary<ByteString, utility::FileId>::create_with_entries({}),DynamicArray<error::JaktError>::create_with({}),JaktInternal::OptionalNone(),DynamicArray<u8>::create_with({}),lexer_debug,parser_debug,false,debug_print,jakt__path::Path::from_parts(DynamicArray<ByteString>::create_with({runtime_path, (ByteString::from_utf8_without_validation("jaktlib"sv))})),extra_include_paths,json_errors,dump_type_hints,dump_try_hints,optimize,target_triple,user_configuration,binary_dir,({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<jakt__path::Path>,ErrorOr<int>>{
 auto __jakt_enum_value = (((assume_main_file_path).has_value()));
 if (__jakt_enum_value == true) {
@@ -1169,7 +1169,7 @@ VERIFY_NOT_REACHED();
 }));
 TRY((((compiler)->load_prelude())));
 if (((format || format_debug) || format_inplace)){
-NonnullRefPtr<jakt__file_iterator::RecursiveFileIterator> const directory_or_file_paths = TRY((jakt__file_iterator::RecursiveFileIterator::make(file_path,(ByteString::must_from_utf8("jakt"sv)))));
+NonnullRefPtr<jakt__file_iterator::RecursiveFileIterator> const directory_or_file_paths = TRY((jakt__file_iterator::RecursiveFileIterator::make(file_path,(ByteString::from_utf8_without_validation("jakt"sv)))));
 {
 NonnullRefPtr<jakt__file_iterator::RecursiveFileIterator> _magic = directory_or_file_paths;
 for (;;){
@@ -1243,7 +1243,7 @@ ide::JaktSymbol symbol = (_magic_value.value());
 }
 }
 
-outln((StringView::from_string_literal("[{}]"sv)),utility::join(symbol_representations,(ByteString::must_from_utf8(","sv))));
+outln((StringView::from_string_literal("[{}]"sv)),utility::join(symbol_representations,(ByteString::from_utf8_without_validation(","sv))));
 return static_cast<int>(0);
 }
 typechecker::Typechecker typechecker = TRY((typechecker::Typechecker::typecheck(compiler,parsed_namespace)));
@@ -1286,7 +1286,7 @@ JaktInternal::Tuple<ByteString,JaktInternal::DynamicArray<ids::FunctionId>> cons
 ByteString const function_name = ((jakt__function_name__overload_set__).template get<0>());
 JaktInternal::DynamicArray<ids::FunctionId> const overload_set = ((jakt__function_name__overload_set__).template get<1>());
 
-if (((function_name) == ((ByteString::must_from_utf8("main"sv))))){
+if (((function_name) == ((ByteString::from_utf8_without_validation("main"sv))))){
 (main_function_id = ((overload_set)[static_cast<i64>(0LL)]));
 break;
 }
@@ -1508,7 +1508,7 @@ JaktInternal::Tuple<ByteString,ByteString> const __module_file_path_ = contents_
 ByteString const _ = ((__module_file_path_).template get<0>());
 ByteString const module_file_path = ((__module_file_path_).template get<1>());
 
-if (((module_file_path) == ((ByteString::must_from_utf8("__prelude__"sv))))){
+if (((module_file_path) == ((ByteString::from_utf8_without_validation("__prelude__"sv))))){
 continue;
 }
 jakt__path::Path const path = ((binary_dir).join(file));
@@ -1548,7 +1548,7 @@ JaktInternal::Tuple<ByteString,ByteString> const contents_module_file_path_ = co
 ByteString const contents = ((contents_module_file_path_).template get<0>());
 ByteString const module_file_path = ((contents_module_file_path_).template get<1>());
 
-if (((module_file_path) == ((ByteString::must_from_utf8("__prelude__"sv))))){
+if (((module_file_path) == ((ByteString::from_utf8_without_validation("__prelude__"sv))))){
 continue;
 }
 ByteString const file = escape_for_depfile(module_file_path);
@@ -1679,7 +1679,7 @@ JaktInternal::Tuple<ByteString,JaktInternal::Tuple<ByteString,ByteString>> const
 ByteString const file_name = ((jakt__file_name_____).template get<0>());
 JaktInternal::Tuple<ByteString,ByteString> const _ = ((jakt__file_name_____).template get<1>());
 
-if (((file_name).ends_with((ByteString::must_from_utf8(".h"sv))))){
+if (((file_name).ends_with((ByteString::from_utf8_without_validation(".h"sv))))){
 continue;
 }
 ((files).push(file_name));
@@ -1704,21 +1704,21 @@ ByteString file = (_magic_value.value());
 }
 
 build::Builder builder = TRY((build::Builder::for_building(files,max_concurrent)));
-JaktInternal::DynamicArray<ByteString> extra_compiler_flags = DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-c"sv))});
+JaktInternal::DynamicArray<ByteString> extra_compiler_flags = DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-c"sv))});
 if (ak_stdlib){
-((extra_compiler_flags).push((ByteString::must_from_utf8("-DJAKT_USING_AK_AS_STANDARD_LIBRARY=1"sv))));
+((extra_compiler_flags).push((ByteString::from_utf8_without_validation("-DJAKT_USING_AK_AS_STANDARD_LIBRARY=1"sv))));
 }
 if (build_static){
-((extra_compiler_flags).push((ByteString::must_from_utf8("-static"sv))));
+((extra_compiler_flags).push((ByteString::from_utf8_without_validation("-static"sv))));
 }
 if (((target_triple).has_value())){
-if ((TRY((compiler_is((ByteString::must_from_utf8("clang++"sv))))) && [](ByteString const& self, ByteString rhs) -> bool {
+if ((TRY((compiler_is((ByteString::from_utf8_without_validation("clang++"sv))))) && [](ByteString const& self, ByteString rhs) -> bool {
 {
 return (!(((self) == (rhs))));
 }
 }
 ((target_triple.value()),TRY((((TRY((jakt__platform::Target::active()))).name(false))))))){
-((extra_compiler_flags).push((ByteString::must_from_utf8("-target"sv))));
+((extra_compiler_flags).push((ByteString::from_utf8_without_validation("-target"sv))));
 ((extra_compiler_flags).push((target_triple.value())));
 }
 }
@@ -1767,10 +1767,10 @@ VERIFY_NOT_REACHED();
 if (((link_archive).has_value())){
 JaktInternal::DynamicArray<ByteString> extra_arguments = DynamicArray<ByteString>::create_with({});
 if (archive_link_support_libs){
-((extra_arguments).push(((((runtime_lib_path).join(TRY((platform::library_name_for_target((ByteString::must_from_utf8("main"sv)),target)))))).to_string())));
-((extra_arguments).push(((((runtime_lib_path).join(TRY((platform::library_name_for_target((ByteString::must_from_utf8("runtime"sv)),target)))))).to_string())));
+((extra_arguments).push(((((runtime_lib_path).join(TRY((platform::library_name_for_target((ByteString::from_utf8_without_validation("main"sv)),target)))))).to_string())));
+((extra_arguments).push(((((runtime_lib_path).join(TRY((platform::library_name_for_target((ByteString::from_utf8_without_validation("runtime"sv)),target)))))).to_string())));
 }
-auto __jakt_var_970 = [&]() -> ErrorOr<void> { return TRY((((builder).link_into_archive(TRY((archiver_path.try_value_or_lazy_evaluated([&]() -> ErrorOr<ByteString> { return (ByteString::must_from_utf8("ar"sv)); }))),((((binary_dir).join((link_archive.value())))).to_string()),extra_arguments)))), ErrorOr<void>{}; }();
+auto __jakt_var_970 = [&]() -> ErrorOr<void> { return TRY((((builder).link_into_archive(TRY((archiver_path.try_value_or_lazy_evaluated([&]() -> ErrorOr<ByteString> { return (ByteString::from_utf8_without_validation("ar"sv)); }))),((((binary_dir).join((link_archive.value())))).to_string()),extra_arguments)))), ErrorOr<void>{}; }();
 if (__jakt_var_970.is_error()) {{
 return static_cast<int>(1);
 }
@@ -1778,7 +1778,7 @@ return static_cast<int>(1);
 ;
 }
 else {
-JaktInternal::DynamicArray<ByteString> extra_arguments = DynamicArray<ByteString>::create_with({(ByteString::must_from_utf8("-g"sv))});
+JaktInternal::DynamicArray<ByteString> extra_arguments = DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-g"sv))});
 {
 JaktInternal::ArrayIterator<ByteString> _magic = ((extra_cpp_flags).iterator());
 for (;;){
@@ -1795,18 +1795,18 @@ ByteString flag = (_magic_value.value());
 }
 
 if (((target_triple).has_value())){
-if ((TRY((compiler_is((ByteString::must_from_utf8("clang++"sv))))) && [](ByteString const& self, ByteString rhs) -> bool {
+if ((TRY((compiler_is((ByteString::from_utf8_without_validation("clang++"sv))))) && [](ByteString const& self, ByteString rhs) -> bool {
 {
 return (!(((self) == (rhs))));
 }
 }
 ((target_triple.value()),TRY((((TRY((jakt__platform::Target::active()))).name(false))))))){
-((extra_arguments).push((ByteString::must_from_utf8("-target"sv))));
+((extra_arguments).push((ByteString::from_utf8_without_validation("-target"sv))));
 ((extra_arguments).push(TRY((((target).name(true))))));
 }
 }
-((extra_arguments).push(((((runtime_lib_path).join(TRY((platform::library_name_for_target((ByteString::must_from_utf8("main"sv)),target)))))).to_string())));
-((extra_arguments).push(((((runtime_lib_path).join(TRY((platform::library_name_for_target((ByteString::must_from_utf8("runtime"sv)),target)))))).to_string())));
+((extra_arguments).push(((((runtime_lib_path).join(TRY((platform::library_name_for_target((ByteString::from_utf8_without_validation("main"sv)),target)))))).to_string())));
+((extra_arguments).push(((((runtime_lib_path).join(TRY((platform::library_name_for_target((ByteString::from_utf8_without_validation("runtime"sv)),target)))))).to_string())));
 {
 JaktInternal::ArrayIterator<ByteString> _magic = ((extra_lib_paths).iterator());
 for (;;){
@@ -1816,7 +1816,7 @@ break;
 }
 ByteString path = (_magic_value.value());
 {
-((extra_arguments).push((ByteString::must_from_utf8("-L"sv))));
+((extra_arguments).push((ByteString::from_utf8_without_validation("-L"sv))));
 ((extra_arguments).push(path));
 }
 
@@ -1832,16 +1832,16 @@ break;
 }
 ByteString lib = (_magic_value.value());
 {
-((extra_arguments).push((ByteString::must_from_utf8("-l"sv))));
+((extra_arguments).push((ByteString::from_utf8_without_validation("-l"sv))));
 ((extra_arguments).push(lib));
 }
 
 }
 }
 
-if ((false && TRY((compiler_is((ByteString::must_from_utf8("clang-cl"sv))))))){
-((extra_arguments).push((ByteString::must_from_utf8("/link"sv))));
-((extra_arguments).push((ByteString::must_from_utf8("/subsystem:console"sv))));
+if ((false && TRY((compiler_is((ByteString::from_utf8_without_validation("clang-cl"sv))))))){
+((extra_arguments).push((ByteString::from_utf8_without_validation("/link"sv))));
+((extra_arguments).push((ByteString::from_utf8_without_validation("/subsystem:console"sv))));
 }
 {
 JaktInternal::ArrayIterator<ByteString> _magic = ((extra_linker_args).iterator());
@@ -1930,16 +1930,16 @@ ByteString const space = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<void>>{
 auto __jakt_enum_value = (next_char);
 if (__jakt_enum_value == static_cast<u8>(u8' ')) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(""sv)));
 }
 else if (__jakt_enum_value == static_cast<u8>(u8'\t')) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(""sv)));
 }
 else if (__jakt_enum_value == static_cast<u8>(u8'/')) {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(""sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(""sv)));
 }
 else {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" "sv)));
 }
 }());
     if (_jakt_value.is_return())
@@ -1957,7 +1957,7 @@ if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(indent(((formatted_token).indent)));
 }
 else {
-return JaktInternal::ExplicitValue((ByteString::must_from_utf8(" "sv)));
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(" "sv)));
 }
 }());
     if (_jakt_value.is_return())
