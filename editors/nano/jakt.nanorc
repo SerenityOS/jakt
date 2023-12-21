@@ -7,7 +7,7 @@ color magenta "fn [a-z_0-9]+"
 color magenta "comptime [a-z_0-9]+"
 
 # Reserved words
-color yellow "\<(and|anon|boxed|break|catch|class|continue|cpp|defer|else|enum|extern|false|for|fn|comptime|if|import|in|is|let|loop|match|mut|namespace|not|or|private|public|raw|return|restricted|struct|this|throw|throws|true|try|unsafe|weak|while|yield|guard)\>"
+color yellow "\<(and|anon|boxed|break|catch|class|continue|cpp|defer|else|enum|extern|false|for|fn|comptime|if|import|in|is|let|loop|match|must|mut|namespace|not|or|private|public|raw|return|restricted|struct|this|throw|throws|true|try|unsafe|weak|while|yield|guard)\>"
 
 # Constants
 color magenta "[A-Z][A-Z_0-9]+"
