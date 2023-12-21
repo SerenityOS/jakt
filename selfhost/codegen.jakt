@@ -2883,15 +2883,15 @@ struct CodeGenerator {
                 mut output = ""
                 if repeat.has_value() {
                     let repeat_val = repeat.value()
-                    output += "(DynamicArray<"
+                    output += "DynamicArray<"
                     output += .codegen_type(inner_type_id)
                     output += ">::filled("
                     output += .codegen_expression(repeat_val)
                     output += ", "
                     output += .codegen_expression(vals[0])
-                    output += "))"
+                    output += ")"
                 } else {
-                    output += "(DynamicArray<"
+                    output += "DynamicArray<"
                     output += .codegen_type(inner_type_id)
                     output += ">::create_with({"
                     mut first = true
@@ -2904,7 +2904,7 @@ struct CodeGenerator {
 
                         output += .codegen_expression(val)
                     }
-                    output += "}))"
+                    output += "})"
                 }
 
                 yield output
