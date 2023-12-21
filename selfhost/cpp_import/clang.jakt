@@ -1665,12 +1665,8 @@ class CppImportProcessor {
             let the_enum = CheckedEnum(
                 name
                 name_span: empty_span()
-                generic_parameters: []
-                variants: []
-                fields: []
                 scope_id: enum_scope
                 definition_linkage: DefinitionLinkage::External
-                trait_implementations: [:]
                 record_type: RecordType::ValueEnum(
                     underlying_type: ParsedType::Empty
                     variants: []
@@ -1717,12 +1713,9 @@ class CppImportProcessor {
         module.enums[enum_id.id] = CheckedEnum(
             name
             name_span: empty_span()
-            generic_parameters: []
             variants
-            fields: []
             scope_id: enum_scope
             definition_linkage: DefinitionLinkage::External
-            trait_implementations: [:]
             record_type: RecordType::ValueEnum(
                 underlying_type: ParsedType::Empty
                 variants: []
@@ -1901,10 +1894,8 @@ class CppImportProcessor {
                 name_span: empty_span()
                 generic_parameters: generic_parameters ?? empty_parameters
                 generic_parameter_defaults
-                fields: []
                 scope_id: struct_scope
                 definition_linkage: DefinitionLinkage::External
-                trait_implementations: [:]
                 record_type: RecordType::Struct(fields: [], super_type: None)
                 type_id: struct_type_id
                 super_struct_id: None
