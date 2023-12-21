@@ -731,8 +731,6 @@ fn value_to_checked_expression(anon this_value: Value, anon mut interpreter: Int
             generics: FunctionGenerics(
                 base_scope_id: inherited_scope_id
                 base_params: checked_params
-                params: []
-                specializations: []
             )
             block: new_block
             can_throw

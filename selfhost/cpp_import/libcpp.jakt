@@ -319,8 +319,6 @@ fn process_cpp_declaration(
                 generics: FunctionGenerics(
                     base_scope_id: function_scope
                     base_params: params
-                    params: []
-                    specializations: []
                 )
                 block: CheckedBlock(
                     statements: []
