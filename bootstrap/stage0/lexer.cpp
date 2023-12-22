@@ -1554,142 +1554,147 @@ builder.append("Token::Match"sv);
 [[maybe_unused]] auto const& that = this->as.Match;
 builder.appendff("({})", that.value);
 break;}
-case 85 /* Mut */: {
+case 85 /* Must */: {
+builder.append("Token::Must"sv);
+[[maybe_unused]] auto const& that = this->as.Must;
+builder.appendff("({})", that.value);
+break;}
+case 86 /* Mut */: {
 builder.append("Token::Mut"sv);
 [[maybe_unused]] auto const& that = this->as.Mut;
 builder.appendff("({})", that.value);
 break;}
-case 86 /* Namespace */: {
+case 87 /* Namespace */: {
 builder.append("Token::Namespace"sv);
 [[maybe_unused]] auto const& that = this->as.Namespace;
 builder.appendff("({})", that.value);
 break;}
-case 87 /* Not */: {
+case 88 /* Not */: {
 builder.append("Token::Not"sv);
 [[maybe_unused]] auto const& that = this->as.Not;
 builder.appendff("({})", that.value);
 break;}
-case 88 /* Or */: {
+case 89 /* Or */: {
 builder.append("Token::Or"sv);
 [[maybe_unused]] auto const& that = this->as.Or;
 builder.appendff("({})", that.value);
 break;}
-case 89 /* Override */: {
+case 90 /* Override */: {
 builder.append("Token::Override"sv);
 [[maybe_unused]] auto const& that = this->as.Override;
 builder.appendff("({})", that.value);
 break;}
-case 90 /* Private */: {
+case 91 /* Private */: {
 builder.append("Token::Private"sv);
 [[maybe_unused]] auto const& that = this->as.Private;
 builder.appendff("({})", that.value);
 break;}
-case 91 /* Public */: {
+case 92 /* Public */: {
 builder.append("Token::Public"sv);
 [[maybe_unused]] auto const& that = this->as.Public;
 builder.appendff("({})", that.value);
 break;}
-case 92 /* Raw */: {
+case 93 /* Raw */: {
 builder.append("Token::Raw"sv);
 [[maybe_unused]] auto const& that = this->as.Raw;
 builder.appendff("({})", that.value);
 break;}
-case 93 /* Reflect */: {
+case 94 /* Reflect */: {
 builder.append("Token::Reflect"sv);
 [[maybe_unused]] auto const& that = this->as.Reflect;
 builder.appendff("({})", that.value);
 break;}
-case 94 /* Return */: {
+case 95 /* Return */: {
 builder.append("Token::Return"sv);
 [[maybe_unused]] auto const& that = this->as.Return;
 builder.appendff("({})", that.value);
 break;}
-case 95 /* Restricted */: {
+case 96 /* Restricted */: {
 builder.append("Token::Restricted"sv);
 [[maybe_unused]] auto const& that = this->as.Restricted;
 builder.appendff("({})", that.value);
 break;}
-case 96 /* Sizeof */: {
+case 97 /* Sizeof */: {
 builder.append("Token::Sizeof"sv);
 [[maybe_unused]] auto const& that = this->as.Sizeof;
 builder.appendff("({})", that.value);
 break;}
-case 97 /* Struct */: {
+case 98 /* Struct */: {
 builder.append("Token::Struct"sv);
 [[maybe_unused]] auto const& that = this->as.Struct;
 builder.appendff("({})", that.value);
 break;}
-case 98 /* This */: {
+case 99 /* This */: {
 builder.append("Token::This"sv);
 [[maybe_unused]] auto const& that = this->as.This;
 builder.appendff("({})", that.value);
 break;}
-case 99 /* Throw */: {
+case 100 /* Throw */: {
 builder.append("Token::Throw"sv);
 [[maybe_unused]] auto const& that = this->as.Throw;
 builder.appendff("({})", that.value);
 break;}
-case 100 /* Throws */: {
+case 101 /* Throws */: {
 builder.append("Token::Throws"sv);
 [[maybe_unused]] auto const& that = this->as.Throws;
 builder.appendff("({})", that.value);
 break;}
-case 101 /* True */: {
+case 102 /* True */: {
 builder.append("Token::True"sv);
 [[maybe_unused]] auto const& that = this->as.True;
 builder.appendff("({})", that.value);
 break;}
-case 102 /* Try */: {
+case 103 /* Try */: {
 builder.append("Token::Try"sv);
 [[maybe_unused]] auto const& that = this->as.Try;
 builder.appendff("({})", that.value);
 break;}
-case 103 /* Unsafe */: {
+case 104 /* Unsafe */: {
 builder.append("Token::Unsafe"sv);
 [[maybe_unused]] auto const& that = this->as.Unsafe;
 builder.appendff("({})", that.value);
 break;}
-case 104 /* Virtual */: {
+case 105 /* Virtual */: {
 builder.append("Token::Virtual"sv);
 [[maybe_unused]] auto const& that = this->as.Virtual;
 builder.appendff("({})", that.value);
 break;}
-case 105 /* Weak */: {
+case 106 /* Weak */: {
 builder.append("Token::Weak"sv);
 [[maybe_unused]] auto const& that = this->as.Weak;
 builder.appendff("({})", that.value);
 break;}
-case 106 /* While */: {
+case 107 /* While */: {
 builder.append("Token::While"sv);
 [[maybe_unused]] auto const& that = this->as.While;
 builder.appendff("({})", that.value);
 break;}
-case 107 /* Yield */: {
+case 108 /* Yield */: {
 builder.append("Token::Yield"sv);
 [[maybe_unused]] auto const& that = this->as.Yield;
 builder.appendff("({})", that.value);
 break;}
-case 108 /* Guard */: {
+case 109 /* Guard */: {
 builder.append("Token::Guard"sv);
 [[maybe_unused]] auto const& that = this->as.Guard;
 builder.appendff("({})", that.value);
 break;}
-case 109 /* Implements */: {
+case 110 /* Implements */: {
 builder.append("Token::Implements"sv);
 [[maybe_unused]] auto const& that = this->as.Implements;
 builder.appendff("({})", that.value);
 break;}
-case 110 /* Requires */: {
+case 111 /* Requires */: {
 builder.append("Token::Requires"sv);
 [[maybe_unused]] auto const& that = this->as.Requires;
 builder.appendff("({})", that.value);
 break;}
-case 111 /* Trait */: {
+case 112 /* Trait */: {
 builder.append("Token::Trait"sv);
 [[maybe_unused]] auto const& that = this->as.Trait;
 builder.appendff("({})", that.value);
 break;}
-case 112 /* Garbage */: {
+case 113 /* Garbage */: {
 builder.append("Token::Garbage"sv);
 [[maybe_unused]] auto const& that = this->as.Garbage;
 builder.append("("sv);
@@ -2223,171 +2228,177 @@ __jakt_uninit_enum.__jakt_variant_index = 85;
 new (&__jakt_uninit_enum.as.Match.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
-[[nodiscard]] Token Token::Mut(utility::Span value){
+[[nodiscard]] Token Token::Must(utility::Span value){
 Token __jakt_uninit_enum;
 __jakt_uninit_enum.__jakt_variant_index = 86;
+new (&__jakt_uninit_enum.as.Must.value) (decltype(value))(move(value));
+return __jakt_uninit_enum;
+}
+[[nodiscard]] Token Token::Mut(utility::Span value){
+Token __jakt_uninit_enum;
+__jakt_uninit_enum.__jakt_variant_index = 87;
 new (&__jakt_uninit_enum.as.Mut.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] Token Token::Namespace(utility::Span value){
 Token __jakt_uninit_enum;
-__jakt_uninit_enum.__jakt_variant_index = 87;
+__jakt_uninit_enum.__jakt_variant_index = 88;
 new (&__jakt_uninit_enum.as.Namespace.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] Token Token::Not(utility::Span value){
 Token __jakt_uninit_enum;
-__jakt_uninit_enum.__jakt_variant_index = 88;
+__jakt_uninit_enum.__jakt_variant_index = 89;
 new (&__jakt_uninit_enum.as.Not.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] Token Token::Or(utility::Span value){
 Token __jakt_uninit_enum;
-__jakt_uninit_enum.__jakt_variant_index = 89;
+__jakt_uninit_enum.__jakt_variant_index = 90;
 new (&__jakt_uninit_enum.as.Or.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] Token Token::Override(utility::Span value){
 Token __jakt_uninit_enum;
-__jakt_uninit_enum.__jakt_variant_index = 90;
+__jakt_uninit_enum.__jakt_variant_index = 91;
 new (&__jakt_uninit_enum.as.Override.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] Token Token::Private(utility::Span value){
 Token __jakt_uninit_enum;
-__jakt_uninit_enum.__jakt_variant_index = 91;
+__jakt_uninit_enum.__jakt_variant_index = 92;
 new (&__jakt_uninit_enum.as.Private.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] Token Token::Public(utility::Span value){
 Token __jakt_uninit_enum;
-__jakt_uninit_enum.__jakt_variant_index = 92;
+__jakt_uninit_enum.__jakt_variant_index = 93;
 new (&__jakt_uninit_enum.as.Public.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] Token Token::Raw(utility::Span value){
 Token __jakt_uninit_enum;
-__jakt_uninit_enum.__jakt_variant_index = 93;
+__jakt_uninit_enum.__jakt_variant_index = 94;
 new (&__jakt_uninit_enum.as.Raw.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] Token Token::Reflect(utility::Span value){
 Token __jakt_uninit_enum;
-__jakt_uninit_enum.__jakt_variant_index = 94;
+__jakt_uninit_enum.__jakt_variant_index = 95;
 new (&__jakt_uninit_enum.as.Reflect.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] Token Token::Return(utility::Span value){
 Token __jakt_uninit_enum;
-__jakt_uninit_enum.__jakt_variant_index = 95;
+__jakt_uninit_enum.__jakt_variant_index = 96;
 new (&__jakt_uninit_enum.as.Return.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] Token Token::Restricted(utility::Span value){
 Token __jakt_uninit_enum;
-__jakt_uninit_enum.__jakt_variant_index = 96;
+__jakt_uninit_enum.__jakt_variant_index = 97;
 new (&__jakt_uninit_enum.as.Restricted.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] Token Token::Sizeof(utility::Span value){
 Token __jakt_uninit_enum;
-__jakt_uninit_enum.__jakt_variant_index = 97;
+__jakt_uninit_enum.__jakt_variant_index = 98;
 new (&__jakt_uninit_enum.as.Sizeof.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] Token Token::Struct(utility::Span value){
 Token __jakt_uninit_enum;
-__jakt_uninit_enum.__jakt_variant_index = 98;
+__jakt_uninit_enum.__jakt_variant_index = 99;
 new (&__jakt_uninit_enum.as.Struct.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] Token Token::This(utility::Span value){
 Token __jakt_uninit_enum;
-__jakt_uninit_enum.__jakt_variant_index = 99;
+__jakt_uninit_enum.__jakt_variant_index = 100;
 new (&__jakt_uninit_enum.as.This.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] Token Token::Throw(utility::Span value){
 Token __jakt_uninit_enum;
-__jakt_uninit_enum.__jakt_variant_index = 100;
+__jakt_uninit_enum.__jakt_variant_index = 101;
 new (&__jakt_uninit_enum.as.Throw.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] Token Token::Throws(utility::Span value){
 Token __jakt_uninit_enum;
-__jakt_uninit_enum.__jakt_variant_index = 101;
+__jakt_uninit_enum.__jakt_variant_index = 102;
 new (&__jakt_uninit_enum.as.Throws.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] Token Token::True(utility::Span value){
 Token __jakt_uninit_enum;
-__jakt_uninit_enum.__jakt_variant_index = 102;
+__jakt_uninit_enum.__jakt_variant_index = 103;
 new (&__jakt_uninit_enum.as.True.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] Token Token::Try(utility::Span value){
 Token __jakt_uninit_enum;
-__jakt_uninit_enum.__jakt_variant_index = 103;
+__jakt_uninit_enum.__jakt_variant_index = 104;
 new (&__jakt_uninit_enum.as.Try.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] Token Token::Unsafe(utility::Span value){
 Token __jakt_uninit_enum;
-__jakt_uninit_enum.__jakt_variant_index = 104;
+__jakt_uninit_enum.__jakt_variant_index = 105;
 new (&__jakt_uninit_enum.as.Unsafe.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] Token Token::Virtual(utility::Span value){
 Token __jakt_uninit_enum;
-__jakt_uninit_enum.__jakt_variant_index = 105;
+__jakt_uninit_enum.__jakt_variant_index = 106;
 new (&__jakt_uninit_enum.as.Virtual.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] Token Token::Weak(utility::Span value){
 Token __jakt_uninit_enum;
-__jakt_uninit_enum.__jakt_variant_index = 106;
+__jakt_uninit_enum.__jakt_variant_index = 107;
 new (&__jakt_uninit_enum.as.Weak.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] Token Token::While(utility::Span value){
 Token __jakt_uninit_enum;
-__jakt_uninit_enum.__jakt_variant_index = 107;
+__jakt_uninit_enum.__jakt_variant_index = 108;
 new (&__jakt_uninit_enum.as.While.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] Token Token::Yield(utility::Span value){
 Token __jakt_uninit_enum;
-__jakt_uninit_enum.__jakt_variant_index = 108;
+__jakt_uninit_enum.__jakt_variant_index = 109;
 new (&__jakt_uninit_enum.as.Yield.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] Token Token::Guard(utility::Span value){
 Token __jakt_uninit_enum;
-__jakt_uninit_enum.__jakt_variant_index = 109;
+__jakt_uninit_enum.__jakt_variant_index = 110;
 new (&__jakt_uninit_enum.as.Guard.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] Token Token::Implements(utility::Span value){
 Token __jakt_uninit_enum;
-__jakt_uninit_enum.__jakt_variant_index = 110;
+__jakt_uninit_enum.__jakt_variant_index = 111;
 new (&__jakt_uninit_enum.as.Implements.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] Token Token::Requires(utility::Span value){
 Token __jakt_uninit_enum;
-__jakt_uninit_enum.__jakt_variant_index = 111;
+__jakt_uninit_enum.__jakt_variant_index = 112;
 new (&__jakt_uninit_enum.as.Requires.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] Token Token::Trait(utility::Span value){
 Token __jakt_uninit_enum;
-__jakt_uninit_enum.__jakt_variant_index = 112;
+__jakt_uninit_enum.__jakt_variant_index = 113;
 new (&__jakt_uninit_enum.as.Trait.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] Token Token::Garbage(JaktInternal::Optional<ByteString> consumed, utility::Span span){
 Token __jakt_uninit_enum;
-__jakt_uninit_enum.__jakt_variant_index = 113;
+__jakt_uninit_enum.__jakt_variant_index = 114;
 new (&__jakt_uninit_enum.as.Garbage.consumed) (decltype(consumed))(move(consumed));
 new (&__jakt_uninit_enum.as.Garbage.span) (decltype(span))(move(span));
 return __jakt_uninit_enum;
@@ -2660,88 +2671,91 @@ break;
 case 84 /* Match */:
 new (&this->as.Match.value) (decltype(this->as.Match.value))(rhs.as.Match.value);
 break;
-case 85 /* Mut */:
+case 85 /* Must */:
+new (&this->as.Must.value) (decltype(this->as.Must.value))(rhs.as.Must.value);
+break;
+case 86 /* Mut */:
 new (&this->as.Mut.value) (decltype(this->as.Mut.value))(rhs.as.Mut.value);
 break;
-case 86 /* Namespace */:
+case 87 /* Namespace */:
 new (&this->as.Namespace.value) (decltype(this->as.Namespace.value))(rhs.as.Namespace.value);
 break;
-case 87 /* Not */:
+case 88 /* Not */:
 new (&this->as.Not.value) (decltype(this->as.Not.value))(rhs.as.Not.value);
 break;
-case 88 /* Or */:
+case 89 /* Or */:
 new (&this->as.Or.value) (decltype(this->as.Or.value))(rhs.as.Or.value);
 break;
-case 89 /* Override */:
+case 90 /* Override */:
 new (&this->as.Override.value) (decltype(this->as.Override.value))(rhs.as.Override.value);
 break;
-case 90 /* Private */:
+case 91 /* Private */:
 new (&this->as.Private.value) (decltype(this->as.Private.value))(rhs.as.Private.value);
 break;
-case 91 /* Public */:
+case 92 /* Public */:
 new (&this->as.Public.value) (decltype(this->as.Public.value))(rhs.as.Public.value);
 break;
-case 92 /* Raw */:
+case 93 /* Raw */:
 new (&this->as.Raw.value) (decltype(this->as.Raw.value))(rhs.as.Raw.value);
 break;
-case 93 /* Reflect */:
+case 94 /* Reflect */:
 new (&this->as.Reflect.value) (decltype(this->as.Reflect.value))(rhs.as.Reflect.value);
 break;
-case 94 /* Return */:
+case 95 /* Return */:
 new (&this->as.Return.value) (decltype(this->as.Return.value))(rhs.as.Return.value);
 break;
-case 95 /* Restricted */:
+case 96 /* Restricted */:
 new (&this->as.Restricted.value) (decltype(this->as.Restricted.value))(rhs.as.Restricted.value);
 break;
-case 96 /* Sizeof */:
+case 97 /* Sizeof */:
 new (&this->as.Sizeof.value) (decltype(this->as.Sizeof.value))(rhs.as.Sizeof.value);
 break;
-case 97 /* Struct */:
+case 98 /* Struct */:
 new (&this->as.Struct.value) (decltype(this->as.Struct.value))(rhs.as.Struct.value);
 break;
-case 98 /* This */:
+case 99 /* This */:
 new (&this->as.This.value) (decltype(this->as.This.value))(rhs.as.This.value);
 break;
-case 99 /* Throw */:
+case 100 /* Throw */:
 new (&this->as.Throw.value) (decltype(this->as.Throw.value))(rhs.as.Throw.value);
 break;
-case 100 /* Throws */:
+case 101 /* Throws */:
 new (&this->as.Throws.value) (decltype(this->as.Throws.value))(rhs.as.Throws.value);
 break;
-case 101 /* True */:
+case 102 /* True */:
 new (&this->as.True.value) (decltype(this->as.True.value))(rhs.as.True.value);
 break;
-case 102 /* Try */:
+case 103 /* Try */:
 new (&this->as.Try.value) (decltype(this->as.Try.value))(rhs.as.Try.value);
 break;
-case 103 /* Unsafe */:
+case 104 /* Unsafe */:
 new (&this->as.Unsafe.value) (decltype(this->as.Unsafe.value))(rhs.as.Unsafe.value);
 break;
-case 104 /* Virtual */:
+case 105 /* Virtual */:
 new (&this->as.Virtual.value) (decltype(this->as.Virtual.value))(rhs.as.Virtual.value);
 break;
-case 105 /* Weak */:
+case 106 /* Weak */:
 new (&this->as.Weak.value) (decltype(this->as.Weak.value))(rhs.as.Weak.value);
 break;
-case 106 /* While */:
+case 107 /* While */:
 new (&this->as.While.value) (decltype(this->as.While.value))(rhs.as.While.value);
 break;
-case 107 /* Yield */:
+case 108 /* Yield */:
 new (&this->as.Yield.value) (decltype(this->as.Yield.value))(rhs.as.Yield.value);
 break;
-case 108 /* Guard */:
+case 109 /* Guard */:
 new (&this->as.Guard.value) (decltype(this->as.Guard.value))(rhs.as.Guard.value);
 break;
-case 109 /* Implements */:
+case 110 /* Implements */:
 new (&this->as.Implements.value) (decltype(this->as.Implements.value))(rhs.as.Implements.value);
 break;
-case 110 /* Requires */:
+case 111 /* Requires */:
 new (&this->as.Requires.value) (decltype(this->as.Requires.value))(rhs.as.Requires.value);
 break;
-case 111 /* Trait */:
+case 112 /* Trait */:
 new (&this->as.Trait.value) (decltype(this->as.Trait.value))(rhs.as.Trait.value);
 break;
-case 112 /* Garbage */:
+case 113 /* Garbage */:
 new (&this->as.Garbage.consumed) (decltype(this->as.Garbage.consumed))(rhs.as.Garbage.consumed);
 new (&this->as.Garbage.span) (decltype(this->as.Garbage.span))(rhs.as.Garbage.span);
 break;
@@ -3011,88 +3025,91 @@ break;
 case 84 /* Match */:
 this->as.Match.value = rhs.as.Match.value;
 break;
-case 85 /* Mut */:
+case 85 /* Must */:
+this->as.Must.value = rhs.as.Must.value;
+break;
+case 86 /* Mut */:
 this->as.Mut.value = rhs.as.Mut.value;
 break;
-case 86 /* Namespace */:
+case 87 /* Namespace */:
 this->as.Namespace.value = rhs.as.Namespace.value;
 break;
-case 87 /* Not */:
+case 88 /* Not */:
 this->as.Not.value = rhs.as.Not.value;
 break;
-case 88 /* Or */:
+case 89 /* Or */:
 this->as.Or.value = rhs.as.Or.value;
 break;
-case 89 /* Override */:
+case 90 /* Override */:
 this->as.Override.value = rhs.as.Override.value;
 break;
-case 90 /* Private */:
+case 91 /* Private */:
 this->as.Private.value = rhs.as.Private.value;
 break;
-case 91 /* Public */:
+case 92 /* Public */:
 this->as.Public.value = rhs.as.Public.value;
 break;
-case 92 /* Raw */:
+case 93 /* Raw */:
 this->as.Raw.value = rhs.as.Raw.value;
 break;
-case 93 /* Reflect */:
+case 94 /* Reflect */:
 this->as.Reflect.value = rhs.as.Reflect.value;
 break;
-case 94 /* Return */:
+case 95 /* Return */:
 this->as.Return.value = rhs.as.Return.value;
 break;
-case 95 /* Restricted */:
+case 96 /* Restricted */:
 this->as.Restricted.value = rhs.as.Restricted.value;
 break;
-case 96 /* Sizeof */:
+case 97 /* Sizeof */:
 this->as.Sizeof.value = rhs.as.Sizeof.value;
 break;
-case 97 /* Struct */:
+case 98 /* Struct */:
 this->as.Struct.value = rhs.as.Struct.value;
 break;
-case 98 /* This */:
+case 99 /* This */:
 this->as.This.value = rhs.as.This.value;
 break;
-case 99 /* Throw */:
+case 100 /* Throw */:
 this->as.Throw.value = rhs.as.Throw.value;
 break;
-case 100 /* Throws */:
+case 101 /* Throws */:
 this->as.Throws.value = rhs.as.Throws.value;
 break;
-case 101 /* True */:
+case 102 /* True */:
 this->as.True.value = rhs.as.True.value;
 break;
-case 102 /* Try */:
+case 103 /* Try */:
 this->as.Try.value = rhs.as.Try.value;
 break;
-case 103 /* Unsafe */:
+case 104 /* Unsafe */:
 this->as.Unsafe.value = rhs.as.Unsafe.value;
 break;
-case 104 /* Virtual */:
+case 105 /* Virtual */:
 this->as.Virtual.value = rhs.as.Virtual.value;
 break;
-case 105 /* Weak */:
+case 106 /* Weak */:
 this->as.Weak.value = rhs.as.Weak.value;
 break;
-case 106 /* While */:
+case 107 /* While */:
 this->as.While.value = rhs.as.While.value;
 break;
-case 107 /* Yield */:
+case 108 /* Yield */:
 this->as.Yield.value = rhs.as.Yield.value;
 break;
-case 108 /* Guard */:
+case 109 /* Guard */:
 this->as.Guard.value = rhs.as.Guard.value;
 break;
-case 109 /* Implements */:
+case 110 /* Implements */:
 this->as.Implements.value = rhs.as.Implements.value;
 break;
-case 110 /* Requires */:
+case 111 /* Requires */:
 this->as.Requires.value = rhs.as.Requires.value;
 break;
-case 111 /* Trait */:
+case 112 /* Trait */:
 this->as.Trait.value = rhs.as.Trait.value;
 break;
-case 112 /* Garbage */:
+case 113 /* Garbage */:
 this->as.Garbage.consumed = rhs.as.Garbage.consumed;
 this->as.Garbage.span = rhs.as.Garbage.span;
 break;
@@ -3367,88 +3384,91 @@ break;
 case 84 /* Match */:
 new (&this->as.Match.value) (decltype(this->as.Match.value))(rhs.as.Match.value);
 break;
-case 85 /* Mut */:
+case 85 /* Must */:
+new (&this->as.Must.value) (decltype(this->as.Must.value))(rhs.as.Must.value);
+break;
+case 86 /* Mut */:
 new (&this->as.Mut.value) (decltype(this->as.Mut.value))(rhs.as.Mut.value);
 break;
-case 86 /* Namespace */:
+case 87 /* Namespace */:
 new (&this->as.Namespace.value) (decltype(this->as.Namespace.value))(rhs.as.Namespace.value);
 break;
-case 87 /* Not */:
+case 88 /* Not */:
 new (&this->as.Not.value) (decltype(this->as.Not.value))(rhs.as.Not.value);
 break;
-case 88 /* Or */:
+case 89 /* Or */:
 new (&this->as.Or.value) (decltype(this->as.Or.value))(rhs.as.Or.value);
 break;
-case 89 /* Override */:
+case 90 /* Override */:
 new (&this->as.Override.value) (decltype(this->as.Override.value))(rhs.as.Override.value);
 break;
-case 90 /* Private */:
+case 91 /* Private */:
 new (&this->as.Private.value) (decltype(this->as.Private.value))(rhs.as.Private.value);
 break;
-case 91 /* Public */:
+case 92 /* Public */:
 new (&this->as.Public.value) (decltype(this->as.Public.value))(rhs.as.Public.value);
 break;
-case 92 /* Raw */:
+case 93 /* Raw */:
 new (&this->as.Raw.value) (decltype(this->as.Raw.value))(rhs.as.Raw.value);
 break;
-case 93 /* Reflect */:
+case 94 /* Reflect */:
 new (&this->as.Reflect.value) (decltype(this->as.Reflect.value))(rhs.as.Reflect.value);
 break;
-case 94 /* Return */:
+case 95 /* Return */:
 new (&this->as.Return.value) (decltype(this->as.Return.value))(rhs.as.Return.value);
 break;
-case 95 /* Restricted */:
+case 96 /* Restricted */:
 new (&this->as.Restricted.value) (decltype(this->as.Restricted.value))(rhs.as.Restricted.value);
 break;
-case 96 /* Sizeof */:
+case 97 /* Sizeof */:
 new (&this->as.Sizeof.value) (decltype(this->as.Sizeof.value))(rhs.as.Sizeof.value);
 break;
-case 97 /* Struct */:
+case 98 /* Struct */:
 new (&this->as.Struct.value) (decltype(this->as.Struct.value))(rhs.as.Struct.value);
 break;
-case 98 /* This */:
+case 99 /* This */:
 new (&this->as.This.value) (decltype(this->as.This.value))(rhs.as.This.value);
 break;
-case 99 /* Throw */:
+case 100 /* Throw */:
 new (&this->as.Throw.value) (decltype(this->as.Throw.value))(rhs.as.Throw.value);
 break;
-case 100 /* Throws */:
+case 101 /* Throws */:
 new (&this->as.Throws.value) (decltype(this->as.Throws.value))(rhs.as.Throws.value);
 break;
-case 101 /* True */:
+case 102 /* True */:
 new (&this->as.True.value) (decltype(this->as.True.value))(rhs.as.True.value);
 break;
-case 102 /* Try */:
+case 103 /* Try */:
 new (&this->as.Try.value) (decltype(this->as.Try.value))(rhs.as.Try.value);
 break;
-case 103 /* Unsafe */:
+case 104 /* Unsafe */:
 new (&this->as.Unsafe.value) (decltype(this->as.Unsafe.value))(rhs.as.Unsafe.value);
 break;
-case 104 /* Virtual */:
+case 105 /* Virtual */:
 new (&this->as.Virtual.value) (decltype(this->as.Virtual.value))(rhs.as.Virtual.value);
 break;
-case 105 /* Weak */:
+case 106 /* Weak */:
 new (&this->as.Weak.value) (decltype(this->as.Weak.value))(rhs.as.Weak.value);
 break;
-case 106 /* While */:
+case 107 /* While */:
 new (&this->as.While.value) (decltype(this->as.While.value))(rhs.as.While.value);
 break;
-case 107 /* Yield */:
+case 108 /* Yield */:
 new (&this->as.Yield.value) (decltype(this->as.Yield.value))(rhs.as.Yield.value);
 break;
-case 108 /* Guard */:
+case 109 /* Guard */:
 new (&this->as.Guard.value) (decltype(this->as.Guard.value))(rhs.as.Guard.value);
 break;
-case 109 /* Implements */:
+case 110 /* Implements */:
 new (&this->as.Implements.value) (decltype(this->as.Implements.value))(rhs.as.Implements.value);
 break;
-case 110 /* Requires */:
+case 111 /* Requires */:
 new (&this->as.Requires.value) (decltype(this->as.Requires.value))(rhs.as.Requires.value);
 break;
-case 111 /* Trait */:
+case 112 /* Trait */:
 new (&this->as.Trait.value) (decltype(this->as.Trait.value))(rhs.as.Trait.value);
 break;
-case 112 /* Garbage */:
+case 113 /* Garbage */:
 new (&this->as.Garbage.consumed) (decltype(this->as.Garbage.consumed))(rhs.as.Garbage.consumed);
 new (&this->as.Garbage.span) (decltype(this->as.Garbage.span))(rhs.as.Garbage.span);
 break;
@@ -3723,88 +3743,91 @@ break;
 case 84 /* Match */:
 new (&this->as.Match.value) (decltype(this->as.Match.value))(move(rhs.as.Match.value));
 break;
-case 85 /* Mut */:
+case 85 /* Must */:
+new (&this->as.Must.value) (decltype(this->as.Must.value))(move(rhs.as.Must.value));
+break;
+case 86 /* Mut */:
 new (&this->as.Mut.value) (decltype(this->as.Mut.value))(move(rhs.as.Mut.value));
 break;
-case 86 /* Namespace */:
+case 87 /* Namespace */:
 new (&this->as.Namespace.value) (decltype(this->as.Namespace.value))(move(rhs.as.Namespace.value));
 break;
-case 87 /* Not */:
+case 88 /* Not */:
 new (&this->as.Not.value) (decltype(this->as.Not.value))(move(rhs.as.Not.value));
 break;
-case 88 /* Or */:
+case 89 /* Or */:
 new (&this->as.Or.value) (decltype(this->as.Or.value))(move(rhs.as.Or.value));
 break;
-case 89 /* Override */:
+case 90 /* Override */:
 new (&this->as.Override.value) (decltype(this->as.Override.value))(move(rhs.as.Override.value));
 break;
-case 90 /* Private */:
+case 91 /* Private */:
 new (&this->as.Private.value) (decltype(this->as.Private.value))(move(rhs.as.Private.value));
 break;
-case 91 /* Public */:
+case 92 /* Public */:
 new (&this->as.Public.value) (decltype(this->as.Public.value))(move(rhs.as.Public.value));
 break;
-case 92 /* Raw */:
+case 93 /* Raw */:
 new (&this->as.Raw.value) (decltype(this->as.Raw.value))(move(rhs.as.Raw.value));
 break;
-case 93 /* Reflect */:
+case 94 /* Reflect */:
 new (&this->as.Reflect.value) (decltype(this->as.Reflect.value))(move(rhs.as.Reflect.value));
 break;
-case 94 /* Return */:
+case 95 /* Return */:
 new (&this->as.Return.value) (decltype(this->as.Return.value))(move(rhs.as.Return.value));
 break;
-case 95 /* Restricted */:
+case 96 /* Restricted */:
 new (&this->as.Restricted.value) (decltype(this->as.Restricted.value))(move(rhs.as.Restricted.value));
 break;
-case 96 /* Sizeof */:
+case 97 /* Sizeof */:
 new (&this->as.Sizeof.value) (decltype(this->as.Sizeof.value))(move(rhs.as.Sizeof.value));
 break;
-case 97 /* Struct */:
+case 98 /* Struct */:
 new (&this->as.Struct.value) (decltype(this->as.Struct.value))(move(rhs.as.Struct.value));
 break;
-case 98 /* This */:
+case 99 /* This */:
 new (&this->as.This.value) (decltype(this->as.This.value))(move(rhs.as.This.value));
 break;
-case 99 /* Throw */:
+case 100 /* Throw */:
 new (&this->as.Throw.value) (decltype(this->as.Throw.value))(move(rhs.as.Throw.value));
 break;
-case 100 /* Throws */:
+case 101 /* Throws */:
 new (&this->as.Throws.value) (decltype(this->as.Throws.value))(move(rhs.as.Throws.value));
 break;
-case 101 /* True */:
+case 102 /* True */:
 new (&this->as.True.value) (decltype(this->as.True.value))(move(rhs.as.True.value));
 break;
-case 102 /* Try */:
+case 103 /* Try */:
 new (&this->as.Try.value) (decltype(this->as.Try.value))(move(rhs.as.Try.value));
 break;
-case 103 /* Unsafe */:
+case 104 /* Unsafe */:
 new (&this->as.Unsafe.value) (decltype(this->as.Unsafe.value))(move(rhs.as.Unsafe.value));
 break;
-case 104 /* Virtual */:
+case 105 /* Virtual */:
 new (&this->as.Virtual.value) (decltype(this->as.Virtual.value))(move(rhs.as.Virtual.value));
 break;
-case 105 /* Weak */:
+case 106 /* Weak */:
 new (&this->as.Weak.value) (decltype(this->as.Weak.value))(move(rhs.as.Weak.value));
 break;
-case 106 /* While */:
+case 107 /* While */:
 new (&this->as.While.value) (decltype(this->as.While.value))(move(rhs.as.While.value));
 break;
-case 107 /* Yield */:
+case 108 /* Yield */:
 new (&this->as.Yield.value) (decltype(this->as.Yield.value))(move(rhs.as.Yield.value));
 break;
-case 108 /* Guard */:
+case 109 /* Guard */:
 new (&this->as.Guard.value) (decltype(this->as.Guard.value))(move(rhs.as.Guard.value));
 break;
-case 109 /* Implements */:
+case 110 /* Implements */:
 new (&this->as.Implements.value) (decltype(this->as.Implements.value))(move(rhs.as.Implements.value));
 break;
-case 110 /* Requires */:
+case 111 /* Requires */:
 new (&this->as.Requires.value) (decltype(this->as.Requires.value))(move(rhs.as.Requires.value));
 break;
-case 111 /* Trait */:
+case 112 /* Trait */:
 new (&this->as.Trait.value) (decltype(this->as.Trait.value))(move(rhs.as.Trait.value));
 break;
-case 112 /* Garbage */:
+case 113 /* Garbage */:
 new (&this->as.Garbage.consumed) (decltype(this->as.Garbage.consumed))(move(rhs.as.Garbage.consumed));
 new (&this->as.Garbage.span) (decltype(this->as.Garbage.span))(move(rhs.as.Garbage.span));
 break;
@@ -4074,88 +4097,91 @@ break;
 case 84 /* Match */:
 this->as.Match.value = move(rhs.as.Match.value);
 break;
-case 85 /* Mut */:
+case 85 /* Must */:
+this->as.Must.value = move(rhs.as.Must.value);
+break;
+case 86 /* Mut */:
 this->as.Mut.value = move(rhs.as.Mut.value);
 break;
-case 86 /* Namespace */:
+case 87 /* Namespace */:
 this->as.Namespace.value = move(rhs.as.Namespace.value);
 break;
-case 87 /* Not */:
+case 88 /* Not */:
 this->as.Not.value = move(rhs.as.Not.value);
 break;
-case 88 /* Or */:
+case 89 /* Or */:
 this->as.Or.value = move(rhs.as.Or.value);
 break;
-case 89 /* Override */:
+case 90 /* Override */:
 this->as.Override.value = move(rhs.as.Override.value);
 break;
-case 90 /* Private */:
+case 91 /* Private */:
 this->as.Private.value = move(rhs.as.Private.value);
 break;
-case 91 /* Public */:
+case 92 /* Public */:
 this->as.Public.value = move(rhs.as.Public.value);
 break;
-case 92 /* Raw */:
+case 93 /* Raw */:
 this->as.Raw.value = move(rhs.as.Raw.value);
 break;
-case 93 /* Reflect */:
+case 94 /* Reflect */:
 this->as.Reflect.value = move(rhs.as.Reflect.value);
 break;
-case 94 /* Return */:
+case 95 /* Return */:
 this->as.Return.value = move(rhs.as.Return.value);
 break;
-case 95 /* Restricted */:
+case 96 /* Restricted */:
 this->as.Restricted.value = move(rhs.as.Restricted.value);
 break;
-case 96 /* Sizeof */:
+case 97 /* Sizeof */:
 this->as.Sizeof.value = move(rhs.as.Sizeof.value);
 break;
-case 97 /* Struct */:
+case 98 /* Struct */:
 this->as.Struct.value = move(rhs.as.Struct.value);
 break;
-case 98 /* This */:
+case 99 /* This */:
 this->as.This.value = move(rhs.as.This.value);
 break;
-case 99 /* Throw */:
+case 100 /* Throw */:
 this->as.Throw.value = move(rhs.as.Throw.value);
 break;
-case 100 /* Throws */:
+case 101 /* Throws */:
 this->as.Throws.value = move(rhs.as.Throws.value);
 break;
-case 101 /* True */:
+case 102 /* True */:
 this->as.True.value = move(rhs.as.True.value);
 break;
-case 102 /* Try */:
+case 103 /* Try */:
 this->as.Try.value = move(rhs.as.Try.value);
 break;
-case 103 /* Unsafe */:
+case 104 /* Unsafe */:
 this->as.Unsafe.value = move(rhs.as.Unsafe.value);
 break;
-case 104 /* Virtual */:
+case 105 /* Virtual */:
 this->as.Virtual.value = move(rhs.as.Virtual.value);
 break;
-case 105 /* Weak */:
+case 106 /* Weak */:
 this->as.Weak.value = move(rhs.as.Weak.value);
 break;
-case 106 /* While */:
+case 107 /* While */:
 this->as.While.value = move(rhs.as.While.value);
 break;
-case 107 /* Yield */:
+case 108 /* Yield */:
 this->as.Yield.value = move(rhs.as.Yield.value);
 break;
-case 108 /* Guard */:
+case 109 /* Guard */:
 this->as.Guard.value = move(rhs.as.Guard.value);
 break;
-case 109 /* Implements */:
+case 110 /* Implements */:
 this->as.Implements.value = move(rhs.as.Implements.value);
 break;
-case 110 /* Requires */:
+case 111 /* Requires */:
 this->as.Requires.value = move(rhs.as.Requires.value);
 break;
-case 111 /* Trait */:
+case 112 /* Trait */:
 this->as.Trait.value = move(rhs.as.Trait.value);
 break;
-case 112 /* Garbage */:
+case 113 /* Garbage */:
 this->as.Garbage.consumed = move(rhs.as.Garbage.consumed);
 this->as.Garbage.span = move(rhs.as.Garbage.span);
 break;
@@ -4431,88 +4457,91 @@ break;
 case 84 /* Match */:
 new (&this->as.Match.value) (decltype(this->as.Match.value))(move(rhs.as.Match.value));
 break;
-case 85 /* Mut */:
+case 85 /* Must */:
+new (&this->as.Must.value) (decltype(this->as.Must.value))(move(rhs.as.Must.value));
+break;
+case 86 /* Mut */:
 new (&this->as.Mut.value) (decltype(this->as.Mut.value))(move(rhs.as.Mut.value));
 break;
-case 86 /* Namespace */:
+case 87 /* Namespace */:
 new (&this->as.Namespace.value) (decltype(this->as.Namespace.value))(move(rhs.as.Namespace.value));
 break;
-case 87 /* Not */:
+case 88 /* Not */:
 new (&this->as.Not.value) (decltype(this->as.Not.value))(move(rhs.as.Not.value));
 break;
-case 88 /* Or */:
+case 89 /* Or */:
 new (&this->as.Or.value) (decltype(this->as.Or.value))(move(rhs.as.Or.value));
 break;
-case 89 /* Override */:
+case 90 /* Override */:
 new (&this->as.Override.value) (decltype(this->as.Override.value))(move(rhs.as.Override.value));
 break;
-case 90 /* Private */:
+case 91 /* Private */:
 new (&this->as.Private.value) (decltype(this->as.Private.value))(move(rhs.as.Private.value));
 break;
-case 91 /* Public */:
+case 92 /* Public */:
 new (&this->as.Public.value) (decltype(this->as.Public.value))(move(rhs.as.Public.value));
 break;
-case 92 /* Raw */:
+case 93 /* Raw */:
 new (&this->as.Raw.value) (decltype(this->as.Raw.value))(move(rhs.as.Raw.value));
 break;
-case 93 /* Reflect */:
+case 94 /* Reflect */:
 new (&this->as.Reflect.value) (decltype(this->as.Reflect.value))(move(rhs.as.Reflect.value));
 break;
-case 94 /* Return */:
+case 95 /* Return */:
 new (&this->as.Return.value) (decltype(this->as.Return.value))(move(rhs.as.Return.value));
 break;
-case 95 /* Restricted */:
+case 96 /* Restricted */:
 new (&this->as.Restricted.value) (decltype(this->as.Restricted.value))(move(rhs.as.Restricted.value));
 break;
-case 96 /* Sizeof */:
+case 97 /* Sizeof */:
 new (&this->as.Sizeof.value) (decltype(this->as.Sizeof.value))(move(rhs.as.Sizeof.value));
 break;
-case 97 /* Struct */:
+case 98 /* Struct */:
 new (&this->as.Struct.value) (decltype(this->as.Struct.value))(move(rhs.as.Struct.value));
 break;
-case 98 /* This */:
+case 99 /* This */:
 new (&this->as.This.value) (decltype(this->as.This.value))(move(rhs.as.This.value));
 break;
-case 99 /* Throw */:
+case 100 /* Throw */:
 new (&this->as.Throw.value) (decltype(this->as.Throw.value))(move(rhs.as.Throw.value));
 break;
-case 100 /* Throws */:
+case 101 /* Throws */:
 new (&this->as.Throws.value) (decltype(this->as.Throws.value))(move(rhs.as.Throws.value));
 break;
-case 101 /* True */:
+case 102 /* True */:
 new (&this->as.True.value) (decltype(this->as.True.value))(move(rhs.as.True.value));
 break;
-case 102 /* Try */:
+case 103 /* Try */:
 new (&this->as.Try.value) (decltype(this->as.Try.value))(move(rhs.as.Try.value));
 break;
-case 103 /* Unsafe */:
+case 104 /* Unsafe */:
 new (&this->as.Unsafe.value) (decltype(this->as.Unsafe.value))(move(rhs.as.Unsafe.value));
 break;
-case 104 /* Virtual */:
+case 105 /* Virtual */:
 new (&this->as.Virtual.value) (decltype(this->as.Virtual.value))(move(rhs.as.Virtual.value));
 break;
-case 105 /* Weak */:
+case 106 /* Weak */:
 new (&this->as.Weak.value) (decltype(this->as.Weak.value))(move(rhs.as.Weak.value));
 break;
-case 106 /* While */:
+case 107 /* While */:
 new (&this->as.While.value) (decltype(this->as.While.value))(move(rhs.as.While.value));
 break;
-case 107 /* Yield */:
+case 108 /* Yield */:
 new (&this->as.Yield.value) (decltype(this->as.Yield.value))(move(rhs.as.Yield.value));
 break;
-case 108 /* Guard */:
+case 109 /* Guard */:
 new (&this->as.Guard.value) (decltype(this->as.Guard.value))(move(rhs.as.Guard.value));
 break;
-case 109 /* Implements */:
+case 110 /* Implements */:
 new (&this->as.Implements.value) (decltype(this->as.Implements.value))(move(rhs.as.Implements.value));
 break;
-case 110 /* Requires */:
+case 111 /* Requires */:
 new (&this->as.Requires.value) (decltype(this->as.Requires.value))(move(rhs.as.Requires.value));
 break;
-case 111 /* Trait */:
+case 112 /* Trait */:
 new (&this->as.Trait.value) (decltype(this->as.Trait.value))(move(rhs.as.Trait.value));
 break;
-case 112 /* Garbage */:
+case 113 /* Garbage */:
 new (&this->as.Garbage.consumed) (decltype(this->as.Garbage.consumed))(move(rhs.as.Garbage.consumed));
 new (&this->as.Garbage.span) (decltype(this->as.Garbage.span))(move(rhs.as.Garbage.span));
 break;
@@ -4704,61 +4733,63 @@ case 83 /* Loop */:this->as.Loop.value.~Span();
 break;
 case 84 /* Match */:this->as.Match.value.~Span();
 break;
-case 85 /* Mut */:this->as.Mut.value.~Span();
+case 85 /* Must */:this->as.Must.value.~Span();
 break;
-case 86 /* Namespace */:this->as.Namespace.value.~Span();
+case 86 /* Mut */:this->as.Mut.value.~Span();
 break;
-case 87 /* Not */:this->as.Not.value.~Span();
+case 87 /* Namespace */:this->as.Namespace.value.~Span();
 break;
-case 88 /* Or */:this->as.Or.value.~Span();
+case 88 /* Not */:this->as.Not.value.~Span();
 break;
-case 89 /* Override */:this->as.Override.value.~Span();
+case 89 /* Or */:this->as.Or.value.~Span();
 break;
-case 90 /* Private */:this->as.Private.value.~Span();
+case 90 /* Override */:this->as.Override.value.~Span();
 break;
-case 91 /* Public */:this->as.Public.value.~Span();
+case 91 /* Private */:this->as.Private.value.~Span();
 break;
-case 92 /* Raw */:this->as.Raw.value.~Span();
+case 92 /* Public */:this->as.Public.value.~Span();
 break;
-case 93 /* Reflect */:this->as.Reflect.value.~Span();
+case 93 /* Raw */:this->as.Raw.value.~Span();
 break;
-case 94 /* Return */:this->as.Return.value.~Span();
+case 94 /* Reflect */:this->as.Reflect.value.~Span();
 break;
-case 95 /* Restricted */:this->as.Restricted.value.~Span();
+case 95 /* Return */:this->as.Return.value.~Span();
 break;
-case 96 /* Sizeof */:this->as.Sizeof.value.~Span();
+case 96 /* Restricted */:this->as.Restricted.value.~Span();
 break;
-case 97 /* Struct */:this->as.Struct.value.~Span();
+case 97 /* Sizeof */:this->as.Sizeof.value.~Span();
 break;
-case 98 /* This */:this->as.This.value.~Span();
+case 98 /* Struct */:this->as.Struct.value.~Span();
 break;
-case 99 /* Throw */:this->as.Throw.value.~Span();
+case 99 /* This */:this->as.This.value.~Span();
 break;
-case 100 /* Throws */:this->as.Throws.value.~Span();
+case 100 /* Throw */:this->as.Throw.value.~Span();
 break;
-case 101 /* True */:this->as.True.value.~Span();
+case 101 /* Throws */:this->as.Throws.value.~Span();
 break;
-case 102 /* Try */:this->as.Try.value.~Span();
+case 102 /* True */:this->as.True.value.~Span();
 break;
-case 103 /* Unsafe */:this->as.Unsafe.value.~Span();
+case 103 /* Try */:this->as.Try.value.~Span();
 break;
-case 104 /* Virtual */:this->as.Virtual.value.~Span();
+case 104 /* Unsafe */:this->as.Unsafe.value.~Span();
 break;
-case 105 /* Weak */:this->as.Weak.value.~Span();
+case 105 /* Virtual */:this->as.Virtual.value.~Span();
 break;
-case 106 /* While */:this->as.While.value.~Span();
+case 106 /* Weak */:this->as.Weak.value.~Span();
 break;
-case 107 /* Yield */:this->as.Yield.value.~Span();
+case 107 /* While */:this->as.While.value.~Span();
 break;
-case 108 /* Guard */:this->as.Guard.value.~Span();
+case 108 /* Yield */:this->as.Yield.value.~Span();
 break;
-case 109 /* Implements */:this->as.Implements.value.~Span();
+case 109 /* Guard */:this->as.Guard.value.~Span();
 break;
-case 110 /* Requires */:this->as.Requires.value.~Span();
+case 110 /* Implements */:this->as.Implements.value.~Span();
 break;
-case 111 /* Trait */:this->as.Trait.value.~Span();
+case 111 /* Requires */:this->as.Requires.value.~Span();
 break;
-case 112 /* Garbage */:this->as.Garbage.consumed.~Optional();
+case 112 /* Trait */:this->as.Trait.value.~Span();
+break;
+case 113 /* Garbage */:this->as.Garbage.consumed.~Optional();
 this->as.Garbage.span.~Span();
 break;
 }
@@ -5109,115 +5140,119 @@ case 84 /* Match */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Match;utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
-case 85 /* Mut */: {
+case 85 /* Must */: {
+auto&& __jakt_match_value = __jakt_match_variant.as.Must;utility::Span const& span = __jakt_match_value.value;
+return JaktInternal::ExplicitValue(span);
+};/*case end*/
+case 86 /* Mut */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Mut;utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
-case 86 /* Namespace */: {
+case 87 /* Namespace */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Namespace;utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
-case 87 /* Not */: {
+case 88 /* Not */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Not;utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
-case 88 /* Or */: {
+case 89 /* Or */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Or;utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
-case 89 /* Override */: {
+case 90 /* Override */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Override;utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
-case 90 /* Private */: {
+case 91 /* Private */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Private;utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
-case 91 /* Public */: {
+case 92 /* Public */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Public;utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
-case 92 /* Raw */: {
+case 93 /* Raw */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Raw;utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
-case 93 /* Reflect */: {
+case 94 /* Reflect */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Reflect;utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
-case 94 /* Return */: {
+case 95 /* Return */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Return;utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
-case 95 /* Restricted */: {
+case 96 /* Restricted */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Restricted;utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
-case 96 /* Sizeof */: {
+case 97 /* Sizeof */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Sizeof;utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
-case 97 /* Struct */: {
+case 98 /* Struct */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Struct;utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
-case 98 /* This */: {
+case 99 /* This */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.This;utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
-case 99 /* Throw */: {
+case 100 /* Throw */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Throw;utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
-case 100 /* Throws */: {
+case 101 /* Throws */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Throws;utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
-case 101 /* True */: {
+case 102 /* True */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.True;utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
-case 102 /* Try */: {
+case 103 /* Try */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Try;utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
-case 103 /* Unsafe */: {
+case 104 /* Unsafe */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Unsafe;utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
-case 104 /* Virtual */: {
+case 105 /* Virtual */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Virtual;utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
-case 105 /* Weak */: {
+case 106 /* Weak */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Weak;utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
-case 106 /* While */: {
+case 107 /* While */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.While;utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
-case 107 /* Yield */: {
+case 108 /* Yield */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Yield;utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
-case 108 /* Guard */: {
+case 109 /* Guard */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Guard;utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
-case 109 /* Implements */: {
+case 110 /* Implements */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Implements;utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
-case 110 /* Requires */: {
+case 111 /* Requires */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Requires;utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
-case 111 /* Trait */: {
+case 112 /* Trait */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Trait;utility::Span const& span = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
-case 112 /* Garbage */: {
+case 113 /* Garbage */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Garbage;utility::Span const& span = __jakt_match_value.span;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
@@ -5313,6 +5348,9 @@ return JaktInternal::ExplicitValue(lexer::Token::Loop(span));
 }
 else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("match"sv))) {
 return JaktInternal::ExplicitValue(lexer::Token::Match(span));
+}
+else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("must"sv))) {
+return JaktInternal::ExplicitValue(lexer::Token::Must(span));
 }
 else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("mut"sv))) {
 return JaktInternal::ExplicitValue(lexer::Token::Mut(span));

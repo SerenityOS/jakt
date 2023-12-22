@@ -1019,6 +1019,10 @@ utility::Span span;
 } Function;
 struct {
 NonnullRefPtr<typename parser::ParsedExpression> expr;
+utility::Span span;
+} Must;
+struct {
+NonnullRefPtr<typename parser::ParsedExpression> expr;
 JaktInternal::Optional<parser::ParsedBlock> catch_block;
 JaktInternal::Optional<utility::Span> catch_span;
 JaktInternal::Optional<ByteString> catch_name;
@@ -1072,6 +1076,7 @@ constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 
 [[nodiscard]] static NonnullRefPtr<ParsedExpression> EnumVariantArg(NonnullRefPtr<typename parser::ParsedExpression> expr, parser::EnumVariantPatternArgument arg, NonnullRefPtr<typename parser::ParsedType> enum_variant, utility::Span span);
 [[nodiscard]] static NonnullRefPtr<ParsedExpression> NamespacedVar(ByteString name, JaktInternal::DynamicArray<ByteString> namespace_, utility::Span span);
 [[nodiscard]] static NonnullRefPtr<ParsedExpression> Function(JaktInternal::DynamicArray<parser::ParsedCapture> captures, JaktInternal::DynamicArray<parser::ParsedParameter> params, bool can_throw, bool is_fat_arrow, NonnullRefPtr<typename parser::ParsedType> return_type, parser::ParsedBlock block, utility::Span span);
+[[nodiscard]] static NonnullRefPtr<ParsedExpression> Must(NonnullRefPtr<typename parser::ParsedExpression> expr, utility::Span span);
 [[nodiscard]] static NonnullRefPtr<ParsedExpression> Try(NonnullRefPtr<typename parser::ParsedExpression> expr, JaktInternal::Optional<parser::ParsedBlock> catch_block, JaktInternal::Optional<utility::Span> catch_span, JaktInternal::Optional<ByteString> catch_name, utility::Span span);
 [[nodiscard]] static NonnullRefPtr<ParsedExpression> TryBlock(NonnullRefPtr<typename parser::ParsedStatement> stmt, ByteString error_name, utility::Span error_span, parser::ParsedBlock catch_block, utility::Span span);
 [[nodiscard]] static NonnullRefPtr<ParsedExpression> Reflect(NonnullRefPtr<typename parser::ParsedType> type, utility::Span span);
