@@ -124,10 +124,8 @@ K const key = ((jakt__key__values__).template get<0>());
 JaktInternal::DynamicArray<V> const values = ((jakt__key__values__).template get<1>());
 
 size_t const index = ((((*this).current_index))[key]);
-if ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+if ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }

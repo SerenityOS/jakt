@@ -140,10 +140,8 @@ ByteString jakt__path::Path::basename(bool const strip_extension) const {
 JaktInternal::Tuple<ByteString,ByteString> const parts = ((*this).split_at_last_slash());
 if (strip_extension){
 size_t ext_length = ((((*this).extension())).length());
-if ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+if ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -164,7 +162,7 @@ ErrorOr<jakt__path::Path> jakt__path::Path::replace_extension(ByteString const n
 JaktInternal::Tuple<ByteString,ByteString> const parts = ((*this).split_at_last_slash());
 ByteString const basename = ((*this).basename(true));
 ByteString const extension = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<jakt__path::Path>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<jakt__path::Path>> {
 auto __jakt_enum_value = (new_extension);
 if (__jakt_enum_value == (ByteString::from_utf8_without_validation(""sv))) {
 return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(""sv)));
@@ -236,10 +234,8 @@ else {
 }
 
 if (((last_slash).has_value())){
-if ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+if ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -275,10 +271,8 @@ JaktInternal::Optional<size_t> jakt__path::Path::last_slash(ByteString const pat
 {
 size_t i = JaktInternal::checked_sub(((path).length()),static_cast<size_t>(1ULL));
 u8 const separator = static_cast<u8>(47);
-while (([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+while (([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }

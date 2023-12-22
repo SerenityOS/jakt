@@ -21,10 +21,8 @@ return build::ParallelExecutionPool(Dictionary<size_t, jakt__platform__unknown_p
 
 ErrorOr<size_t> build::ParallelExecutionPool::run(JaktInternal::DynamicArray<ByteString> const args) {
 {
-if ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+if ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -243,7 +241,7 @@ return {};
 ErrorOr<void> build::Builder::link_into_archive(ByteString const archiver,ByteString const archive_filename,JaktInternal::DynamicArray<ByteString> const extra_arguments) {
 {
 JaktInternal::DynamicArray<ByteString> args = DynamicArray<ByteString>::create_with({archiver, ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<void>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<void>> {
 auto __jakt_enum_value = (((extra_arguments).size()));
 if (__jakt_enum_value == static_cast<size_t>(0ULL)) {
 return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("cr"sv)));

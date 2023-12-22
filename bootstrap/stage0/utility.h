@@ -130,10 +130,8 @@ break;
 this->__jakt_variant_index = rhs.__jakt_variant_index;
 }
 }
-~IterationDecision(){
-if (this->__jakt_variant_index == 0) return;
-this->__jakt_destroy_variant();
-}
+~IterationDecision(){ if (this->__jakt_variant_index == 0) return;
+this->__jakt_destroy_variant(); }
 private: void __jakt_destroy_variant() {
 switch (this->__jakt_init_index()) {
 case 0 /* Break */:this->as.Break.value.~T();

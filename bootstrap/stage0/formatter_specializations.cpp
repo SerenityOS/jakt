@@ -48,7 +48,7 @@ template<>
 JaktInternal::Optional<lexer::Token> collapse<lexer::Token>(JaktInternal::Optional<JaktInternal::Optional<lexer::Token>> const x) {
 {
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<lexer::Token>,JaktInternal::Optional<lexer::Token>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<lexer::Token>,JaktInternal::Optional<lexer::Token>> {
 auto __jakt_enum_value = (((x).has_value()));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue((x.value()));

@@ -81,8 +81,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.GenericInstance;ids::StructI
 JaktInternal::DynamicArray<ids::TypeId> const& args = __jakt_match_value.args;
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_168; {
 types::CheckedStruct const struct_ = ((((interpreter)->program))->get_struct(struct_id));
-Function<ids::TypeId(ids::TypeId)> const resolve_type_id = [&struct_, &args](ids::TypeId type_id) -> ids::TypeId {
-{
+Function<ids::TypeId(ids::TypeId)> const resolve_type_id = [&struct_, &args](ids::TypeId type_id) -> ids::TypeId {{
 i64 i = static_cast<i64>(0LL);
 {
 JaktInternal::ArrayIterator<types::CheckedGenericParameter> _magic = ((((struct_).generic_parameters)).iterator());
@@ -119,10 +118,8 @@ break;
 types::CheckedField field = (_magic_value.value());
 {
 size_t const field_alignment = TRY((interpreter::align_of_impl(resolve_type_id(((((((interpreter)->program))->get_variable(((field).variable_id))))->type_id)),interpreter)));
-if ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+if ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -147,8 +144,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.Struct;ids::StructId const& 
 JaktInternal::DynamicArray<ids::TypeId> const args = DynamicArray<ids::TypeId>::create_with({});
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_170; {
 types::CheckedStruct const struct_ = ((((interpreter)->program))->get_struct(struct_id));
-Function<ids::TypeId(ids::TypeId)> const resolve_type_id = [&struct_, &args](ids::TypeId type_id) -> ids::TypeId {
-{
+Function<ids::TypeId(ids::TypeId)> const resolve_type_id = [&struct_, &args](ids::TypeId type_id) -> ids::TypeId {{
 i64 i = static_cast<i64>(0LL);
 {
 JaktInternal::ArrayIterator<types::CheckedGenericParameter> _magic = ((((struct_).generic_parameters)).iterator());
@@ -185,10 +181,8 @@ break;
 types::CheckedField field = (_magic_value.value());
 {
 size_t const field_alignment = TRY((interpreter::align_of_impl(resolve_type_id(((((((interpreter)->program))->get_variable(((field).variable_id))))->type_id)),interpreter)));
-if ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+if ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -213,8 +207,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.GenericEnumInstance;ids::Enu
 JaktInternal::DynamicArray<ids::TypeId> const& args = __jakt_match_value.args;
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_172; {
 types::CheckedEnum const enum_ = ((((interpreter)->program))->get_enum(enum_id));
-Function<ids::TypeId(ids::TypeId)> const resolve_type_id = [&enum_, &args](ids::TypeId type_id) -> ids::TypeId {
-{
+Function<ids::TypeId(ids::TypeId)> const resolve_type_id = [&enum_, &args](ids::TypeId type_id) -> ids::TypeId {{
 i64 i = static_cast<i64>(0LL);
 {
 JaktInternal::ArrayIterator<types::CheckedGenericParameter> _magic = ((((enum_).generic_parameters)).iterator());
@@ -241,7 +234,7 @@ return type_id;
 }
 ;
 __jakt_var_172 = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<size_t>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<size_t>> {
 auto __jakt_enum_value = (((((enum_).underlying_type_id)).equals(types::void_type_id())));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_174; {
@@ -283,10 +276,8 @@ break;
 ids::VarId field = (_magic_value.value());
 {
 size_t const field_alignment = TRY((interpreter::align_of_impl(resolve_type_id(((((((interpreter)->program))->get_variable(field)))->type_id)),interpreter)));
-if ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+if ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -317,10 +308,8 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
         continue;
     _jakt_value.release_value();
 });
-if ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+if ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -336,7 +325,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 
 types::BuiltinType const index_type = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::BuiltinType,ErrorOr<size_t>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::BuiltinType,ErrorOr<size_t>> {
 auto __jakt_enum_value = (((((enum_).variants)).size()));
 if (__jakt_enum_value >= static_cast<size_t>(0ULL)&& __jakt_enum_value < static_cast<size_t>(256ULL)) {
 return JaktInternal::ExplicitValue(types::BuiltinType::U8());
@@ -350,10 +339,8 @@ return JaktInternal::ExplicitValue(types::BuiltinType::Usize());
     _jakt_value.release_value();
 });
 size_t const index_align = TRY((interpreter::align_of_impl(types::builtin(index_type),interpreter)));
-if ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+if ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -385,8 +372,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.Enum;ids::EnumId const& enum
 JaktInternal::DynamicArray<ids::TypeId> const args = DynamicArray<ids::TypeId>::create_with({});
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_176; {
 types::CheckedEnum const enum_ = ((((interpreter)->program))->get_enum(enum_id));
-Function<ids::TypeId(ids::TypeId)> const resolve_type_id = [&enum_, &args](ids::TypeId type_id) -> ids::TypeId {
-{
+Function<ids::TypeId(ids::TypeId)> const resolve_type_id = [&enum_, &args](ids::TypeId type_id) -> ids::TypeId {{
 i64 i = static_cast<i64>(0LL);
 {
 JaktInternal::ArrayIterator<types::CheckedGenericParameter> _magic = ((((enum_).generic_parameters)).iterator());
@@ -413,7 +399,7 @@ return type_id;
 }
 ;
 __jakt_var_176 = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<size_t>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<size_t>> {
 auto __jakt_enum_value = (((((enum_).underlying_type_id)).equals(types::void_type_id())));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_178; {
@@ -455,10 +441,8 @@ break;
 ids::VarId field = (_magic_value.value());
 {
 size_t const field_alignment = TRY((interpreter::align_of_impl(resolve_type_id(((((((interpreter)->program))->get_variable(field)))->type_id)),interpreter)));
-if ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+if ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -489,10 +473,8 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
         continue;
     _jakt_value.release_value();
 });
-if ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+if ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -508,7 +490,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 
 types::BuiltinType const index_type = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::BuiltinType,ErrorOr<size_t>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::BuiltinType,ErrorOr<size_t>> {
 auto __jakt_enum_value = (((((enum_).variants)).size()));
 if (__jakt_enum_value >= static_cast<size_t>(0ULL)&& __jakt_enum_value < static_cast<size_t>(256ULL)) {
 return JaktInternal::ExplicitValue(types::BuiltinType::U8());
@@ -522,10 +504,8 @@ return JaktInternal::ExplicitValue(types::BuiltinType::Usize());
     _jakt_value.release_value();
 });
 size_t const index_align = TRY((interpreter::align_of_impl(types::builtin(index_type),interpreter)));
-if ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+if ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -660,8 +640,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.GenericInstance;ids::StructI
 JaktInternal::DynamicArray<ids::TypeId> const& args = __jakt_match_value.args;
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_180; {
 types::CheckedStruct const struct_ = ((((interpreter)->program))->get_struct(struct_id));
-Function<ids::TypeId(ids::TypeId)> const resolve_type_id = [&struct_, &args](ids::TypeId type_id) -> ids::TypeId {
-{
+Function<ids::TypeId(ids::TypeId)> const resolve_type_id = [&struct_, &args](ids::TypeId type_id) -> ids::TypeId {{
 i64 i = static_cast<i64>(0LL);
 {
 JaktInternal::ArrayIterator<types::CheckedGenericParameter> _magic = ((((struct_).generic_parameters)).iterator());
@@ -705,10 +684,8 @@ size_t const slack = JaktInternal::checked_mod(size,field_align);
 if (((slack) != (static_cast<size_t>(0ULL)))){
 ((size) += (JaktInternal::checked_sub(field_align,slack)));
 }
-if ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+if ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -744,8 +721,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.Struct;ids::StructId const& 
 JaktInternal::DynamicArray<ids::TypeId> const args = DynamicArray<ids::TypeId>::create_with({});
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_182; {
 types::CheckedStruct const struct_ = ((((interpreter)->program))->get_struct(struct_id));
-Function<ids::TypeId(ids::TypeId)> const resolve_type_id = [&struct_, &args](ids::TypeId type_id) -> ids::TypeId {
-{
+Function<ids::TypeId(ids::TypeId)> const resolve_type_id = [&struct_, &args](ids::TypeId type_id) -> ids::TypeId {{
 i64 i = static_cast<i64>(0LL);
 {
 JaktInternal::ArrayIterator<types::CheckedGenericParameter> _magic = ((((struct_).generic_parameters)).iterator());
@@ -789,10 +765,8 @@ size_t const slack = JaktInternal::checked_mod(size,field_align);
 if (((slack) != (static_cast<size_t>(0ULL)))){
 ((size) += (JaktInternal::checked_sub(field_align,slack)));
 }
-if ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+if ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -828,8 +802,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.GenericEnumInstance;ids::Enu
 JaktInternal::DynamicArray<ids::TypeId> const& args = __jakt_match_value.args;
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_184; {
 types::CheckedEnum const enum_ = ((((interpreter)->program))->get_enum(enum_id));
-Function<ids::TypeId(ids::TypeId)> const resolve_type_id = [&enum_, &args](ids::TypeId type_id) -> ids::TypeId {
-{
+Function<ids::TypeId(ids::TypeId)> const resolve_type_id = [&enum_, &args](ids::TypeId type_id) -> ids::TypeId {{
 i64 i = static_cast<i64>(0LL);
 {
 JaktInternal::ArrayIterator<types::CheckedGenericParameter> _magic = ((((enum_).generic_parameters)).iterator());
@@ -856,7 +829,7 @@ return type_id;
 }
 ;
 __jakt_var_184 = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<size_t>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<size_t>> {
 auto __jakt_enum_value = (((((enum_).underlying_type_id)).equals(types::void_type_id())));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_186; {
@@ -882,10 +855,8 @@ case 1 /* Typed */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Typed;ids::TypeId const& type_id = __jakt_match_value.type_id;
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_187; {
 size_t const align = TRY((interpreter::align_of_impl(resolve_type_id(type_id),interpreter)));
-if ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+if ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -924,10 +895,8 @@ size_t const slack = JaktInternal::checked_mod(size,field_alignment);
 if (((slack) != (static_cast<size_t>(0ULL)))){
 ((size) += (JaktInternal::checked_sub(field_alignment,slack)));
 }
-if ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+if ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -953,10 +922,8 @@ if (((total_slack) != (static_cast<size_t>(0ULL)))){
 }
 }
 
-if ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+if ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -982,10 +949,8 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
         continue;
     _jakt_value.release_value();
 });
-if ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+if ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -1001,7 +966,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 
 types::BuiltinType const index_type = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::BuiltinType,ErrorOr<size_t>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::BuiltinType,ErrorOr<size_t>> {
 auto __jakt_enum_value = (((((enum_).variants)).size()));
 if (__jakt_enum_value >= static_cast<size_t>(0ULL)&& __jakt_enum_value < static_cast<size_t>(256ULL)) {
 return JaktInternal::ExplicitValue(types::BuiltinType::U8());
@@ -1021,10 +986,8 @@ if (((index_slack) != (static_cast<size_t>(0ULL)))){
 ((size) += (JaktInternal::checked_sub(index_align,index_slack)));
 }
 ((size) += (index_size));
-if ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+if ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -1059,8 +1022,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.Enum;ids::EnumId const& enum
 JaktInternal::DynamicArray<ids::TypeId> const args = DynamicArray<ids::TypeId>::create_with({});
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_189; {
 types::CheckedEnum const enum_ = ((((interpreter)->program))->get_enum(enum_id));
-Function<ids::TypeId(ids::TypeId)> const resolve_type_id = [&enum_, &args](ids::TypeId type_id) -> ids::TypeId {
-{
+Function<ids::TypeId(ids::TypeId)> const resolve_type_id = [&enum_, &args](ids::TypeId type_id) -> ids::TypeId {{
 i64 i = static_cast<i64>(0LL);
 {
 JaktInternal::ArrayIterator<types::CheckedGenericParameter> _magic = ((((enum_).generic_parameters)).iterator());
@@ -1087,7 +1049,7 @@ return type_id;
 }
 ;
 __jakt_var_189 = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<size_t>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<size_t>> {
 auto __jakt_enum_value = (((((enum_).underlying_type_id)).equals(types::void_type_id())));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_191; {
@@ -1113,10 +1075,8 @@ case 1 /* Typed */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Typed;ids::TypeId const& type_id = __jakt_match_value.type_id;
 return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_192; {
 size_t const align = TRY((interpreter::align_of_impl(resolve_type_id(type_id),interpreter)));
-if ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+if ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -1155,10 +1115,8 @@ size_t const slack = JaktInternal::checked_mod(size,field_alignment);
 if (((slack) != (static_cast<size_t>(0ULL)))){
 ((size) += (JaktInternal::checked_sub(field_alignment,slack)));
 }
-if ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+if ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -1184,10 +1142,8 @@ if (((total_slack) != (static_cast<size_t>(0ULL)))){
 }
 }
 
-if ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+if ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -1213,10 +1169,8 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
         continue;
     _jakt_value.release_value();
 });
-if ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+if ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -1232,7 +1186,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 
 types::BuiltinType const index_type = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::BuiltinType,ErrorOr<size_t>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::BuiltinType,ErrorOr<size_t>> {
 auto __jakt_enum_value = (((((enum_).variants)).size()));
 if (__jakt_enum_value >= static_cast<size_t>(0ULL)&& __jakt_enum_value < static_cast<size_t>(256ULL)) {
 return JaktInternal::ExplicitValue(types::BuiltinType::U8());
@@ -1252,10 +1206,8 @@ if (((index_slack) != (static_cast<size_t>(0ULL)))){
 ((size) += (JaktInternal::checked_sub(index_align,index_slack)));
 }
 ((size) += (index_size));
-if ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+if ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -1361,7 +1313,7 @@ return JaktInternal::ExplicitValue(types::Value(types::ValueImpl::U8((infallible
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<types::Value>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<types::Value>> {
 auto __jakt_enum_value = (is_optional);
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(types::Value(types::ValueImpl::OptionalSome(this_value),((this_value).span)));
@@ -1407,7 +1359,7 @@ return JaktInternal::ExplicitValue(types::Value(types::ValueImpl::U16((infallibl
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<types::Value>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<types::Value>> {
 auto __jakt_enum_value = (is_optional);
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(types::Value(types::ValueImpl::OptionalSome(this_value),((this_value).span)));
@@ -1453,7 +1405,7 @@ return JaktInternal::ExplicitValue(types::Value(types::ValueImpl::U32((infallibl
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<types::Value>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<types::Value>> {
 auto __jakt_enum_value = (is_optional);
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(types::Value(types::ValueImpl::OptionalSome(this_value),((this_value).span)));
@@ -1499,7 +1451,7 @@ return JaktInternal::ExplicitValue(types::Value(types::ValueImpl::U64((infallibl
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<types::Value>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<types::Value>> {
 auto __jakt_enum_value = (is_optional);
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(types::Value(types::ValueImpl::OptionalSome(this_value),((this_value).span)));
@@ -1541,7 +1493,7 @@ return JaktInternal::ExplicitValue(types::Value(types::ValueImpl::I8((infallible
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<types::Value>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<types::Value>> {
 auto __jakt_enum_value = (is_optional);
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(types::Value(types::ValueImpl::OptionalSome(this_value),((this_value).span)));
@@ -1583,7 +1535,7 @@ return JaktInternal::ExplicitValue(types::Value(types::ValueImpl::I16((infallibl
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<types::Value>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<types::Value>> {
 auto __jakt_enum_value = (is_optional);
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(types::Value(types::ValueImpl::OptionalSome(this_value),((this_value).span)));
@@ -1625,7 +1577,7 @@ return JaktInternal::ExplicitValue(types::Value(types::ValueImpl::I32((infallibl
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<types::Value>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<types::Value>> {
 auto __jakt_enum_value = (is_optional);
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(types::Value(types::ValueImpl::OptionalSome(this_value),((this_value).span)));
@@ -1667,7 +1619,7 @@ return JaktInternal::ExplicitValue(types::Value(types::ValueImpl::I64((infallibl
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<types::Value>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<types::Value>> {
 auto __jakt_enum_value = (is_optional);
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(types::Value(types::ValueImpl::OptionalSome(this_value),((this_value).span)));
@@ -1701,7 +1653,7 @@ return JaktInternal::ExplicitValue(types::Value(types::ValueImpl::USize((infalli
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<types::Value>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<types::Value>> {
 auto __jakt_enum_value = (is_optional);
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(types::Value(types::ValueImpl::OptionalSome(this_value),((this_value).span)));
@@ -1726,7 +1678,7 @@ VERIFY_NOT_REACHED();
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<types::Value>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<types::Value>> {
 auto __jakt_enum_value = (is_optional);
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(({
@@ -1938,10 +1890,8 @@ size_t i = (_magic_value.value());
 }
 
 NonnullRefPtr<types::CheckedFunction> const callee = ((((interpreter)->program))->get_function((constructor.value())));
-if ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+if ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -2029,10 +1979,8 @@ size_t i = (_magic_value.value());
 }
 
 NonnullRefPtr<types::CheckedFunction> const callee = ((((interpreter)->program))->get_function((constructor.value())));
-if ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+if ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -2713,7 +2661,7 @@ NonnullRefPtr<typename types::CheckedStatement> statement = (_magic_value.value(
 
 types::CheckedBlock const new_then_block = types::CheckedBlock(then_statements,((then_block).scope_id),((then_block).control_flow),((then_block).yielded_type),((then_block).yielded_none));
 JaktInternal::Optional<NonnullRefPtr<typename types::CheckedStatement>> const new_else_statement = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<NonnullRefPtr<typename types::CheckedStatement>>,ErrorOr<NonnullRefPtr<typename types::CheckedStatement>>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<NonnullRefPtr<typename types::CheckedStatement>>,ErrorOr<NonnullRefPtr<typename types::CheckedStatement>>> {
 auto __jakt_enum_value = (((else_statement).has_value()));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(static_cast<JaktInternal::Optional<NonnullRefPtr<typename types::CheckedStatement>>>(TRY((((*this).perform_final_interpretation_pass((else_statement.value()),scope,function_id))))));
@@ -2815,7 +2763,7 @@ case 8 /* Return */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Return;JaktInternal::Optional<NonnullRefPtr<typename types::CheckedExpression>> const& val = __jakt_match_value.val;
 JaktInternal::Optional<utility::Span> const& span = __jakt_match_value.span;
 return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename types::CheckedStatement>,ErrorOr<NonnullRefPtr<typename types::CheckedStatement>>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename types::CheckedStatement>,ErrorOr<NonnullRefPtr<typename types::CheckedStatement>>> {
 auto __jakt_enum_value = (((val).has_value()));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(types::CheckedStatement::Return(TRY((((*this).perform_final_interpretation_expr_pass((val.value()),scope,function_id)))),span));
@@ -3330,7 +3278,7 @@ ErrorOr<interpreter::StatementResult> interpreter::Interpreter::call_prelude_fun
 {
 if (((((namespace_).size())) != (static_cast<size_t>(1ULL)))){
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (prelude_function);
 if (__jakt_enum_value == (ByteString::from_utf8_without_validation("format"sv))) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_209; {
@@ -3385,7 +3333,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Inval
 });
 ByteString const formatted_string = TRY((types::comptime_format_impl(format_string,((arguments)[(JaktInternal::Range<i64>{static_cast<i64>(static_cast<i64>(1LL)),static_cast<i64>(9223372036854775807LL)})]),((((*this).program))))));
 ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (prelude_function);
 if (__jakt_enum_value == (ByteString::from_utf8_without_validation("println"sv))) {
 return (outln((StringView::from_string_literal("{}"sv)),formatted_string)), JaktInternal::ExplicitValue<void>();
@@ -3435,7 +3383,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Inval
 });
 ByteString const formatted_string = TRY((types::comptime_format_impl(format_string,((arguments)[(JaktInternal::Range<i64>{static_cast<i64>(static_cast<i64>(1LL)),static_cast<i64>(9223372036854775807LL)})]),((((*this).program))))));
 ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (prelude_function);
 if (__jakt_enum_value == (ByteString::from_utf8_without_validation("println"sv))) {
 return (outln((StringView::from_string_literal("{}"sv)),formatted_string)), JaktInternal::ExplicitValue<void>();
@@ -3485,7 +3433,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Inval
 });
 ByteString const formatted_string = TRY((types::comptime_format_impl(format_string,((arguments)[(JaktInternal::Range<i64>{static_cast<i64>(static_cast<i64>(1LL)),static_cast<i64>(9223372036854775807LL)})]),((((*this).program))))));
 ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (prelude_function);
 if (__jakt_enum_value == (ByteString::from_utf8_without_validation("println"sv))) {
 return (outln((StringView::from_string_literal("{}"sv)),formatted_string)), JaktInternal::ExplicitValue<void>();
@@ -3535,7 +3483,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Inval
 });
 ByteString const formatted_string = TRY((types::comptime_format_impl(format_string,((arguments)[(JaktInternal::Range<i64>{static_cast<i64>(static_cast<i64>(1LL)),static_cast<i64>(9223372036854775807LL)})]),((((*this).program))))));
 ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (prelude_function);
 if (__jakt_enum_value == (ByteString::from_utf8_without_validation("println"sv))) {
 return (outln((StringView::from_string_literal("{}"sv)),formatted_string)), JaktInternal::ExplicitValue<void>();
@@ -4215,11 +4163,11 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Not y
 });
 }
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (((((namespace_)[static_cast<i64>(0LL)])).name));
 if (__jakt_enum_value == (ByteString::from_utf8_without_validation("Error"sv))) {
 return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (prelude_function);
 if (__jakt_enum_value == (ByteString::from_utf8_without_validation("from_errno"sv))) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_221; {
@@ -4302,7 +4250,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Not y
 }
 else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("File"sv))) {
 return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (prelude_function);
 if (__jakt_enum_value == (ByteString::from_utf8_without_validation("open_for_reading"sv))) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_223; {
@@ -4774,7 +4722,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Not y
 }
 else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("StringBuilder"sv))) {
 return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (prelude_function);
 if (__jakt_enum_value == (ByteString::from_utf8_without_validation("create"sv))) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_229; {
@@ -4832,7 +4780,7 @@ ByteString current_string = ((fields_current_string_).template get<1>());
 ByteStringBuilder builder = ByteStringBuilder::create();
 ((builder).append(current_string));
 ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (prelude_function);
 if (__jakt_enum_value == (ByteString::from_utf8_without_validation("append"sv))) {
 return (({
@@ -4978,7 +4926,7 @@ ByteString current_string = ((fields_current_string_).template get<1>());
 ByteStringBuilder builder = ByteStringBuilder::create();
 ((builder).append(current_string));
 ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (prelude_function);
 if (__jakt_enum_value == (ByteString::from_utf8_without_validation("append"sv))) {
 return (({
@@ -5124,7 +5072,7 @@ ByteString current_string = ((fields_current_string_).template get<1>());
 ByteStringBuilder builder = ByteStringBuilder::create();
 ((builder).append(current_string));
 ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (prelude_function);
 if (__jakt_enum_value == (ByteString::from_utf8_without_validation("append"sv))) {
 return (({
@@ -5372,7 +5320,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Not y
 }
 else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("Dictionary"sv))) {
 return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (prelude_function);
 if (__jakt_enum_value == (ByteString::from_utf8_without_validation("Dictionary"sv))) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_234; {
@@ -5416,7 +5364,7 @@ break;
 }
 
 __jakt_var_235 = interpreter::StatementResult::JustValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (((found_index).has_value()));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(types::Value(types::ValueImpl::OptionalSome(((values)[(found_index.value())])),call_span));
@@ -5815,7 +5763,7 @@ utility::panic((ByteString::from_utf8_without_validation("expected generic insta
     _jakt_value.release_value();
 });
 __jakt_var_241 = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (((((generics).size())) == (static_cast<size_t>(2ULL))));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_242; {
@@ -5893,7 +5841,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Not y
 }
 else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("Array"sv))) {
 return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (prelude_function);
 if (__jakt_enum_value == (ByteString::from_utf8_without_validation("iterator"sv))) {
 return JaktInternal::ExplicitValue(({
@@ -6048,7 +5996,7 @@ return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __j
 JaktInternal::DynamicArray<types::Value> mutable_values = values;
 JaktInternal::Optional<types::Value> const value = ((mutable_values).pop());
 __jakt_var_248 = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (((value).has_value()));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(interpreter::StatementResult::JustValue((value.value())));
@@ -6090,7 +6038,7 @@ return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __j
 JaktInternal::DynamicArray<types::Value> mutable_values = values;
 JaktInternal::Optional<types::Value> const value = ((mutable_values).first());
 __jakt_var_249 = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (((value).has_value()));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(interpreter::StatementResult::JustValue((value.value())));
@@ -6132,7 +6080,7 @@ return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __j
 JaktInternal::DynamicArray<types::Value> mutable_values = values;
 JaktInternal::Optional<types::Value> const value = ((mutable_values).last());
 __jakt_var_250 = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (((value).has_value()));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(interpreter::StatementResult::JustValue((value.value())));
@@ -6414,7 +6362,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Not y
 }
 else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("ArrayIterator"sv))) {
 return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (prelude_function);
 if (__jakt_enum_value == (ByteString::from_utf8_without_validation("next"sv))) {
 return JaktInternal::ExplicitValue(({
@@ -6452,11 +6400,9 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 20 /* JaktArray */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.JaktArray;JaktInternal::DynamicArray<types::Value> const& values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<interpreter::StatementResult>>{
-auto __jakt_enum_value = ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<interpreter::StatementResult>> {
+auto __jakt_enum_value = ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -6524,7 +6470,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Not y
 }
 else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("Range"sv))) {
 return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (prelude_function);
 if (__jakt_enum_value == (ByteString::from_utf8_without_validation("next"sv))) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_258; {
@@ -6655,10 +6601,8 @@ utility::panic((ByteString::from_utf8_without_validation("Invalid type for compt
 if (((start) == (end))){
 return interpreter::StatementResult::JustValue(types::Value(types::ValueImpl::OptionalNone(),call_span));
 }
-if ([](u64 const& self, u64 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](u64 const& self, u64 rhs) -> jakt__prelude__operators::Ordering {
-{
+if ([](u64 const& self, u64 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](u64 const& self, u64 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -6794,7 +6738,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Not y
 }
 else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("String"sv))) {
 return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (prelude_function);
 if (__jakt_enum_value == (ByteString::from_utf8_without_validation("is_empty"sv))) {
 return JaktInternal::ExplicitValue(({
@@ -7294,7 +7238,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.JaktString;ByteString const&
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_285; {
 JaktInternal::Optional<u32> const result = ((value).to_uint());
 __jakt_var_285 = interpreter::StatementResult::JustValue(types::Value(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename types::ValueImpl>,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename types::ValueImpl>,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (((result).has_value()));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(types::ValueImpl::OptionalSome(types::Value(types::ValueImpl::U32((result.value())),call_span)));
@@ -7334,7 +7278,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.JaktString;ByteString const&
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_286; {
 JaktInternal::Optional<i32> const result = ((value).to_int());
 __jakt_var_286 = interpreter::StatementResult::JustValue(types::Value(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename types::ValueImpl>,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename types::ValueImpl>,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (((result).has_value()));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(types::ValueImpl::OptionalSome(types::Value(types::ValueImpl::I32((result.value())),call_span)));
@@ -7766,7 +7710,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Not y
 }
 else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("Set"sv))) {
 return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (prelude_function);
 if (__jakt_enum_value == (ByteString::from_utf8_without_validation("Set"sv))) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_289; {
@@ -8100,7 +8044,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Not y
 }
 else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("SetIterator"sv))) {
 return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (prelude_function);
 if (__jakt_enum_value == (ByteString::from_utf8_without_validation("next"sv))) {
 return JaktInternal::ExplicitValue(({
@@ -8138,11 +8082,9 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 22 /* JaktSet */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.JaktSet;JaktInternal::DynamicArray<types::Value> const& values = __jakt_match_value.values;
 return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<interpreter::StatementResult>>{
-auto __jakt_enum_value = ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<interpreter::StatementResult>> {
+auto __jakt_enum_value = ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -8210,7 +8152,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Not y
 }
 else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("DictionaryIterator"sv))) {
 return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (prelude_function);
 if (__jakt_enum_value == (ByteString::from_utf8_without_validation("next"sv))) {
 return JaktInternal::ExplicitValue(({
@@ -8250,21 +8192,17 @@ auto&& __jakt_match_value = __jakt_match_variant.as.JaktDictionary;JaktInternal:
 JaktInternal::DynamicArray<types::Value> const& values = __jakt_match_value.values;
 ids::TypeId const& type_id = __jakt_match_value.type_id;
 return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<interpreter::StatementResult>>{
-auto __jakt_enum_value = (([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<interpreter::StatementResult>> {
+auto __jakt_enum_value = (([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
 (self,rhs))))) == (static_cast<u8>(2)));
 }
 }
-(((keys).size()),index) && [](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+(((keys).size()),index) && [](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -8355,7 +8293,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("Not y
 }
 else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("Optional"sv))) {
 return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (prelude_function);
 if (__jakt_enum_value == (ByteString::from_utf8_without_validation("has_value"sv))) {
 return JaktInternal::ExplicitValue(({
@@ -8419,7 +8357,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.OptionalSome;types::Value co
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_300; {
 types::Value const mapper_value = ((arguments)[static_cast<i64>(0LL)]);
 __jakt_var_300 = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (((((mapper_value).impl))->__jakt_init_index() == 27 /* Function */));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_301; {
@@ -8458,7 +8396,7 @@ break;
 
 interpreter::StatementResult const result = TRY((((*this).execute_block(block,scope,call_span))));
 __jakt_var_301 = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (((result).__jakt_init_index() == 5 /* JustValue */));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_302; {
@@ -9463,14 +9401,14 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
     _jakt_value.release_value();
 });
 JaktInternal::Optional<types::CheckedBlock> const block = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<types::CheckedBlock>,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<types::CheckedBlock>,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (cond);
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(static_cast<JaktInternal::Optional<types::CheckedBlock>>(then_block));
 }
 else if (__jakt_enum_value == false) {
 return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<types::CheckedBlock>,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<types::CheckedBlock>,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (((else_statement).has_value()));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(static_cast<JaktInternal::Optional<types::CheckedBlock>>(types::CheckedBlock(DynamicArray<NonnullRefPtr<typename types::CheckedStatement>>::create_with({(else_statement.value())}),((then_block).scope_id),types::BlockControlFlow::MayReturn(),JaktInternal::OptionalNone(),false)));
@@ -11838,8 +11776,7 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 13 /* JaktString */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.JaktString;ByteString const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](ByteString const& self, ByteString rhs) -> bool {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](ByteString const& self, ByteString rhs) -> bool {{
 return (!(((self) == (rhs))));
 }
 }
@@ -11886,10 +11823,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 2 /* U8 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U8;u8 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](u8 const& self, u8 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](u8 const& self, u8 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](u8 const& self, u8 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](u8 const& self, u8 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -11920,10 +11855,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 3 /* U16 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U16;u16 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](u16 const& self, u16 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](u16 const& self, u16 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](u16 const& self, u16 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](u16 const& self, u16 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -11954,10 +11887,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 4 /* U32 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U32;u32 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](u32 const& self, u32 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](u32 const& self, u32 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](u32 const& self, u32 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](u32 const& self, u32 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -11988,10 +11919,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 5 /* U64 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U64;u64 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](u64 const& self, u64 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](u64 const& self, u64 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](u64 const& self, u64 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](u64 const& self, u64 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -12022,10 +11951,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 6 /* I8 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I8;i8 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](i8 const& self, i8 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](i8 const& self, i8 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](i8 const& self, i8 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](i8 const& self, i8 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -12056,10 +11983,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 7 /* I16 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I16;i16 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](i16 const& self, i16 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](i16 const& self, i16 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](i16 const& self, i16 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](i16 const& self, i16 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -12090,10 +12015,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 8 /* I32 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I32;i32 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](i32 const& self, i32 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](i32 const& self, i32 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](i32 const& self, i32 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](i32 const& self, i32 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -12124,10 +12047,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 9 /* I64 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I64;i64 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](i64 const& self, i64 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](i64 const& self, i64 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](i64 const& self, i64 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](i64 const& self, i64 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -12158,10 +12079,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 10 /* F32 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.F32;f32 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](f32 const& self, f32 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](f32 const& self, f32 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](f32 const& self, f32 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](f32 const& self, f32 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -12192,10 +12111,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 11 /* F64 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.F64;f64 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](f64 const& self, f64 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](f64 const& self, f64 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](f64 const& self, f64 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](f64 const& self, f64 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -12226,10 +12143,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 12 /* USize */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.USize;size_t const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -12303,10 +12218,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 2 /* U8 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U8;u8 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](u8 const& self, u8 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](u8 const& self, u8 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](u8 const& self, u8 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](u8 const& self, u8 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -12337,10 +12250,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 3 /* U16 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U16;u16 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](u16 const& self, u16 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](u16 const& self, u16 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](u16 const& self, u16 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](u16 const& self, u16 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -12371,10 +12282,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 4 /* U32 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U32;u32 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](u32 const& self, u32 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](u32 const& self, u32 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](u32 const& self, u32 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](u32 const& self, u32 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -12405,10 +12314,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 5 /* U64 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U64;u64 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](u64 const& self, u64 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](u64 const& self, u64 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](u64 const& self, u64 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](u64 const& self, u64 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -12439,10 +12346,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 6 /* I8 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I8;i8 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](i8 const& self, i8 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](i8 const& self, i8 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](i8 const& self, i8 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](i8 const& self, i8 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -12473,10 +12378,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 7 /* I16 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I16;i16 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](i16 const& self, i16 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](i16 const& self, i16 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](i16 const& self, i16 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](i16 const& self, i16 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -12507,10 +12410,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 8 /* I32 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I32;i32 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](i32 const& self, i32 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](i32 const& self, i32 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](i32 const& self, i32 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](i32 const& self, i32 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -12541,10 +12442,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 9 /* I64 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I64;i64 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](i64 const& self, i64 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](i64 const& self, i64 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](i64 const& self, i64 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](i64 const& self, i64 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -12575,10 +12474,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 10 /* F32 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.F32;f32 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](f32 const& self, f32 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](f32 const& self, f32 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](f32 const& self, f32 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](f32 const& self, f32 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -12609,10 +12506,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 11 /* F64 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.F64;f64 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](f64 const& self, f64 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](f64 const& self, f64 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](f64 const& self, f64 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](f64 const& self, f64 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -12643,10 +12538,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 12 /* USize */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.USize;size_t const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -12720,10 +12613,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 2 /* U8 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U8;u8 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](u8 const& self, u8 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](u8 const& self, u8 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](u8 const& self, u8 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](u8 const& self, u8 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -12754,10 +12645,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 3 /* U16 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U16;u16 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](u16 const& self, u16 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](u16 const& self, u16 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](u16 const& self, u16 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](u16 const& self, u16 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -12788,10 +12677,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 4 /* U32 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U32;u32 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](u32 const& self, u32 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](u32 const& self, u32 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](u32 const& self, u32 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](u32 const& self, u32 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -12822,10 +12709,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 5 /* U64 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U64;u64 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](u64 const& self, u64 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](u64 const& self, u64 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](u64 const& self, u64 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](u64 const& self, u64 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -12856,10 +12741,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 6 /* I8 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I8;i8 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](i8 const& self, i8 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](i8 const& self, i8 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](i8 const& self, i8 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](i8 const& self, i8 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -12890,10 +12773,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 7 /* I16 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I16;i16 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](i16 const& self, i16 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](i16 const& self, i16 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](i16 const& self, i16 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](i16 const& self, i16 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -12924,10 +12805,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 8 /* I32 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I32;i32 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](i32 const& self, i32 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](i32 const& self, i32 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](i32 const& self, i32 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](i32 const& self, i32 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -12958,10 +12837,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 9 /* I64 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I64;i64 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](i64 const& self, i64 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](i64 const& self, i64 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](i64 const& self, i64 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](i64 const& self, i64 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -12992,10 +12869,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 10 /* F32 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.F32;f32 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](f32 const& self, f32 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](f32 const& self, f32 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](f32 const& self, f32 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](f32 const& self, f32 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -13026,10 +12901,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 11 /* F64 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.F64;f64 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](f64 const& self, f64 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](f64 const& self, f64 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](f64 const& self, f64 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](f64 const& self, f64 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -13060,10 +12933,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 12 /* USize */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.USize;size_t const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -13137,10 +13008,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 2 /* U8 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U8;u8 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](u8 const& self, u8 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](u8 const& self, u8 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](u8 const& self, u8 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](u8 const& self, u8 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -13171,10 +13040,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 3 /* U16 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U16;u16 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](u16 const& self, u16 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](u16 const& self, u16 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](u16 const& self, u16 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](u16 const& self, u16 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -13205,10 +13072,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 4 /* U32 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U32;u32 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](u32 const& self, u32 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](u32 const& self, u32 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](u32 const& self, u32 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](u32 const& self, u32 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -13239,10 +13104,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 5 /* U64 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U64;u64 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](u64 const& self, u64 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](u64 const& self, u64 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](u64 const& self, u64 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](u64 const& self, u64 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -13273,10 +13136,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 6 /* I8 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I8;i8 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](i8 const& self, i8 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](i8 const& self, i8 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](i8 const& self, i8 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](i8 const& self, i8 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -13307,10 +13168,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 7 /* I16 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I16;i16 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](i16 const& self, i16 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](i16 const& self, i16 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](i16 const& self, i16 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](i16 const& self, i16 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -13341,10 +13200,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 8 /* I32 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I32;i32 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](i32 const& self, i32 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](i32 const& self, i32 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](i32 const& self, i32 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](i32 const& self, i32 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -13375,10 +13232,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 9 /* I64 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I64;i64 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](i64 const& self, i64 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](i64 const& self, i64 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](i64 const& self, i64 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](i64 const& self, i64 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -13409,10 +13264,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 10 /* F32 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.F32;f32 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](f32 const& self, f32 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](f32 const& self, f32 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](f32 const& self, f32 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](f32 const& self, f32 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -13443,10 +13296,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 11 /* F64 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.F64;f64 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](f64 const& self, f64 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](f64 const& self, f64 rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](f64 const& self, f64 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](f64 const& self, f64 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -13477,10 +13328,8 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 12 /* USize */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.USize;size_t const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+return JaktInternal::ExplicitValue(types::ValueImpl::Bool([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -15510,7 +15359,7 @@ return {};
 ErrorOr<interpreter::StatementResult> interpreter::Interpreter::execute_expression(NonnullRefPtr<typename types::CheckedExpression> const expr,NonnullRefPtr<interpreter::InterpreterScope> scope) {
 {
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (((((*this).current_function_id)).has_value()));
 if (__jakt_enum_value == false) {
 return JaktInternal::ExplicitValue(TRY((((*this).execute_expression_without_cast(expr,scope)))));
@@ -15759,7 +15608,7 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 1 /* Bool */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Bool;bool const& x = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (x);
 if (__jakt_enum_value == ((((op).op)).__jakt_init_index() == 18 /* LogicalAnd */)) {
 return JaktInternal::ExplicitValue(((({
@@ -15837,7 +15686,7 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 1 /* Bool */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Bool;bool const& x = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (x);
 if (__jakt_enum_value == ((((op).op)).__jakt_init_index() == 18 /* LogicalAnd */)) {
 return JaktInternal::ExplicitValue(((({
@@ -16692,8 +16541,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.Enum;JaktInternal::DynamicAr
 ids::FunctionId const& constructor = __jakt_match_value.constructor;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_357; {
 ByteString const constructor_name = ((((((*this).program))->get_function(constructor)))->name);
-if ([](ByteString const& self, ByteString rhs) -> bool {
-{
+if ([](ByteString const& self, ByteString rhs) -> bool {{
 return (!(((self) == (rhs))));
 }
 }
@@ -16750,7 +16598,7 @@ JaktInternal::Optional<NonnullRefPtr<typename types::CheckedExpression>> const& 
 utility::Span const& span = __jakt_match_value.span;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_358; {
 types::Value const start = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (((from).has_value()));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(({
@@ -16810,7 +16658,7 @@ VERIFY_NOT_REACHED();
     _jakt_value.release_value();
 });
 types::Value const end = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::Value,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (((to).has_value()));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(({
@@ -17643,10 +17491,8 @@ utility::panic((ByteString::from_utf8_without_validation("Invalid type for repea
         return _jakt_value.release_return();
     _jakt_value.release_value();
 });
-if ([](u64 const& self, u64 rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](u64 const& self, u64 rhs) -> jakt__prelude__operators::Ordering {
-{
+if ([](u64 const& self, u64 rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](u64 const& self, u64 rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -18114,7 +17960,7 @@ case 2 /* QuotedString */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.QuotedString;types::CheckedStringLiteral const& val = __jakt_match_value.val;
 utility::Span const& span = __jakt_match_value.span;
 return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (((((val).type_id)).equals(types::builtin(types::BuiltinType::JaktString()))));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(interpreter::StatementResult::JustValue(types::Value(types::ValueImpl::JaktString(utility::interpret_escapes(((val).to_string()))),span)));
@@ -18247,7 +18093,7 @@ JaktInternal::Optional<NonnullRefPtr<typename types::CheckedExpression>> const& 
 utility::Span const& span = __jakt_match_value.span;
 ids::TypeId const& type_id = __jakt_match_value.type_id;
 return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (((repeat).has_value()));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_376; {
@@ -18516,7 +18362,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
     _jakt_value.release_value();
 });
 __jakt_var_378 = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (((((value).impl))->__jakt_init_index() == 26 /* JaktTuple */));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_379; {
@@ -18623,8 +18469,7 @@ size_t const& index = __jakt_match_value.index;
 types::CheckedMatchBody const& body = __jakt_match_value.body;
 utility::Span const& marker_span = __jakt_match_value.marker_span;
 {
-if ([](ByteString const& self, ByteString rhs) -> bool {
-{
+if ([](ByteString const& self, ByteString rhs) -> bool {{
 return (!(((self) == (rhs))));
 }
 }
@@ -18710,10 +18555,8 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 case 1 /* Typed */: {
 {
-if ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+if ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -20443,11 +20286,9 @@ utility::panic((ByteString::from_utf8_without_validation("Unknown kind of generi
     _jakt_value.release_value();
 });
 ids::TypeId const t = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ids::TypeId,ErrorOr<types::Value>>{
-auto __jakt_enum_value = ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ids::TypeId,ErrorOr<types::Value>> {
+auto __jakt_enum_value = ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -20632,11 +20473,9 @@ utility::panic((ByteString::from_utf8_without_validation("Unknown kind of generi
     _jakt_value.release_value();
 });
 ids::TypeId const t = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ids::TypeId,ErrorOr<types::Value>>{
-auto __jakt_enum_value = ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ids::TypeId,ErrorOr<types::Value>> {
+auto __jakt_enum_value = ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -20777,7 +20616,7 @@ utility::panic((ByteString::from_utf8_without_validation("Expected RecordType to
 });
 bool const is_value_enum = ((((subject_enum).underlying_type_id)).equals(types::unknown_type_id()));
 ids::FunctionId const record_type_struct_constructor = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ids::FunctionId,ErrorOr<types::Value>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ids::FunctionId,ErrorOr<types::Value>> {
 auto __jakt_enum_value = (is_value_enum);
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue((TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(record_type_enum_id))).scope_id),(ByteString::from_utf8_without_validation("ValueEnum"sv)),JaktInternal::OptionalNone())))).value()));
@@ -20835,11 +20674,9 @@ utility::panic((ByteString::from_utf8_without_validation("Unknown kind of generi
     _jakt_value.release_value();
 });
 ids::TypeId const t = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ids::TypeId,ErrorOr<types::Value>>{
-auto __jakt_enum_value = ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ids::TypeId,ErrorOr<types::Value>> {
+auto __jakt_enum_value = ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -20972,7 +20809,7 @@ utility::panic((ByteString::from_utf8_without_validation("Expected RecordType to
 });
 bool const is_value_enum = ((((subject_enum).underlying_type_id)).equals(types::unknown_type_id()));
 ids::FunctionId const record_type_struct_constructor = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ids::FunctionId,ErrorOr<types::Value>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ids::FunctionId,ErrorOr<types::Value>> {
 auto __jakt_enum_value = (is_value_enum);
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue((TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(record_type_enum_id))).scope_id),(ByteString::from_utf8_without_validation("ValueEnum"sv)),JaktInternal::OptionalNone())))).value()));
@@ -21030,11 +20867,9 @@ utility::panic((ByteString::from_utf8_without_validation("Unknown kind of generi
     _jakt_value.release_value();
 });
 ids::TypeId const t = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ids::TypeId,ErrorOr<types::Value>>{
-auto __jakt_enum_value = ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ids::TypeId,ErrorOr<types::Value>> {
+auto __jakt_enum_value = ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -21275,10 +21110,8 @@ break;
 this->__jakt_variant_index = rhs.__jakt_variant_index;
 }
 }
-Deferred::~Deferred(){
-if (this->__jakt_variant_index == 0) return;
-this->__jakt_destroy_variant();
-}
+Deferred::~Deferred(){ if (this->__jakt_variant_index == 0) return;
+this->__jakt_destroy_variant(); }
 void Deferred::__jakt_destroy_variant() {
 switch (this->__jakt_init_index()) {
 case 0 /* Expression */:this->as.Expression.value.~NonnullRefPtr();
@@ -21390,10 +21223,8 @@ break;
 this->__jakt_variant_index = rhs.__jakt_variant_index;
 }
 }
-ExecutionResult::~ExecutionResult(){
-if (this->__jakt_variant_index == 0) return;
-this->__jakt_destroy_variant();
-}
+ExecutionResult::~ExecutionResult(){ if (this->__jakt_variant_index == 0) return;
+this->__jakt_destroy_variant(); }
 void ExecutionResult::__jakt_destroy_variant() {
 switch (this->__jakt_init_index()) {
 case 0 /* Return */:this->as.Return.value.~Value();
@@ -21603,10 +21434,8 @@ break;
 this->__jakt_variant_index = rhs.__jakt_variant_index;
 }
 }
-StatementResult::~StatementResult(){
-if (this->__jakt_variant_index == 0) return;
-this->__jakt_destroy_variant();
-}
+StatementResult::~StatementResult(){ if (this->__jakt_variant_index == 0) return;
+this->__jakt_destroy_variant(); }
 void StatementResult::__jakt_destroy_variant() {
 switch (this->__jakt_init_index()) {
 case 0 /* Return */:this->as.Return.value.~Value();

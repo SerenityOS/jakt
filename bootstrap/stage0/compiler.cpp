@@ -111,10 +111,8 @@ return {};
 
 JaktInternal::Optional<jakt__path::Path> compiler::Compiler::get_file_path(utility::FileId const file_id) const {
 {
-if ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+if ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -173,7 +171,7 @@ NonnullRefPtr<File> file = TRY((File::open_for_reading(((((((*this).files))[((fi
 ;return {};}();
 if (__jakt_var_3.is_error()) {auto error = __jakt_var_3.release_error();{
 ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<bool>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<bool>> {
 auto __jakt_enum_value = (((error).code()));
 if (__jakt_enum_value == ErrNOENT) {
 return (warnln((StringView::from_string_literal("\u001b[31;1mError\u001b[0m Could not access {}: File not found"sv)),((((*this).files))[((file_id).id)]))), JaktInternal::ExplicitValue<void>();
@@ -298,10 +296,8 @@ return candidate_path;
 JaktInternal::Optional<jakt__path::Path> const current_file_path = ((*this).assume_main_file_path).value_or_lazy_evaluated_optional([&] { return ((*this).current_file_path()); });
 if (((current_file_path).has_value())){
 jakt__path::Path candidate_path = ((((TRY(((((current_file_path.value())).absolute())))).parent())).join(path));
-if ((relative_import && [](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+if ((relative_import && [](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -311,10 +307,8 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 (parent_path_count,static_cast<size_t>(0ULL)))){
 size_t parent_count = parent_path_count;
 jakt__path::Path parent = ((candidate_path).parent());
-while ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+while ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }

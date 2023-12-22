@@ -5,11 +5,11 @@ ErrorOr<JaktInternal::DynamicArray<ByteString>> platform_import_names() {
 {
 jakt__platform::Target const target = TRY((jakt__platform::Target::active()));
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::DynamicArray<ByteString>,ErrorOr<JaktInternal::DynamicArray<ByteString>>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::DynamicArray<ByteString>,ErrorOr<JaktInternal::DynamicArray<ByteString>>> {
 auto __jakt_enum_value = (((target).os));
 if (__jakt_enum_value == (ByteString::from_utf8_without_validation("windows"sv))) {
 return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::DynamicArray<ByteString>,ErrorOr<JaktInternal::DynamicArray<ByteString>>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::DynamicArray<ByteString>,ErrorOr<JaktInternal::DynamicArray<ByteString>>> {
 auto __jakt_enum_value = (((target).arch));
 if (__jakt_enum_value == (ByteString::from_utf8_without_validation("x86_64"sv))) {
 return JaktInternal::ExplicitValue(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("win64"sv)), (ByteString::from_utf8_without_validation("windows"sv))}));
@@ -77,10 +77,8 @@ return output;
 JaktInternal::Optional<size_t> last_namespace_separator(ByteString const name) {
 {
 size_t i = JaktInternal::checked_sub(((name).length()),static_cast<size_t>(1ULL));
-while ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+while ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -130,7 +128,7 @@ return TRY((jakt__platform::Target::from_triple(triple)));
 ErrorOr<ByteString> jakt__platform::Target::name(bool const abbreviate) const {
 {
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<ByteString>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<ByteString>> {
 auto __jakt_enum_value = (abbreviate);
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(__jakt_format((StringView::from_string_literal("{}-{}-{}"sv)),((*this).arch),((*this).platform),((*this).os)));
@@ -152,7 +150,7 @@ jakt__platform::Target::Target(ByteString a_arch, ByteString a_platform, ByteStr
 ErrorOr<size_t> jakt__platform::Target::size_t_size() const {
 {
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<size_t>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<size_t>> {
 auto __jakt_enum_value = (((*this).arch));
 if (__jakt_enum_value == (ByteString::from_utf8_without_validation("x86_64"sv))) {
 return JaktInternal::ExplicitValue(static_cast<size_t>(8ULL));
@@ -176,7 +174,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("size_
 ErrorOr<size_t> jakt__platform::Target::pointer_size() const {
 {
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<size_t>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<size_t>> {
 auto __jakt_enum_value = (((*this).arch));
 if (__jakt_enum_value == (ByteString::from_utf8_without_validation("x86_64"sv))) {
 return JaktInternal::ExplicitValue(static_cast<size_t>(8ULL));
@@ -200,7 +198,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("point
 ErrorOr<size_t> jakt__platform::Target::int_size() const {
 {
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<size_t>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<size_t>> {
 auto __jakt_enum_value = (((*this).arch));
 if (__jakt_enum_value == (ByteString::from_utf8_without_validation("x86_64"sv))) {
 return JaktInternal::ExplicitValue(static_cast<size_t>(4ULL));

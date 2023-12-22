@@ -12,8 +12,7 @@ return ((((*this).id)) == (((rhs).id)));
 }
 public: __attribute__((always_inline)) inline u32 hash() const {
 {
-return [](size_t const& self) -> u32 {
-{
+return [](size_t const& self) -> u32 {{
 return ((AK::Traits<size_t>()).hash(self));
 }
 }
@@ -47,8 +46,7 @@ return (((((((*this).module)).id)) == (((((rhs).module)).id))) && ((((*this).id)
 }
 public: __attribute__((always_inline)) inline u32 hash() const {
 {
-return pair_int_hash([](size_t const& self) -> u32 {
-{
+return pair_int_hash([](size_t const& self) -> u32 {{
 return ((AK::Traits<size_t>()).hash(self));
 }
 }
@@ -82,10 +80,8 @@ return (((((((*this).module)).id)) == (((((rhs).module)).id))) && ((((*this).id)
 }
 public: __attribute__((always_inline)) inline u32 hash() const {
 {
-return [](size_t const& self, ids::ModuleId const& other) -> u32 {
-{
-return pair_int_hash([](size_t const& self) -> u32 {
-{
+return [](size_t const& self, ids::ModuleId const& other) -> u32 {{
+return pair_int_hash([](size_t const& self) -> u32 {{
 return ((AK::Traits<size_t>()).hash(self));
 }
 }

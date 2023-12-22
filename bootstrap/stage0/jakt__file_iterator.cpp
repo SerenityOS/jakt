@@ -20,10 +20,8 @@ return jakt__file_iterator::RecursiveFileIterator::__jakt_create(extension,Dynam
 ErrorOr<JaktInternal::Optional<jakt__path::Path>> jakt__file_iterator::RecursiveFileIterator::next() {
 {
 if ((!(((((*this).current_directory)).has_value())))){
-if ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+if ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }

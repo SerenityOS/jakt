@@ -105,10 +105,8 @@ break;
 this->__jakt_variant_index = rhs.__jakt_variant_index;
 }
 }
-LineResult::~LineResult(){
-if (this->__jakt_variant_index == 0) return;
-this->__jakt_destroy_variant();
-}
+LineResult::~LineResult(){ if (this->__jakt_variant_index == 0) return;
+this->__jakt_destroy_variant(); }
 void LineResult::__jakt_destroy_variant() {
 switch (this->__jakt_init_index()) {
 case 0 /* Line */:this->as.Line.value.~ByteString();
@@ -361,10 +359,8 @@ break;
 this->__jakt_variant_index = rhs.__jakt_variant_index;
 }
 }
-XTermColor::~XTermColor(){
-if (this->__jakt_variant_index == 0) return;
-this->__jakt_destroy_variant();
-}
+XTermColor::~XTermColor(){ if (this->__jakt_variant_index == 0) return;
+this->__jakt_destroy_variant(); }
 void XTermColor::__jakt_destroy_variant() {
 switch (this->__jakt_init_index()) {
 case 0 /* Default */:break;
@@ -506,10 +502,8 @@ break;
 this->__jakt_variant_index = rhs.__jakt_variant_index;
 }
 }
-Color::~Color(){
-if (this->__jakt_variant_index == 0) return;
-this->__jakt_destroy_variant();
-}
+Color::~Color(){ if (this->__jakt_variant_index == 0) return;
+this->__jakt_destroy_variant(); }
 void Color::__jakt_destroy_variant() {
 switch (this->__jakt_init_index()) {
 case 0 /* Components */:break;
