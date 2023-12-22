@@ -200,11 +200,11 @@ static ErrorOr<Optional<ExitPollResult>> poll_any_process(DWORD timeout = 0)
 
     // FIXME: Can we use RegisterWaitForSingleObject here?
     // Barring that, can probably bookeep this array along with the other static lists
-    auto handles = TRY(DynamicArray<HANDLE>::create_empty());
-    TRY(handles.ensure_capacity(s_process_handles.size()));
+    auto handles = DynamicArray<HANDLE>::create_empty();
+    handles.ensure_capacity(s_process_handles.size());
 
     for (auto const& element : s_process_handles)
-        MUST(handles.push(element.value.hProcess));
+        handles.push(element.value.hProcess);
 
     DWORD ret = WaitForMultipleObjects(handles.size(), handles.unsafe_data(), FALSE, timeout);
     if (ret == WAIT_FAILED)
