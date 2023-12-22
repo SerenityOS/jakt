@@ -1,0 +1,22 @@
+/// Expect:
+/// - output: ""
+
+struct Throwsy implements(ThrowingFromStringLiteral) {
+    fn from_string_literal(anon s: StringView) throws -> Throwsy {
+        return Throwsy()
+    }
+}
+
+// Adapted from #1530.
+fn boog() {
+    let x: String? = None
+    let y = x ?? ""
+}
+
+fn throwsy_boog() {
+    let x: Throwsy? = None
+    let y = try x ?? ""
+}
+
+fn main() {
+}

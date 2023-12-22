@@ -1652,9 +1652,7 @@ boxed enum CheckedExpression {
 
     fn can_throw(this) -> bool => match this {
         Call(call) | MethodCall(call) => call.callee_throws
-        // FIXME: This could be a 'StringView' or something that implements FromStringLiteral, which does not throw.
-        //        For now, we have to assume the worst.
-        QuotedString => true
+        QuotedString(val) => val.may_throw
         else => false
     }
 
