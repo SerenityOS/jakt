@@ -13,7 +13,7 @@ import typechecker {
     never_type_id, unknown_type_id, void_type_id
 }
 import types { CheckedGenericParameter, CheckedParameter, FunctionGenericParameter, SafetyMode, StructLikeId }
-import utility { Queue, Span, interpret_escapes, join, panic, prepend_to_each, todo }
+import utility { Queue, Span, escape_for_quotes, interpret_escapes, join, panic, prepend_to_each, todo }
 import compiler { Compiler }
 import interpreter { Interpreter, TypecheckFunctions, value_to_checked_expression }
 
@@ -3244,6 +3244,10 @@ struct CodeGenerator {
         }
         let match_values_all_constant = all_variants_constant and not is_generic_enum
 
+        let byte_string_type_id = .program.find_or_add_type_id(
+            type: Type::Struct(.program.find_struct_in_prelude("String"))
+            module_id: .program.prelude_module_id()
+        )
 
         // TODO: Use switch statement if all values are constant
         output.append(format(
@@ -3357,7 +3361,16 @@ struct CodeGenerator {
                         }
                     } else {
                         output.append("if (__jakt_enum_value == ")
-                        .codegen_expression(expression, &mut output)
+                        if expression is QuotedString(val)
+                            and (val.type_id == byte_string_type_id or val.type_id == builtin(BuiltinType::JaktString)) {
+                            let original_string = val.to_string()
+                            let escaped_value = escape_for_quotes(original_string)
+                            output.append("\"")
+                            output.append(escaped_value)
+                            output.append("\"sv")
+                        } else {
+                            .codegen_expression(expression, &mut output)
+                        }
                     }
                     output.append(") {\n")
                     .codegen_match_body(body, return_type_id, &mut output)
