@@ -1,0 +1,10 @@
+/// Expect:
+/// - error: "Invalid argument not used in call"
+
+fn test(defaulted_arg: i64 = 0) {
+    println("{}", defaulted_arg);
+}
+
+fn main() {
+    test(12)
+}

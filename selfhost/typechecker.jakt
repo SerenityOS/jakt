@@ -11045,6 +11045,8 @@ struct Typechecker {
 
         mut consumed_arg = 0uz
         mut resolved_args: [(String, Span, CheckedExpression)] = []
+        // argument index => [(parameter index, error)]
+        mut invalid_considered_argument_uses: [usize:[(usize, String)]] = [:]
 
         for i in arg_offset..params.size() {
             let param = params[i]
@@ -11100,6 +11102,17 @@ struct Typechecker {
                     if .validate_argument_label(param, label: name, span, expr, default_value: maybe_checked_expr) {
                         maybe_checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint: param.variable.type_id)
                         consumed_arg++
+                    } else {
+                        let reason = match name.is_empty() {
+                            true => format("Missing argument label (expected '{}:')", param.variable.name)
+                            false => format("Wrong parameter name in argument label (got '{}', expected '{}')", name, param.variable.name)
+                        }
+
+                        if not invalid_considered_argument_uses.contains(consumed_arg) {
+                            invalid_considered_argument_uses[consumed_arg] = []
+                        }
+
+                        invalid_considered_argument_uses[consumed_arg].push((i, reason))
                     }
                 }
             }
@@ -11107,6 +11120,31 @@ struct Typechecker {
             if maybe_checked_expr.has_value() {
                 mut checked_arg = maybe_checked_expr!
                 resolved_args.push((param.variable.name, span, checked_arg))
+            }
+        }
+
+        if not has_varargs {
+            while consumed_arg < args.size() {
+                defer consumed_arg += 1
+
+                // We might not have even considered this argument, but make sure to report the error if we did.
+                if invalid_considered_argument_uses.contains(consumed_arg) {
+                    let last_invalid_use = invalid_considered_argument_uses[consumed_arg].last()!
+                    .error_with_hint(
+                        "Invalid argument not used in call",
+                        args[consumed_arg].1
+                        format(
+                            "{} position{} considered for the argument, final rejection reason was: {}"
+                            invalid_considered_argument_uses[consumed_arg].size()
+                            match invalid_considered_argument_uses[consumed_arg].size() {
+                                1 => ""
+                                else => "s"
+                            }
+                            last_invalid_use.1
+                        )
+                        params[last_invalid_use.0].variable.definition_span
+                    )
+                }
             }
         }
 
