@@ -260,7 +260,7 @@ struct Typechecker {
         scope_id: ScopeId
         var: String
         root_scope_id: ScopeId? = None
-    ) throws -> CheckedVariable? => .program.find_var_in_scope(scope_id, var, root_scope_id)
+    ) throws -> CheckedVariable? => .program.find_var_in_scope(scope_id, var, root_scope: root_scope_id)
 
     fn lookup_struct_field(this, struct_id: StructId, name: String) -> FieldRecord? {
         mut chain: [StructId] = []
@@ -729,7 +729,7 @@ struct Typechecker {
         function_name: String
         root_scope_id: ScopeId? = None
     ) throws -> [FunctionId]? {
-        return .program.find_functions_with_name_in_scope(parent_scope_id, function_name, root_scope_id)
+        return .program.find_functions_with_name_in_scope(parent_scope_id, function_name, root_scope: root_scope_id)
     }
 
     fn find_scoped_functions_with_name_in_scope(
@@ -738,7 +738,7 @@ struct Typechecker {
         function_name: String
         root_scope_id: ScopeId? = None
     ) throws -> ([FunctionId], ScopeId)? {
-        return .program.find_scoped_functions_with_name_in_scope(parent_scope_id, function_name, root_scope_id)
+        return .program.find_scoped_functions_with_name_in_scope(parent_scope_id, function_name, root_scope: root_scope_id)
     }
 
     fn find_function_matching_signature_in_scope(this, parent_scope_id: ScopeId, prototype: ParsedFunction) throws -> FunctionId? {
@@ -2358,7 +2358,7 @@ struct Typechecker {
 
             mut trait_implementations: [TypeId] = []
             mut parameter = CheckedGenericParameter::make(parameter_type_id, span: gen_parameter.span)
-            module.types.push(Type::TypeVariable(name: gen_parameter.name, trait_implementations, gen_parameter.is_value))
+            module.types.push(Type::TypeVariable(name: gen_parameter.name, trait_implementations, is_value: gen_parameter.is_value))
 
             if gen_parameter.requires_list.has_value() {
                 .fill_trait_requirements(
@@ -10259,7 +10259,7 @@ struct Typechecker {
         }
 
         // 1. Look for a variable in the current scope with this name.
-        let maybe_var = .find_var_in_scope(scope_id: current_scope_id, var: call.name, root_scope: current_scope_id)
+        let maybe_var = .find_var_in_scope(scope_id: current_scope_id, var: call.name)
         if maybe_var.has_value()  {
             let inner_type = match .get_type(maybe_var!.type_id) {
                 Reference(type_id) | MutableReference(type_id) => type_id
@@ -10275,7 +10275,6 @@ struct Typechecker {
         let maybe_overload_set = .find_scoped_functions_with_name_in_scope(
             parent_scope_id: current_scope_id
             function_name: call.name
-            root_scope_id: current_scope_id
         )
         if maybe_overload_set.has_value() {
             let function = .get_function(maybe_overload_set!.0[0])
@@ -10295,7 +10294,6 @@ struct Typechecker {
         let maybe_struct_id = .find_struct_in_scope(
             scope_id: current_scope_id
             name: call.name
-            root_scope_id: current_scope_id
         )
         if maybe_struct_id.has_value() {
             let struct_id = maybe_struct_id!
@@ -10972,7 +10970,7 @@ struct Typechecker {
             }
 
             mut result: ExecutionResult? = None
-            mut invocation_scope = InterpreterScope::create(parent_scope: eval_scope, type_bindings)
+            mut invocation_scope = InterpreterScope::create(parent: eval_scope, type_bindings)
             try {
                 result = interpreter.execute(
                     function_to_run_id: resolved_function_id!
