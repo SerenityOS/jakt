@@ -23,7 +23,7 @@ enum ExternalName {
     PreprocessorName(String)
     Operator(name: String, is_prefix: bool = false)
 
-    fn as_name_for_definition(this) throws -> String => match this {
+    fn as_name_for_definition(this) -> String => match this {
         Plain(name) => name
         PreprocessorName(name) => name
         Operator(name) => "operator" + name
@@ -198,7 +198,7 @@ struct ParsedModuleImport {
         }
     }
 
-    fn merge_import_list(mut this, anon list: ImportList) throws {
+    fn merge_import_list(mut this, anon list: ImportList) {
         // generate a set of the names that exist
         mut name_set: {String} = {}
         mut everything = false
@@ -281,7 +281,7 @@ struct ParsedNamespace {
     fn is_equivalent_to(this, anon other: ParsedNamespace) -> bool =>
         .name == other.name and .import_path_if_extern == other.import_path_if_extern
 
-    fn add_module_import(mut this, anon import_: ParsedModuleImport) throws {
+    fn add_module_import(mut this, anon import_: ParsedModuleImport) {
         for module_import in .module_imports {
             if module_import.is_equivalent_to(import_) {
                 module_import.merge_import_list(import_.import_list)
@@ -291,7 +291,7 @@ struct ParsedNamespace {
         .module_imports.push(import_)
     }
 
-    fn add_extern_import(mut this, anon import_: ParsedExternImport) throws {
+    fn add_extern_import(mut this, anon import_: ParsedExternImport) {
         for extern_import in .extern_imports {
             if extern_import.is_equivalent_to(import_) {
                 extern_import.assigned_namespace.merge_with(import_.assigned_namespace)
@@ -303,7 +303,7 @@ struct ParsedNamespace {
         .extern_imports.push(import_)
     }
 
-    fn add_child_namespace(mut this, anon namespace_: ParsedNamespace) throws {
+    fn add_child_namespace(mut this, anon namespace_: ParsedNamespace) {
         for child_namespace in .namespaces {
             if child_namespace.is_equivalent_to(namespace_) {
                 child_namespace.merge_with(namespace_)
@@ -317,7 +317,7 @@ struct ParsedNamespace {
         .aliases.push(alias)
     }
 
-    fn merge_with(mut this, anon namespace_: ParsedNamespace) throws {
+    fn merge_with(mut this, anon namespace_: ParsedNamespace) {
         .functions.push_values(&namespace_.functions)
         .records.push_values(&namespace_.records)
 
@@ -1704,7 +1704,7 @@ struct Parser {
     can_have_trailing_closure: bool = true
     next_function_id: usize = 0
 
-    fn parse(compiler: Compiler, tokens: [Token]) throws -> ParsedNamespace {
+    fn parse(compiler: Compiler, tokens: [Token]) -> ParsedNamespace {
         mut parser = Parser(index: 0, tokens, compiler)
         return parser.parse_namespace()
     }
@@ -1753,14 +1753,14 @@ struct Parser {
         .tokens.insert(before_index: .index + 1, value: token)
     }
 
-    public fn parse_forall(mut this) throws -> ([ParsedGenericParameter], ParsedNamespace) {
+    public fn parse_forall(mut this) -> ([ParsedGenericParameter], ParsedNamespace) {
         // forall<T requires(Trait...), ...> namespace-contents
         let parameters = .parse_generic_parameters()
         let contents = .parse_namespace(process_only_one_entity: true)
         return (parameters, contents)
     }
 
-    public fn parse_namespace(mut this, process_only_one_entity: bool = false) throws -> ParsedNamespace {
+    public fn parse_namespace(mut this, process_only_one_entity: bool = false) -> ParsedNamespace {
         mut parsed_namespace = ParsedNamespace()
 
         mut active_attributes: [ParsedAttribute] = []
@@ -1979,7 +1979,7 @@ struct Parser {
         return parsed_namespace
     }
 
-    fn apply_attributes(mut this, anon namespace_: &mut ParsedNamespace, active_attributes: &[ParsedAttribute]) throws {
+    fn apply_attributes(mut this, anon namespace_: &mut ParsedNamespace, active_attributes: &[ParsedAttribute]) {
         for attribute in *active_attributes {
             match attribute.name {
                 "extern_import" => {
@@ -2066,7 +2066,7 @@ struct Parser {
         }
     }
 
-    fn apply_attributes(mut this, anon field: &mut ParsedField, active_attributes: &[ParsedAttribute]) throws {
+    fn apply_attributes(mut this, anon field: &mut ParsedField, active_attributes: &[ParsedAttribute]) {
         for attribute in *active_attributes {
             match attribute.name {
                 "name" => {
@@ -2107,7 +2107,7 @@ struct Parser {
         }
     }
 
-    fn apply_attributes(mut this, anon parsed_function: &mut ParsedFunction, active_attributes: &[ParsedAttribute]) throws {
+    fn apply_attributes(mut this, anon parsed_function: &mut ParsedFunction, active_attributes: &[ParsedAttribute]) {
         for attribute in *active_attributes {
             match attribute.name {
                 "name" => {
@@ -2229,11 +2229,11 @@ struct Parser {
         }
     }
 
-    fn apply_attributes(mut this, anon parsed_method: &mut ParsedMethod, active_attributes: &[ParsedAttribute]) throws {
+    fn apply_attributes(mut this, anon parsed_method: &mut ParsedMethod, active_attributes: &[ParsedAttribute]) {
         .apply_attributes(parsed_function: &mut parsed_method.parsed_function, active_attributes)
     }
 
-    fn apply_attributes(mut this, anon parsed_record: &mut ParsedRecord, active_attributes: &[ParsedAttribute]) throws {
+    fn apply_attributes(mut this, anon parsed_record: &mut ParsedRecord, active_attributes: &[ParsedAttribute]) {
         for attribute in *active_attributes {
             match attribute.name {
                 "name" => {
@@ -2406,7 +2406,7 @@ struct Parser {
         )
     }
 
-    fn parse_using(mut this) throws -> ParsedAlias {
+    fn parse_using(mut this) -> ParsedAlias {
         // (using) qualified_name [as Ident]
         mut alias = ParsedAlias()
 
@@ -2489,7 +2489,7 @@ struct Parser {
         return alias
     }
 
-    fn parse_external_trait_implementation(mut this) throws -> ParsedExternalTraitImplementation {
+    fn parse_external_trait_implementation(mut this) -> ParsedExternalTraitImplementation {
         // (type) TypeName implements(TraitName...) { <method list> }
         let type_name = .parse_typename()
         .skip_newlines()
@@ -2528,7 +2528,7 @@ struct Parser {
         return ParsedExternalTraitImplementation(for_type: type_name, traits: trait_list!, methods)
     }
 
-    fn parse_trait(mut this) throws -> ParsedTrait {
+    fn parse_trait(mut this) -> ParsedTrait {
 
         mut parsed_trait = ParsedTrait(
             name: ""
@@ -2626,7 +2626,7 @@ struct Parser {
         return parsed_trait
     }
 
-    fn parse_record(mut this, anon definition_linkage: DefinitionLinkage) throws -> ParsedRecord => match .current() {
+    fn parse_record(mut this, anon definition_linkage: DefinitionLinkage) -> ParsedRecord => match .current() {
         Struct => .parse_struct(definition_linkage)
         Class => .parse_class(definition_linkage)
         Enum => .parse_enum(definition_linkage, is_boxed: false)
@@ -2645,7 +2645,7 @@ struct Parser {
         }
     }
 
-    fn parse_import(mut this, parent: &mut ParsedNamespace) throws  {
+    fn parse_import(mut this, parent: &mut ParsedNamespace)  {
         // import . <extern <extern-import> | <module-import>>
         if .current() is Extern {
             .index++
@@ -2655,7 +2655,7 @@ struct Parser {
         }
     }
 
-    fn parse_extern_import(mut this, parent: &mut ParsedNamespace) throws -> ParsedExternImport {
+    fn parse_extern_import(mut this, parent: &mut ParsedNamespace) -> ParsedExternImport {
         // import extern . [c] "<path>" [as <alias-name>] namespace?
         mut parsed_import = ParsedExternImport()
 
@@ -2746,7 +2746,7 @@ struct Parser {
         return parsed_import
     }
 
-    fn parse_include_action(mut this) throws -> [IncludeAction]? {
+    fn parse_include_action(mut this) -> [IncludeAction]? {
         .skip_newlines()
         if .current() is Identifier(name) {
             // define { name = "value" ... }
@@ -2856,7 +2856,7 @@ struct Parser {
         }
     }
 
-    fn parse_module_import(mut this) throws -> ParsedModuleImport {
+    fn parse_module_import(mut this) -> ParsedModuleImport {
         mut parsed_import = ParsedModuleImport(
             module_name: ImportName::Literal(name: "", span: .empty_span())
             alias_name: None
@@ -3036,7 +3036,7 @@ struct Parser {
         return parsed_import
     }
 
-    fn parse_value_enum_body(mut this, partial_enum: ParsedRecord, definition_linkage: DefinitionLinkage) throws -> ([ValueEnumVariant], [ParsedMethod]) {
+    fn parse_value_enum_body(mut this, partial_enum: ParsedRecord, definition_linkage: DefinitionLinkage) -> ([ValueEnumVariant], [ParsedMethod]) {
         mut methods: [ParsedMethod] = []
         mut variants: [ValueEnumVariant] = []
 
@@ -3142,7 +3142,7 @@ struct Parser {
         partial_enum: ParsedRecord
         definition_linkage: DefinitionLinkage
         is_boxed: bool
-    ) throws -> ([SumEnumVariant], [ParsedField], [ParsedMethod], [ParsedRecord]) {
+    ) -> ([SumEnumVariant], [ParsedField], [ParsedMethod], [ParsedRecord]) {
         mut methods: [ParsedMethod] = []
         mut variants: [SumEnumVariant] = []
         mut fields: [ParsedField] = []
@@ -3368,7 +3368,7 @@ struct Parser {
         return (variants, fields, methods, records)
     }
 
-    fn parse_enum(mut this, anon definition_linkage: DefinitionLinkage, is_boxed: bool) throws -> ParsedRecord {
+    fn parse_enum(mut this, anon definition_linkage: DefinitionLinkage, is_boxed: bool) -> ParsedRecord {
         mut parsed_enum = ParsedRecord(
             name: "",
             name_span: .empty_span(),
@@ -3460,7 +3460,7 @@ struct Parser {
         definition_linkage: DefinitionLinkage
         default_visibility: Visibility
         is_class: bool
-    ) throws -> ([ParsedField], [ParsedMethod], [ParsedRecord]) {
+    ) -> ([ParsedField], [ParsedMethod], [ParsedRecord]) {
         if .current() is LCurly {
             .index++
         } else {
@@ -3648,7 +3648,7 @@ struct Parser {
         return (fields, methods, records)
     }
 
-    public fn parse_struct(mut this, anon definition_linkage: DefinitionLinkage) throws -> ParsedRecord {
+    public fn parse_struct(mut this, anon definition_linkage: DefinitionLinkage) -> ParsedRecord {
         mut parsed_struct = ParsedRecord(
             name: "",
             name_span: .empty_span(),
@@ -3712,7 +3712,7 @@ struct Parser {
         return parsed_struct
     }
 
-    public fn parse_class(mut this, anon definition_linkage: DefinitionLinkage) throws -> ParsedRecord {
+    public fn parse_class(mut this, anon definition_linkage: DefinitionLinkage) -> ParsedRecord {
         mut parsed_class = ParsedRecord(
             name: "",
             name_span: .empty_span(),
@@ -3781,7 +3781,7 @@ struct Parser {
         return parsed_class
     }
 
-    public fn parse_function_parameters(mut this, for_trailing_closure: bool = false) throws -> ParsedFunctionParameters {
+    public fn parse_function_parameters(mut this, for_trailing_closure: bool = false) -> ParsedFunctionParameters {
         if not for_trailing_closure and .current() is LParen {
             .index++
         } else if for_trailing_closure and .current() is Pipe {
@@ -3961,7 +3961,7 @@ struct Parser {
         is_destructor: bool
         is_unsafe: bool
         allow_missing_body: bool = false
-    ) throws -> ParsedFunction {
+    ) -> ParsedFunction {
         mut parsed_function = ParsedFunction(
             id: .next_function_id++
             name: "",
@@ -4076,7 +4076,7 @@ struct Parser {
         return parsed_function
     }
 
-    fn parse_fat_arrow(mut this) throws -> ParsedBlock {
+    fn parse_fat_arrow(mut this) -> ParsedBlock {
         .index++
         let start = .current().span()
         let expr = .parse_expression(allow_assignments: false, allow_newlines: false)
@@ -4084,7 +4084,7 @@ struct Parser {
         return ParsedBlock(stmts: [return_statement])
     }
 
-    fn parse_field(mut this, anon visibility: Visibility) throws -> ParsedField {
+    fn parse_field(mut this, anon visibility: Visibility) -> ParsedField {
         let parsed_variable_declaration = .parse_variable_declaration(is_mutable: true)
 
         if parsed_variable_declaration.parsed_type is Empty {
@@ -4105,7 +4105,7 @@ struct Parser {
         )
     }
 
-    fn parse_method(mut this, anon linkage: FunctionLinkage, anon visibility: Visibility, is_virtual: bool, is_override: bool, is_comptime: bool, is_destructor: bool, is_unsafe: bool) throws -> ParsedMethod {
+    fn parse_method(mut this, anon linkage: FunctionLinkage, anon visibility: Visibility, is_virtual: bool, is_override: bool, is_comptime: bool, is_destructor: bool, is_unsafe: bool) -> ParsedMethod {
         mut parsed_function = .parse_function(linkage, visibility, is_comptime, is_destructor, is_unsafe)
 
         if linkage is External {
@@ -4120,7 +4120,7 @@ struct Parser {
         )
     }
 
-    fn parse_type_parameter_list(mut this) throws -> [ParsedType] {
+    fn parse_type_parameter_list(mut this) -> [ParsedType] {
         mut params: [ParsedType] = []
         if .current() is LessThan {
             .index++
@@ -4160,7 +4160,7 @@ struct Parser {
         return params
     }
 
-    fn parse_typename(mut this) throws -> ParsedType {
+    fn parse_typename(mut this) -> ParsedType {
         let base = .parse_typename_base()
         mut result = base
         mut done = false
@@ -4189,7 +4189,7 @@ struct Parser {
         return result
     }
 
-    fn parse_typename_base(mut this) throws -> ParsedType {
+    fn parse_typename_base(mut this) -> ParsedType {
         let start = .current().span()
 
         if .current() is Comptime {
@@ -4243,7 +4243,7 @@ struct Parser {
         return parsed_type
     }
 
-    fn parse_type_longhand(mut this, qualifiers: ParsedTypeQualifiers) throws -> ParsedType => match .current() {
+    fn parse_type_longhand(mut this, qualifiers: ParsedTypeQualifiers) -> ParsedType => match .current() {
         Raw => {
             let start = .current().span()
             .index++
@@ -4344,7 +4344,7 @@ struct Parser {
         }
     }
 
-    fn parse_destructuring_assignment(mut this, is_mutable: bool) throws -> ParsedVarDeclTuple {
+    fn parse_destructuring_assignment(mut this, is_mutable: bool) -> ParsedVarDeclTuple {
         let start = .current().span()
         .index++
 
@@ -4376,7 +4376,7 @@ struct Parser {
         )
     }
 
-    fn parse_variable_declaration(mut this, is_mutable: bool) throws -> ParsedVarDecl {
+    fn parse_variable_declaration(mut this, is_mutable: bool) -> ParsedVarDecl {
         let span = .current().span()
 
         guard .current() is Identifier(name) else {
@@ -4416,14 +4416,14 @@ struct Parser {
         )
     }
 
-    fn parse_type_shorthand(mut this, qualifiers: ParsedTypeQualifiers) throws -> ParsedType => match .current() {
+    fn parse_type_shorthand(mut this, qualifiers: ParsedTypeQualifiers) -> ParsedType => match .current() {
         LSquare => .parse_type_shorthand_array_or_dictionary(qualifiers)
         LCurly => .parse_type_shorthand_set(qualifiers)
         LParen => .parse_type_shorthand_tuple(qualifiers)
         else => ParsedType::Empty(qualifiers)
     }
 
-    fn parse_type_shorthand_array_or_dictionary(mut this, qualifiers: ParsedTypeQualifiers) throws -> ParsedType {
+    fn parse_type_shorthand_array_or_dictionary(mut this, qualifiers: ParsedTypeQualifiers) -> ParsedType {
         // [T] is shorthand for Array<T>
         // [K:V] is shorthand for Dictionary<K, V>
         let start = .current().span()
@@ -4447,7 +4447,7 @@ struct Parser {
         return ParsedType::Empty(qualifiers)
     }
 
-    fn parse_type_shorthand_set(mut this, qualifiers: ParsedTypeQualifiers) throws -> ParsedType {
+    fn parse_type_shorthand_set(mut this, qualifiers: ParsedTypeQualifiers) -> ParsedType {
         // {T} is shorthand for Set<T>
         let start = .current().span()
         if .current() is LCurly {
@@ -4462,7 +4462,7 @@ struct Parser {
         return ParsedType::Empty(qualifiers)
     }
 
-    fn parse_type_shorthand_tuple(mut this, qualifiers: ParsedTypeQualifiers) throws -> ParsedType {
+    fn parse_type_shorthand_tuple(mut this, qualifiers: ParsedTypeQualifiers) -> ParsedType {
         // (A, B, C) is shorthand for Tuple<A, B, C>
         let start = .current().span()
         .index++
@@ -4487,7 +4487,7 @@ struct Parser {
         return ParsedType::Empty(qualifiers)
     }
 
-    fn parse_block(mut this) throws -> ParsedBlock {
+    fn parse_block(mut this) -> ParsedBlock {
         let start = .current().span()
         mut block = ParsedBlock()
 
@@ -4523,7 +4523,7 @@ struct Parser {
         return block
     }
 
-    fn parse_statement(mut this, inside_block: bool) throws -> ParsedStatement {
+    fn parse_statement(mut this, inside_block: bool) -> ParsedStatement {
         let start = .current().span()
 
         return match .current() {
@@ -4651,7 +4651,7 @@ struct Parser {
         }
     }
 
-    fn parse_guard_statement(mut this) throws -> ParsedStatement {
+    fn parse_guard_statement(mut this) -> ParsedStatement {
         let span = .current().span()
         .index++
         let previous_can_have_trailing_closure = .can_have_trailing_closure
@@ -4684,7 +4684,7 @@ struct Parser {
         return ParsedStatement::Guard(expr, else_block, remaining_code, span)
     }
 
-    fn parse_try_block(mut this) throws -> ParsedExpression {
+    fn parse_try_block(mut this) -> ParsedExpression {
         let start_span = .current().span()
         let stmt = .parse_statement(inside_block: false)
 
@@ -4706,7 +4706,7 @@ struct Parser {
         return ParsedExpression::TryBlock(stmt, error_name, error_span, catch_block, span: merge_spans(start_span, .previous().span()))
     }
 
-    fn parse_for_statement(mut this) throws -> ParsedStatement {
+    fn parse_for_statement(mut this) -> ParsedStatement {
         let start_span = .current().span()
         .index++
 
@@ -4775,7 +4775,7 @@ struct Parser {
         return ParsedStatement::For(iterator_name, name_span, is_destructuring, range, block, span: merge_spans(start_span, .previous().span()))
     }
 
-    fn parse_if_statement(mut this) throws -> ParsedStatement {
+    fn parse_if_statement(mut this) -> ParsedStatement {
         if not .current() is If {
             .error("Expected ‘if’ statement", .current().span())
             return ParsedStatement::Garbage(.current().span())
@@ -4819,7 +4819,7 @@ struct Parser {
         return ParsedStatement::If(condition, then_block, else_statement, span: merge_spans(start_span, .previous().span()))
     }
 
-    fn parse_expression(mut this, allow_assignments: bool, allow_newlines: bool) throws -> ParsedExpression {
+    fn parse_expression(mut this, allow_assignments: bool, allow_newlines: bool) -> ParsedExpression {
         mut expr_stack: [ParsedExpression] = []
         mut last_precedence = 1000000
 
@@ -4901,7 +4901,7 @@ struct Parser {
         return expr_stack[0]
     }
 
-    fn parse_operand_base(mut this) throws -> ParsedExpression => match .current() {
+    fn parse_operand_base(mut this) -> ParsedExpression => match .current() {
         Dot(span) => {
             yield ParsedExpression::Var(name: "this", span)
         }
@@ -5111,7 +5111,7 @@ struct Parser {
         }
     }
 
-    fn parse_number(mut this, prefix: LiteralPrefix, number: String, mut suffix: LiteralSuffix, span: Span) throws -> ParsedExpression {
+    fn parse_number(mut this, prefix: LiteralPrefix, number: String, mut suffix: LiteralSuffix, span: Span) -> ParsedExpression {
         .index++
         mut total = 0u64
 
@@ -5415,7 +5415,7 @@ struct Parser {
         return captures
     }
 
-    fn parse_lambda(mut this) throws -> ParsedExpression {
+    fn parse_lambda(mut this) -> ParsedExpression {
         let start = .current().span()
         .index++
         let captures = .parse_captures()
@@ -5460,14 +5460,14 @@ struct Parser {
         )
     }
 
-    fn parse_asterisk(mut this) throws -> ParsedExpression {
+    fn parse_asterisk(mut this) -> ParsedExpression {
         let start = .current().span()
         .index++
         let expr = .parse_operand()
         return ParsedExpression::UnaryOp(expr, op: UnaryOperator::Dereference, span: merge_spans(start, .current().span()))
     }
 
-    fn parse_ampersand(mut this) throws -> ParsedExpression {
+    fn parse_ampersand(mut this) -> ParsedExpression {
         let start = .current().span()
         .index++
         if .current() is Raw {
@@ -5484,7 +5484,7 @@ struct Parser {
         return ParsedExpression::UnaryOp(expr, op: UnaryOperator::Reference, span: merge_spans(start, expr.span()))
     }
 
-    fn parse_range(mut this) throws -> ParsedExpression {
+    fn parse_range(mut this) -> ParsedExpression {
         let start = .current().span()
 
         .index++
@@ -5500,7 +5500,7 @@ struct Parser {
         return ParsedExpression::Range(from: None, to, span: merge_spans(start, .current().span()))
     }
 
-    fn parse_unsafe_expr(mut this) throws -> ParsedExpression {
+    fn parse_unsafe_expr(mut this) -> ParsedExpression {
         let start = .current().span()
 
         .index++
@@ -5510,7 +5510,7 @@ struct Parser {
         return ParsedExpression::Unsafe(expr, span: merge_spans(start, expr.span()))
     }
 
-    fn parse_set_literal(mut this) throws -> ParsedExpression {
+    fn parse_set_literal(mut this) -> ParsedExpression {
         let start = .current().span()
 
         if not .current() is LCurly {
@@ -5548,7 +5548,7 @@ struct Parser {
         return ParsedExpression::Set(values: output, span: merge_spans(start, .tokens[end].span()))
     }
 
-    fn parse_operand(mut this) throws -> ParsedExpression {
+    fn parse_operand(mut this) -> ParsedExpression {
         .skip_newlines()
         let start = .current().span()
         .skip_newlines()
@@ -5556,7 +5556,7 @@ struct Parser {
         return .parse_operand_postfix_operator(start, expr)
     }
 
-    fn parse_operand_postfix_operator(mut this, start: Span, expr: ParsedExpression) throws -> ParsedExpression {
+    fn parse_operand_postfix_operator(mut this, start: Span, expr: ParsedExpression) -> ParsedExpression {
         mut result = expr
         loop {
             result = match .current() {
@@ -5750,7 +5750,7 @@ struct Parser {
         return result
     }
 
-    fn parse_postfix_colon_colon(mut this, start: Span, expr: ParsedExpression) throws -> ParsedExpression {
+    fn parse_postfix_colon_colon(mut this, start: Span, expr: ParsedExpression) -> ParsedExpression {
         .index++
         mut namespace_: [String] = []
         if expr is Var(name) {
@@ -5805,7 +5805,7 @@ struct Parser {
         return expr
     }
 
-    fn parse_operator(mut this, allow_assignments: bool) throws -> ParsedExpression {
+    fn parse_operator(mut this, allow_assignments: bool) -> ParsedExpression {
         let span = .current().span()
 
         let op = match .current() {
@@ -5865,7 +5865,7 @@ struct Parser {
         return ParsedExpression::Operator(op, span)
     }
 
-    fn parse_match_expression(mut this) throws -> ParsedExpression {
+    fn parse_match_expression(mut this) -> ParsedExpression {
         mut start = .current().span()
         .index++
 
@@ -5897,7 +5897,7 @@ struct Parser {
         )
     }
 
-    fn parse_match_cases(mut this) throws -> [ParsedMatchCase] {
+    fn parse_match_cases(mut this) -> [ParsedMatchCase] {
         mut cases: [ParsedMatchCase] = []
 
         .skip_newlines()
@@ -5956,7 +5956,7 @@ struct Parser {
         return cases
     }
 
-    fn parse_match_patterns(mut this) throws -> [ParsedMatchPattern] {
+    fn parse_match_patterns(mut this) -> [ParsedMatchPattern] {
         mut patterns: [ParsedMatchPattern] = []
         .skip_newlines()
         while not .eof() {
@@ -6022,7 +6022,7 @@ struct Parser {
         return patterns
     }
 
-    fn parse_match_pattern(mut this) throws -> ParsedMatchPattern => match .current() {
+    fn parse_match_pattern(mut this) -> ParsedMatchPattern => match .current() {
         True
         | False
         | Number
@@ -6091,7 +6091,7 @@ struct Parser {
         }
     }
 
-    fn parse_variant_arguments(mut this) throws -> [EnumVariantPatternArgument] {
+    fn parse_variant_arguments(mut this) -> [EnumVariantPatternArgument] {
         mut variant_arguments: [EnumVariantPatternArgument] = []
         mut has_parens = false
         if .current() is LParen {
@@ -6162,7 +6162,7 @@ struct Parser {
         return variant_arguments
     }
 
-    fn parse_call(mut this) throws -> ParsedCall? {
+    fn parse_call(mut this) -> ParsedCall? {
         mut call = ParsedCall()
 
         guard .current() is Identifier(name) else {
@@ -6298,7 +6298,7 @@ struct Parser {
         }
     }
 
-    fn parse_trait_list(mut this) throws -> [ParsedNameWithGenericParameters]? {
+    fn parse_trait_list(mut this) -> [ParsedNameWithGenericParameters]? {
         guard .current() is LParen else {
             .error("Expected '(' to start the trait list", .current().span())
             return None
@@ -6346,7 +6346,7 @@ struct Parser {
         }
     }
 
-    fn parse_generic_parameters(mut this) throws -> [ParsedGenericParameter] {
+    fn parse_generic_parameters(mut this) -> [ParsedGenericParameter] {
         if not .current() is LessThan {
             return []
         }
@@ -6418,7 +6418,7 @@ struct Parser {
         return ""
     }
 
-    fn parse_restricted_visibility_modifier(mut this) throws -> Visibility {
+    fn parse_restricted_visibility_modifier(mut this) -> Visibility {
         mut restricted_span = .current().span()
 
         .index++
@@ -6496,7 +6496,7 @@ struct Parser {
         return Visibility::Restricted(whitelist, span: restricted_span)
     }
 
-    fn parse_array_or_dictionary_literal(mut this) throws -> ParsedExpression {
+    fn parse_array_or_dictionary_literal(mut this) -> ParsedExpression {
         mut is_dictionary = false
         let start = .current().span()
 
