@@ -1,6 +1,6 @@
 # The Jakt programming language
 
-**Jakt** is a memory-safe systems programming language.
+**Jakt** (pronounced [yakt](https://commons.wikimedia.org/wiki/File:Sv-jakt.ogg)) is a memory-safe systems programming language.
 
 It currently transpiles to C++.
 
