@@ -1008,7 +1008,13 @@ class Interpreter {
         anon parent_scope_id: ScopeId
         anon function_id: FunctionId?
     ) throws -> CheckedBlock {
-        return function(parsed_block: block, parent_scope_id, safety_mode: SafetyMode::Safe, yield_type_hint: None, function_id)
+        return function(
+            parsed_block: block
+            parent_scope_id
+            safety_mode: SafetyMode::Safe
+            yield_type_hint: None
+            containing_function_id: function_id
+        )
     }
 
 

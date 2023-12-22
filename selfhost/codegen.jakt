@@ -54,16 +54,16 @@ struct ControlFlowState {
         return ControlFlowState(
             allowed_exits: AllowedControlExits::JustReturn
             passes_through_try: false
-            indirectly_inside_match: false
             directly_inside_match: false
+            indirectly_inside_match: false
         )
     }
     fn enter_loop(this) -> ControlFlowState {
         return ControlFlowState(
             allowed_exits: AllowedControlExits::AtLoop
             passes_through_try: .passes_through_try
-            indirectly_inside_match: .indirectly_inside_match
             directly_inside_match: false
+            indirectly_inside_match: .indirectly_inside_match
         )
     }
     fn enter_match(this) -> ControlFlowState {

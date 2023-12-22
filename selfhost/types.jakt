@@ -619,7 +619,7 @@ class Scope {
     public traits: [String: TraitId] = [:]
     public imports: [String: ModuleId] = [:] // FIXME: Span
     public aliases: [String: ScopeId] = [:]
-    
+
     public alias_scope: ScopeId? = None
     public children: [ScopeId] = []
     public import_path_if_extern: String? = None
