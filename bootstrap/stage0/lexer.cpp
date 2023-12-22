@@ -62,10 +62,8 @@ return ((((*this).input))[((*this).index)]);
 
 u8 lexer::Lexer::peek_ahead(size_t const steps) const {
 {
-if ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+if ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -81,10 +79,8 @@ return ((((*this).input))[JaktInternal::checked_add(((*this).index),steps)]);
 
 u8 lexer::Lexer::peek_behind(size_t const steps) const {
 {
-if ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+if ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -100,10 +96,8 @@ return ((((*this).input))[JaktInternal::checked_sub(((*this).index),steps)]);
 
 bool lexer::Lexer::eof() const {
 {
-return [](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+return [](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -142,7 +136,7 @@ if (((((*this).peek_ahead(static_cast<size_t>(1ULL)))) != (static_cast<u8>(u8'\'
 return ((*this).lex_number_or_name());
 }
 JaktInternal::Optional<ByteString> const prefix = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<ByteString>,lexer::Token>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<ByteString>,lexer::Token> {
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == static_cast<u8>(u8'b')) {
 return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("b"sv)));
@@ -165,10 +159,8 @@ size_t const start = ((*this).index);
 ((((*this).index)++));
 bool escaped = false;
 while (((!(((*this).eof()))) && (escaped || ((((*this).peek())) != (static_cast<u8>(u8'\'')))))){
-if ((escaped && [](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+if ((escaped && [](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -178,10 +170,8 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 (JaktInternal::checked_sub(((*this).index),start),static_cast<size_t>(3ULL)))){
 break;
 }
-else if ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+else if ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -231,10 +221,8 @@ u8 const value = ((((*this).input))[((*this).index)]);
 size_t const end = ((*this).index);
 utility::Span const span = ((*this).span(start,end));
 ByteString const string = ((string_builder).to_string());
-if (([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+if (([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -292,7 +280,7 @@ lexer::LiteralPrefix prefix = lexer::LiteralPrefix::None();
 ByteStringBuilder number = ByteStringBuilder::create();
 if (((((*this).peek())) == (static_cast<u8>(u8'0')))){
 ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,lexer::Token>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,lexer::Token> {
 auto __jakt_enum_value = (((*this).peek_ahead(static_cast<size_t>(1ULL))));
 if (__jakt_enum_value == static_cast<u8>(u8'x')) {
 {
@@ -362,7 +350,7 @@ return lexer::Token::Number(prefix,((number).to_string()),suffix,((*this).span(s
 lexer::LiteralSuffix lexer::Lexer::consume_numeric_literal_suffix() {
 {
 ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,lexer::LiteralSuffix>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,lexer::LiteralSuffix> {
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == static_cast<u8>(u8'u')) {
 {
@@ -398,10 +386,8 @@ return lexer::LiteralSuffix::UZ();
 size_t local_index = static_cast<size_t>(1ULL);
 i64 width = static_cast<i64>(0LL);
 while (utility::is_ascii_digit(((*this).peek_ahead(local_index)))){
-if ([](size_t const& self, size_t rhs) -> bool {
-{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {
-{
+if ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
@@ -417,11 +403,11 @@ i64 const digit = as_saturated<i64, u8>(JaktInternal::checked_sub(value,static_c
 (width = JaktInternal::checked_add(JaktInternal::checked_mul(width,static_cast<i64>(10LL)),digit));
 }
 lexer::LiteralSuffix const suffix = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::LiteralSuffix,lexer::LiteralSuffix>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::LiteralSuffix,lexer::LiteralSuffix> {
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == static_cast<u8>(u8'u')) {
 return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::LiteralSuffix,lexer::LiteralSuffix>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::LiteralSuffix,lexer::LiteralSuffix> {
 auto __jakt_enum_value = (width);
 if (__jakt_enum_value == static_cast<i64>(8LL)) {
 return JaktInternal::ExplicitValue(lexer::LiteralSuffix::U8());
@@ -446,7 +432,7 @@ return JaktInternal::ExplicitValue(lexer::LiteralSuffix::None());
 }
 else if (__jakt_enum_value == static_cast<u8>(u8'i')) {
 return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::LiteralSuffix,lexer::LiteralSuffix>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::LiteralSuffix,lexer::LiteralSuffix> {
 auto __jakt_enum_value = (width);
 if (__jakt_enum_value == static_cast<i64>(8LL)) {
 return JaktInternal::ExplicitValue(lexer::LiteralSuffix::I8());
@@ -471,7 +457,7 @@ return JaktInternal::ExplicitValue(lexer::LiteralSuffix::None());
 }
 else if (__jakt_enum_value == static_cast<u8>(u8'f')) {
 return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::LiteralSuffix,lexer::LiteralSuffix>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::LiteralSuffix,lexer::LiteralSuffix> {
 auto __jakt_enum_value = (width);
 if (__jakt_enum_value == static_cast<i64>(32LL)) {
 return JaktInternal::ExplicitValue(lexer::LiteralSuffix::F32());
@@ -540,7 +526,7 @@ lexer::Token lexer::Lexer::lex_plus() {
 {
 size_t const start = ((((*this).index)++));
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token> {
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == static_cast<u8>(u8'=')) {
 return JaktInternal::ExplicitValue(lexer::Token::PlusEqual(((*this).span(start,(++(((*this).index)))))));
@@ -563,7 +549,7 @@ lexer::Token lexer::Lexer::lex_minus() {
 {
 size_t const start = ((((*this).index)++));
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token> {
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == static_cast<u8>(u8'=')) {
 return JaktInternal::ExplicitValue(lexer::Token::MinusEqual(((*this).span(start,(++(((*this).index)))))));
@@ -589,7 +575,7 @@ lexer::Token lexer::Lexer::lex_asterisk() {
 {
 size_t const start = ((((*this).index)++));
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token> {
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == static_cast<u8>(u8'=')) {
 return JaktInternal::ExplicitValue(lexer::Token::AsteriskEqual(((*this).span(start,(++(((*this).index)))))));
@@ -637,7 +623,7 @@ lexer::Token lexer::Lexer::lex_caret() {
 {
 size_t const start = ((((*this).index)++));
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token> {
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == static_cast<u8>(u8'=')) {
 return JaktInternal::ExplicitValue(lexer::Token::CaretEqual(((*this).span(start,(++(((*this).index)))))));
@@ -657,7 +643,7 @@ lexer::Token lexer::Lexer::lex_pipe() {
 {
 size_t const start = ((((*this).index)++));
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token> {
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == static_cast<u8>(u8'=')) {
 return JaktInternal::ExplicitValue(lexer::Token::PipeEqual(((*this).span(start,(++(((*this).index)))))));
@@ -680,7 +666,7 @@ lexer::Token lexer::Lexer::lex_percent_sign() {
 {
 size_t const start = ((((*this).index)++));
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token> {
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == static_cast<u8>(u8'=')) {
 return JaktInternal::ExplicitValue(lexer::Token::PercentSignEqual(((*this).span(start,(++(((*this).index)))))));
@@ -700,7 +686,7 @@ lexer::Token lexer::Lexer::lex_exclamation_point() {
 {
 size_t const start = ((((*this).index)++));
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token> {
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == static_cast<u8>(u8'=')) {
 return JaktInternal::ExplicitValue(lexer::Token::NotEqual(((*this).span(start,(++(((*this).index)))))));
@@ -720,7 +706,7 @@ lexer::Token lexer::Lexer::lex_ampersand() {
 {
 size_t const start = ((((*this).index)++));
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token> {
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == static_cast<u8>(u8'=')) {
 return JaktInternal::ExplicitValue(lexer::Token::AmpersandEqual(((*this).span(start,(++(((*this).index)))))));
@@ -743,7 +729,7 @@ lexer::Token lexer::Lexer::lex_less_than() {
 {
 size_t const start = ((((*this).index)++));
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token> {
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == static_cast<u8>(u8'=')) {
 return JaktInternal::ExplicitValue(lexer::Token::LessThanOrEqual(((*this).span(start,(++(((*this).index)))))));
@@ -752,7 +738,7 @@ else if (__jakt_enum_value == static_cast<u8>(u8'<')) {
 return JaktInternal::ExplicitValue(({ Optional<lexer::Token> __jakt_var_4; {
 ((((*this).index)++));
 __jakt_var_4 = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token> {
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == static_cast<u8>(u8'<')) {
 return JaktInternal::ExplicitValue(lexer::Token::LeftArithmeticShift(((*this).span(start,(++(((*this).index)))))));
@@ -787,7 +773,7 @@ lexer::Token lexer::Lexer::lex_greater_than() {
 {
 size_t const start = ((((*this).index)++));
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token> {
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == static_cast<u8>(u8'=')) {
 return JaktInternal::ExplicitValue(lexer::Token::GreaterThanOrEqual(((*this).span(start,(++(((*this).index)))))));
@@ -796,7 +782,7 @@ else if (__jakt_enum_value == static_cast<u8>(u8'>')) {
 return JaktInternal::ExplicitValue(({ Optional<lexer::Token> __jakt_var_5; {
 ((((*this).index)++));
 __jakt_var_5 = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token> {
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == static_cast<u8>(u8'>')) {
 return JaktInternal::ExplicitValue(lexer::Token::RightArithmeticShift(((*this).span(start,(++(((*this).index)))))));
@@ -831,7 +817,7 @@ lexer::Token lexer::Lexer::lex_dot() {
 {
 size_t const start = ((((*this).index)++));
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token> {
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == static_cast<u8>(u8'.')) {
 return JaktInternal::ExplicitValue(lexer::Token::DotDot(((*this).span(start,(++(((*this).index)))))));
@@ -851,7 +837,7 @@ lexer::Token lexer::Lexer::lex_colon() {
 {
 size_t const start = ((((*this).index)++));
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token> {
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == static_cast<u8>(u8':')) {
 return JaktInternal::ExplicitValue(lexer::Token::ColonColon(((*this).span(start,(++(((*this).index)))))));
@@ -871,13 +857,13 @@ lexer::Token lexer::Lexer::lex_question_mark() {
 {
 size_t const start = ((((*this).index)++));
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token> {
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == static_cast<u8>(u8'?')) {
 return JaktInternal::ExplicitValue(({ Optional<lexer::Token> __jakt_var_6; {
 ((((*this).index)++));
 __jakt_var_6 = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token> {
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == static_cast<u8>(u8'=')) {
 return JaktInternal::ExplicitValue(lexer::Token::QuestionMarkQuestionMarkEqual(((*this).span(start,(++(((*this).index)))))));
@@ -909,7 +895,7 @@ lexer::Token lexer::Lexer::lex_equals() {
 {
 size_t const start = ((((*this).index)++));
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token> {
 auto __jakt_enum_value = (((*this).peek()));
 if (__jakt_enum_value == static_cast<u8>(u8'=')) {
 return JaktInternal::ExplicitValue(lexer::Token::DoubleEqual(((*this).span(start,(++(((*this).index)))))));
@@ -976,7 +962,7 @@ break;
 }
 size_t const start = ((*this).index);
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<lexer::Token>,JaktInternal::Optional<lexer::Token>>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<lexer::Token>,JaktInternal::Optional<lexer::Token>> {
 auto __jakt_enum_value = (((((*this).input))[((*this).index)]));
 if (__jakt_enum_value == static_cast<u8>(u8'(')) {
 return JaktInternal::ExplicitValue(lexer::Token::LParen(((*this).span(start,(++(((*this).index)))))));
@@ -4549,10 +4535,8 @@ break;
 this->__jakt_variant_index = rhs.__jakt_variant_index;
 }
 }
-Token::~Token(){
-if (this->__jakt_variant_index == 0) return;
-this->__jakt_destroy_variant();
-}
+Token::~Token(){ if (this->__jakt_variant_index == 0) return;
+this->__jakt_destroy_variant(); }
 void Token::__jakt_destroy_variant() {
 switch (this->__jakt_init_index()) {
 case 0 /* SingleQuotedString */:this->as.SingleQuotedString.quote.~ByteString();
@@ -5269,7 +5253,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 lexer::Token lexer::Token::from_keyword_or_identifier(ByteString const string,utility::Span const span) {
 {
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token> {
 auto __jakt_enum_value = (string);
 if (__jakt_enum_value == (ByteString::from_utf8_without_validation("and"sv))) {
 return JaktInternal::ExplicitValue(lexer::Token::And(span));
@@ -5569,10 +5553,8 @@ break;
 this->__jakt_variant_index = rhs.__jakt_variant_index;
 }
 }
-LiteralPrefix::~LiteralPrefix(){
-if (this->__jakt_variant_index == 0) return;
-this->__jakt_destroy_variant();
-}
+LiteralPrefix::~LiteralPrefix(){ if (this->__jakt_variant_index == 0) return;
+this->__jakt_destroy_variant(); }
 void LiteralPrefix::__jakt_destroy_variant() {
 switch (this->__jakt_init_index()) {
 case 0 /* None */:break;
@@ -5894,10 +5876,8 @@ break;
 this->__jakt_variant_index = rhs.__jakt_variant_index;
 }
 }
-LiteralSuffix::~LiteralSuffix(){
-if (this->__jakt_variant_index == 0) return;
-this->__jakt_destroy_variant();
-}
+LiteralSuffix::~LiteralSuffix(){ if (this->__jakt_variant_index == 0) return;
+this->__jakt_destroy_variant(); }
 void LiteralSuffix::__jakt_destroy_variant() {
 switch (this->__jakt_init_index()) {
 case 0 /* None */:break;
