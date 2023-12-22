@@ -328,6 +328,9 @@ utility::Span value;
 } Match;
 struct {
 utility::Span value;
+} Must;
+struct {
+utility::Span value;
 } Mut;
 struct {
 utility::Span value;
@@ -500,6 +503,7 @@ constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 
 [[nodiscard]] static Token Let(utility::Span value);
 [[nodiscard]] static Token Loop(utility::Span value);
 [[nodiscard]] static Token Match(utility::Span value);
+[[nodiscard]] static Token Must(utility::Span value);
 [[nodiscard]] static Token Mut(utility::Span value);
 [[nodiscard]] static Token Namespace(utility::Span value);
 [[nodiscard]] static Token Not(utility::Span value);
