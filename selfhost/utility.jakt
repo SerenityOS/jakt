@@ -38,18 +38,18 @@ fn to_string(anon bytes: [u8]) -> String {
 }
 
 fn join(anon strings: [String], separator: String) -> String {
-    mut output = ""
+    mut output = StringBuilder::create()
 
     mut i = 0uz
     for s in strings {
-        output += s
+        output.append(s)
         if i < strings.size() - 1 {
-            output += separator
+            output.append(separator)
         }
         i++
     }
 
-    return output
+    return output.to_string()
 }
 
 fn map<T, U>(input: [T], mapper: &fn(item: T) -> U) -> [U] {
