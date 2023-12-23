@@ -1,10 +1,12 @@
 #pragma once
 #include "__unified_forward.h"
-#include "parser.h"
 #include "typechecker.h"
 #include "types.h"
-#include "utility.h"
+#include "ids.h"
+#include "parser.h"
 #include "compiler.h"
+#include "utility.h"
+#include "jakt__arguments.h"
 namespace Jakt {
 namespace ide {
 struct Mutability {

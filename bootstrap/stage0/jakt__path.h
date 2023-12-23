@@ -1,7 +1,8 @@
 #pragma once
 #include "__unified_forward.h"
-#include "jakt__platform.h"
 #include "jakt__platform__unknown_path.h"
+#include "jakt__platform.h"
+#include "jakt__prelude__static_array.h"
 namespace Jakt {
 namespace jakt__path {
 struct Path {

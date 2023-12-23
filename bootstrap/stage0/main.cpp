@@ -553,85 +553,85 @@ ByteString const arg = ((args_to_process).dequeue());
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<int>> {
 auto __jakt_enum_value = (arg);
-if (__jakt_enum_value == (ByteString::from_utf8_without_validation("--target-triple"sv))) {
+if (__jakt_enum_value == "--target-triple"sv) {
 {
 (target_triple = ((args_to_process).dequeue()));
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("-T"sv))) {
+else if (__jakt_enum_value == "-T"sv) {
 {
 (target_triple = ((args_to_process).dequeue()));
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("--sysroot"sv))) {
+else if (__jakt_enum_value == "--sysroot"sv) {
 {
 (sysroot = ((args_to_process).dequeue()));
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("--system-lib-dir"sv))) {
+else if (__jakt_enum_value == "--system-lib-dir"sv) {
 {
 ((system_lib_dirs).push(((args_to_process).dequeue())));
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("--system-include-dir"sv))) {
+else if (__jakt_enum_value == "--system-include-dir"sv) {
 {
 ((system_include_dirs).push(((args_to_process).dequeue())));
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("--compiler-include-dir"sv))) {
+else if (__jakt_enum_value == "--compiler-include-dir"sv) {
 {
 (compiler_include_dir = ((args_to_process).dequeue()));
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("--compiler-lib-dir"sv))) {
+else if (__jakt_enum_value == "--compiler-lib-dir"sv) {
 {
 (compiler_lib_dir = ((args_to_process).dequeue()));
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("--install-root"sv))) {
+else if (__jakt_enum_value == "--install-root"sv) {
 {
 (install_root = ((args_to_process).dequeue()));
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("--runtime-lib-path"sv))) {
+else if (__jakt_enum_value == "--runtime-lib-path"sv) {
 {
 (runtime_lib_path = jakt__path::Path::from_string(((args_to_process).dequeue())));
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("--runtime-path"sv))) {
+else if (__jakt_enum_value == "--runtime-path"sv) {
 {
 (runtime_path = jakt__path::Path::from_string(((args_to_process).dequeue())));
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("--source-file"sv))) {
+else if (__jakt_enum_value == "--source-file"sv) {
 {
 (source_file = ((args_to_process).dequeue()));
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("--output-filename"sv))) {
+else if (__jakt_enum_value == "--output-filename"sv) {
 {
 (output_filename = ((args_to_process).dequeue()));
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("-o"sv))) {
+else if (__jakt_enum_value == "-o"sv) {
 {
 (output_filename = ((args_to_process).dequeue()));
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("--only-support-libs"sv))) {
+else if (__jakt_enum_value == "--only-support-libs"sv) {
 {
 (only_support_libs = true);
 }

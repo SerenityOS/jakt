@@ -1,6 +1,8 @@
 #pragma once
 #include "__unified_forward.h"
 #include "types.h"
+#include "ids.h"
+#include "compiler.h"
 #include "jakt__path.h"
 namespace Jakt {
 namespace cpp_import__none {

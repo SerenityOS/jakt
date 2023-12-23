@@ -1,8 +1,9 @@
 #pragma once
 #include "__unified_forward.h"
+#include "compiler.h"
 #include "error.h"
 #include "utility.h"
-#include "compiler.h"
+#include "jakt__arguments.h"
 namespace Jakt {
 namespace lexer {
 struct LiteralPrefix {

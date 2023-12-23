@@ -1,7 +1,9 @@
 #pragma once
 #include "__unified_forward.h"
-#include "compiler.h"
 #include "lexer.h"
+#include "compiler.h"
+#include "jakt__arguments.h"
+#include "jakt__prelude__static_array.h"
 namespace Jakt {
 namespace formatter {
 struct Entity {

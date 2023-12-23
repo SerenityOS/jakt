@@ -2,10 +2,11 @@
 #include "__unified_forward.h"
 #include "error.h"
 #include "utility.h"
-#include "utility.h"
+#include "jakt__file_iterator.h"
+#include "jakt__platform__unknown_fs.h"
 #include "jakt__path.h"
 #include "jakt__platform.h"
-#include "jakt__platform__unknown_fs.h"
+#include "jakt__arguments.h"
 namespace Jakt {
 namespace compiler {
 class Compiler :public RefCounted<Compiler>, public Weakable<Compiler> {

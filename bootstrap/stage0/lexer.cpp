@@ -5255,166 +5255,166 @@ lexer::Token lexer::Token::from_keyword_or_identifier(ByteString const string,ut
 return ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<lexer::Token,lexer::Token> {
 auto __jakt_enum_value = (string);
-if (__jakt_enum_value == (ByteString::from_utf8_without_validation("and"sv))) {
+if (__jakt_enum_value == "and"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::And(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("anon"sv))) {
+else if (__jakt_enum_value == "anon"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Anon(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("as"sv))) {
+else if (__jakt_enum_value == "as"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::As(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("boxed"sv))) {
+else if (__jakt_enum_value == "boxed"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Boxed(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("break"sv))) {
+else if (__jakt_enum_value == "break"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Break(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("catch"sv))) {
+else if (__jakt_enum_value == "catch"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Catch(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("class"sv))) {
+else if (__jakt_enum_value == "class"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Class(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("continue"sv))) {
+else if (__jakt_enum_value == "continue"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Continue(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("cpp"sv))) {
+else if (__jakt_enum_value == "cpp"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Cpp(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("defer"sv))) {
+else if (__jakt_enum_value == "defer"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Defer(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("destructor"sv))) {
+else if (__jakt_enum_value == "destructor"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Destructor(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("else"sv))) {
+else if (__jakt_enum_value == "else"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Else(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("enum"sv))) {
+else if (__jakt_enum_value == "enum"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Enum(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("extern"sv))) {
+else if (__jakt_enum_value == "extern"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Extern(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("false"sv))) {
+else if (__jakt_enum_value == "false"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::False(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("for"sv))) {
+else if (__jakt_enum_value == "for"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::For(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("fn"sv))) {
+else if (__jakt_enum_value == "fn"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Fn(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("comptime"sv))) {
+else if (__jakt_enum_value == "comptime"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Comptime(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("if"sv))) {
+else if (__jakt_enum_value == "if"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::If(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("import"sv))) {
+else if (__jakt_enum_value == "import"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Import(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("relative"sv))) {
+else if (__jakt_enum_value == "relative"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Relative(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("in"sv))) {
+else if (__jakt_enum_value == "in"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::In(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("is"sv))) {
+else if (__jakt_enum_value == "is"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Is(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("let"sv))) {
+else if (__jakt_enum_value == "let"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Let(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("loop"sv))) {
+else if (__jakt_enum_value == "loop"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Loop(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("match"sv))) {
+else if (__jakt_enum_value == "match"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Match(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("must"sv))) {
+else if (__jakt_enum_value == "must"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Must(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("mut"sv))) {
+else if (__jakt_enum_value == "mut"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Mut(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("namespace"sv))) {
+else if (__jakt_enum_value == "namespace"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Namespace(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("not"sv))) {
+else if (__jakt_enum_value == "not"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Not(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("or"sv))) {
+else if (__jakt_enum_value == "or"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Or(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("override"sv))) {
+else if (__jakt_enum_value == "override"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Override(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("private"sv))) {
+else if (__jakt_enum_value == "private"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Private(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("public"sv))) {
+else if (__jakt_enum_value == "public"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Public(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("raw"sv))) {
+else if (__jakt_enum_value == "raw"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Raw(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("reflect"sv))) {
+else if (__jakt_enum_value == "reflect"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Reflect(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("return"sv))) {
+else if (__jakt_enum_value == "return"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Return(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("restricted"sv))) {
+else if (__jakt_enum_value == "restricted"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Restricted(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("sizeof"sv))) {
+else if (__jakt_enum_value == "sizeof"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Sizeof(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("struct"sv))) {
+else if (__jakt_enum_value == "struct"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Struct(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("this"sv))) {
+else if (__jakt_enum_value == "this"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::This(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("throw"sv))) {
+else if (__jakt_enum_value == "throw"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Throw(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("throws"sv))) {
+else if (__jakt_enum_value == "throws"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Throws(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("true"sv))) {
+else if (__jakt_enum_value == "true"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::True(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("try"sv))) {
+else if (__jakt_enum_value == "try"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Try(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("unsafe"sv))) {
+else if (__jakt_enum_value == "unsafe"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Unsafe(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("virtual"sv))) {
+else if (__jakt_enum_value == "virtual"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Virtual(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("weak"sv))) {
+else if (__jakt_enum_value == "weak"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Weak(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("while"sv))) {
+else if (__jakt_enum_value == "while"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::While(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("yield"sv))) {
+else if (__jakt_enum_value == "yield"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Yield(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("guard"sv))) {
+else if (__jakt_enum_value == "guard"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Guard(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("requires"sv))) {
+else if (__jakt_enum_value == "requires"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Requires(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("implements"sv))) {
+else if (__jakt_enum_value == "implements"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Implements(span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("trait"sv))) {
+else if (__jakt_enum_value == "trait"sv) {
 return JaktInternal::ExplicitValue(lexer::Token::Trait(span));
 }
 else {

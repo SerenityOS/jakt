@@ -260,7 +260,9 @@ builder.appendff("fresh_label_counter: {}, ", fresh_label_counter);
 JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("this_replacement: {}, ", this_replacement);
 JaktInternal::PrettyPrint::must_output_indentation(builder);
-builder.appendff("generic_inferences: {}", generic_inferences);
+builder.appendff("generic_inferences: {}, ", generic_inferences);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("used_modules: {}", used_modules);
 }
 builder.append(")"sv);return builder.to_string(); }
 ByteString codegen::CodeGenerator::current_error_handler() const {
@@ -371,7 +373,7 @@ utility::panic((ByteString::from_utf8_without_validation("Cyclic module imports"
 
 ErrorOr<JaktInternal::Dictionary<ByteString,JaktInternal::Tuple<ByteString,ByteString>>> codegen::CodeGenerator::generate(NonnullRefPtr<compiler::Compiler> const compiler,NonnullRefPtr<types::CheckedProgram> const program,bool const debug_info) {
 {
-codegen::CodeGenerator generator = codegen::CodeGenerator(compiler,program,codegen::ControlFlowState::no_control_flow(),DynamicArray<JaktInternal::Tuple<ByteString,ByteString>>::create_with({}),ByteStringBuilder::create(),JaktInternal::OptionalNone(),false,codegen::CodegenDebugInfo(compiler,Dictionary<size_t, JaktInternal::DynamicArray<codegen::LineSpan>>::create_with_entries({}),debug_info),DynamicArray<ByteString>::create_with({}),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),JaktInternal::OptionalNone(),JaktInternal::OptionalNone());
+codegen::CodeGenerator generator = codegen::CodeGenerator(compiler,program,codegen::ControlFlowState::no_control_flow(),DynamicArray<JaktInternal::Tuple<ByteString,ByteString>>::create_with({}),ByteStringBuilder::create(),JaktInternal::OptionalNone(),false,codegen::CodegenDebugInfo(compiler,Dictionary<size_t, JaktInternal::DynamicArray<codegen::LineSpan>>::create_with_entries({}),debug_info),DynamicArray<ByteString>::create_with({}),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL),JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),Set<ids::ModuleId>::create_with_values({}));
 JaktInternal::Dictionary<ByteString,JaktInternal::Tuple<ByteString,ByteString>> result = Dictionary<ByteString, JaktInternal::Tuple<ByteString,ByteString>>::create_with_entries({});
 ByteStringBuilder output = ByteStringBuilder::create();
 ((output).append((StringView::from_string_literal("#pragma once\n"sv))));
@@ -570,15 +572,6 @@ TRY((((generator).codegen_namespace_predecl(scope,module,((output))))));
 ((output).append((StringView::from_string_literal("} // namespace Jakt\n"sv))));
 ((result).set((ByteString::from_utf8_without_validation("__unified_forward.h"sv)),(Tuple{((output).to_string()), (((((compiler)->current_file_path()).value())).to_string())})));
 {
-JaktInternal::ArrayIterator<bool> _magic = ((DynamicArray<bool>::create_with({true, false})).iterator());
-for (;;){
-JaktInternal::Optional<bool> const _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-bool as_forward = (_magic_value.value());
-{
-{
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(((sorted_modules).size())),static_cast<size_t>(static_cast<size_t>(0ULL))});
 for (;;){
 JaktInternal::Optional<size_t> const _magic_value = ((_magic).next());
@@ -592,21 +585,13 @@ if (((i) == (static_cast<size_t>(0ULL)))){
 continue;
 }
 NonnullRefPtr<types::Module> const module = ((((((generator).program))->modules))[i]);
-((((generator).compiler))->dbg_println(__jakt_format((StringView::from_string_literal("generate: module idx: {}, module.name {} - forward: {}"sv)),i,((module)->name),as_forward)));
+((((generator).compiler))->dbg_println(__jakt_format((StringView::from_string_literal("generate: module idx: {}, module.name {} - forward: {}"sv)),i,((module)->name),true)));
 ByteString const header_name = __jakt_format((StringView::from_string_literal("{}.h"sv)),((module)->name));
-ByteString const impl_name = __jakt_format((StringView::from_string_literal("{}.cpp"sv)),((module)->name));
 ((output).clear());
-if (as_forward){
 ((output).append((StringView::from_string_literal("#pragma once\n"sv))));
 ((output).append((StringView::from_string_literal("#include \"__unified_forward.h\"\n"sv))));
-}
-else {
-((output).append(__jakt_format((StringView::from_string_literal("#include \"{}\"\n"sv)),header_name)));
-}
-
 ids::ScopeId const scope_id = ids::ScopeId(((module)->id),static_cast<size_t>(0ULL));
 NonnullRefPtr<types::Scope> const scope = ((((generator).program))->get_scope(scope_id));
-if (as_forward){
 {
 JaktInternal::ArrayIterator<ids::ScopeId> _magic = ((((scope)->children)).iterator());
 for (;;){
@@ -732,8 +717,22 @@ if (has_name){
 }
 }
 
+ByteStringBuilder after_headers = ByteStringBuilder::create();
+((after_headers).append((StringView::from_string_literal("namespace Jakt {\n"sv))));
+if ((!(((module)->is_root)))){
+((((generator).namespace_stack)).push(((module)->name)));
+}
+JaktInternal::DynamicArray<ids::ModuleId> const ordered_imports = TRY((((generator).capturing_modules(((sorted_modules)),module,(([scope](codegen::CodeGenerator& generator, NonnullRefPtr<types::Module> module, ByteStringBuilder& output) -> ErrorOr<void> {{
+TRY((((((generator))).codegen_namespace_forward(scope,module,((((output))))))));
+}
+return {};
+}
+)),((after_headers))))));
+if ((!(((module)->is_root)))){
+JaktInternal::Optional<ByteString> const dummy = ((((generator).namespace_stack)).pop());
+}
 {
-JaktInternal::ArrayIterator<ids::ModuleId> _magic = ((((module)->imports)).iterator());
+JaktInternal::ArrayIterator<ids::ModuleId> _magic = ((ordered_imports).iterator());
 for (;;){
 JaktInternal::Optional<ids::ModuleId> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
@@ -741,37 +740,68 @@ break;
 }
 ids::ModuleId id = (_magic_value.value());
 {
+if ((((((id).id)) != (static_cast<size_t>(0ULL))) && ((((id).id)) != (((((module)->id)).id))))){
 NonnullRefPtr<types::Module> const module = ((((((generator).program))->modules))[((id).id)]);
 ((output).append(__jakt_format((StringView::from_string_literal("#include \"{}.h\"\n"sv)),((module)->name))));
 }
+else {
+continue;
+}
+
+}
 
 }
 }
 
+((output).append(((after_headers).to_string())));
+((output).append((StringView::from_string_literal("} // namespace Jakt\n"sv))));
+((result).set(header_name,(Tuple{((output).to_string()), ((module)->resolved_import_path)})));
 }
-((output).append((StringView::from_string_literal("namespace Jakt {\n"sv))));
+
+}
+}
+
+{
+JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(((sorted_modules).size())),static_cast<size_t>(static_cast<size_t>(0ULL))});
+for (;;){
+JaktInternal::Optional<size_t> const _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+size_t idx = (_magic_value.value());
+{
+size_t const i = ((((sorted_modules)[JaktInternal::checked_sub(idx,static_cast<size_t>(1ULL))])).id);
+if (((i) == (static_cast<size_t>(0ULL)))){
+continue;
+}
+NonnullRefPtr<types::Module> const module = ((((((generator).program))->modules))[i]);
+((((generator).compiler))->dbg_println(__jakt_format((StringView::from_string_literal("generate: module idx: {}, module.name {} - forward: {}"sv)),i,((module)->name),false)));
+ByteString const header_name = __jakt_format((StringView::from_string_literal("{}.h"sv)),((module)->name));
+ByteString const impl_name = __jakt_format((StringView::from_string_literal("{}.cpp"sv)),((module)->name));
+((output).clear());
+((output).append(__jakt_format((StringView::from_string_literal("#include \"{}\"\n"sv)),header_name)));
+ids::ScopeId const scope_id = ids::ScopeId(((module)->id),static_cast<size_t>(0ULL));
+NonnullRefPtr<types::Scope> const scope = ((((generator).program))->get_scope(scope_id));
 if ((!(((module)->is_root)))){
 ((((generator).namespace_stack)).push(((module)->name)));
 }
-TRY((((generator).codegen_namespace(scope,module,as_forward,((output))))));
+ByteStringBuilder inside_namespace = ByteStringBuilder::create();
+TRY((((generator).codegen_namespace(scope,module,((inside_namespace))))));
+((inside_namespace).append(((((generator).deferred_output)).to_string())));
+((((generator).deferred_output)).clear());
 if ((!(((module)->is_root)))){
 JaktInternal::Optional<ByteString> const dummy = ((((generator).namespace_stack)).pop());
 }
-((output).append(((((generator).deferred_output)).to_string())));
-((((generator).deferred_output)).clear());
+if ((!(((inside_namespace).is_empty())))){
+((output).append((StringView::from_string_literal("namespace Jakt {\n"sv))));
+((output).append(((inside_namespace).to_string())));
 ((output).append((StringView::from_string_literal("} // namespace Jakt\n"sv))));
-if (as_forward){
-((result).set(header_name,(Tuple{((output).to_string()), ((module)->resolved_import_path)})));
 }
 else {
+((output).clear());
+}
+
 ((result).set(impl_name,(Tuple{((output).to_string()), ((module)->resolved_import_path)})));
-}
-
-}
-
-}
-}
-
 }
 
 }
@@ -790,12 +820,28 @@ size_t const i = ((((sorted_modules)[JaktInternal::checked_sub(idx,static_cast<s
 NonnullRefPtr<types::Module> const module = ((((((generator).program))->modules))[i]);
 ByteString const header_name = __jakt_format((StringView::from_string_literal("{}.h"sv)),((module)->name));
 ByteString const impl_name = __jakt_format((StringView::from_string_literal("{}_specializations.cpp"sv)),((module)->name));
-((output).clear());
+ids::ScopeId const scope_id = ids::ScopeId(((module)->id),static_cast<size_t>(0ULL));
+NonnullRefPtr<types::Scope> const scope = ((((generator).program))->get_scope(scope_id));
+ByteStringBuilder code_output = ByteStringBuilder::create();
+if ((!(((module)->is_root)))){
+((((generator).namespace_stack)).push(((module)->name)));
+}
+JaktInternal::DynamicArray<ids::ModuleId> const ordered_imports = TRY((((generator).capturing_modules(((sorted_modules)),module,(([scope](codegen::CodeGenerator& gen, NonnullRefPtr<types::Module> module, ByteStringBuilder& output) -> ErrorOr<void> {{
+TRY((((((gen))).codegen_namespace_specializations(scope,module,((((output))))))));
+}
+return {};
+}
+)),((code_output))))));
+if ((!(((module)->is_root)))){
+JaktInternal::Optional<ByteString> const dummy = ((((generator).namespace_stack)).pop());
+}
+if ((!(((code_output).is_empty())))){
+(output = ByteStringBuilder::create());
 if (((i) != (static_cast<size_t>(0ULL)))){
 ((output).append(__jakt_format((StringView::from_string_literal("#include \"{}\"\n"sv)),header_name)));
 }
 {
-JaktInternal::ArrayIterator<ids::ModuleId> _magic = ((sorted_modules).iterator());
+JaktInternal::ArrayIterator<ids::ModuleId> _magic = ((ordered_imports).iterator());
 for (;;){
 JaktInternal::Optional<ids::ModuleId> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
@@ -813,19 +859,14 @@ NonnullRefPtr<types::Module> const module = ((((((generator).program))->modules)
 }
 }
 
-ids::ScopeId const scope_id = ids::ScopeId(((module)->id),static_cast<size_t>(0ULL));
-NonnullRefPtr<types::Scope> const scope = ((((generator).program))->get_scope(scope_id));
 ((output).append((StringView::from_string_literal("namespace Jakt {\n"sv))));
-if ((!(((module)->is_root)))){
-((((generator).namespace_stack)).push(((module)->name)));
-}
-TRY((((generator).codegen_namespace_specializations(scope,module,((output))))));
-if ((!(((module)->is_root)))){
-JaktInternal::Optional<ByteString> const dummy = ((((generator).namespace_stack)).pop());
-}
-((output).append(((((generator).deferred_output)).to_string())));
-((((generator).deferred_output)).clear());
+((output).append(((code_output).to_string())));
 ((output).append((StringView::from_string_literal("} // namespace Jakt\n"sv))));
+}
+else {
+((output).clear());
+}
+
 ((result).set(impl_name,(Tuple{((output).to_string()), ((module)->resolved_import_path)})));
 }
 
@@ -833,6 +874,59 @@ JaktInternal::Optional<ByteString> const dummy = ((((generator).namespace_stack)
 }
 
 return result;
+}
+}
+
+JaktInternal::DynamicArray<ids::ModuleId> codegen::CodeGenerator::get_topologically_sorted_modules(JaktInternal::DynamicArray<ids::ModuleId> const& all_sorted_modules,JaktInternal::Set<ids::ModuleId> const& dependencies) {
+{
+JaktInternal::DynamicArray<ids::ModuleId> deps = DynamicArray<ids::ModuleId>::create_with({});
+((deps).ensure_capacity(((((dependencies))).size())));
+{
+JaktInternal::ArrayIterator<ids::ModuleId> _magic = ((((all_sorted_modules))).iterator());
+for (;;){
+JaktInternal::Optional<ids::ModuleId> const _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+ids::ModuleId id = (_magic_value.value());
+{
+if (((((dependencies))).contains(id))){
+((deps).push(id));
+}
+}
+
+}
+}
+
+return deps;
+}
+}
+
+ErrorOr<JaktInternal::DynamicArray<ids::ModuleId>> codegen::CodeGenerator::capturing_modules(JaktInternal::DynamicArray<ids::ModuleId> const& all_sorted_modules,NonnullRefPtr<types::Module> const module,Function<ErrorOr<void>(codegen::CodeGenerator&, NonnullRefPtr<types::Module>, ByteStringBuilder&)> const& gen,ByteStringBuilder& output) {
+{
+(((*this).used_modules) = Set<ids::ModuleId>::create_with_values({}));
+((((*this).used_modules)).ensure_capacity(((((module)->imports)).size())));
+{
+JaktInternal::ArrayIterator<ids::ModuleId> _magic = ((((module)->imports)).iterator());
+for (;;){
+JaktInternal::Optional<ids::ModuleId> const _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+ids::ModuleId id = (_magic_value.value());
+{
+((((*this).used_modules)).add(id));
+}
+
+}
+}
+
+((((*this).deferred_output)).clear());
+TRY((gen(((*this)),module,((((output)))))));
+((((output))).append(((((*this).deferred_output)).to_string())));
+((((*this).deferred_output)).clear());
+JaktInternal::DynamicArray<ids::ModuleId> const modules = codegen::CodeGenerator::get_topologically_sorted_modules(all_sorted_modules,((((*this).used_modules))));
+return modules;
 }
 }
 
@@ -1435,9 +1529,6 @@ if ((((((scope)->alias_path)).has_value()) || ((((scope)->import_path_if_extern)
 return {};
 }
 JaktInternal::Set<ids::TypeId> seen_types = Set<ids::TypeId>::create_with_values({});
-if (((((scope)->namespace_name)).has_value())){
-((((output))).append((((((ByteString::from_utf8_without_validation("namespace "sv))) + ((((scope)->namespace_name).value())))) + ((ByteString::from_utf8_without_validation(" {\n"sv))))));
-}
 {
 JaktInternal::ArrayIterator<bool> _magic = ((DynamicArray<bool>::create_with({false, true})).iterator());
 for (;;){
@@ -1624,23 +1715,26 @@ JaktInternal::Optional<ByteString> const dummy = ((((*this).namespace_stack)).po
 }
 }
 
-if (((((scope)->namespace_name)).has_value())){
+if ((((((scope)->namespace_name)).has_value()) && (!(((((output))).is_empty()))))){
+ByteString const inside_namespace = ((((output))).to_string());
+((((output))).clear());
+((((output))).append(__jakt_format((StringView::from_string_literal("namespace {} {{\n"sv)),(((scope)->namespace_name).value()))));
+((((output))).append(inside_namespace));
 ((((output))).append((StringView::from_string_literal("}\n"sv))));
 }
 }
 return {};
 }
 
-ErrorOr<void> codegen::CodeGenerator::codegen_namespace(NonnullRefPtr<types::Scope> const scope,NonnullRefPtr<types::Module> const current_module,bool const as_forward,ByteStringBuilder& output) {
+ErrorOr<void> codegen::CodeGenerator::codegen_namespace_forward(NonnullRefPtr<types::Scope> const scope,NonnullRefPtr<types::Module> const current_module,ByteStringBuilder& output) {
 {
 if ((((((scope)->alias_path)).has_value()) || ((((scope)->import_path_if_extern)).has_value()))){
 return {};
 }
-JaktInternal::Set<ids::TypeId> seen_types = Set<ids::TypeId>::create_with_values({});
-if (as_forward){
 if (((((scope)->namespace_name)).has_value())){
 ((((output))).append((((((ByteString::from_utf8_without_validation("namespace "sv))) + ((((scope)->namespace_name).value())))) + ((ByteString::from_utf8_without_validation(" {\n"sv))))));
 }
+JaktInternal::Set<ids::TypeId> seen_types = Set<ids::TypeId>::create_with_values({});
 JaktInternal::Dictionary<ids::TypeId,JaktInternal::DynamicArray<ids::TypeId>> const dependency_graph = TRY((((*this).produce_codegen_dependency_graph(scope))));
 {
 JaktInternal::DictionaryIterator<ids::TypeId,JaktInternal::DynamicArray<ids::TypeId>> _magic = ((dependency_graph).iterator());
@@ -1841,7 +1935,7 @@ NonnullRefPtr<types::Scope> const child_scope = ((((*this).program))->get_scope(
 if (((((child_scope)->namespace_name)).has_value())){
 ByteString const name = (((child_scope)->namespace_name).value());
 ((((*this).namespace_stack)).push(name));
-TRY((((*this).codegen_namespace(child_scope,current_module,as_forward,((((output))))))));
+TRY((((*this).codegen_namespace_forward(child_scope,current_module,((((output))))))));
 JaktInternal::Optional<ByteString> const dummy = ((((*this).namespace_stack)).pop());
 }
 }
@@ -1852,11 +1946,16 @@ JaktInternal::Optional<ByteString> const dummy = ((((*this).namespace_stack)).po
 if (((((scope)->namespace_name)).has_value())){
 ((((output))).append((StringView::from_string_literal("}\n"sv))));
 }
+}
 return {};
 }
-if (((((scope)->namespace_name)).has_value())){
-((((output))).append((((((ByteString::from_utf8_without_validation("namespace "sv))) + ((((scope)->namespace_name).value())))) + ((ByteString::from_utf8_without_validation(" {\n"sv))))));
+
+ErrorOr<void> codegen::CodeGenerator::codegen_namespace(NonnullRefPtr<types::Scope> const scope,NonnullRefPtr<types::Module> const current_module,ByteStringBuilder& output) {
+{
+if ((((((scope)->alias_path)).has_value()) || ((((scope)->import_path_if_extern)).has_value()))){
+return {};
 }
+ByteStringBuilder inside_namespace = ByteStringBuilder::create();
 {
 JaktInternal::DictionaryIterator<ByteString,JaktInternal::DynamicArray<ids::FunctionId>> _magic = ((((scope)->functions)).iterator());
 for (;;){
@@ -1895,8 +1994,8 @@ if ((((((((function)->linkage)).__jakt_init_index() == 1 /* External */) || ((((
 continue;
 }
 if (((((((function)->generics))->params)).is_empty())){
-TRY((((*this).codegen_function(function,false,((((output))))))));
-((((output))).append((StringView::from_string_literal("\n"sv))));
+TRY((((*this).codegen_function(function,false,((inside_namespace))))));
+((inside_namespace).append((StringView::from_string_literal("\n"sv))));
 }
 }
 
@@ -1931,7 +2030,7 @@ continue;
 if ((!(((((struct_).generic_parameters)).is_empty())))){
 continue;
 }
-TRY((((*this).codegen_debug_description_getter(struct_,false,((((output))))))));
+TRY((((*this).codegen_debug_description_getter(struct_,false,((inside_namespace))))));
 NonnullRefPtr<types::Scope> const scope = ((((*this).program))->get_scope(((struct_).scope_id)));
 {
 JaktInternal::DictionaryIterator<ByteString,JaktInternal::DynamicArray<ids::FunctionId>> _magic = ((((scope)->functions)).iterator());
@@ -1965,16 +2064,16 @@ ScopeGuard __jakt_var_617([&] {
 (((*this).current_function) = previous_function);
 });
 if (((((function)->type)).__jakt_init_index() == 2 /* ImplicitConstructor */)){
-TRY((((*this).codegen_constructor(function,false,((((output))))))));
-((((output))).append((StringView::from_string_literal("\n"sv))));
+TRY((((*this).codegen_constructor(function,false,((inside_namespace))))));
+((inside_namespace).append((StringView::from_string_literal("\n"sv))));
 }
 else if (((((function)->type)).__jakt_init_index() == 1 /* Destructor */)){
-TRY((((*this).codegen_destructor(((struct_)),((function)),false,((((output))))))));
-((((output))).append((StringView::from_string_literal("\n"sv))));
+TRY((((*this).codegen_destructor(((struct_)),((function)),false,((inside_namespace))))));
+((inside_namespace).append((StringView::from_string_literal("\n"sv))));
 }
 else if (((!(((((function)->type)).__jakt_init_index() == 3 /* ImplicitEnumConstructor */))) && ((!(((function)->is_comptime))) && ((((((function)->generics))->params)).is_empty())))){
-TRY((((*this).codegen_function_in_namespace(function,((struct_).type_id),false,false,JaktInternal::OptionalNone(),((((output))))))));
-((((output))).append((StringView::from_string_literal("\n"sv))));
+TRY((((*this).codegen_function_in_namespace(function,((struct_).type_id),false,false,JaktInternal::OptionalNone(),((inside_namespace))))));
+((inside_namespace).append((StringView::from_string_literal("\n"sv))));
 }
 }
 
@@ -2015,17 +2114,17 @@ if ((!(((((enum_).generic_parameters)).is_empty())))){
 continue;
 }
 if (((((enum_).underlying_type_id)).equals(types::void_type_id()))){
-TRY((((*this).codegen_enum_debug_description_getter(enum_,false,((((output))))))));
+TRY((((*this).codegen_enum_debug_description_getter(enum_,false,((inside_namespace))))));
 JaktInternal::Tuple<JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,ByteString>>,JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,ByteString>>>>> const common_fields_variant_field_list_ = TRY((((*this).codegen_enum_field_lists(enum_))));
 JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,ByteString>> const common_fields = ((common_fields_variant_field_list_).template get<0>());
 JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,ByteString>>>> const variant_field_list = ((common_fields_variant_field_list_).template get<1>());
 
-((*this).codegen_enum_constructors(enum_,false,JaktInternal::OptionalNone(),variant_field_list,common_fields,((((output))))));
-((((output))).append(__jakt_format((StringView::from_string_literal("{0}::~{0}()"sv)),((enum_).name))));
-((*this).codegen_enum_destructor_body(enum_,((((output))))));
-((((output))).append(__jakt_format((StringView::from_string_literal("void {0}::__jakt_destroy_variant() {{\n"sv)),((enum_).name))));
-((*this).codegen_enum_destroy_variant(enum_,((((output))))));
-((((output))).append((StringView::from_string_literal("}\n"sv))));
+((*this).codegen_enum_constructors(enum_,false,JaktInternal::OptionalNone(),variant_field_list,common_fields,((inside_namespace))));
+((inside_namespace).append(__jakt_format((StringView::from_string_literal("{0}::~{0}()"sv)),((enum_).name))));
+((*this).codegen_enum_destructor_body(enum_,((inside_namespace))));
+((inside_namespace).append(__jakt_format((StringView::from_string_literal("void {0}::__jakt_destroy_variant() {{\n"sv)),((enum_).name))));
+((*this).codegen_enum_destroy_variant(enum_,((inside_namespace))));
+((inside_namespace).append((StringView::from_string_literal("}\n"sv))));
 }
 NonnullRefPtr<types::Scope> const scope = ((((*this).program))->get_scope(((enum_).scope_id)));
 {
@@ -2057,8 +2156,8 @@ ScopeGuard __jakt_var_618([&] {
 (((*this).current_function) = previous_function);
 });
 if (((!(((((function)->type)).__jakt_init_index() == 2 /* ImplicitConstructor */))) && ((!(((((function)->type)).__jakt_init_index() == 3 /* ImplicitEnumConstructor */))) && ((!(((((function)->type)).__jakt_init_index() == 1 /* Destructor */))) && ((!(((function)->is_comptime))) && ((((((function)->generics))->params)).is_empty())))))){
-TRY((((*this).codegen_function_in_namespace(function,((enum_).type_id),false,false,JaktInternal::OptionalNone(),((((output))))))));
-((((output))).append((StringView::from_string_literal("\n"sv))));
+TRY((((*this).codegen_function_in_namespace(function,((enum_).type_id),false,false,JaktInternal::OptionalNone(),((inside_namespace))))));
+((inside_namespace).append((StringView::from_string_literal("\n"sv))));
 }
 }
 
@@ -2088,7 +2187,7 @@ NonnullRefPtr<types::Scope> const child_scope = ((((*this).program))->get_scope(
 if (((((child_scope)->namespace_name)).has_value())){
 ByteString const name = (((child_scope)->namespace_name).value());
 ((((*this).namespace_stack)).push(name));
-TRY((((*this).codegen_namespace(child_scope,current_module,as_forward,((((output))))))));
+TRY((((*this).codegen_namespace(child_scope,current_module,((inside_namespace))))));
 JaktInternal::Optional<ByteString> const dummy = ((((*this).namespace_stack)).pop());
 }
 }
@@ -2096,8 +2195,16 @@ JaktInternal::Optional<ByteString> const dummy = ((((*this).namespace_stack)).po
 }
 }
 
+if ((!(((inside_namespace).is_empty())))){
 if (((((scope)->namespace_name)).has_value())){
+((((output))).append(__jakt_format((StringView::from_string_literal("namespace {} {{\n"sv)),(((scope)->namespace_name).value()))));
+((((output))).append(((inside_namespace).to_string())));
 ((((output))).append((StringView::from_string_literal("}\n"sv))));
+}
+else {
+((((output))).append(((inside_namespace).to_string())));
+}
+
 }
 }
 return {};
@@ -4342,7 +4449,7 @@ ByteString const name = ((((var)->name_for_codegen())).as_name_for_use());
 ((((output))).append(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<void>> {
 auto __jakt_enum_value = (name);
-if (__jakt_enum_value == (ByteString::from_utf8_without_validation("this"sv))) {
+if (__jakt_enum_value == "this"sv) {
 return JaktInternal::ExplicitValue(((*this).this_replacement).value_or_lazy_evaluated([&] { return (ByteString::from_utf8_without_validation("*this"sv)); }));
 }
 else {
@@ -5741,6 +5848,7 @@ break;
 }
 
 bool const match_values_all_constant = (all_variants_constant && (!(is_generic_enum)));
+ids::TypeId const byte_string_type_id = ((((*this).program))->find_or_add_type_id(types::Type::Struct(parser::CheckedQualifiers(false),TRY((((((*this).program))->find_struct_in_prelude((ByteString::from_utf8_without_validation("String"sv))))))),((((*this).program))->prelude_module_id()),false));
 ((((output))).append(__jakt_format((StringView::from_string_literal("([&]() -> JaktInternal::ExplicitValueOrControlFlow<{},{}> {{\n"sv)),cpp_match_result_type,TRY((((*this).codegen_function_return_type((((*this).current_function).value()))))))));
 if (is_generic_enum){
 ((((output))).append((StringView::from_string_literal("auto&& __jakt_enum_value = JaktInternal::deref_if_ref_pointer("sv))));
@@ -5952,7 +6060,24 @@ TRY((((*this).codegen_expression((to.value()),((((output))))))));
 }
 else {
 ((((output))).append((StringView::from_string_literal("if (__jakt_enum_value == "sv))));
+if (((expression)->__jakt_init_index() == 2 /* QuotedString */)){
+types::CheckedStringLiteral const val = (expression)->as.QuotedString.val;
+if ((((((val).type_id)).equals(byte_string_type_id)) || ((((val).type_id)).equals(types::builtin(types::BuiltinType::JaktString()))))){
+ByteString const original_string = ((val).to_string());
+ByteString const escaped_value = utility::escape_for_quotes(original_string);
+((((output))).append((StringView::from_string_literal("\""sv))));
+((((output))).append(escaped_value));
+((((output))).append((StringView::from_string_literal("\"sv"sv))));
+}
+else {
 TRY((((*this).codegen_expression(expression,((((output))))))));
+}
+
+}
+else {
+TRY((((*this).codegen_expression(expression,((((output))))))));
+}
+
 }
 
 ((((output))).append((StringView::from_string_literal(") {\n"sv))));
@@ -7281,24 +7406,24 @@ if (((call).callee_throws)){
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<void>> {
 auto __jakt_enum_value = (((call).name));
-if (__jakt_enum_value == (ByteString::from_utf8_without_validation("print"sv))) {
+if (__jakt_enum_value == "print"sv) {
 {
 ByteString const helper = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<void>> {
 auto __jakt_enum_value = (((call).name));
-if (__jakt_enum_value == (ByteString::from_utf8_without_validation("print"sv))) {
+if (__jakt_enum_value == "print"sv) {
 return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("out"sv)));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("println"sv))) {
+else if (__jakt_enum_value == "println"sv) {
 return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("outln"sv)));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("eprint"sv))) {
+else if (__jakt_enum_value == "eprint"sv) {
 return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("warn"sv)));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("eprintln"sv))) {
+else if (__jakt_enum_value == "eprintln"sv) {
 return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("warnln"sv)));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("format"sv))) {
+else if (__jakt_enum_value == "format"sv) {
 return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("__jakt_format"sv)));
 }
 else {
@@ -7337,24 +7462,24 @@ if (((i) != (JaktInternal::checked_sub(((((call).args)).size()),static_cast<size
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("println"sv))) {
+else if (__jakt_enum_value == "println"sv) {
 {
 ByteString const helper = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<void>> {
 auto __jakt_enum_value = (((call).name));
-if (__jakt_enum_value == (ByteString::from_utf8_without_validation("print"sv))) {
+if (__jakt_enum_value == "print"sv) {
 return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("out"sv)));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("println"sv))) {
+else if (__jakt_enum_value == "println"sv) {
 return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("outln"sv)));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("eprint"sv))) {
+else if (__jakt_enum_value == "eprint"sv) {
 return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("warn"sv)));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("eprintln"sv))) {
+else if (__jakt_enum_value == "eprintln"sv) {
 return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("warnln"sv)));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("format"sv))) {
+else if (__jakt_enum_value == "format"sv) {
 return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("__jakt_format"sv)));
 }
 else {
@@ -7393,24 +7518,24 @@ if (((i) != (JaktInternal::checked_sub(((((call).args)).size()),static_cast<size
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("eprintln"sv))) {
+else if (__jakt_enum_value == "eprintln"sv) {
 {
 ByteString const helper = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<void>> {
 auto __jakt_enum_value = (((call).name));
-if (__jakt_enum_value == (ByteString::from_utf8_without_validation("print"sv))) {
+if (__jakt_enum_value == "print"sv) {
 return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("out"sv)));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("println"sv))) {
+else if (__jakt_enum_value == "println"sv) {
 return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("outln"sv)));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("eprint"sv))) {
+else if (__jakt_enum_value == "eprint"sv) {
 return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("warn"sv)));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("eprintln"sv))) {
+else if (__jakt_enum_value == "eprintln"sv) {
 return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("warnln"sv)));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("format"sv))) {
+else if (__jakt_enum_value == "format"sv) {
 return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("__jakt_format"sv)));
 }
 else {
@@ -7449,24 +7574,24 @@ if (((i) != (JaktInternal::checked_sub(((((call).args)).size()),static_cast<size
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("eprint"sv))) {
+else if (__jakt_enum_value == "eprint"sv) {
 {
 ByteString const helper = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<void>> {
 auto __jakt_enum_value = (((call).name));
-if (__jakt_enum_value == (ByteString::from_utf8_without_validation("print"sv))) {
+if (__jakt_enum_value == "print"sv) {
 return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("out"sv)));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("println"sv))) {
+else if (__jakt_enum_value == "println"sv) {
 return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("outln"sv)));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("eprint"sv))) {
+else if (__jakt_enum_value == "eprint"sv) {
 return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("warn"sv)));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("eprintln"sv))) {
+else if (__jakt_enum_value == "eprintln"sv) {
 return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("warnln"sv)));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("format"sv))) {
+else if (__jakt_enum_value == "format"sv) {
 return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("__jakt_format"sv)));
 }
 else {
@@ -7505,24 +7630,24 @@ if (((i) != (JaktInternal::checked_sub(((((call).args)).size()),static_cast<size
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("format"sv))) {
+else if (__jakt_enum_value == "format"sv) {
 {
 ByteString const helper = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<void>> {
 auto __jakt_enum_value = (((call).name));
-if (__jakt_enum_value == (ByteString::from_utf8_without_validation("print"sv))) {
+if (__jakt_enum_value == "print"sv) {
 return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("out"sv)));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("println"sv))) {
+else if (__jakt_enum_value == "println"sv) {
 return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("outln"sv)));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("eprint"sv))) {
+else if (__jakt_enum_value == "eprint"sv) {
 return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("warn"sv)));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("eprintln"sv))) {
+else if (__jakt_enum_value == "eprintln"sv) {
 return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("warnln"sv)));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("format"sv))) {
+else if (__jakt_enum_value == "format"sv) {
 return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("__jakt_format"sv)));
 }
 else {
@@ -8232,6 +8357,7 @@ return TRY((((*this).codegen_type_possibly_as_namespace(type_id,false))));
 
 ErrorOr<ByteString> codegen::CodeGenerator::codegen_type_possibly_as_namespace(ids::TypeId const type_id,bool const as_namespace) {
 {
+((((*this).used_modules)).add(((type_id).module)));
 ByteString qualifiers = (ByteString::from_utf8_without_validation(""sv));
 if (((!(as_namespace)) && ((((((((*this).program))->get_type(type_id)))->common.init_common.qualifiers)).is_immutable))){
 [](ByteString& self, ByteString rhs) -> void {{
@@ -9505,7 +9631,7 @@ if ((can_throw && ((return_type_id).equals(types::builtin(types::BuiltinType::Vo
 return {};
 }
 
-codegen::CodeGenerator::CodeGenerator(NonnullRefPtr<compiler::Compiler> a_compiler, NonnullRefPtr<types::CheckedProgram> a_program, codegen::ControlFlowState a_control_flow_state, JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,ByteString>> a_entered_yieldable_blocks, ByteStringBuilder a_deferred_output, JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> a_current_function, bool a_inside_defer, codegen::CodegenDebugInfo a_debug_info, JaktInternal::DynamicArray<ByteString> a_namespace_stack, size_t a_fresh_var_counter, size_t a_fresh_label_counter, JaktInternal::Optional<ByteString> a_this_replacement, JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> a_generic_inferences): compiler(move(a_compiler)), program(move(a_program)), control_flow_state(move(a_control_flow_state)), entered_yieldable_blocks(move(a_entered_yieldable_blocks)), deferred_output(move(a_deferred_output)), current_function(move(a_current_function)), inside_defer(move(a_inside_defer)), debug_info(move(a_debug_info)), namespace_stack(move(a_namespace_stack)), fresh_var_counter(move(a_fresh_var_counter)), fresh_label_counter(move(a_fresh_label_counter)), this_replacement(move(a_this_replacement)), generic_inferences(move(a_generic_inferences)){}
+codegen::CodeGenerator::CodeGenerator(NonnullRefPtr<compiler::Compiler> a_compiler, NonnullRefPtr<types::CheckedProgram> a_program, codegen::ControlFlowState a_control_flow_state, JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,ByteString>> a_entered_yieldable_blocks, ByteStringBuilder a_deferred_output, JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> a_current_function, bool a_inside_defer, codegen::CodegenDebugInfo a_debug_info, JaktInternal::DynamicArray<ByteString> a_namespace_stack, size_t a_fresh_var_counter, size_t a_fresh_label_counter, JaktInternal::Optional<ByteString> a_this_replacement, JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> a_generic_inferences, JaktInternal::Set<ids::ModuleId> a_used_modules): compiler(move(a_compiler)), program(move(a_program)), control_flow_state(move(a_control_flow_state)), entered_yieldable_blocks(move(a_entered_yieldable_blocks)), deferred_output(move(a_deferred_output)), current_function(move(a_current_function)), inside_defer(move(a_inside_defer)), debug_info(move(a_debug_info)), namespace_stack(move(a_namespace_stack)), fresh_var_counter(move(a_fresh_var_counter)), fresh_label_counter(move(a_fresh_label_counter)), this_replacement(move(a_this_replacement)), generic_inferences(move(a_generic_inferences)), used_modules(move(a_used_modules)){}
 
 ByteString codegen::AllowedControlExits::debug_description() const {
 auto builder = ByteStringBuilder::create();

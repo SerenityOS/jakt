@@ -1,11 +1,14 @@
 #pragma once
 #include "__unified_forward.h"
-#include "parser.h"
 #include "typechecker.h"
-#include "types.h"
-#include "utility.h"
-#include "compiler.h"
 #include "interpreter.h"
+#include "types.h"
+#include "ids.h"
+#include "parser.h"
+#include "compiler.h"
+#include "utility.h"
+#include "jakt__path.h"
+#include "jakt__arguments.h"
 namespace Jakt {
 namespace codegen {
 struct AllowedControlExits {
@@ -54,11 +57,13 @@ public: CodegenDebugInfo(NonnullRefPtr<compiler::Compiler> a_compiler, JaktInter
 public: ByteString debug_description() const;
 };struct CodeGenerator {
   public:
-public: NonnullRefPtr<compiler::Compiler> compiler;public: NonnullRefPtr<types::CheckedProgram> program;public: codegen::ControlFlowState control_flow_state;public: JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,ByteString>> entered_yieldable_blocks;public: ByteStringBuilder deferred_output;public: JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> current_function;public: bool inside_defer;public: codegen::CodegenDebugInfo debug_info;public: JaktInternal::DynamicArray<ByteString> namespace_stack;public: size_t fresh_var_counter;public: size_t fresh_label_counter;public: JaktInternal::Optional<ByteString> this_replacement;public: JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences;public: ByteString current_error_handler() const;
+public: NonnullRefPtr<compiler::Compiler> compiler;public: NonnullRefPtr<types::CheckedProgram> program;public: codegen::ControlFlowState control_flow_state;public: JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,ByteString>> entered_yieldable_blocks;public: ByteStringBuilder deferred_output;public: JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> current_function;public: bool inside_defer;public: codegen::CodegenDebugInfo debug_info;public: JaktInternal::DynamicArray<ByteString> namespace_stack;public: size_t fresh_var_counter;public: size_t fresh_label_counter;public: JaktInternal::Optional<ByteString> this_replacement;public: JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences;public: JaktInternal::Set<ids::ModuleId> used_modules;public: ByteString current_error_handler() const;
 public: ByteString fresh_var();
 public: ByteString fresh_label();
 public: JaktInternal::DynamicArray<ids::ModuleId> topologically_sort_modules() const;
 public: static ErrorOr<JaktInternal::Dictionary<ByteString,JaktInternal::Tuple<ByteString,ByteString>>> generate(NonnullRefPtr<compiler::Compiler> const compiler, NonnullRefPtr<types::CheckedProgram> const program, bool const debug_info);
+public: static JaktInternal::DynamicArray<ids::ModuleId> get_topologically_sorted_modules(JaktInternal::DynamicArray<ids::ModuleId> const& all_sorted_modules, JaktInternal::Set<ids::ModuleId> const& dependencies);
+public: ErrorOr<JaktInternal::DynamicArray<ids::ModuleId>> capturing_modules(JaktInternal::DynamicArray<ids::ModuleId> const& all_sorted_modules, NonnullRefPtr<types::Module> const module, Function<ErrorOr<void>(codegen::CodeGenerator&, NonnullRefPtr<types::Module>, ByteStringBuilder&)> const& gen, ByteStringBuilder& output);
 public: ErrorOr<void> postorder_traversal(ids::TypeId const type_id, JaktInternal::Set<ids::TypeId> visited, JaktInternal::Dictionary<ids::TypeId,JaktInternal::DynamicArray<ids::TypeId>> const dependency_graph, JaktInternal::DynamicArray<ids::TypeId> output) const;
 public: ErrorOr<JaktInternal::Dictionary<ids::TypeId,JaktInternal::DynamicArray<ids::TypeId>>> produce_codegen_dependency_graph(NonnullRefPtr<types::Scope> const scope) const;
 public: JaktInternal::DynamicArray<ids::TypeId> extract_dependencies_from(ids::TypeId const type_id, JaktInternal::Dictionary<ids::TypeId,JaktInternal::DynamicArray<ids::TypeId>> const dependency_graph, bool const top_level) const;
@@ -67,7 +72,8 @@ public: JaktInternal::DynamicArray<ids::TypeId> extract_dependencies_from_struct
 public: bool is_full_respecialization(JaktInternal::DynamicArray<ids::TypeId> const type_args) const;
 public: ErrorOr<void> codegen_namespace_specialization(ids::FunctionId const function_id, JaktInternal::Optional<ids::TypeId> const containing_struct, NonnullRefPtr<types::Scope> const scope, NonnullRefPtr<types::Module> const current_module, bool const define_pass, ByteStringBuilder& output);
 public: ErrorOr<void> codegen_namespace_specializations(NonnullRefPtr<types::Scope> const scope, NonnullRefPtr<types::Module> const current_module, ByteStringBuilder& output);
-public: ErrorOr<void> codegen_namespace(NonnullRefPtr<types::Scope> const scope, NonnullRefPtr<types::Module> const current_module, bool const as_forward, ByteStringBuilder& output);
+public: ErrorOr<void> codegen_namespace_forward(NonnullRefPtr<types::Scope> const scope, NonnullRefPtr<types::Module> const current_module, ByteStringBuilder& output);
+public: ErrorOr<void> codegen_namespace(NonnullRefPtr<types::Scope> const scope, NonnullRefPtr<types::Module> const current_module, ByteStringBuilder& output);
 public: ErrorOr<void> codegen_namespace_predecl(NonnullRefPtr<types::Scope> const scope, NonnullRefPtr<types::Module> const current_module, ByteStringBuilder& output);
 public: ErrorOr<void> codegen_template_parameter_names(JaktInternal::DynamicArray<types::FunctionGenericParameter> const parameters, JaktInternal::DynamicArray<ByteString>& names, ByteStringBuilder& output);
 public: ErrorOr<void> codegen_template_parameter_names(JaktInternal::DynamicArray<types::FunctionGenericParameter> const parameters, ByteStringBuilder& output);
@@ -124,7 +130,7 @@ public: ErrorOr<void> codegen_constructor_predecl(NonnullRefPtr<types::CheckedFu
 public: ErrorOr<void> codegen_constructor(NonnullRefPtr<types::CheckedFunction> const function, bool const is_inline, ByteStringBuilder& output);
 public: ErrorOr<void> codegen_function_in_namespace(NonnullRefPtr<types::CheckedFunction> const function, JaktInternal::Optional<ids::TypeId> const containing_struct, bool const as_method, bool const skip_template, JaktInternal::Optional<JaktInternal::DynamicArray<ids::TypeId>> const explicit_generic_instantiation, ByteStringBuilder& output);
 public: ErrorOr<void> codegen_lambda_block(bool const can_throw, types::CheckedBlock const block, ids::TypeId const return_type_id, ByteStringBuilder& output);
-public: CodeGenerator(NonnullRefPtr<compiler::Compiler> a_compiler, NonnullRefPtr<types::CheckedProgram> a_program, codegen::ControlFlowState a_control_flow_state, JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,ByteString>> a_entered_yieldable_blocks, ByteStringBuilder a_deferred_output, JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> a_current_function, bool a_inside_defer, codegen::CodegenDebugInfo a_debug_info, JaktInternal::DynamicArray<ByteString> a_namespace_stack, size_t a_fresh_var_counter, size_t a_fresh_label_counter, JaktInternal::Optional<ByteString> a_this_replacement, JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> a_generic_inferences);
+public: CodeGenerator(NonnullRefPtr<compiler::Compiler> a_compiler, NonnullRefPtr<types::CheckedProgram> a_program, codegen::ControlFlowState a_control_flow_state, JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,ByteString>> a_entered_yieldable_blocks, ByteStringBuilder a_deferred_output, JaktInternal::Optional<NonnullRefPtr<types::CheckedFunction>> a_current_function, bool a_inside_defer, codegen::CodegenDebugInfo a_debug_info, JaktInternal::DynamicArray<ByteString> a_namespace_stack, size_t a_fresh_var_counter, size_t a_fresh_label_counter, JaktInternal::Optional<ByteString> a_this_replacement, JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> a_generic_inferences, JaktInternal::Set<ids::ModuleId> a_used_modules);
 
 public: ByteString debug_description() const;
 };}
