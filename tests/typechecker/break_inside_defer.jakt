@@ -1,0 +1,14 @@
+/// Expect:
+/// - error: "‘break’ inside loop cannot be deferred"
+
+fn test() {
+    for i in 1..2 {
+        defer {
+            break
+        }
+    }
+}
+
+fn main() {
+    test()
+}
