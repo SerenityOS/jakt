@@ -450,26 +450,35 @@ struct CodeGenerator {
                     }
                 }
             }
-            for id in module.imports {
-                let module = generator.program.modules[id.id]
-                output.append(format("#include \"{}.h\"\n", module.name))
-            }
 
-            output.append("namespace Jakt {\n")
+            // We must reserve `output` so that we can add the imported headers later.
+            mut after_headers = StringBuilder::create()
+            after_headers.append("namespace Jakt {\n")
 
             if not module.is_root {
                 generator.namespace_stack.push(module.name)
             }
 
-            generator.codegen_namespace_forward(scope, current_module: module, &mut output)
+
+            let ordered_imports = generator.capturing_modules(all_sorted_modules: &sorted_modules, module, &fn[scope](anon generator: &mut CodeGenerator, module: Module, output: &mut StringBuilder) throws {
+                generator.codegen_namespace_forward(scope, current_module: module, &mut output)
+            }, output: &mut after_headers)
 
             if not module.is_root {
                 // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
                 let dummy = generator.namespace_stack.pop()
             }
 
-            output.append(generator.deferred_output.to_string())
-            generator.deferred_output.clear()
+            for id in ordered_imports {
+                guard id.id != 0 and id.id != module.id.id else {
+                    continue
+                }
+                let module = generator.program.modules[id.id]
+                output.append(format("#include \"{}.h\"\n", module.name))
+            }
+
+
+            output.append(after_headers.to_string())
             output.append("} // namespace Jakt\n")
 
             result.set(header_name, (output.to_string(), module.resolved_import_path))
