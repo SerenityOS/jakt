@@ -385,107 +385,134 @@ struct CodeGenerator {
         )
 
 
-        for as_forward in [true, false] {
-            for idx in sorted_modules.size()..0 {
-                // Module forward declarations header (if as_forward), or module implementation (if not as_forward)
-                let i = sorted_modules[idx - 1].id
-                if i == 0 {
-                    // Skip 0 because it's the prelude
-                    continue
-                }
+        for idx in sorted_modules.size()..0 {
+            // Module forward declarations header
+            let i = sorted_modules[idx - 1].id
+            if i == 0 {
+                // Skip 0 because it's the prelude
+                continue
+            }
 
-                let module = generator.program.modules[i]
-                generator.compiler.dbg_println(format("generate: module idx: {}, module.name {} - forward: {}", i, module.name, as_forward))
+            let module = generator.program.modules[i]
+            generator.compiler.dbg_println(format("generate: module idx: {}, module.name {} - forward: {}", i, module.name, true))
 
-                let header_name = format("{}.h", module.name)
-                let impl_name = format("{}.cpp", module.name)
+            let header_name = format("{}.h", module.name)
 
-                output.clear()
-                if as_forward {
-                    output.append("#pragma once\n")
-                    output.append("#include \"__unified_forward.h\"\n")
-                } else {
-                    output.append(format("#include \"{}\"\n", header_name))
-                }
+            output.clear()
+            output.append("#pragma once\n")
+            output.append("#include \"__unified_forward.h\"\n")
 
-                let scope_id = ScopeId(module_id: module.id, id: 0)
-                let scope = generator.program.get_scope(scope_id)
+            let scope_id = ScopeId(module_id: module.id, id: 0)
+            let scope = generator.program.get_scope(scope_id)
 
-                if as_forward {
-                    for child_scope_id in scope.children {
-                        let scope = generator.program.get_scope(child_scope_id)
-                        if scope.import_path_if_extern.has_value() {
-                            let has_name = scope.namespace_name.has_value()
-                            if has_name {
-                                output.append(format("namespace {} {{\n", scope.namespace_name!))
+            for child_scope_id in scope.children {
+                let scope = generator.program.get_scope(child_scope_id)
+                if scope.import_path_if_extern.has_value() {
+                    let has_name = scope.namespace_name.has_value()
+                    if has_name {
+                        output.append(format("namespace {} {{\n", scope.namespace_name!))
+                    }
+                    for action in scope.before_extern_include {
+                        match action {
+                            Define(name, value) => {
+                                output.append(format("#ifdef {}\n", name))
+                                output.append(format("#undef {}\n", name))
+                                output.append("#endif\n")
+                                output.append(format("#define {} {}\n", name, value))
                             }
-                            for action in scope.before_extern_include {
-                                match action {
-                                    Define(name, value) => {
-                                        output.append(format("#ifdef {}\n", name))
-                                        output.append(format("#undef {}\n", name))
-                                        output.append("#endif\n")
-                                        output.append(format("#define {} {}\n", name, value))
-                                    }
-                                    Undefine(name) => {
-                                        output.append(format("#ifdef {}\n", name))
-                                        output.append(format("#undef {}\n", name))
-                                        output.append("#endif\n")
-                                    }
-                                }
-                            }
-                            output.append(format("#include <{}>\n", scope.import_path_if_extern!))
-                            for action in scope.after_extern_include {
-                                match action {
-                                    Define(name, value) => {
-                                        output.append(format("#ifdef {}\n", name))
-                                        output.append(format("#undef {}\n", name))
-                                        output.append("#endif\n")
-                                        output.append(format("#define {} {}\n", name, value))
-                                    }
-                                    Undefine(name) => {
-                                        output.append(format("#ifdef {}\n", name))
-                                        output.append(format("#undef {}\n", name))
-                                        output.append("#endif\n")
-                                    }
-                                }
-                            }
-                            if has_name {
-                                output.append(" } // namespace ")
-                                output.append(scope.namespace_name!)
-                                output.append("\n")
+                            Undefine(name) => {
+                                output.append(format("#ifdef {}\n", name))
+                                output.append(format("#undef {}\n", name))
+                                output.append("#endif\n")
                             }
                         }
                     }
-                    for id in module.imports {
-                        let module = generator.program.modules[id.id]
-                        output.append(format("#include \"{}.h\"\n", module.name))
+                    output.append(format("#include <{}>\n", scope.import_path_if_extern!))
+                    for action in scope.after_extern_include {
+                        match action {
+                            Define(name, value) => {
+                                output.append(format("#ifdef {}\n", name))
+                                output.append(format("#undef {}\n", name))
+                                output.append("#endif\n")
+                                output.append(format("#define {} {}\n", name, value))
+                            }
+                            Undefine(name) => {
+                                output.append(format("#ifdef {}\n", name))
+                                output.append(format("#undef {}\n", name))
+                                output.append("#endif\n")
+                            }
+                        }
+                    }
+                    if has_name {
+                        output.append(" } // namespace ")
+                        output.append(scope.namespace_name!)
+                        output.append("\n")
                     }
                 }
-
-                output.append("namespace Jakt {\n")
-
-                if not module.is_root {
-                    generator.namespace_stack.push(module.name)
-                }
-
-                generator.codegen_namespace(scope, current_module: module, as_forward, &mut output)
-
-                if not module.is_root {
-                    // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
-                    let dummy = generator.namespace_stack.pop()
-                }
-
-                output.append(generator.deferred_output.to_string())
-                generator.deferred_output.clear()
-                output.append("} // namespace Jakt\n")
-
-                if as_forward {
-                    result.set(header_name, (output.to_string(), module.resolved_import_path))
-                } else {
-                    result.set(impl_name, (output.to_string(), module.resolved_import_path))
-                }
             }
+            for id in module.imports {
+                let module = generator.program.modules[id.id]
+                output.append(format("#include \"{}.h\"\n", module.name))
+            }
+
+            output.append("namespace Jakt {\n")
+
+            if not module.is_root {
+                generator.namespace_stack.push(module.name)
+            }
+
+            generator.codegen_namespace_forward(scope, current_module: module, &mut output)
+
+            if not module.is_root {
+                // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
+                let dummy = generator.namespace_stack.pop()
+            }
+
+            output.append(generator.deferred_output.to_string())
+            generator.deferred_output.clear()
+            output.append("} // namespace Jakt\n")
+
+            result.set(header_name, (output.to_string(), module.resolved_import_path))
+        }
+
+        for idx in sorted_modules.size()..0 {
+            // Module implementation
+            let i = sorted_modules[idx - 1].id
+            if i == 0 {
+                // Skip 0 because it's the prelude
+                continue
+            }
+
+            let module = generator.program.modules[i]
+            generator.compiler.dbg_println(format("generate: module idx: {}, module.name {} - forward: {}", i, module.name, false))
+
+            let header_name = format("{}.h", module.name)
+            let impl_name = format("{}.cpp", module.name)
+
+            output.clear()
+            output.append(format("#include \"{}\"\n", header_name))
+
+            let scope_id = ScopeId(module_id: module.id, id: 0)
+            let scope = generator.program.get_scope(scope_id)
+
+            output.append("namespace Jakt {\n")
+
+            if not module.is_root {
+                generator.namespace_stack.push(module.name)
+            }
+
+            generator.codegen_namespace(scope, current_module: module, &mut output)
+
+            if not module.is_root {
+                // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
+                let dummy = generator.namespace_stack.pop()
+            }
+
+            output.append(generator.deferred_output.to_string())
+            generator.deferred_output.clear()
+            output.append("} // namespace Jakt\n")
+
+            result.set(impl_name, (output.to_string(), module.resolved_import_path))
         }
 
         for idx in sorted_modules.size()..0 {
@@ -574,6 +601,7 @@ struct CodeGenerator {
         .deferred_output.clear()
         gen(&mut this, module, &mut output)
         output.append(.deferred_output.to_string())
+        .deferred_output.clear()
         let modules = CodeGenerator::get_topologically_sorted_modules(all_sorted_modules, dependencies: &.used_modules)
         return modules
     }
@@ -977,133 +1005,139 @@ struct CodeGenerator {
         }
     }
 
-    fn codegen_namespace(
+    fn codegen_namespace_forward(
         mut this
         scope: Scope
         current_module: Module
-        as_forward: bool
         output: &mut StringBuilder
     ) throws {
         if scope.alias_path.has_value() or scope.import_path_if_extern.has_value() {
             return
         }
-        mut seen_types: {TypeId} = {}
-
-        if as_forward {
-            if scope.namespace_name.has_value() {
-                output.append("namespace " + scope.namespace_name! + " {\n")
-            }
-
-            let dependency_graph = .produce_codegen_dependency_graph(scope)
-            for entry in dependency_graph {
-                let traversal: [TypeId] = []
-                .postorder_traversal(
-                    type_id: entry.0
-                    visited: seen_types
-                    dependency_graph
-                    output: traversal
-                )
-                for type_id in traversal {
-                    let type_ = .program.get_type(type_id)
-                    match type_ {
-                        Enum(enum_id) => {
-                            if not enum_id.module.equals(current_module.id) {
-                                // Skip over imports from other modules
-                                continue
-                            }
-                            let enum_ = .program.get_enum(enum_id)
-                            .codegen_enum(enum_, &mut output)
-                        }
-                        Struct(struct_id) => {
-                            if not struct_id.module.equals(current_module.id) {
-                                // Skip over imports from other modules
-                                continue
-                            }
-                            .codegen_struct(struct_: .program.get_struct(struct_id), &mut output)
-                        }
-                        Trait => { }
-                        else => {
-                            panic(format("Unexpected type in dependency graph: {}", type_))
-                        }
-                    }
-                    seen_types.add(type_id)
-                }
-            }
-
-            for (_, struct_id) in scope.structs {
-                if not struct_id.module.equals(current_module.id) {
-                    continue
-                }
-                let struct_ = .program.get_struct(struct_id)
-                if seen_types.contains(struct_.type_id) {
-                    continue
-                }
-                .codegen_struct(struct_, &mut output)
-                output.append("\n")
-            }
-
-            for (_, enum_id) in scope.enums {
-                if not enum_id.module.equals(current_module.id) {
-                    continue
-                }
-                let enum_ = .program.get_enum(enum_id)
-                if seen_types.contains(enum_.type_id) {
-                    continue
-                }
-                .codegen_enum(enum_, &mut output)
-                output.append("\n")
-            }
-
-            for (_, overload_set) in scope.functions {
-                for function_id in overload_set {
-                    let function = .program.get_function(function_id)
-                    if not function.function_scope_id.module_id.equals(current_module.id) {
-                        continue
-                    }
-
-                    if function.is_comptime {
-                        continue
-                    }
-
-                    let previous_function = .current_function
-                    .current_function = function
-                    defer .current_function = previous_function
-
-                    if function.linkage is External or
-                        function.type is ImplicitConstructor or
-                        function.type is ImplicitEnumConstructor or
-                        function.type is Destructor {
-
-                        continue
-                    }
-
-                    if function.generics.params.is_empty() {
-                        continue
-                    }
-
-                    if not function.specialization_index.has_value() {
-                        .codegen_function_predecl(function, allow_generics: true, &mut output)
-                    }
-                }
-            }
-
-            for child_scope_id in scope.children {
-                let child_scope = .program.get_scope(child_scope_id)
-                if child_scope.namespace_name.has_value() {
-                    let name = child_scope.namespace_name!
-                    .namespace_stack.push(name)
-                    .codegen_namespace(scope: child_scope, current_module, as_forward, &mut output)
-                    // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
-                    let dummy = .namespace_stack.pop()
-                }
-            }
-
-            if scope.namespace_name.has_value() {
-                output.append("}\n")
-            }
-            return
+        if scope.namespace_name.has_value() {
+            output.append("namespace " + scope.namespace_name! + " {\n")
         }
 
+        mut seen_types: {TypeId} = {}
+
+        let dependency_graph = .produce_codegen_dependency_graph(scope)
+        for entry in dependency_graph {
+            let traversal: [TypeId] = []
+            .postorder_traversal(
+                type_id: entry.0
+                visited: seen_types
+                dependency_graph
+                output: traversal
+            )
+            for type_id in traversal {
+                let type_ = .program.get_type(type_id)
+                match type_ {
+                    Enum(enum_id) => {
+                        if not enum_id.module.equals(current_module.id) {
+                            // Skip over imports from other modules
+                            continue
+                        }
+                        let enum_ = .program.get_enum(enum_id)
+                        .codegen_enum(enum_, &mut output)
+                    }
+                    Struct(struct_id) => {
+                        if not struct_id.module.equals(current_module.id) {
+                            // Skip over imports from other modules
+                            continue
+                        }
+                        .codegen_struct(struct_: .program.get_struct(struct_id), &mut output)
+                    }
+                    Trait => { }
+                    else => {
+                        panic(format("Unexpected type in dependency graph: {}", type_))
+                    }
+                }
+                seen_types.add(type_id)
+            }
+        }
+
+        for (_, struct_id) in scope.structs {
+            if not struct_id.module.equals(current_module.id) {
+                continue
+            }
+            let struct_ = .program.get_struct(struct_id)
+            if seen_types.contains(struct_.type_id) {
+                continue
+            }
+            .codegen_struct(struct_, &mut output)
+            output.append("\n")
+        }
+
+        for (_, enum_id) in scope.enums {
+            if not enum_id.module.equals(current_module.id) {
+                continue
+            }
+            let enum_ = .program.get_enum(enum_id)
+            if seen_types.contains(enum_.type_id) {
+                continue
+            }
+            .codegen_enum(enum_, &mut output)
+            output.append("\n")
+        }
+
+        for (_, overload_set) in scope.functions {
+            for function_id in overload_set {
+                let function = .program.get_function(function_id)
+                if not function.function_scope_id.module_id.equals(current_module.id) {
+                    continue
+                }
+
+                if function.is_comptime {
+                    continue
+                }
+
+                let previous_function = .current_function
+                .current_function = function
+                defer .current_function = previous_function
+
+                if function.linkage is External or
+                    function.type is ImplicitConstructor or
+                    function.type is ImplicitEnumConstructor or
+                    function.type is Destructor {
+
+                    continue
+                }
+
+                if function.generics.params.is_empty() {
+                    continue
+                }
+
+                if not function.specialization_index.has_value() {
+                    .codegen_function_predecl(function, allow_generics: true, &mut output)
+                }
+            }
+        }
+
+        for child_scope_id in scope.children {
+            let child_scope = .program.get_scope(child_scope_id)
+            if child_scope.namespace_name.has_value() {
+                let name = child_scope.namespace_name!
+                .namespace_stack.push(name)
+                .codegen_namespace_forward(scope: child_scope, current_module, &mut output)
+                // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
+                let dummy = .namespace_stack.pop()
+            }
+        }
+
+        if scope.namespace_name.has_value() {
+            output.append("}\n")
+        }
+    }
+
+    fn codegen_namespace(
+        mut this
+        scope: Scope
+        current_module: Module
+        output: &mut StringBuilder
+    ) throws {
+        if scope.alias_path.has_value() or scope.import_path_if_extern.has_value() {
+            return
+        }
         if scope.namespace_name.has_value() {
             output.append("namespace " + scope.namespace_name! + " {\n")
         }
@@ -1244,7 +1278,7 @@ struct CodeGenerator {
             if child_scope.namespace_name.has_value() {
                 let name = child_scope.namespace_name!
                 .namespace_stack.push(name)
-                .codegen_namespace(scope: child_scope, current_module, as_forward, &mut output)
+                .codegen_namespace(scope: child_scope, current_module, &mut output)
                 // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
                 let dummy = .namespace_stack.pop()
             }
