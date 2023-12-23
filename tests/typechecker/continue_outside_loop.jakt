@@ -1,0 +1,6 @@
+/// Expect:
+/// - error: "‘continue’ statements can only be used inside loops"
+
+fn main() {
+    continue
+}

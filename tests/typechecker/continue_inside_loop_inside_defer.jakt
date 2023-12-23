@@ -1,0 +1,19 @@
+/// Expect:
+/// - output: "1\n2\n"
+
+fn test() {
+    for i in 1..2 {
+        defer {
+            for j in 1..2 {
+                println("2")
+                continue
+            }
+        }
+
+        println("1")
+    }
+}
+
+fn main() {
+    test()
+}
