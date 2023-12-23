@@ -6401,7 +6401,7 @@ struct Typechecker {
         Loop(block, span) => .typecheck_loop(parsed_block: block, scope_id, safety_mode, span)
         Throw(expr, span) => .typecheck_throw(expr, scope_id, safety_mode, span)
         While(condition, block, span) => .typecheck_while(condition, block, scope_id, safety_mode, span)
-        Continue(span) => CheckedStatement::Continue(span)
+        Continue(span) => .typecheck_continue(span)
         Break(span) => CheckedStatement::Break(span)
         VarDecl(var, init, span) => .typecheck_var_decl(var, init, scope_id, safety_mode, span)
         DestructuringAssignment(vars, var_decl, span) => .typecheck_destructuring_assignment(vars, var_decl, scope_id, safety_mode, span)
@@ -6409,6 +6409,18 @@ struct Typechecker {
         Garbage(span) => CheckedStatement::Garbage(span)
         For(iterator_name, name_span, is_destructuring, range, block, span) => .typecheck_for(iterator_name, name_span, is_destructuring, range, block, scope_id, safety_mode, span)
         Guard(expr, else_block, remaining_code, span) => .typecheck_guard(expr, else_block, remaining_code, scope_id, safety_mode, span)
+    }
+
+    fn typecheck_continue(mut this, span: Span) -> CheckedStatement {
+        if not .break_continue_tracker is AnyLoop {
+            if .break_continue_tracker is Defer {
+                .error("‘continue’ inside loop cannot be deferred", span)
+            } else {
+                .error("‘continue’ statements can only be used inside loops", span)
+            }
+        }
+
+        return CheckedStatement::Continue(span)
     }
 
     fn typecheck_guard(mut this, expr: ParsedExpression, else_block: ParsedBlock, remaining_code: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {

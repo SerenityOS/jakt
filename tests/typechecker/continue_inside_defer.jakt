@@ -1,0 +1,14 @@
+/// Expect:
+/// - error: "‘continue’ inside loop cannot be deferred"
+
+fn test() {
+    for i in 1..2 {
+        defer {
+            continue
+        }
+    }
+}
+
+fn main() {
+    test()
+}
