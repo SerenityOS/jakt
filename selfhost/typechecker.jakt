@@ -68,6 +68,12 @@ struct ImportRestrictions {
     )
 }
 
+enum BreakContinueLegalityTracker {
+    None,
+    AnyLoop,
+    Defer
+}
+
 enum NumericOrStringValue {
     StringValue(String)
     SignedNumericValue(i64)
@@ -129,6 +135,7 @@ struct Typechecker {
     current_struct_type_id: TypeId? = None
     current_function_id: FunctionId? = None
     inside_defer: bool = false
+    break_continue_tracker: BreakContinueLegalityTracker = BreakContinueLegalityTracker::None
     ignore_errors: bool = false
     dump_type_hints: bool = false
     dump_try_hints: bool = false
@@ -6482,6 +6489,10 @@ struct Typechecker {
         safety_mode: SafetyMode
         span: Span
     ) throws -> CheckedStatement {
+        let previous_break_continue_tracker = .break_continue_tracker
+        .break_continue_tracker = BreakContinueLegalityTracker::AnyLoop
+        defer .break_continue_tracker = previous_break_continue_tracker
+
         let maybe_span = block.find_yield_span()
         if maybe_span.has_value() {
             .error("a 'for' loop block is not allowed to yield values", maybe_span!)
@@ -7148,6 +7159,10 @@ struct Typechecker {
     }
 
     fn typecheck_while(mut this, condition: ParsedExpression, block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
+        let previous_break_continue_tracker = .break_continue_tracker
+        .break_continue_tracker = BreakContinueLegalityTracker::AnyLoop
+        defer .break_continue_tracker = previous_break_continue_tracker
+
         let checked_condition = .typecheck_expression_and_dereference_if_needed(condition, scope_id, safety_mode, type_hint: None, span)
         if not checked_condition.type().equals(builtin(BuiltinType::Bool)) {
             .error("Condition must be a boolean expression", condition.span())
@@ -7259,6 +7274,10 @@ struct Typechecker {
     }
 
     fn typecheck_loop(mut this, parsed_block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
+        let previous_break_continue_tracker = .break_continue_tracker
+        .break_continue_tracker = BreakContinueLegalityTracker::AnyLoop
+        defer .break_continue_tracker = previous_break_continue_tracker
+
         let checked_block = .typecheck_block(parsed_block, parent_scope_id: scope_id, safety_mode)
         if checked_block.yielded_type.has_value() {
             .error("A ‘loop’ block is not allowed to yield values", parsed_block.find_yield_span()!)
@@ -7267,6 +7286,10 @@ struct Typechecker {
     }
 
     fn typecheck_defer(mut this, statement: ParsedStatement, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
+        let previous_break_continue_tracker = .break_continue_tracker
+        .break_continue_tracker = BreakContinueLegalityTracker::Defer
+        defer .break_continue_tracker = previous_break_continue_tracker
+
         let was_inside_defer = .inside_defer
         .inside_defer = true
         defer .inside_defer = was_inside_defer
