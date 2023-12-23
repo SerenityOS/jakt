@@ -1230,7 +1230,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.Identifier;ByteString const&
 return (({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,parser::ParsedNamespace> {
 auto __jakt_enum_value = (name);
-if (__jakt_enum_value == (ByteString::from_utf8_without_validation("type"sv))) {
+if (__jakt_enum_value == "type"sv) {
 {
 if ((!(((active_attributes).is_empty())))){
 ((*this).error((ByteString::from_utf8_without_validation("Cannot apply attributes to external trait declarations"sv)),((((active_attributes)[static_cast<i64>(0LL)])).span)));
@@ -1242,7 +1242,7 @@ if ((!(((active_attributes).is_empty())))){
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("use"sv))) {
+else if (__jakt_enum_value == "use"sv) {
 {
 if ((!(((active_attributes).is_empty())))){
 ((*this).error((ByteString::from_utf8_without_validation("Cannot apply attributes to use declarations"sv)),((((active_attributes)[static_cast<i64>(0LL)])).span)));
@@ -1254,7 +1254,7 @@ if ((!(((active_attributes).is_empty())))){
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("forall"sv))) {
+else if (__jakt_enum_value == "forall"sv) {
 {
 if ((!(((active_attributes).is_empty())))){
 ((*this).error((ByteString::from_utf8_without_validation("Cannot apply attributes to forall declarations"sv)),((((active_attributes)[static_cast<i64>(0LL)])).span)));
@@ -1580,7 +1580,7 @@ parser::ParsedAttribute attribute = (_magic_value.value());
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,void> {
 auto __jakt_enum_value = (((attribute).name));
-if (__jakt_enum_value == (ByteString::from_utf8_without_validation("extern_import"sv))) {
+if (__jakt_enum_value == "extern_import"sv) {
 {
 if ((!(((((attribute).assigned_value)).has_value())))){
 {
@@ -1595,13 +1595,13 @@ parser::ParsedAttributeArgument argument = (_magic_value.value());
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,void> {
 auto __jakt_enum_value = (((argument).name));
-if (__jakt_enum_value == (ByteString::from_utf8_without_validation("from"sv))) {
+if (__jakt_enum_value == "from"sv) {
 {
 (((((namespace_))).import_path_if_extern) = ((argument).assigned_value));
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("define_before"sv))) {
+else if (__jakt_enum_value == "define_before"sv) {
 {
 if (((((argument).assigned_value)).has_value())){
 if (((((argument).name)).starts_with((ByteString::from_utf8_without_validation("define"sv))))){
@@ -1639,7 +1639,7 @@ return JaktInternal::LoopContinue{};
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("undefine_before"sv))) {
+else if (__jakt_enum_value == "undefine_before"sv) {
 {
 if (((((argument).assigned_value)).has_value())){
 if (((((argument).name)).starts_with((ByteString::from_utf8_without_validation("define"sv))))){
@@ -1677,7 +1677,7 @@ return JaktInternal::LoopContinue{};
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("define_after"sv))) {
+else if (__jakt_enum_value == "define_after"sv) {
 {
 if (((((argument).assigned_value)).has_value())){
 if (((((argument).name)).starts_with((ByteString::from_utf8_without_validation("define"sv))))){
@@ -1715,7 +1715,7 @@ return JaktInternal::LoopContinue{};
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("undefine_after"sv))) {
+else if (__jakt_enum_value == "undefine_after"sv) {
 {
 if (((((argument).assigned_value)).has_value())){
 if (((((argument).name)).starts_with((ByteString::from_utf8_without_validation("define"sv))))){
@@ -1783,7 +1783,7 @@ return JaktInternal::LoopContinue{};
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("generated"sv))) {
+else if (__jakt_enum_value == "generated"sv) {
 {
 if ((!(((((attribute).assigned_value)).has_value())))){
 (((((namespace_))).is_generated_code) = true);
@@ -1834,7 +1834,7 @@ parser::ParsedAttribute attribute = (_magic_value.value());
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,void> {
 auto __jakt_enum_value = (((attribute).name));
-if (__jakt_enum_value == (ByteString::from_utf8_without_validation("name"sv))) {
+if (__jakt_enum_value == "name"sv) {
 {
 if (((((attribute).assigned_value)).has_value())){
 if (((((((((field))).var_decl)).external_name)).has_value())){
@@ -1900,7 +1900,7 @@ parser::ParsedAttribute attribute = (_magic_value.value());
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,void> {
 auto __jakt_enum_value = (((attribute).name));
-if (__jakt_enum_value == (ByteString::from_utf8_without_validation("name"sv))) {
+if (__jakt_enum_value == "name"sv) {
 {
 if (((((attribute).assigned_value)).has_value())){
 if (((((((parsed_function))).external_name)).has_value())){
@@ -1928,7 +1928,7 @@ return JaktInternal::LoopContinue{};
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("deprecated"sv))) {
+else if (__jakt_enum_value == "deprecated"sv) {
 {
 if (((((((parsed_function))).deprecated_message)).has_value())){
 ((*this).error(__jakt_format((StringView::from_string_literal("The attribute '{}' cannot be applied more than once"sv)),((attribute).name)),((attribute).span)));
@@ -1939,7 +1939,7 @@ ByteString const message = ((((((attribute).arguments)).first())).map([](auto& _
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("inline"sv))) {
+else if (__jakt_enum_value == "inline"sv) {
 {
 if ((!(((((((parsed_function))).force_inline)).__jakt_init_index() == 0 /* Default */)))){
 ((*this).error(__jakt_format((StringView::from_string_literal("The attribute '{}' cannot be applied more than once"sv)),((attribute).name)),((attribute).span)));
@@ -1948,16 +1948,16 @@ return JaktInternal::LoopContinue{};
 parser::InlineState const inline_state = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<parser::InlineState,void> {
 auto __jakt_enum_value = (((((((attribute).arguments)).first())).map([](auto& _value) { return _value.name; })).value_or_lazy_evaluated([&] { return (ByteString::from_utf8_without_validation(""sv)); }));
-if (__jakt_enum_value == (ByteString::from_utf8_without_validation("never"sv))) {
+if (__jakt_enum_value == "never"sv) {
 return JaktInternal::ExplicitValue(parser::InlineState::Default());
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation(""sv))) {
+else if (__jakt_enum_value == ""sv) {
 return JaktInternal::ExplicitValue(parser::InlineState::ForceInline());
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("always"sv))) {
+else if (__jakt_enum_value == "always"sv) {
 return JaktInternal::ExplicitValue(parser::InlineState::ForceInline());
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("make_available"sv))) {
+else if (__jakt_enum_value == "make_available"sv) {
 return JaktInternal::ExplicitValue(parser::InlineState::MakeDefinitionAvailable());
 }
 else {
@@ -1979,7 +1979,7 @@ return JaktInternal::LoopContinue{};
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("stores_arguments"sv))) {
+else if (__jakt_enum_value == "stores_arguments"sv) {
 {
 JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,parser::ArgumentStoreLevel>> stores_arguments = DynamicArray<JaktInternal::Tuple<size_t,parser::ArgumentStoreLevel>>::create_with({});
 {
@@ -2090,7 +2090,7 @@ parser::ParsedAttribute attribute = (_magic_value.value());
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,void> {
 auto __jakt_enum_value = (((attribute).name));
-if (__jakt_enum_value == (ByteString::from_utf8_without_validation("name"sv))) {
+if (__jakt_enum_value == "name"sv) {
 {
 if (((((attribute).assigned_value)).has_value())){
 if (((((((parsed_record))).external_name)).has_value())){
@@ -5345,7 +5345,7 @@ ByteString const name = (((*this).current())).as.Identifier.name;
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,parser::ParsedExternImport> {
 auto __jakt_enum_value = (name);
-if (__jakt_enum_value == (ByteString::from_utf8_without_validation("before_include"sv))) {
+if (__jakt_enum_value == "before_include"sv) {
 {
 ((((*this).index)++));
 JaktInternal::Optional<JaktInternal::DynamicArray<parser::IncludeAction>> const actions = ((*this).parse_include_action());
@@ -5355,7 +5355,7 @@ if (((actions).has_value())){
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("after_include"sv))) {
+else if (__jakt_enum_value == "after_include"sv) {
 {
 ((((*this).index)++));
 JaktInternal::Optional<JaktInternal::DynamicArray<parser::IncludeAction>> const actions = ((*this).parse_include_action());
@@ -5399,7 +5399,7 @@ ByteString const name = (((*this).current())).as.Identifier.name;
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,JaktInternal::Optional<JaktInternal::DynamicArray<parser::IncludeAction>>> {
 auto __jakt_enum_value = (name);
-if (__jakt_enum_value == (ByteString::from_utf8_without_validation("define"sv))) {
+if (__jakt_enum_value == "define"sv) {
 {
 ((((*this).index)++));
 ((*this).skip_newlines());
@@ -5482,7 +5482,7 @@ return static_cast<JaktInternal::Optional<JaktInternal::DynamicArray<parser::Inc
 }
 return JaktInternal::ExplicitValue<void>();
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("undefine"sv))) {
+else if (__jakt_enum_value == "undefine"sv) {
 {
 ((((*this).index)++));
 ((*this).skip_newlines());
@@ -9124,7 +9124,7 @@ if ((!(((call).has_value())))){
 return ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedExpression>,NonnullRefPtr<typename parser::ParsedExpression>> {
 auto __jakt_enum_value = (name);
-if (__jakt_enum_value == (ByteString::from_utf8_without_validation("None"sv))) {
+if (__jakt_enum_value == "None"sv) {
 return JaktInternal::ExplicitValue(parser::ParsedExpression::OptionalNone(span));
 }
 else {

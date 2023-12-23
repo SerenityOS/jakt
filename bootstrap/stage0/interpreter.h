@@ -1,10 +1,11 @@
 #pragma once
 #include "__unified_forward.h"
 #include "types.h"
+#include "ids.h"
 #include "parser.h"
-#include "utility.h"
-#include "error.h"
 #include "compiler.h"
+#include "error.h"
+#include "utility.h"
 #include "jakt__platform.h"
 namespace Jakt {
 namespace interpreter {

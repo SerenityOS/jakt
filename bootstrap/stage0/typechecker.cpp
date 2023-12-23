@@ -8462,52 +8462,52 @@ return ((*this).with_qualifiers(((*this).typecheck_type_qualifiers(((parsed_type
 __jakt_var_516 = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ids::TypeId,ErrorOr<ids::TypeId>> {
 auto __jakt_enum_value = (name);
-if (__jakt_enum_value == (ByteString::from_utf8_without_validation("i8"sv))) {
+if (__jakt_enum_value == "i8"sv) {
 return JaktInternal::ExplicitValue(types::builtin(types::BuiltinType::I8()));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("i16"sv))) {
+else if (__jakt_enum_value == "i16"sv) {
 return JaktInternal::ExplicitValue(types::builtin(types::BuiltinType::I16()));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("i32"sv))) {
+else if (__jakt_enum_value == "i32"sv) {
 return JaktInternal::ExplicitValue(types::builtin(types::BuiltinType::I32()));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("i64"sv))) {
+else if (__jakt_enum_value == "i64"sv) {
 return JaktInternal::ExplicitValue(types::builtin(types::BuiltinType::I64()));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("u8"sv))) {
+else if (__jakt_enum_value == "u8"sv) {
 return JaktInternal::ExplicitValue(types::builtin(types::BuiltinType::U8()));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("u16"sv))) {
+else if (__jakt_enum_value == "u16"sv) {
 return JaktInternal::ExplicitValue(types::builtin(types::BuiltinType::U16()));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("u32"sv))) {
+else if (__jakt_enum_value == "u32"sv) {
 return JaktInternal::ExplicitValue(types::builtin(types::BuiltinType::U32()));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("u64"sv))) {
+else if (__jakt_enum_value == "u64"sv) {
 return JaktInternal::ExplicitValue(types::builtin(types::BuiltinType::U64()));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("f32"sv))) {
+else if (__jakt_enum_value == "f32"sv) {
 return JaktInternal::ExplicitValue(types::builtin(types::BuiltinType::F32()));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("f64"sv))) {
+else if (__jakt_enum_value == "f64"sv) {
 return JaktInternal::ExplicitValue(types::builtin(types::BuiltinType::F64()));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("c_char"sv))) {
+else if (__jakt_enum_value == "c_char"sv) {
 return JaktInternal::ExplicitValue(types::builtin(types::BuiltinType::CChar()));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("c_int"sv))) {
+else if (__jakt_enum_value == "c_int"sv) {
 return JaktInternal::ExplicitValue(types::builtin(types::BuiltinType::CInt()));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("usize"sv))) {
+else if (__jakt_enum_value == "usize"sv) {
 return JaktInternal::ExplicitValue(types::builtin(types::BuiltinType::Usize()));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("bool"sv))) {
+else if (__jakt_enum_value == "bool"sv) {
 return JaktInternal::ExplicitValue(types::builtin(types::BuiltinType::Bool()));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("void"sv))) {
+else if (__jakt_enum_value == "void"sv) {
 return JaktInternal::ExplicitValue(types::builtin(types::BuiltinType::Void()));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("never"sv))) {
+else if (__jakt_enum_value == "never"sv) {
 return JaktInternal::ExplicitValue(types::builtin(types::BuiltinType::Never()));
 }
 else {
@@ -17328,13 +17328,13 @@ utility::Span const& span = __jakt_match_value.span;
 return JaktInternal::ExplicitValue(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename types::CheckedExpression>,ErrorOr<NonnullRefPtr<typename types::CheckedExpression>>> {
 auto __jakt_enum_value = (prefix.value_or_lazy_evaluated([&] { return (ByteString::from_utf8_without_validation(""sv)); }));
-if (__jakt_enum_value == (ByteString::from_utf8_without_validation(""sv))) {
+if (__jakt_enum_value == ""sv) {
 return JaktInternal::ExplicitValue(types::CheckedExpression::CharacterConstant(JaktInternal::OptionalNone(),val,span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("b"sv))) {
+else if (__jakt_enum_value == "b"sv) {
 return JaktInternal::ExplicitValue(types::CheckedExpression::ByteConstant(JaktInternal::OptionalNone(),val,span));
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("c"sv))) {
+else if (__jakt_enum_value == "c"sv) {
 return JaktInternal::ExplicitValue(types::CheckedExpression::CCharacterConstant(JaktInternal::OptionalNone(),val,span));
 }
 else {
@@ -17722,10 +17722,10 @@ if ((!(((checked_expr_type)->__jakt_init_index() == 20 /* GenericInstance */))))
 (operator_is = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<types::CheckedUnaryOperator,ErrorOr<NonnullRefPtr<typename types::CheckedExpression>>> {
 auto __jakt_enum_value = (name);
-if (__jakt_enum_value == (ByteString::from_utf8_without_validation("Some"sv))) {
+if (__jakt_enum_value == "Some"sv) {
 return JaktInternal::ExplicitValue(types::CheckedUnaryOperator::IsSome());
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("None"sv))) {
+else if (__jakt_enum_value == "None"sv) {
 return JaktInternal::ExplicitValue(types::CheckedUnaryOperator::IsNone());
 }
 else {
@@ -21064,19 +21064,19 @@ ScopeGuard __jakt_var_589([&] {
 bool const is_print_like = (((((call).namespace_)).is_empty()) && ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool,ErrorOr<NonnullRefPtr<typename types::CheckedExpression>>> {
 auto __jakt_enum_value = (((call).name));
-if (__jakt_enum_value == (ByteString::from_utf8_without_validation("print"sv))) {
+if (__jakt_enum_value == "print"sv) {
 return JaktInternal::ExplicitValue(true);
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("println"sv))) {
+else if (__jakt_enum_value == "println"sv) {
 return JaktInternal::ExplicitValue(true);
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("eprintln"sv))) {
+else if (__jakt_enum_value == "eprintln"sv) {
 return JaktInternal::ExplicitValue(true);
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("eprint"sv))) {
+else if (__jakt_enum_value == "eprint"sv) {
 return JaktInternal::ExplicitValue(true);
 }
-else if (__jakt_enum_value == (ByteString::from_utf8_without_validation("format"sv))) {
+else if (__jakt_enum_value == "format"sv) {
 return JaktInternal::ExplicitValue(true);
 }
 else {

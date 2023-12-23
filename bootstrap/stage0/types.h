@@ -1,9 +1,11 @@
 #pragma once
 #include "__unified_forward.h"
-#include "parser.h"
-#include "utility.h"
-#include "compiler.h"
 #include "ids.h"
+#include "parser.h"
+#include "compiler.h"
+#include "utility.h"
+#include "jakt__arguments.h"
+#include "jakt__prelude__static_array.h"
 namespace Jakt {
 namespace types {
 struct StructOrEnumId {

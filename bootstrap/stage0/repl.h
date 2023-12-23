@@ -1,15 +1,17 @@
 #pragma once
 #include "__unified_forward.h"
-#include "typechecker.h"
-#include "parser.h"
-#include "compiler.h"
-#include "lexer.h"
-#include "utility.h"
-#include "error.h"
-#include "interpreter.h"
-#include "jakt__path.h"
-#include "platform.h"
 #include "repl_backend__default.h"
+#include "platform.h"
+#include "typechecker.h"
+#include "interpreter.h"
+#include "ids.h"
+#include "parser.h"
+#include "lexer.h"
+#include "compiler.h"
+#include "error.h"
+#include "utility.h"
+#include "jakt__path.h"
+#include "jakt__arguments.h"
 namespace Jakt {
 namespace repl {
 struct REPL {

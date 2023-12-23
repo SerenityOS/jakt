@@ -7,7 +7,7 @@ ByteString const target_name = TRY((((target).name(false))));
 return __jakt_format((StringView::from_string_literal("{}/{}"sv)),target_name,({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<ByteString>> {
 auto __jakt_enum_value = (((target).os));
-if (__jakt_enum_value == (ByteString::from_utf8_without_validation("windows"sv))) {
+if (__jakt_enum_value == "windows"sv) {
 return JaktInternal::ExplicitValue(__jakt_format((StringView::from_string_literal("jakt_{}_{}.lib"sv)),name,target_name));
 }
 else {

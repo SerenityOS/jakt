@@ -164,7 +164,7 @@ ByteString const basename = ((*this).basename(true));
 ByteString const extension = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<jakt__path::Path>> {
 auto __jakt_enum_value = (new_extension);
-if (__jakt_enum_value == (ByteString::from_utf8_without_validation(""sv))) {
+if (__jakt_enum_value == ""sv) {
 return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(""sv)));
 }
 else {
