@@ -6402,7 +6402,7 @@ struct Typechecker {
         Throw(expr, span) => .typecheck_throw(expr, scope_id, safety_mode, span)
         While(condition, block, span) => .typecheck_while(condition, block, scope_id, safety_mode, span)
         Continue(span) => .typecheck_continue(span)
-        Break(span) => CheckedStatement::Break(span)
+        Break(span) => .typecheck_break(span)
         VarDecl(var, init, span) => .typecheck_var_decl(var, init, scope_id, safety_mode, span)
         DestructuringAssignment(vars, var_decl, span) => .typecheck_destructuring_assignment(vars, var_decl, scope_id, safety_mode, span)
         If(condition, then_block, else_statement, span) => .typecheck_if(condition, then_block, else_statement, scope_id, safety_mode, span)
@@ -6421,6 +6421,18 @@ struct Typechecker {
         }
 
         return CheckedStatement::Continue(span)
+    }
+
+    fn typecheck_break(mut this, span: Span) -> CheckedStatement {
+        if not .break_continue_tracker is AnyLoop {
+            if .break_continue_tracker is Defer {
+                .error("‘break’ inside loop cannot be deferred", span)
+            } else {
+                .error("‘break’ statements can only be used inside loops", span)
+            }
+        }
+
+        return CheckedStatement::Break(span)
     }
 
     fn typecheck_guard(mut this, expr: ParsedExpression, else_block: ParsedBlock, remaining_code: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {

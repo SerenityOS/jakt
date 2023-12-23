@@ -1,0 +1,6 @@
+/// Expect:
+/// - error: "‘break’ statements can only be used inside loops"
+
+fn main() {
+    break
+}
