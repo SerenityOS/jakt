@@ -504,22 +504,35 @@ struct CodeGenerator {
             let scope_id = ScopeId(module_id: module.id, id: 0)
             let scope = generator.program.get_scope(scope_id)
 
-            output.append("namespace Jakt {\n")
 
             if not module.is_root {
                 generator.namespace_stack.push(module.name)
             }
 
-            generator.codegen_namespace(scope, current_module: module, &mut output)
+            mut inside_namespace = StringBuilder::create()
+            generator.codegen_namespace(scope, current_module: module, output: &mut inside_namespace)
+            inside_namespace.append(generator.deferred_output.to_string())
+            generator.deferred_output.clear()
 
             if not module.is_root {
                 // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
                 let dummy = generator.namespace_stack.pop()
             }
 
-            output.append(generator.deferred_output.to_string())
-            generator.deferred_output.clear()
-            output.append("} // namespace Jakt\n")
+            if not inside_namespace.is_empty() {
+                output.append("namespace Jakt {\n")
+                output.append(inside_namespace.to_string())
+                output.append("} // namespace Jakt\n")
+            } else {
+                // Nothing is implemented -> nothing is needed
+                // NOTE: CMake's add_jakt_executable expects one
+                // <module>.cpp per module, so we'll just emit
+                // an empty one with no includes, to be more predictable.
+                // FIXME: remove the empty file from the result once CMake
+                // doesn't rely on the above.
+                output.clear()
+            }
+
 
             result.set(impl_name, (output.to_string(), module.resolved_import_path))
         }
@@ -1147,9 +1160,8 @@ struct CodeGenerator {
         if scope.alias_path.has_value() or scope.import_path_if_extern.has_value() {
             return
         }
-        if scope.namespace_name.has_value() {
-            output.append("namespace " + scope.namespace_name! + " {\n")
-        }
+
+        mut inside_namespace = StringBuilder::create()
 
         for (_, overload_set) in scope.functions {
             for function_id in overload_set {
@@ -1175,8 +1187,8 @@ struct CodeGenerator {
                 }
 
                 if function.generics.params.is_empty() {
-                    .codegen_function(function, &mut output)
-                    output.append("\n")
+                    .codegen_function(function, output: &mut inside_namespace)
+                    inside_namespace.append("\n")
                 }
             }
         }
@@ -1195,7 +1207,7 @@ struct CodeGenerator {
                 continue
             }
 
-            .codegen_debug_description_getter(struct_, &mut output)
+            .codegen_debug_description_getter(struct_, output: &mut inside_namespace)
 
             let scope = .program.get_scope(struct_.scope_id)
             for (_, overload_set) in scope.functions {
@@ -1210,17 +1222,17 @@ struct CodeGenerator {
                     defer .current_function = previous_function
 
                     if function.type is ImplicitConstructor {
-                        .codegen_constructor(function, &mut output)
-                        output.append("\n")
+                        .codegen_constructor(function, output: &mut inside_namespace)
+                        inside_namespace.append("\n")
                     } else if function.type is Destructor {
-                        .codegen_destructor(&struct_, &function, is_inline: false, &mut output)
-                        output.append("\n")
+                        .codegen_destructor(&struct_, &function, is_inline: false, output: &mut inside_namespace)
+                        inside_namespace.append("\n")
                     } else if not function.type is ImplicitEnumConstructor and
                         not function.is_comptime and
                         function.generics.params.is_empty() {
 
-                        .codegen_function_in_namespace(function, containing_struct: struct_.type_id, &mut output)
-                        output.append("\n")
+                        .codegen_function_in_namespace(function, containing_struct: struct_.type_id, output: &mut inside_namespace)
+                        inside_namespace.append("\n")
                     }
                 }
             }
@@ -1241,7 +1253,7 @@ struct CodeGenerator {
             }
 
             if enum_.underlying_type_id == void_type_id() {
-                .codegen_enum_debug_description_getter(enum_, &mut output)
+                .codegen_enum_debug_description_getter(enum_, output: &mut inside_namespace)
                 let (common_fields, variant_field_list) = .codegen_enum_field_lists(enum_)
                 .codegen_enum_constructors(
                     enum_
@@ -1249,16 +1261,16 @@ struct CodeGenerator {
                     generic_parameter_list: None
                     variant_field_list
                     common_fields
-                    &mut output
+                    output: &mut inside_namespace
                 )
 
-                output.append(format("{0}::~{0}()", enum_.name))
+                inside_namespace.append(format("{0}::~{0}()", enum_.name))
 
-                .codegen_enum_destructor_body(enum_, &mut output)
+                .codegen_enum_destructor_body(enum_, output: &mut inside_namespace)
 
-                output.append(format("void {0}::__jakt_destroy_variant() {{\n", enum_.name))
-                .codegen_enum_destroy_variant(enum_, &mut output)
-                output.append("}\n")
+                inside_namespace.append(format("void {0}::__jakt_destroy_variant() {{\n", enum_.name))
+                .codegen_enum_destroy_variant(enum_, output: &mut inside_namespace)
+                inside_namespace.append("}\n")
             }
 
             let scope = .program.get_scope(enum_.scope_id)
@@ -1275,8 +1287,8 @@ struct CodeGenerator {
                         not function.is_comptime and
                         function.generics.params.is_empty() {
 
-                        .codegen_function_in_namespace(function, containing_struct: enum_.type_id, &mut output)
-                        output.append("\n")
+                        .codegen_function_in_namespace(function, containing_struct: enum_.type_id, output: &mut inside_namespace)
+                        inside_namespace.append("\n")
                     }
                 }
             }
@@ -1287,14 +1299,20 @@ struct CodeGenerator {
             if child_scope.namespace_name.has_value() {
                 let name = child_scope.namespace_name!
                 .namespace_stack.push(name)
-                .codegen_namespace(scope: child_scope, current_module, &mut output)
+                .codegen_namespace(scope: child_scope, current_module, output: &mut inside_namespace)
                 // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
                 let dummy = .namespace_stack.pop()
             }
         }
 
-        if scope.namespace_name.has_value() {
-            output.append("}\n")
+        if not inside_namespace.is_empty() {
+            if scope.namespace_name.has_value() {
+                output.append(format("namespace {} {{\n", scope.namespace_name!))
+                output.append(inside_namespace.to_string())
+                output.append("}\n")
+            } else {
+                output.append(inside_namespace.to_string())
+            }
         }
     }
 
