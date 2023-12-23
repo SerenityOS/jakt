@@ -209,6 +209,8 @@ struct CodeGenerator {
     fresh_label_counter: usize
     this_replacement: String? = None
     generic_inferences: [TypeId:TypeId]? = None
+    // Modules that this generation depends on, detected from type definitions
+    used_modules: {ModuleId} = {}
 
     // noreturn functions may not throw, so let them crash instead.
     fn current_error_handler(this) -> String {
@@ -498,8 +500,51 @@ struct CodeGenerator {
             if i != 0 {
                 output.append(format("#include \"{}\"\n", header_name))
             }
-            // FIXME: Figure out exactly which headers we need to include to get all the types we need.
+
+            let scope_id = ScopeId(module_id: module.id, id: 0)
+            let scope = generator.program.get_scope(scope_id)
+
+            // We want to know which headers we want to include before we
+            // attach this to the running output.
+            mut code_output = StringBuilder::create()
+
+            if not module.is_root {
+                generator.namespace_stack.push(module.name)
+            }
+
+            generator.used_modules = {}
+
+            generator.used_modules.ensure_capacity(module.imports.size())
+            for id in module.imports {
+                generator.used_modules.add(id)
+            }
+
+            generator.codegen_namespace_specializations(scope, current_module: module, output:  &mut code_output)
+            code_output.append(generator.deferred_output.to_string())
+            generator.deferred_output.clear()
+
+            if not module.is_root {
+                // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
+                let dummy = generator.namespace_stack.pop()
+            }
+
+            // Now generator.used_modules is filled with all the modules from
+            // all the types, so we know we need those modules.
+            // NOTE: Here we maintain topological order to ensure the output does not
+            // change from iteration order in Set.
+            mut ordered_imports: [ModuleId] = []
+            ordered_imports.ensure_capacity(generator.used_modules.size())
+
+            // FIXME: The `in_degrees` Dictionary from
+            // `topologically_sort_modules` could be useful to avoid looping
+            // through all modules just to know the order.
             for id in sorted_modules {
+                if generator.used_modules.contains(id) {
+                    ordered_imports.push(id)
+                }
+            }
+
+            for id in ordered_imports {
                 if id.id == 0 {
                     continue
                 }
@@ -507,21 +552,8 @@ struct CodeGenerator {
                 output.append(format("#include \"{}.h\"\n", module.name))
             }
 
-            let scope_id = ScopeId(module_id: module.id, id: 0)
-            let scope = generator.program.get_scope(scope_id)
             output.append("namespace Jakt {\n")
-            if not module.is_root {
-                generator.namespace_stack.push(module.name)
-            }
-
-            generator.codegen_namespace_specializations(scope, current_module: module, &mut output)
-            if not module.is_root {
-                // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
-                let dummy = generator.namespace_stack.pop()
-            }
-
-            output.append(generator.deferred_output.to_string())
-            generator.deferred_output.clear()
+            output.append(code_output.to_string())
             output.append("} // namespace Jakt\n")
 
             result.set(impl_name, (output.to_string(), module.resolved_import_path))
@@ -4477,6 +4509,11 @@ struct CodeGenerator {
     }
 
     fn codegen_type_possibly_as_namespace(mut this, type_id: TypeId, as_namespace: bool) throws -> String {
+
+        // Since we're using this type, ensure its module header is included to
+        // obtain the definition.
+        .used_modules.add(type_id.module)
+
         mut qualifiers = ""
 
         if not as_namespace and .program.get_type(type_id).qualifiers.is_immutable {
