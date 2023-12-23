@@ -1,0 +1,13 @@
+/// Expect:
+/// - output: "PASS\n"
+
+fn test() {
+    defer {
+        let x = fn() { println("PASS") return }
+        x()
+    }
+}
+
+fn main() {
+    test()
+}
