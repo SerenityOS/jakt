@@ -496,11 +496,6 @@ struct CodeGenerator {
             let header_name = format("{}.h", module.name)
             let impl_name = format("{}_specializations.cpp", module.name)
 
-            output.clear()
-            if i != 0 {
-                output.append(format("#include \"{}\"\n", header_name))
-            }
-
             let scope_id = ScopeId(module_id: module.id, id: 0)
             let scope = generator.program.get_scope(scope_id)
 
@@ -512,54 +507,75 @@ struct CodeGenerator {
                 generator.namespace_stack.push(module.name)
             }
 
-            generator.used_modules = {}
 
-            generator.used_modules.ensure_capacity(module.imports.size())
-            for id in module.imports {
-                generator.used_modules.add(id)
-            }
 
-            generator.codegen_namespace_specializations(scope, current_module: module, output:  &mut code_output)
-            code_output.append(generator.deferred_output.to_string())
-            generator.deferred_output.clear()
+            let ordered_imports = generator.capturing_modules(all_sorted_modules: &sorted_modules, module, &fn[scope](anon gen: &mut CodeGenerator, module: Module, output: &mut StringBuilder) throws {
+                gen.codegen_namespace_specializations(scope, current_module: module, &mut output)
+            }, output: &mut code_output)
 
             if not module.is_root {
                 // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
                 let dummy = generator.namespace_stack.pop()
             }
 
-            // Now generator.used_modules is filled with all the modules from
-            // all the types, so we know we need those modules.
-            // NOTE: Here we maintain topological order to ensure the output does not
-            // change from iteration order in Set.
-            mut ordered_imports: [ModuleId] = []
-            ordered_imports.ensure_capacity(generator.used_modules.size())
-
-            // FIXME: The `in_degrees` Dictionary from
-            // `topologically_sort_modules` could be useful to avoid looping
-            // through all modules just to know the order.
-            for id in sorted_modules {
-                if generator.used_modules.contains(id) {
-                    ordered_imports.push(id)
+            if not code_output.is_empty() {
+                output = StringBuilder::create()
+                if i != 0 {
+                    output.append(format("#include \"{}\"\n", header_name))
                 }
-            }
 
-            for id in ordered_imports {
-                if id.id == 0 {
-                    continue
+                for id in ordered_imports {
+                    if id.id == 0 {
+                        continue
+                    }
+                    let module = generator.program.modules[id.id]
+                    output.append(format("#include \"{}.h\"\n", module.name))
                 }
-                let module = generator.program.modules[id.id]
-                output.append(format("#include \"{}.h\"\n", module.name))
+                output.append("namespace Jakt {\n")
+                output.append(code_output.to_string())
+                output.append("} // namespace Jakt\n")
+            } else {
+                // NOTE: CMake's add_jakt_executable expects one
+                // <module>_specializations.cpp per module, so we'll just emit
+                // an empty one with no includes, to be more predictable.
+                // FIXME: remove the empty file from the result once CMake
+                // doesn't rely on the above.
+                output.clear()
             }
-
-            output.append("namespace Jakt {\n")
-            output.append(code_output.to_string())
-            output.append("} // namespace Jakt\n")
-
             result.set(impl_name, (output.to_string(), module.resolved_import_path))
         }
 
         return result
+    }
+
+
+    fn get_topologically_sorted_modules(all_sorted_modules: &[ModuleId], dependencies: &{ModuleId}) -> [ModuleId] {
+        mut deps: [ModuleId] = []
+        deps.ensure_capacity(dependencies.size())
+
+        for id in all_sorted_modules {
+            if dependencies.contains(id) {
+                deps.push(id)
+            }
+        }
+
+        return deps
+    }
+
+    // Captures required modules only from the types `gen` generates, and gives
+    // back a topologically sorted array of the dependencies, with the deferred
+    // output appended to `gen`'s output.
+    fn capturing_modules(mut this, all_sorted_modules: &[ModuleId], module: Module, anon gen: &fn(anon cg: &mut CodeGenerator, module: Module, output: &mut StringBuilder) throws -> void, output: &mut StringBuilder) throws -> [ModuleId] {
+        .used_modules = {}
+        .used_modules.ensure_capacity(module.imports.size())
+        for id in module.imports {
+            .used_modules.add(id)
+        }
+        .deferred_output.clear()
+        gen(&mut this, module, &mut output)
+        output.append(.deferred_output.to_string())
+        let modules = CodeGenerator::get_topologically_sorted_modules(all_sorted_modules, dependencies: &.used_modules)
+        return modules
     }
 
     fn postorder_traversal(this, type_id: TypeId, mut visited: {TypeId}, dependency_graph: [TypeId: [TypeId]], mut output: [TypeId]) throws {
@@ -884,10 +900,6 @@ struct CodeGenerator {
         }
         mut seen_types: {TypeId} = {}
 
-        if scope.namespace_name.has_value() {
-            output.append("namespace " + scope.namespace_name! + " {\n")
-        }
-
         for define_pass in [false, true] {
             for (_, overload_set) in scope.functions {
                 for function_id in overload_set {
@@ -955,7 +967,12 @@ struct CodeGenerator {
             }
         }
 
-        if scope.namespace_name.has_value() {
+        if scope.namespace_name.has_value() and not output.is_empty() {
+
+            let inside_namespace = output.to_string()
+            output.clear()
+            output.append(format("namespace {} {{\n", scope.namespace_name!))
+            output.append(inside_namespace)
             output.append("}\n")
         }
     }
