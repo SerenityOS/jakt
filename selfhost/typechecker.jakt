@@ -74,6 +74,12 @@ enum BreakContinueLegalityTracker {
     Defer
 }
 
+enum ReturnLegalityTracker {
+    None,
+    Lambda,
+    Defer
+}
+
 enum NumericOrStringValue {
     StringValue(String)
     SignedNumericValue(i64)
@@ -134,8 +140,8 @@ struct Typechecker {
     current_module_id: ModuleId
     current_struct_type_id: TypeId? = None
     current_function_id: FunctionId? = None
-    inside_defer: bool = false
     break_continue_tracker: BreakContinueLegalityTracker = BreakContinueLegalityTracker::None
+    return_tracker: ReturnLegalityTracker = ReturnLegalityTracker::None
     ignore_errors: bool = false
     dump_type_hints: bool = false
     dump_try_hints: bool = false
@@ -7310,13 +7316,14 @@ struct Typechecker {
     }
 
     fn typecheck_defer(mut this, statement: ParsedStatement, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
+        let previous_return_tracker = .return_tracker
+        .return_tracker = ReturnLegalityTracker::Defer
+        defer .return_tracker = previous_return_tracker
+
         let previous_break_continue_tracker = .break_continue_tracker
         .break_continue_tracker = BreakContinueLegalityTracker::Defer
         defer .break_continue_tracker = previous_break_continue_tracker
 
-        let was_inside_defer = .inside_defer
-        .inside_defer = true
-        defer .inside_defer = was_inside_defer
         let checked_statement = .typecheck_statement(statement, scope_id, safety_mode)
         if checked_statement is Block(block) and block.yielded_type.has_value() {
             .error("‘yield’ inside ‘defer’ is meaningless", span)
@@ -7351,9 +7358,10 @@ struct Typechecker {
     }
 
     fn typecheck_return(mut this, expr: ParsedExpression?, span: Span, scope_id: ScopeId, safety_mode: SafetyMode) throws -> CheckedStatement {
-        if .inside_defer {
+        if .return_tracker is Defer {
             .error("‘return’ is not allowed inside ‘defer’", span)
         }
+
         if not expr.has_value() {
             if .current_function_id.has_value() {
                 let current_function = .get_function(.current_function_id!)
@@ -8727,6 +8735,10 @@ struct Typechecker {
         scope_id: ScopeId
         safety_mode: SafetyMode
     ) throws -> CheckedExpression {
+        let previous_return_tracker = .return_tracker
+        .return_tracker = ReturnLegalityTracker::Lambda
+        defer .return_tracker = previous_return_tracker
+
         let synthetic_type = ParsedType::Function(
             params
             can_throw
