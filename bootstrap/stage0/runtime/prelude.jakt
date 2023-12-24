@@ -57,8 +57,6 @@ extern struct String {
     fn split(this, anon c: c_char) -> [String]
     [[name=characters]]
     fn c_string(this) -> raw c_char
-    fn to_int(this) -> i32?
-    fn to_uint(this) -> u32?
     fn to_number<T>(this) -> T?
     fn is_whitespace(this) -> bool
     fn hash(this) -> u32
