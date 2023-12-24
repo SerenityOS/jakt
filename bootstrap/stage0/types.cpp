@@ -637,7 +637,7 @@ break;
 
 if (has_index){
 ByteString const index_str = ((str).substring(static_cast<size_t>(0ULL),slice_end));
-JaktInternal::Optional<u32> const index = ((index_str).to_uint());
+JaktInternal::Optional<u32> const index = ((index_str).template to_number<u32>());
 if (((index).has_value())){
 return (Tuple{static_cast<JaktInternal::Optional<size_t>>((infallible_integer_cast<size_t>(((index.value()))))), ((str).substring(slice_end,JaktInternal::checked_sub(((str).length()),slice_end)))});
 }
