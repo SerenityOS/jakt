@@ -2791,36 +2791,6 @@ class Interpreter {
                         throw Error::from_string_literal("Invalid type")
                     }
                 }
-                "to_uint" => match this_argument!.impl {
-                    JaktString(value) => {
-                        let result = value.to_uint()
-                        yield StatementResult::JustValue(Value(
-                            impl: match result.has_value() {
-                                true => ValueImpl::OptionalSome(value: Value(impl: ValueImpl::U32(result!), span: call_span))
-                                else => ValueImpl::OptionalNone()
-                            }
-                            span: call_span
-                        ))
-                    }
-                    else => {
-                        panic("Invalid String")
-                    }
-                }
-                "to_int" => match this_argument!.impl {
-                    JaktString(value) => {
-                        let result = value.to_int()
-                        yield StatementResult::JustValue(Value(
-                            impl: match result.has_value() {
-                                true => ValueImpl::OptionalSome(value: Value(impl: ValueImpl::I32(result!), span: call_span))
-                                false => ValueImpl::OptionalNone()
-                            }
-                            span: call_span
-                        ))
-                    }
-                    else => {
-                        panic("Invalid String")
-                    }
-                }
                 "to_number" => match this_argument!.impl {
                     JaktString(value) => {
                         if type_bindings.size() < 1 {
