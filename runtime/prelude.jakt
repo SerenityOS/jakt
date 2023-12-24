@@ -59,6 +59,7 @@ extern struct String {
     fn c_string(this) -> raw c_char
     fn to_int(this) -> i32?
     fn to_uint(this) -> u32?
+    fn to_number<T>(this) -> T?
     fn is_whitespace(this) -> bool
     fn hash(this) -> u32
     fn substring(this, start: usize, length: usize) -> String
