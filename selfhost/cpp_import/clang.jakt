@@ -128,7 +128,7 @@ fn cast_to_type(
     anon value: f64
     anon type: CXType
 ) throws -> ValueImpl => match clang_getCanonicalType(type).kind {
-    CXType_Float => ValueImpl::F32(cpp_static_cast<f32>(value))
+    CXType_Float => ValueImpl::F32(value as! f32)
     CXType_Double => ValueImpl::F64(value)
     else => ValueImpl::Void
 }
