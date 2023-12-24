@@ -2869,7 +2869,7 @@ return JaktInternal::ExplicitValue(types::NumericOrStringValue::UnsignedNumericV
 };/*case end*/
 case 5 /* U64 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U64;u64 const& val = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::NumericOrStringValue::UnsignedNumericValue((infallible_integer_cast<u64>((val)))));
+return JaktInternal::ExplicitValue(types::NumericOrStringValue::UnsignedNumericValue((static_cast<u64>((val)))));
 };/*case end*/
 case 12 /* USize */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.USize;size_t const& val = __jakt_match_value.value;
@@ -2889,7 +2889,7 @@ return JaktInternal::ExplicitValue(types::NumericOrStringValue::SignedNumericVal
 };/*case end*/
 case 9 /* I64 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I64;i64 const& val = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::NumericOrStringValue::SignedNumericValue((infallible_integer_cast<i64>((val)))));
+return JaktInternal::ExplicitValue(types::NumericOrStringValue::SignedNumericValue((static_cast<i64>((val)))));
 };/*case end*/
 default: {
 {
@@ -3123,6 +3123,10 @@ return JaktInternal::ExplicitValue(types::CheckedTypeCast::Fallible(((scope)->ma
 case 1 /* Infallible */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Infallible;ids::TypeId const& type_id = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(types::CheckedTypeCast::Infallible(((scope)->map_type(type_id))));
+};/*case end*/
+case 2 /* Identity */: {
+auto&& __jakt_match_value = __jakt_match_variant.as.Identity;ids::TypeId const& type_id = __jakt_match_value.value;
+return JaktInternal::ExplicitValue(types::CheckedTypeCast::Identity(((scope)->map_type(type_id))));
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
@@ -6528,7 +6532,7 @@ return JaktInternal::ExplicitValue((infallible_integer_cast<u64>((x))));
 };/*case end*/
 case 5 /* U64 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U64;u64 const& x = __jakt_match_value.value;
-return JaktInternal::ExplicitValue((infallible_integer_cast<u64>((x))));
+return JaktInternal::ExplicitValue((static_cast<u64>((x))));
 };/*case end*/
 case 12 /* USize */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.USize;size_t const& x = __jakt_match_value.value;
@@ -6580,7 +6584,7 @@ return JaktInternal::ExplicitValue((infallible_integer_cast<u64>((x))));
 };/*case end*/
 case 5 /* U64 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U64;u64 const& x = __jakt_match_value.value;
-return JaktInternal::ExplicitValue((infallible_integer_cast<u64>((x))));
+return JaktInternal::ExplicitValue((static_cast<u64>((x))));
 };/*case end*/
 case 12 /* USize */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.USize;size_t const& x = __jakt_match_value.value;
@@ -6666,7 +6670,7 @@ return JaktInternal::ExplicitValue((infallible_integer_cast<u64>((x))));
 };/*case end*/
 case 5 /* U64 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U64;u64 const& x = __jakt_match_value.value;
-return JaktInternal::ExplicitValue((infallible_integer_cast<u64>((x))));
+return JaktInternal::ExplicitValue((static_cast<u64>((x))));
 };/*case end*/
 case 12 /* USize */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.USize;size_t const& x = __jakt_match_value.value;
@@ -6826,7 +6830,7 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 12 /* USize */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.USize;size_t const& length = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_260; {
-ByteString const result = ((value).substring((infallible_integer_cast<size_t>((start))),(infallible_integer_cast<size_t>((length)))));
+ByteString const result = ((value).substring((static_cast<size_t>((start))),(static_cast<size_t>((length)))));
 __jakt_var_260 = interpreter::StatementResult::JustValue(types::Value(types::ValueImpl::JaktString(result),call_span)); goto __jakt_label_246;
 
 }
@@ -6835,7 +6839,7 @@ __jakt_label_246:; __jakt_var_260.release_value(); }));
 case 5 /* U64 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U64;u64 const& length = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_261; {
-ByteString const result = ((value).substring((infallible_integer_cast<size_t>((start))),(infallible_integer_cast<size_t>((length)))));
+ByteString const result = ((value).substring((static_cast<size_t>((start))),(infallible_integer_cast<size_t>((length)))));
 __jakt_var_261 = interpreter::StatementResult::JustValue(types::Value(types::ValueImpl::JaktString(result),call_span)); goto __jakt_label_247;
 
 }
@@ -6844,7 +6848,7 @@ __jakt_label_247:; __jakt_var_261.release_value(); }));
 case 4 /* U32 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U32;u32 const& length = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_262; {
-ByteString const result = ((value).substring((infallible_integer_cast<size_t>((start))),(infallible_integer_cast<size_t>((length)))));
+ByteString const result = ((value).substring((static_cast<size_t>((start))),(infallible_integer_cast<size_t>((length)))));
 __jakt_var_262 = interpreter::StatementResult::JustValue(types::Value(types::ValueImpl::JaktString(result),call_span)); goto __jakt_label_248;
 
 }
@@ -6853,7 +6857,7 @@ __jakt_label_248:; __jakt_var_262.release_value(); }));
 case 3 /* U16 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U16;u16 const& length = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_263; {
-ByteString const result = ((value).substring((infallible_integer_cast<size_t>((start))),(infallible_integer_cast<size_t>((length)))));
+ByteString const result = ((value).substring((static_cast<size_t>((start))),(infallible_integer_cast<size_t>((length)))));
 __jakt_var_263 = interpreter::StatementResult::JustValue(types::Value(types::ValueImpl::JaktString(result),call_span)); goto __jakt_label_249;
 
 }
@@ -6862,7 +6866,7 @@ __jakt_label_249:; __jakt_var_263.release_value(); }));
 case 2 /* U8 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U8;u8 const& length = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_264; {
-ByteString const result = ((value).substring((infallible_integer_cast<size_t>((start))),(infallible_integer_cast<size_t>((length)))));
+ByteString const result = ((value).substring((static_cast<size_t>((start))),(infallible_integer_cast<size_t>((length)))));
 __jakt_var_264 = interpreter::StatementResult::JustValue(types::Value(types::ValueImpl::JaktString(result),call_span)); goto __jakt_label_250;
 
 }
@@ -6891,7 +6895,7 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 12 /* USize */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.USize;size_t const& length = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_265; {
-ByteString const result = ((value).substring((infallible_integer_cast<size_t>((start))),(infallible_integer_cast<size_t>((length)))));
+ByteString const result = ((value).substring((infallible_integer_cast<size_t>((start))),(static_cast<size_t>((length)))));
 __jakt_var_265 = interpreter::StatementResult::JustValue(types::Value(types::ValueImpl::JaktString(result),call_span)); goto __jakt_label_251;
 
 }
@@ -6956,7 +6960,7 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 12 /* USize */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.USize;size_t const& length = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_270; {
-ByteString const result = ((value).substring((infallible_integer_cast<size_t>((start))),(infallible_integer_cast<size_t>((length)))));
+ByteString const result = ((value).substring((infallible_integer_cast<size_t>((start))),(static_cast<size_t>((length)))));
 __jakt_var_270 = interpreter::StatementResult::JustValue(types::Value(types::ValueImpl::JaktString(result),call_span)); goto __jakt_label_256;
 
 }
@@ -7021,7 +7025,7 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 12 /* USize */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.USize;size_t const& length = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_275; {
-ByteString const result = ((value).substring((infallible_integer_cast<size_t>((start))),(infallible_integer_cast<size_t>((length)))));
+ByteString const result = ((value).substring((infallible_integer_cast<size_t>((start))),(static_cast<size_t>((length)))));
 __jakt_var_275 = interpreter::StatementResult::JustValue(types::Value(types::ValueImpl::JaktString(result),call_span)); goto __jakt_label_261;
 
 }
@@ -7086,7 +7090,7 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 12 /* USize */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.USize;size_t const& length = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_280; {
-ByteString const result = ((value).substring((infallible_integer_cast<size_t>((start))),(infallible_integer_cast<size_t>((length)))));
+ByteString const result = ((value).substring((infallible_integer_cast<size_t>((start))),(static_cast<size_t>((length)))));
 __jakt_var_280 = interpreter::StatementResult::JustValue(types::Value(types::ValueImpl::JaktString(result),call_span)); goto __jakt_label_266;
 
 }
@@ -7176,7 +7180,7 @@ auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 9 /* I64 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I64;i64 const& number = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(interpreter::StatementResult::JustValue(types::Value(types::ValueImpl::JaktString(ByteString::number((infallible_integer_cast<i64>((number))))),call_span)));
+return JaktInternal::ExplicitValue(interpreter::StatementResult::JustValue(types::Value(types::ValueImpl::JaktString(ByteString::number((static_cast<i64>((number))))),call_span)));
 };/*case end*/
 case 4 /* U32 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U32;u32 const& number = __jakt_match_value.value;
@@ -7467,7 +7471,7 @@ auto&& __jakt_match_variant = *((((arguments)[static_cast<i64>(0LL)])).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 12 /* USize */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.USize;size_t const& index = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(interpreter::StatementResult::JustValue(types::Value(types::ValueImpl::U8(((value).byte_at((infallible_integer_cast<size_t>((index)))))),call_span)));
+return JaktInternal::ExplicitValue(interpreter::StatementResult::JustValue(types::Value(types::ValueImpl::U8(((value).byte_at((static_cast<size_t>((index)))))),call_span)));
 };/*case end*/
 case 5 /* U64 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U64;u64 const& index = __jakt_match_value.value;
@@ -13422,7 +13426,7 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 2 /* U8 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U8;u8 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::U8((infallible_integer_cast<u8>(((x & y))))));
+return JaktInternal::ExplicitValue(types::ValueImpl::U8((static_cast<u8>(((x & y))))));
 };/*case end*/
 default: {
 {
@@ -13446,7 +13450,7 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 3 /* U16 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U16;u16 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::U16((infallible_integer_cast<u16>(((x & y))))));
+return JaktInternal::ExplicitValue(types::ValueImpl::U16((static_cast<u16>(((x & y))))));
 };/*case end*/
 default: {
 {
@@ -13518,7 +13522,7 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 6 /* I8 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I8;i8 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::I8((infallible_integer_cast<i8>(((x & y))))));
+return JaktInternal::ExplicitValue(types::ValueImpl::I8((static_cast<i8>(((x & y))))));
 };/*case end*/
 default: {
 {
@@ -13542,7 +13546,7 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 7 /* I16 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I16;i16 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::I16((infallible_integer_cast<i16>(((x & y))))));
+return JaktInternal::ExplicitValue(types::ValueImpl::I16((static_cast<i16>(((x & y))))));
 };/*case end*/
 default: {
 {
@@ -13657,7 +13661,7 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 2 /* U8 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U8;u8 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::U8((infallible_integer_cast<u8>(((x | y))))));
+return JaktInternal::ExplicitValue(types::ValueImpl::U8((static_cast<u8>(((x | y))))));
 };/*case end*/
 default: {
 {
@@ -13681,7 +13685,7 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 3 /* U16 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U16;u16 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::U16((infallible_integer_cast<u16>(((x | y))))));
+return JaktInternal::ExplicitValue(types::ValueImpl::U16((static_cast<u16>(((x | y))))));
 };/*case end*/
 default: {
 {
@@ -13753,7 +13757,7 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 6 /* I8 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I8;i8 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::I8((infallible_integer_cast<i8>(((x | y))))));
+return JaktInternal::ExplicitValue(types::ValueImpl::I8((static_cast<i8>(((x | y))))));
 };/*case end*/
 default: {
 {
@@ -13777,7 +13781,7 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 7 /* I16 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I16;i16 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::I16((infallible_integer_cast<i16>(((x | y))))));
+return JaktInternal::ExplicitValue(types::ValueImpl::I16((static_cast<i16>(((x | y))))));
 };/*case end*/
 default: {
 {
@@ -13892,7 +13896,7 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 2 /* U8 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U8;u8 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::U8((infallible_integer_cast<u8>(((x ^ y))))));
+return JaktInternal::ExplicitValue(types::ValueImpl::U8((static_cast<u8>(((x ^ y))))));
 };/*case end*/
 default: {
 {
@@ -13916,7 +13920,7 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 3 /* U16 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U16;u16 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::U16((infallible_integer_cast<u16>(((x ^ y))))));
+return JaktInternal::ExplicitValue(types::ValueImpl::U16((static_cast<u16>(((x ^ y))))));
 };/*case end*/
 default: {
 {
@@ -13988,7 +13992,7 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 6 /* I8 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I8;i8 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::I8((infallible_integer_cast<i8>(((x ^ y))))));
+return JaktInternal::ExplicitValue(types::ValueImpl::I8((static_cast<i8>(((x ^ y))))));
 };/*case end*/
 default: {
 {
@@ -14012,7 +14016,7 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 7 /* I16 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I16;i16 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::I16((infallible_integer_cast<i16>(((x ^ y))))));
+return JaktInternal::ExplicitValue(types::ValueImpl::I16((static_cast<i16>(((x ^ y))))));
 };/*case end*/
 default: {
 {
@@ -14127,7 +14131,7 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 2 /* U8 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U8;u8 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::U8((infallible_integer_cast<u8>(((x << y))))));
+return JaktInternal::ExplicitValue(types::ValueImpl::U8((static_cast<u8>(((x << y))))));
 };/*case end*/
 default: {
 {
@@ -14151,7 +14155,7 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 3 /* U16 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U16;u16 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::U16((infallible_integer_cast<u16>(((x << y))))));
+return JaktInternal::ExplicitValue(types::ValueImpl::U16((static_cast<u16>(((x << y))))));
 };/*case end*/
 default: {
 {
@@ -14223,7 +14227,7 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 6 /* I8 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I8;i8 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::I8((infallible_integer_cast<i8>(((x << y))))));
+return JaktInternal::ExplicitValue(types::ValueImpl::I8((static_cast<i8>(((x << y))))));
 };/*case end*/
 default: {
 {
@@ -14247,7 +14251,7 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 7 /* I16 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I16;i16 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::I16((infallible_integer_cast<i16>(((x << y))))));
+return JaktInternal::ExplicitValue(types::ValueImpl::I16((static_cast<i16>(((x << y))))));
 };/*case end*/
 default: {
 {
@@ -14362,7 +14366,7 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 2 /* U8 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U8;u8 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::U8((infallible_integer_cast<u8>(((x >> y))))));
+return JaktInternal::ExplicitValue(types::ValueImpl::U8((static_cast<u8>(((x >> y))))));
 };/*case end*/
 default: {
 {
@@ -14386,7 +14390,7 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 3 /* U16 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U16;u16 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::U16((infallible_integer_cast<u16>(((x >> y))))));
+return JaktInternal::ExplicitValue(types::ValueImpl::U16((static_cast<u16>(((x >> y))))));
 };/*case end*/
 default: {
 {
@@ -14458,7 +14462,7 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 6 /* I8 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I8;i8 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::I8((infallible_integer_cast<i8>(((x >> y))))));
+return JaktInternal::ExplicitValue(types::ValueImpl::I8((static_cast<i8>(((x >> y))))));
 };/*case end*/
 default: {
 {
@@ -14482,7 +14486,7 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 7 /* I16 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I16;i16 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::I16((infallible_integer_cast<i16>(((x >> y))))));
+return JaktInternal::ExplicitValue(types::ValueImpl::I16((static_cast<i16>(((x >> y))))));
 };/*case end*/
 default: {
 {
@@ -14597,7 +14601,7 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 2 /* U8 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U8;u8 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::U8((infallible_integer_cast<u8>(((x << y))))));
+return JaktInternal::ExplicitValue(types::ValueImpl::U8((static_cast<u8>(((x << y))))));
 };/*case end*/
 default: {
 {
@@ -14621,7 +14625,7 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 3 /* U16 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U16;u16 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::U16((infallible_integer_cast<u16>(((x << y))))));
+return JaktInternal::ExplicitValue(types::ValueImpl::U16((static_cast<u16>(((x << y))))));
 };/*case end*/
 default: {
 {
@@ -14693,7 +14697,7 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 6 /* I8 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I8;i8 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::I8((infallible_integer_cast<i8>(((x << y))))));
+return JaktInternal::ExplicitValue(types::ValueImpl::I8((static_cast<i8>(((x << y))))));
 };/*case end*/
 default: {
 {
@@ -14717,7 +14721,7 @@ auto&& __jakt_match_variant = *((rhs_value).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 7 /* I16 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I16;i16 const& y = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::ValueImpl::I16((infallible_integer_cast<i16>(((x << y))))));
+return JaktInternal::ExplicitValue(types::ValueImpl::I16((static_cast<i16>(((x << y))))));
 };/*case end*/
 default: {
 {
@@ -16528,6 +16532,10 @@ return JaktInternal::ExplicitValue(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<interpreter::StatementResult, ErrorOr<interpreter::StatementResult>>{
 auto&& __jakt_match_variant = cast;
 switch(__jakt_match_variant.__jakt_init_index()) {
+case 2 /* Identity */: {
+auto&& __jakt_match_value = __jakt_match_variant.as.Identity;ids::TypeId const& type_id = __jakt_match_value.value;
+return JaktInternal::ExplicitValue(interpreter::StatementResult::JustValue(TRY((interpreter::cast_value_to_type(value,type_id,*this,false)))));
+};/*case end*/
 case 1 /* Infallible */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Infallible;ids::TypeId const& type_id = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(interpreter::StatementResult::JustValue(TRY((interpreter::cast_value_to_type(value,type_id,*this,false)))));
@@ -17509,7 +17517,7 @@ return JaktInternal::ExplicitValue((infallible_integer_cast<u64>((x))));
 };/*case end*/
 case 5 /* U64 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U64;u64 const& x = __jakt_match_value.value;
-return JaktInternal::ExplicitValue((infallible_integer_cast<u64>((x))));
+return JaktInternal::ExplicitValue((static_cast<u64>((x))));
 };/*case end*/
 case 12 /* USize */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.USize;size_t const& x = __jakt_match_value.value;
@@ -18189,7 +18197,7 @@ return JaktInternal::ExplicitValue((infallible_integer_cast<size_t>((x))));
 };/*case end*/
 case 12 /* USize */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.USize;size_t const& x = __jakt_match_value.value;
-return JaktInternal::ExplicitValue((infallible_integer_cast<size_t>((x))));
+return JaktInternal::ExplicitValue((static_cast<size_t>((x))));
 };/*case end*/
 default: {
 {

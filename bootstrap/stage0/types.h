@@ -891,12 +891,16 @@ ids::TypeId value;
 struct {
 ids::TypeId value;
 } Infallible;
+struct {
+ids::TypeId value;
+} Identity;
 constexpr VariantData() {}
 ~VariantData() {}
 } as;
 constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ByteString debug_description() const;
 [[nodiscard]] static CheckedTypeCast Fallible(ids::TypeId value);
 [[nodiscard]] static CheckedTypeCast Infallible(ids::TypeId value);
+[[nodiscard]] static CheckedTypeCast Identity(ids::TypeId value);
 ~CheckedTypeCast();
 CheckedTypeCast& operator=(CheckedTypeCast const &);
 CheckedTypeCast& operator=(CheckedTypeCast &&);
