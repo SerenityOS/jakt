@@ -3483,7 +3483,7 @@ fn comptime_format_impl(format_string: String, arguments: ArraySlice<Value>, pro
 
         if has_index {
             let index_str = str.substring(start: 0, length: slice_end)
-            let index = index_str.to_uint()
+            let index = index_str.to_number<u32>()
             if index.has_value() {
                 return (index! as! usize, str.substring(start: slice_end, length: str.length() - slice_end))
             }
