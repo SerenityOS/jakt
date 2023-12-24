@@ -13556,7 +13556,7 @@ auto&& __jakt_match_value = __jakt_match_variant.as.UnknownUnsigned;u64 const& n
 return JaktInternal::ExplicitValue((infallible_integer_cast<size_t>((num))));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue((infallible_integer_cast<size_t>((static_cast<i64>(0LL)))));
+return JaktInternal::ExplicitValue((static_cast<size_t>((static_cast<size_t>(0ULL)))));
 };/*case end*/
 }/*switch end*/
 }()

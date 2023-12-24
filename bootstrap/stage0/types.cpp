@@ -11232,7 +11232,7 @@ return JaktInternal::ExplicitValue(types::NumberConstant::Signed((infallible_int
 };/*case end*/
 case 3 /* I64 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I64;i64 const& value = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::NumberConstant::Signed((infallible_integer_cast<i64>((value)))));
+return JaktInternal::ExplicitValue(types::NumberConstant::Signed((static_cast<i64>((value)))));
 };/*case end*/
 case 4 /* U8 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U8;u8 const& value = __jakt_match_value.value;
@@ -11248,11 +11248,11 @@ return JaktInternal::ExplicitValue(types::NumberConstant::Unsigned((infallible_i
 };/*case end*/
 case 7 /* U64 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.U64;u64 const& value = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::NumberConstant::Unsigned((infallible_integer_cast<u64>((value)))));
+return JaktInternal::ExplicitValue(types::NumberConstant::Unsigned((static_cast<u64>((value)))));
 };/*case end*/
 case 8 /* USize */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.USize;u64 const& value = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(types::NumberConstant::Unsigned((infallible_integer_cast<u64>((value)))));
+return JaktInternal::ExplicitValue(types::NumberConstant::Unsigned((static_cast<u64>((value)))));
 };/*case end*/
 case 10 /* F64 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.F64;f64 const& value = __jakt_match_value.value;
@@ -11385,6 +11385,11 @@ builder.append("CheckedTypeCast::Infallible"sv);
 [[maybe_unused]] auto const& that = this->as.Infallible;
 builder.appendff("({})", that.value);
 break;}
+case 2 /* Identity */: {
+builder.append("CheckedTypeCast::Identity"sv);
+[[maybe_unused]] auto const& that = this->as.Identity;
+builder.appendff("({})", that.value);
+break;}
 }
 return builder.to_string();
 }
@@ -11400,6 +11405,12 @@ __jakt_uninit_enum.__jakt_variant_index = 2;
 new (&__jakt_uninit_enum.as.Infallible.value) (decltype(value))(move(value));
 return __jakt_uninit_enum;
 }
+[[nodiscard]] CheckedTypeCast CheckedTypeCast::Identity(ids::TypeId value){
+CheckedTypeCast __jakt_uninit_enum;
+__jakt_uninit_enum.__jakt_variant_index = 3;
+new (&__jakt_uninit_enum.as.Identity.value) (decltype(value))(move(value));
+return __jakt_uninit_enum;
+}
 CheckedTypeCast& CheckedTypeCast::operator=(CheckedTypeCast const &rhs){
 {VERIFY(this->__jakt_variant_index != 0 && rhs.__jakt_variant_index != 0);
 if (this->__jakt_variant_index != rhs.__jakt_variant_index) {
@@ -11411,6 +11422,9 @@ break;
 case 1 /* Infallible */:
 new (&this->as.Infallible.value) (decltype(this->as.Infallible.value))(rhs.as.Infallible.value);
 break;
+case 2 /* Identity */:
+new (&this->as.Identity.value) (decltype(this->as.Identity.value))(rhs.as.Identity.value);
+break;
 }
 } else {
 switch (rhs.__jakt_init_index()) {
@@ -11419,6 +11433,9 @@ this->as.Fallible.value = rhs.as.Fallible.value;
 break;
 case 1 /* Infallible */:
 this->as.Infallible.value = rhs.as.Infallible.value;
+break;
+case 2 /* Identity */:
+this->as.Identity.value = rhs.as.Identity.value;
 break;
 }
 }
@@ -11434,6 +11451,9 @@ break;
 case 1 /* Infallible */:
 new (&this->as.Infallible.value) (decltype(this->as.Infallible.value))(rhs.as.Infallible.value);
 break;
+case 2 /* Identity */:
+new (&this->as.Identity.value) (decltype(this->as.Identity.value))(rhs.as.Identity.value);
+break;
 }
 this->__jakt_variant_index = rhs.__jakt_variant_index;
 }
@@ -11448,6 +11468,9 @@ break;
 case 1 /* Infallible */:
 new (&this->as.Infallible.value) (decltype(this->as.Infallible.value))(move(rhs.as.Infallible.value));
 break;
+case 2 /* Identity */:
+new (&this->as.Identity.value) (decltype(this->as.Identity.value))(move(rhs.as.Identity.value));
+break;
 }
 } else {
 switch (rhs.__jakt_init_index()) {
@@ -11456,6 +11479,9 @@ this->as.Fallible.value = move(rhs.as.Fallible.value);
 break;
 case 1 /* Infallible */:
 this->as.Infallible.value = move(rhs.as.Infallible.value);
+break;
+case 2 /* Identity */:
+this->as.Identity.value = move(rhs.as.Identity.value);
 break;
 }
 }
@@ -11472,6 +11498,9 @@ break;
 case 1 /* Infallible */:
 new (&this->as.Infallible.value) (decltype(this->as.Infallible.value))(move(rhs.as.Infallible.value));
 break;
+case 2 /* Identity */:
+new (&this->as.Identity.value) (decltype(this->as.Identity.value))(move(rhs.as.Identity.value));
+break;
 }
 this->__jakt_variant_index = rhs.__jakt_variant_index;
 }
@@ -11483,6 +11512,8 @@ switch (this->__jakt_init_index()) {
 case 0 /* Fallible */:this->as.Fallible.value.~TypeId();
 break;
 case 1 /* Infallible */:this->as.Infallible.value.~TypeId();
+break;
+case 2 /* Identity */:this->as.Identity.value.~TypeId();
 break;
 }
 }
@@ -11498,6 +11529,10 @@ return JaktInternal::ExplicitValue(type_id);
 };/*case end*/
 case 1 /* Infallible */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Infallible;ids::TypeId const& type_id = __jakt_match_value.value;
+return JaktInternal::ExplicitValue(type_id);
+};/*case end*/
+case 2 /* Identity */: {
+auto&& __jakt_match_value = __jakt_match_variant.as.Identity;ids::TypeId const& type_id = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(type_id);
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/

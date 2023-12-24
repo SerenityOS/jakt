@@ -10,7 +10,7 @@
 namespace Jakt {
 namespace interpreter {
 enum class InterpretError : i32 {
-CallToExternalFunction = (infallible_integer_cast<i32>((static_cast<i32>(42)))),
+CallToExternalFunction = (static_cast<i32>((static_cast<i32>(42)))),
 MismatchingArguments = (infallible_integer_cast<i32>((static_cast<u64>(43ULL)))),
 InvalidThisArgument = (infallible_integer_cast<i32>((static_cast<u64>(44ULL)))),
 InvalidOperation = (infallible_integer_cast<i32>((static_cast<u64>(45ULL)))),
