@@ -2821,6 +2821,36 @@ class Interpreter {
                         panic("Invalid String")
                     }
                 }
+                "to_number" => match this_argument!.impl {
+                    JaktString(value) => {
+                        let target_type = .program.get_type(type_bindings.get(type_bindings.keys()[0])!)
+                        yield match target_type {
+                            I32 => {
+                                let v = value.to_int()
+                                let impl = match v.has_value() {
+                                    true => ValueImpl::OptionalSome(value: Value(impl: ValueImpl::I32(v!), span: call_span))
+                                    false => ValueImpl::OptionalNone
+                                }
+                                yield StatementResult::JustValue(Value(impl, span: call_span))
+                            }
+                            U32 => {
+                                let v = value.to_uint()
+                                let impl = match v.has_value() {
+                                    true => ValueImpl::OptionalSome(value: Value(impl: ValueImpl::U32(v!), span: call_span))
+                                    false => ValueImpl::OptionalNone
+                                }
+                                yield StatementResult::JustValue(Value(impl, span: call_span))
+                            }
+                            // FIXME: Add support for other number types
+                            else => {
+                                throw Error::from_string_literal("Invalid or unsupported type for String::to_number")
+                            }
+                        }
+                    }
+                    else => {
+                        panic("Invalid String")
+                    }
+                }
                 "is_whitespace" => match this_argument!.impl {
                     JaktString(value) => StatementResult::JustValue(Value(impl: ValueImpl::Bool(value.is_whitespace()), span: call_span))
                     else => {
