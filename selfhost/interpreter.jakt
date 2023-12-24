@@ -2823,10 +2823,15 @@ class Interpreter {
                 }
                 "to_number" => match this_argument!.impl {
                     JaktString(value) => {
+                        if type_bindings.size() < 1 {
+                            .error("to_number expects one generic argument", call_span)
+                            throw Error::from_string_literal("Invalid type")
+                        }
+
                         let target_type = .program.get_type(type_bindings.get(type_bindings.keys()[0])!)
                         yield match target_type {
                             I32 => {
-                                let v = value.to_int()
+                                let v = value.to_number<i32>()
                                 let impl = match v.has_value() {
                                     true => ValueImpl::OptionalSome(value: Value(impl: ValueImpl::I32(v!), span: call_span))
                                     false => ValueImpl::OptionalNone
@@ -2834,7 +2839,7 @@ class Interpreter {
                                 yield StatementResult::JustValue(Value(impl, span: call_span))
                             }
                             U32 => {
-                                let v = value.to_uint()
+                                let v = value.to_number<u32>()
                                 let impl = match v.has_value() {
                                     true => ValueImpl::OptionalSome(value: Value(impl: ValueImpl::U32(v!), span: call_span))
                                     false => ValueImpl::OptionalNone
@@ -6287,7 +6292,25 @@ class Interpreter {
                 })
             }
 
-            yield match .execute(call.function_id!, namespace_: Some(call.namespace_), this_argument, arguments, call_span: span) {
+            mut type_bindings: [TypeId:TypeId] = [:]
+            for i in 0..function_to_run.generics.params.size() {
+                let param = function_to_run.generics.params[i]
+
+                type_bindings.set(
+                    param.type_id()
+                    call.type_args[i]
+                )
+            }
+            yield match .execute(
+                call.function_id!
+                namespace_: Some(call.namespace_)
+                this_argument
+                arguments
+                call_span: span
+                invocation_scope: InterpreterScope::create(
+                    type_bindings
+                )
+            ) {
                 Return(value) => StatementResult::JustValue(value)
                 Throw(value) => StatementResult::Throw(value)
             }
