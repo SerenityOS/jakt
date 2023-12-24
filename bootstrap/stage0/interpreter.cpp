@@ -7324,7 +7324,7 @@ auto&& __jakt_match_variant = *target_type;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 8 /* I32 */: {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_288; {
-JaktInternal::Optional<i32> const v = ((value).to_int());
+JaktInternal::Optional<i32> const v = ((value).template to_number<i32>());
 NonnullRefPtr<typename types::ValueImpl> const impl = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename types::ValueImpl>,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (((v).has_value()));
@@ -7347,7 +7347,7 @@ __jakt_label_274:; __jakt_var_288.release_value(); }));
 };/*case end*/
 case 4 /* U32 */: {
 return JaktInternal::ExplicitValue(({ Optional<interpreter::StatementResult> __jakt_var_289; {
-JaktInternal::Optional<u32> const v = ((value).to_uint());
+JaktInternal::Optional<u32> const v = ((value).template to_number<u32>());
 NonnullRefPtr<typename types::ValueImpl> const impl = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename types::ValueImpl>,ErrorOr<interpreter::StatementResult>> {
 auto __jakt_enum_value = (((v).has_value()));
