@@ -313,7 +313,7 @@ comptime make_json_decoder<T>() throws -> fn(anon x: &mut T, anon parser: &mut J
                     if negative {
                         throw error("Invalid uint")
                     }
-                    let parsed = text.to_uint()
+                    let parsed = text.to_number<u32>()
                     if parsed.has_value() {
                         x = force_to<T>(parsed!)
                         return
@@ -327,7 +327,7 @@ comptime make_json_decoder<T>() throws -> fn(anon x: &mut T, anon parser: &mut J
             let token = parser.next()
             if token.has_value() {
                 if token! is Number(text, negative) {
-                    let parsed = text.to_int()
+                    let parsed = text.to_number<i32>()
                     if parsed.has_value() {
                         x = force_to<T>(parsed!)
                         if negative {

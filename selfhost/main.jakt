@@ -136,7 +136,7 @@ fn parse_format_range(anon range: String, anon input_file_length: usize) -> Form
         )
     }
 
-    let start_input = parts[0].to_uint()
+    let start_input = parts[0].to_number<u32>()
     if not start_input.has_value() {
         return None
     }
@@ -145,7 +145,7 @@ fn parse_format_range(anon range: String, anon input_file_length: usize) -> Form
     let end = match parts.size() {
         1 => input_file_length
         2 => {
-            let end_input = parts[1].to_uint()
+            let end_input = parts[1].to_number<u32>()
             if not end_input.has_value() {
                 return None
             }
@@ -556,7 +556,7 @@ fn compiler_main(anon args: [String]) throws -> c_int {
     let ak_stdlib = args_parser.flag(["--ak-is-my-only-stdlib"])
     let discover_only = args_parser.flag(["--discover"])
 
-    let max_concurrent = try value_or_throw(compiler_job_count.to_uint()) catch {
+    let max_concurrent = try value_or_throw(compiler_job_count.to_number<u32>()) catch {
         eprintln("error: invalid value for --jobs: {}", compiler_job_count)
         return 1
     } as! usize
@@ -794,7 +794,7 @@ fn compiler_main(anon args: [String]) throws -> c_int {
     }
 
     if goto_def.has_value() {
-        let index = goto_def!.to_uint()! as! usize;
+        let index = goto_def!.to_number<u32>()! as! usize;
 
         let result = ide::find_definition_in_program(program: checked_program, span: Span(file_id: FileId(id: 1), start: index, end: index))
 
@@ -808,7 +808,7 @@ fn compiler_main(anon args: [String]) throws -> c_int {
         return 0
     }
     if goto_type_def.has_value() {
-        let index = goto_type_def!.to_uint()! as! usize;
+        let index = goto_type_def!.to_number<u32>()! as! usize;
 
         let result = ide::find_type_definition_in_program(program: checked_program, span: Span(file_id: FileId(id: 1), start: index, end: index))
 
@@ -822,7 +822,7 @@ fn compiler_main(anon args: [String]) throws -> c_int {
         return 0
     }
     if hover.has_value() {
-        let index = hover!.to_uint()! as! usize;
+        let index = hover!.to_number<u32>()! as! usize;
 
         let result = ide::find_typename_in_program(program: checked_program, span: Span(file_id: FileId(id: 1), start: index, end: index))
 
@@ -832,7 +832,7 @@ fn compiler_main(anon args: [String]) throws -> c_int {
         return 0
     }
     if completions.has_value() {
-        let index = completions!.to_uint()! as! usize;
+        let index = completions!.to_number<u32>()! as! usize;
 
         let result = ide::find_dot_completions(program: checked_program, span: Span(file_id: FileId(id: 1), start: index, end: index))
 
