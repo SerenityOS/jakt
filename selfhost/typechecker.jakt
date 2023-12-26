@@ -8587,7 +8587,8 @@ struct Typechecker {
     }
 
     fn typecheck_must(mut this, expr: ParsedExpression, span: Span, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId?) throws -> CheckedExpression {
-        let checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint)
+        let must_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: true, debug_name: "must")
+        let checked_expr = .typecheck_expression(expr, scope_id: must_scope_id, safety_mode, type_hint)
         if not checked_expr.can_throw() {
             .error(format("‘must’ operator used on non-throwing expression"), span)
         }

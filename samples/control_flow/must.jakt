@@ -1,11 +1,16 @@
 /// Expect:
-/// - output: "magic number: 42\n"
+/// - output: "magic number: 42 42\n"
 
 fn magic_number() throws -> i32 {
     return 42
 }
 
+fn ensure_magic_number() -> i32 {
+    return must magic_number()
+}
+
 fn main() {
-    let magic = must magic_number()
-    println("magic number: {}", magic)
+    let magic1 = must magic_number()
+    let magic2 = ensure_magic_number()
+    println("magic number: {} {}", magic1, magic2)
 }
