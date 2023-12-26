@@ -1,0 +1,17 @@
+/// Expect:
+/// - output: "PASS\n"
+
+fn may_throw(magic_number: i32) throws {
+    if magic_number != 1 {
+        throw Error::from_string_literal("Bad magic number!")
+    }
+}
+
+fn does_not_throw() {
+    must may_throw(magic_number: 1)
+}
+
+fn main() {
+    does_not_throw()
+    println("PASS")
+}
