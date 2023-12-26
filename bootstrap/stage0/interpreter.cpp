@@ -2818,7 +2818,7 @@ return TRY((interpreter::Interpreter::invoke_typecheck_block(((((((*this).typech
 
 ErrorOr<types::CheckedBlock> interpreter::Interpreter::invoke_typecheck_block(Function<ErrorOr<types::CheckedBlock>(parser::ParsedBlock, ids::ScopeId, types::SafetyMode, JaktInternal::Optional<ids::TypeId>, JaktInternal::Optional<ids::FunctionId>)> const& function,parser::ParsedBlock const block,ids::ScopeId const parent_scope_id,JaktInternal::Optional<ids::FunctionId> const function_id) {
 {
-return TRY((function(block,parent_scope_id,types::SafetyMode::Safe(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone())));
+return TRY((function(block,parent_scope_id,types::SafetyMode::Safe(),JaktInternal::OptionalNone(),function_id)));
 }
 }
 

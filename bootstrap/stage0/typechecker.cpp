@@ -469,7 +469,7 @@ return ((((*this).program))->get_scope(id));
 
 ErrorOr<JaktInternal::Optional<NonnullRefPtr<types::CheckedVariable>>> typechecker::Typechecker::find_var_in_scope(ids::ScopeId const scope_id,ByteString const var,JaktInternal::Optional<ids::ScopeId> const root_scope_id) const {
 {
-return TRY((((((*this).program))->find_var_in_scope(scope_id,var,false,JaktInternal::OptionalNone()))));
+return TRY((((((*this).program))->find_var_in_scope(scope_id,var,false,root_scope_id))));
 }
 }
 
@@ -990,13 +990,13 @@ return true;
 
 ErrorOr<JaktInternal::Optional<JaktInternal::DynamicArray<ids::FunctionId>>> typechecker::Typechecker::find_functions_with_name_in_scope(ids::ScopeId const parent_scope_id,ByteString const function_name,JaktInternal::Optional<ids::ScopeId> const root_scope_id) const {
 {
-return TRY((((((*this).program))->find_functions_with_name_in_scope(parent_scope_id,function_name,false,JaktInternal::OptionalNone()))));
+return TRY((((((*this).program))->find_functions_with_name_in_scope(parent_scope_id,function_name,false,root_scope_id))));
 }
 }
 
 ErrorOr<JaktInternal::Optional<JaktInternal::Tuple<JaktInternal::DynamicArray<ids::FunctionId>,ids::ScopeId>>> typechecker::Typechecker::find_scoped_functions_with_name_in_scope(ids::ScopeId const parent_scope_id,ByteString const function_name,JaktInternal::Optional<ids::ScopeId> const root_scope_id) const {
 {
-return TRY((((((*this).program))->find_scoped_functions_with_name_in_scope(parent_scope_id,function_name,false,JaktInternal::OptionalNone()))));
+return TRY((((((*this).program))->find_scoped_functions_with_name_in_scope(parent_scope_id,function_name,false,root_scope_id))));
 }
 }
 
@@ -3819,7 +3819,7 @@ parser::ParsedGenericParameter gen_parameter = (_magic_value.value());
 ids::TypeId const parameter_type_id = ids::TypeId(((*this).current_module_id),((((((*this).current_module()))->types)).size()));
 JaktInternal::DynamicArray<ids::TypeId> trait_implementations = DynamicArray<ids::TypeId>::create_with({});
 types::CheckedGenericParameter parameter = types::CheckedGenericParameter::make(parameter_type_id,((gen_parameter).span));
-((((module)->types)).push(types::Type::TypeVariable(parser::CheckedQualifiers(false),((gen_parameter).name),trait_implementations,false)));
+((((module)->types)).push(types::Type::TypeVariable(parser::CheckedQualifiers(false),((gen_parameter).name),trait_implementations,((gen_parameter).is_value))));
 if (((((gen_parameter).requires_list)).has_value())){
 TRY((((*this).fill_trait_requirements((((gen_parameter).requires_list).value()),((((parameter).constraints))),((trait_implementations)),scope_id))));
 }
@@ -18336,7 +18336,8 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 
 ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> typechecker::Typechecker::typecheck_must(NonnullRefPtr<typename parser::ParsedExpression> const expr,utility::Span const span,ids::ScopeId const scope_id,types::SafetyMode const safety_mode,JaktInternal::Optional<ids::TypeId> const type_hint) {
 {
-NonnullRefPtr<typename types::CheckedExpression> const checked_expr = TRY((((*this).typecheck_expression(expr,scope_id,safety_mode,type_hint))));
+ids::ScopeId const must_scope_id = ((*this).create_scope(scope_id,true,(ByteString::from_utf8_without_validation("must"sv)),true));
+NonnullRefPtr<typename types::CheckedExpression> const checked_expr = TRY((((*this).typecheck_expression(expr,must_scope_id,safety_mode,type_hint))));
 if ((!(((checked_expr)->can_throw())))){
 ((*this).error(__jakt_format((StringView::from_string_literal("‘must’ operator used on non-throwing expression"sv))),span));
 }
@@ -20730,7 +20731,7 @@ ids::FunctionId const pseudo_function_id = (((*this).get_type(inner_type)))->as.
 return DynamicArray<ids::FunctionId>::create_with({pseudo_function_id});
 }
 }
-JaktInternal::Optional<JaktInternal::Tuple<JaktInternal::DynamicArray<ids::FunctionId>,ids::ScopeId>> const maybe_overload_set = TRY((((*this).find_scoped_functions_with_name_in_scope(current_scope_id,((call).name),current_scope_id))));
+JaktInternal::Optional<JaktInternal::Tuple<JaktInternal::DynamicArray<ids::FunctionId>,ids::ScopeId>> const maybe_overload_set = TRY((((*this).find_scoped_functions_with_name_in_scope(current_scope_id,((call).name),JaktInternal::OptionalNone()))));
 if (((maybe_overload_set).has_value())){
 NonnullRefPtr<types::CheckedFunction> const function = ((*this).get_function((((((maybe_overload_set.value())).template get<0>()))[static_cast<i64>(0LL)])));
 if (((!(must_be_enum_constructor)) || ((((function)->type)).__jakt_init_index() == 3 /* ImplicitEnumConstructor */))){
@@ -21765,7 +21766,7 @@ break;
 }
 
 JaktInternal::Optional<interpreter::ExecutionResult> result = JaktInternal::OptionalNone();
-NonnullRefPtr<interpreter::InterpreterScope> invocation_scope = interpreter::InterpreterScope::create(Dictionary<ByteString, types::Value>::create_with_entries({}),JaktInternal::OptionalNone(),Dictionary<ids::TypeId, ids::TypeId>::create_with_entries({}));
+NonnullRefPtr<interpreter::InterpreterScope> invocation_scope = interpreter::InterpreterScope::create(Dictionary<ByteString, types::Value>::create_with_entries({}),eval_scope,type_bindings);
 auto __jakt_var_601 = [&]() -> ErrorOr<void> {{
 (result = TRY((((interpreter)->execute((resolved_function_id.value()),resolved_namespaces,this_argument,call_args,span,invocation_scope)))));
 }
@@ -21889,6 +21890,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 (((args).size()),max_number_of_valid_arguments) || has_varargs))){
 size_t consumed_arg = static_cast<size_t>(0ULL);
 JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span,NonnullRefPtr<typename types::CheckedExpression>>> resolved_args = DynamicArray<JaktInternal::Tuple<ByteString,utility::Span,NonnullRefPtr<typename types::CheckedExpression>>>::create_with({});
+JaktInternal::Dictionary<size_t,JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,ByteString>>> invalid_considered_argument_uses = Dictionary<size_t, JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,ByteString>>>::create_with_entries({});
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(arg_offset),static_cast<size_t>(((params).size()))});
 for (;;){
@@ -21978,6 +21980,32 @@ if (((*this).validate_argument_label(param,name,span,expr,maybe_checked_expr))){
 (maybe_checked_expr = TRY((((*this).typecheck_expression(expr,scope_id,safety_mode,((((param).variable))->type_id))))));
 ((consumed_arg++));
 }
+else {
+ByteString const reason = ({
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span,NonnullRefPtr<typename types::CheckedExpression>>>>> {
+auto __jakt_enum_value = (((name).is_empty()));
+if (__jakt_enum_value == true) {
+return JaktInternal::ExplicitValue(__jakt_format((StringView::from_string_literal("Missing argument label (expected '{}:')"sv)),((((param).variable))->name)));
+}
+else if (__jakt_enum_value == false) {
+return JaktInternal::ExplicitValue(__jakt_format((StringView::from_string_literal("Wrong parameter name in argument label (got '{}', expected '{}')"sv)),name,((((param).variable))->name)));
+}
+VERIFY_NOT_REACHED();
+}());
+    if (_jakt_value.is_return())
+        return _jakt_value.release_return();
+    if (_jakt_value.is_loop_break())
+        break;
+    if (_jakt_value.is_loop_continue())
+        continue;
+    _jakt_value.release_value();
+});
+if ((!(((invalid_considered_argument_uses).contains(consumed_arg))))){
+invalid_considered_argument_uses.set(consumed_arg, DynamicArray<JaktInternal::Tuple<size_t,ByteString>>::create_with({}));
+}
+((((invalid_considered_argument_uses)[consumed_arg])).push((Tuple{i, reason})));
+}
+
 }
 }
 
@@ -21990,6 +22018,42 @@ NonnullRefPtr<typename types::CheckedExpression> checked_arg = (maybe_checked_ex
 }
 }
 
+if ((!(has_varargs))){
+while ([](size_t const& self, size_t rhs) -> bool {{
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
+return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+}
+}
+(self,rhs))))) == (static_cast<u8>(0)));
+}
+}
+(consumed_arg,((args).size()))){
+ScopeGuard __jakt_var_605([&] {
+((consumed_arg) += (static_cast<size_t>(1ULL)));
+});
+if (((invalid_considered_argument_uses).contains(consumed_arg))){
+JaktInternal::Tuple<size_t,ByteString> const last_invalid_use = (((((invalid_considered_argument_uses)[consumed_arg])).last()).value());
+((*this).error_with_hint((ByteString::from_utf8_without_validation("Invalid argument not used in call"sv)),((((args)[consumed_arg])).template get<1>()),__jakt_format((StringView::from_string_literal("{} position{} considered for the argument, final rejection reason was: {}"sv)),((((invalid_considered_argument_uses)[consumed_arg])).size()),({
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span,NonnullRefPtr<typename types::CheckedExpression>>>>> {
+auto __jakt_enum_value = (((((invalid_considered_argument_uses)[consumed_arg])).size()));
+if (__jakt_enum_value == static_cast<size_t>(1ULL)) {
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation(""sv)));
+}
+else {
+return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("s"sv)));
+}
+}());
+    if (_jakt_value.is_return())
+        return _jakt_value.release_return();
+    if (_jakt_value.is_loop_break())
+        break;
+    if (_jakt_value.is_loop_continue())
+        continue;
+    _jakt_value.release_value();
+}),((last_invalid_use).template get<1>())),((((((params)[((last_invalid_use).template get<0>())])).variable))->definition_span)));
+}
+}
+}
 {
 JaktInternal::ArrayIterator<JaktInternal::Tuple<ByteString,utility::Span,NonnullRefPtr<typename parser::ParsedExpression>>> _magic = ((((args)[(JaktInternal::Range<size_t>{static_cast<size_t>(consumed_arg),static_cast<size_t>(9223372036854775807LL)})])).iterator());
 for (;;){
@@ -22118,7 +22182,7 @@ ErrorOr<JaktInternal::DynamicArray<JaktInternal::DynamicArray<ids::TypeId>>> typ
 {
 Function<ErrorOr<bool>(JaktInternal::DynamicArray<ids::TypeId>)> const generics_match = [this, &filter_for_generics, &trait_id](JaktInternal::DynamicArray<ids::TypeId> generics) -> ErrorOr<bool> {{
 JaktInternal::Dictionary<ids::TypeId,ids::TypeId> const old_generic_inferences = ((((*this).generic_inferences)).perform_checkpoint(false));
-ScopeGuard __jakt_var_605([&] {
+ScopeGuard __jakt_var_606([&] {
 ((((*this).generic_inferences)).restore(old_generic_inferences));
 });
 if (((filter_for_generics).has_value())){
@@ -22134,7 +22198,7 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 (((generics).size()),((generics_to_match).size()))){
 bool const old_ignore_errors = ((*this).ignore_errors);
 (((*this).ignore_errors) = true);
-ScopeGuard __jakt_var_606([&] {
+ScopeGuard __jakt_var_607([&] {
 {
 (((*this).ignore_errors) = old_ignore_errors);
 (((*this).had_an_error) = false);
@@ -22185,53 +22249,6 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 24 /* Struct */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Struct;ids::StructId const& struct_id = __jakt_match_value.value;
 JaktInternal::DynamicArray<ids::TypeId> const args = DynamicArray<ids::TypeId>::create_with({});
-return JaktInternal::ExplicitValue(({ Optional<JaktInternal::DynamicArray<JaktInternal::DynamicArray<ids::TypeId>>> __jakt_var_607; {
-types::CheckedStruct const struct_ = ((*this).get_struct(struct_id));
-((((*this).generic_inferences)).set_all(((struct_).generic_parameters),args));
-JaktInternal::DynamicArray<JaktInternal::DynamicArray<ids::TypeId>> implementations = DynamicArray<JaktInternal::DynamicArray<ids::TypeId>>::create_with({});
-{
-JaktInternal::DictionaryIterator<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<ids::TraitId,JaktInternal::DynamicArray<ids::TypeId>>>> _magic = ((((struct_).trait_implementations)).iterator());
-for (;;){
-JaktInternal::Optional<JaktInternal::Tuple<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<ids::TraitId,JaktInternal::DynamicArray<ids::TypeId>>>>> const _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-JaktInternal::Tuple<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<ids::TraitId,JaktInternal::DynamicArray<ids::TypeId>>>> ___trait_descriptors__ = (_magic_value.value());
-{
-JaktInternal::Tuple<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<ids::TraitId,JaktInternal::DynamicArray<ids::TypeId>>>> const jakt_____trait_descriptors__ = ___trait_descriptors__;
-ByteString const _ = ((jakt_____trait_descriptors__).template get<0>());
-JaktInternal::DynamicArray<JaktInternal::Tuple<ids::TraitId,JaktInternal::DynamicArray<ids::TypeId>>> const trait_descriptors = ((jakt_____trait_descriptors__).template get<1>());
-
-{
-JaktInternal::ArrayIterator<JaktInternal::Tuple<ids::TraitId,JaktInternal::DynamicArray<ids::TypeId>>> _magic = ((trait_descriptors).iterator());
-for (;;){
-JaktInternal::Optional<JaktInternal::Tuple<ids::TraitId,JaktInternal::DynamicArray<ids::TypeId>>> const _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
-break;
-}
-JaktInternal::Tuple<ids::TraitId,JaktInternal::DynamicArray<ids::TypeId>> trait_descriptor = (_magic_value.value());
-{
-if ((((((trait_descriptor).template get<0>())).equals(trait_id)) && TRY((generics_match(((trait_descriptor).template get<1>())))))){
-((implementations).push(((trait_descriptor).template get<1>())));
-}
-}
-
-}
-}
-
-}
-
-}
-}
-
-__jakt_var_607 = implementations; goto __jakt_label_518;
-
-}
-__jakt_label_518:; __jakt_var_607.release_value(); }));
-};/*case end*/
-case 20 /* GenericInstance */: {
-auto&& __jakt_match_value = __jakt_match_variant.as.GenericInstance;ids::StructId const& struct_id = __jakt_match_value.id;
-JaktInternal::DynamicArray<ids::TypeId> const& args = __jakt_match_value.args;
 return JaktInternal::ExplicitValue(({ Optional<JaktInternal::DynamicArray<JaktInternal::DynamicArray<ids::TypeId>>> __jakt_var_608; {
 types::CheckedStruct const struct_ = ((*this).get_struct(struct_id));
 ((((*this).generic_inferences)).set_all(((struct_).generic_parameters),args));
@@ -22271,18 +22288,20 @@ if ((((((trait_descriptor).template get<0>())).equals(trait_id)) && TRY((generic
 }
 }
 
-__jakt_var_608 = implementations; goto __jakt_label_519;
+__jakt_var_608 = implementations; goto __jakt_label_518;
 
 }
-__jakt_label_519:; __jakt_var_608.release_value(); }));
+__jakt_label_518:; __jakt_var_608.release_value(); }));
 };/*case end*/
-case 25 /* Enum */: {
-auto&& __jakt_match_value = __jakt_match_variant.as.Enum;ids::EnumId const& enum_id = __jakt_match_value.value;
+case 20 /* GenericInstance */: {
+auto&& __jakt_match_value = __jakt_match_variant.as.GenericInstance;ids::StructId const& struct_id = __jakt_match_value.id;
+JaktInternal::DynamicArray<ids::TypeId> const& args = __jakt_match_value.args;
 return JaktInternal::ExplicitValue(({ Optional<JaktInternal::DynamicArray<JaktInternal::DynamicArray<ids::TypeId>>> __jakt_var_609; {
-types::CheckedEnum const enum_ = ((*this).get_enum(enum_id));
+types::CheckedStruct const struct_ = ((*this).get_struct(struct_id));
+((((*this).generic_inferences)).set_all(((struct_).generic_parameters),args));
 JaktInternal::DynamicArray<JaktInternal::DynamicArray<ids::TypeId>> implementations = DynamicArray<JaktInternal::DynamicArray<ids::TypeId>>::create_with({});
 {
-JaktInternal::DictionaryIterator<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<ids::TraitId,JaktInternal::DynamicArray<ids::TypeId>>>> _magic = ((((enum_).trait_implementations)).iterator());
+JaktInternal::DictionaryIterator<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<ids::TraitId,JaktInternal::DynamicArray<ids::TypeId>>>> _magic = ((((struct_).trait_implementations)).iterator());
 for (;;){
 JaktInternal::Optional<JaktInternal::Tuple<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<ids::TraitId,JaktInternal::DynamicArray<ids::TypeId>>>>> const _magic_value = ((_magic).next());
 if ((!(((_magic_value).has_value())))){
@@ -22316,13 +22335,13 @@ if ((((((trait_descriptor).template get<0>())).equals(trait_id)) && TRY((generic
 }
 }
 
-__jakt_var_609 = implementations; goto __jakt_label_520;
+__jakt_var_609 = implementations; goto __jakt_label_519;
 
 }
-__jakt_label_520:; __jakt_var_609.release_value(); }));
+__jakt_label_519:; __jakt_var_609.release_value(); }));
 };/*case end*/
-case 21 /* GenericEnumInstance */: {
-auto&& __jakt_match_value = __jakt_match_variant.as.GenericEnumInstance;ids::EnumId const& enum_id = __jakt_match_value.id;
+case 25 /* Enum */: {
+auto&& __jakt_match_value = __jakt_match_variant.as.Enum;ids::EnumId const& enum_id = __jakt_match_value.value;
 return JaktInternal::ExplicitValue(({ Optional<JaktInternal::DynamicArray<JaktInternal::DynamicArray<ids::TypeId>>> __jakt_var_610; {
 types::CheckedEnum const enum_ = ((*this).get_enum(enum_id));
 JaktInternal::DynamicArray<JaktInternal::DynamicArray<ids::TypeId>> implementations = DynamicArray<JaktInternal::DynamicArray<ids::TypeId>>::create_with({});
@@ -22361,33 +22380,78 @@ if ((((((trait_descriptor).template get<0>())).equals(trait_id)) && TRY((generic
 }
 }
 
-__jakt_var_610 = implementations; goto __jakt_label_521;
+__jakt_var_610 = implementations; goto __jakt_label_520;
 
 }
-__jakt_label_521:; __jakt_var_610.release_value(); }));
+__jakt_label_520:; __jakt_var_610.release_value(); }));
+};/*case end*/
+case 21 /* GenericEnumInstance */: {
+auto&& __jakt_match_value = __jakt_match_variant.as.GenericEnumInstance;ids::EnumId const& enum_id = __jakt_match_value.id;
+return JaktInternal::ExplicitValue(({ Optional<JaktInternal::DynamicArray<JaktInternal::DynamicArray<ids::TypeId>>> __jakt_var_611; {
+types::CheckedEnum const enum_ = ((*this).get_enum(enum_id));
+JaktInternal::DynamicArray<JaktInternal::DynamicArray<ids::TypeId>> implementations = DynamicArray<JaktInternal::DynamicArray<ids::TypeId>>::create_with({});
+{
+JaktInternal::DictionaryIterator<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<ids::TraitId,JaktInternal::DynamicArray<ids::TypeId>>>> _magic = ((((enum_).trait_implementations)).iterator());
+for (;;){
+JaktInternal::Optional<JaktInternal::Tuple<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<ids::TraitId,JaktInternal::DynamicArray<ids::TypeId>>>>> const _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+JaktInternal::Tuple<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<ids::TraitId,JaktInternal::DynamicArray<ids::TypeId>>>> ___trait_descriptors__ = (_magic_value.value());
+{
+JaktInternal::Tuple<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<ids::TraitId,JaktInternal::DynamicArray<ids::TypeId>>>> const jakt_____trait_descriptors__ = ___trait_descriptors__;
+ByteString const _ = ((jakt_____trait_descriptors__).template get<0>());
+JaktInternal::DynamicArray<JaktInternal::Tuple<ids::TraitId,JaktInternal::DynamicArray<ids::TypeId>>> const trait_descriptors = ((jakt_____trait_descriptors__).template get<1>());
+
+{
+JaktInternal::ArrayIterator<JaktInternal::Tuple<ids::TraitId,JaktInternal::DynamicArray<ids::TypeId>>> _magic = ((trait_descriptors).iterator());
+for (;;){
+JaktInternal::Optional<JaktInternal::Tuple<ids::TraitId,JaktInternal::DynamicArray<ids::TypeId>>> const _magic_value = ((_magic).next());
+if ((!(((_magic_value).has_value())))){
+break;
+}
+JaktInternal::Tuple<ids::TraitId,JaktInternal::DynamicArray<ids::TypeId>> trait_descriptor = (_magic_value.value());
+{
+if ((((((trait_descriptor).template get<0>())).equals(trait_id)) && TRY((generics_match(((trait_descriptor).template get<1>())))))){
+((implementations).push(((trait_descriptor).template get<1>())));
+}
+}
+
+}
+}
+
+}
+
+}
+}
+
+__jakt_var_611 = implementations; goto __jakt_label_521;
+
+}
+__jakt_label_521:; __jakt_var_611.release_value(); }));
 };/*case end*/
 case 27 /* Trait */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Trait;ids::TraitId const& id = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<JaktInternal::DynamicArray<JaktInternal::DynamicArray<ids::TypeId>>> __jakt_var_611; {
+return JaktInternal::ExplicitValue(({ Optional<JaktInternal::DynamicArray<JaktInternal::DynamicArray<ids::TypeId>>> __jakt_var_612; {
 if ((((id).equals(trait_id)) && TRY((generics_match(DynamicArray<ids::TypeId>::create_with({})))))){
 return DynamicArray<JaktInternal::DynamicArray<ids::TypeId>>::create_with({DynamicArray<ids::TypeId>::create_with({})});
 }
-__jakt_var_611 = DynamicArray<JaktInternal::DynamicArray<ids::TypeId>>::create_with({}); goto __jakt_label_522;
+__jakt_var_612 = DynamicArray<JaktInternal::DynamicArray<ids::TypeId>>::create_with({}); goto __jakt_label_522;
 
 }
-__jakt_label_522:; __jakt_var_611.release_value(); }));
+__jakt_label_522:; __jakt_var_612.release_value(); }));
 };/*case end*/
 case 22 /* GenericTraitInstance */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.GenericTraitInstance;ids::TraitId const& id = __jakt_match_value.id;
 JaktInternal::DynamicArray<ids::TypeId> const& args = __jakt_match_value.args;
-return JaktInternal::ExplicitValue(({ Optional<JaktInternal::DynamicArray<JaktInternal::DynamicArray<ids::TypeId>>> __jakt_var_612; {
+return JaktInternal::ExplicitValue(({ Optional<JaktInternal::DynamicArray<JaktInternal::DynamicArray<ids::TypeId>>> __jakt_var_613; {
 if (((!(((id).equals(trait_id)))) || (!(TRY((generics_match(args))))))){
 return DynamicArray<JaktInternal::DynamicArray<ids::TypeId>>::create_with({});
 }
-__jakt_var_612 = DynamicArray<JaktInternal::DynamicArray<ids::TypeId>>::create_with({args}); goto __jakt_label_523;
+__jakt_var_613 = DynamicArray<JaktInternal::DynamicArray<ids::TypeId>>::create_with({args}); goto __jakt_label_523;
 
 }
-__jakt_label_523:; __jakt_var_612.release_value(); }));
+__jakt_label_523:; __jakt_var_613.release_value(); }));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(DynamicArray<JaktInternal::DynamicArray<ids::TypeId>>::create_with({}));
@@ -22407,7 +22471,7 @@ ErrorOr<bool> typechecker::Typechecker::implements_trait(ids::TypeId const type_
 Function<ErrorOr<bool>(JaktInternal::DynamicArray<JaktInternal::DynamicArray<ids::TypeId>>, ids::TraitId, JaktInternal::DynamicArray<ids::TypeId>, typechecker::Typechecker&)> const has_matching_trait = [type_id](JaktInternal::DynamicArray<JaktInternal::DynamicArray<ids::TypeId>> trait_implementations, ids::TraitId trait_id, JaktInternal::DynamicArray<ids::TypeId> passed_generic_arguments, typechecker::Typechecker& typechecker) -> ErrorOr<bool> {{
 bool const old_ignore_errors = ((((typechecker))).ignore_errors);
 (((((typechecker))).ignore_errors) = true);
-ScopeGuard __jakt_var_613([&] {
+ScopeGuard __jakt_var_614([&] {
 {
 (((((typechecker))).ignore_errors) = old_ignore_errors);
 (((((typechecker))).had_an_error) = false);
@@ -22818,7 +22882,7 @@ JaktInternal::DynamicArray<ids::TypeId> const trait_generic_arguments = ((trait_
 
 NonnullRefPtr<types::CheckedTrait> const trait_ = ((((typechecker))).get_trait(trait_id));
 JaktInternal::Dictionary<ids::TypeId,ids::TypeId> const old_generic_inferences = ((((((typechecker))).generic_inferences)).perform_checkpoint(false));
-ScopeGuard __jakt_var_614([&] {
+ScopeGuard __jakt_var_615([&] {
 ((((((typechecker))).generic_inferences)).restore(old_generic_inferences));
 });
 if (((((((trait_)->generic_parameters)).size())) == (((trait_generic_arguments).size())))){
