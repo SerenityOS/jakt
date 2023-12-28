@@ -1,0 +1,31 @@
+/// Expect:
+/// - output: "handled error\n"
+
+
+enum Foo {
+    Bar
+    Baz
+}
+
+fn may_throw() throws {
+    throw Error::from_string_literal("handled error")
+}
+
+fn main() {
+
+    loop {
+         match Foo::Baz {
+            Bar => {
+                abort()
+            },
+            Baz => {
+                try may_throw() catch err {
+                    println("{}", err)
+                    break
+                }
+            }
+        }
+        println("should not have continued loop :)")
+        break
+    }
+}
