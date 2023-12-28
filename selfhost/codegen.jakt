@@ -4643,13 +4643,13 @@ struct CodeGenerator {
                             yield_type_hint: TypeId?
                             containing_function_id: FunctionId? = None
                         ) throws -> CheckedBlock {
-                            throw Error::from_string_literal("Cannot typecheck a const block")
+                            panic("Cannot typecheck a const block")
                         }
 
                         register_function: fn(
                             function: CheckedFunction
                         ) throws -> FunctionId {
-                            throw Error::from_string_literal("Cannot typecheck a const function")
+                            panic("Cannot typecheck a const function")
                         }
                     )
                     spans: []
