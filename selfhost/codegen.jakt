@@ -3244,6 +3244,7 @@ struct CodeGenerator {
                         output.append(".release_error();\n")
                     }
 
+                    .control_flow_state = last_control_flow
                     if catch_block!.yielded_type.has_value() {
                         output.append(fresh_var)
                         output.append(" = (")
