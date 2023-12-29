@@ -1,0 +1,11 @@
+/// Expect:
+/// - output: "PASS\n"
+
+fn main() {
+    let x = 42f64
+    let y = x as! c_int
+
+    if y == 42 {
+        println("PASS")
+    }
+}

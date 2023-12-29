@@ -68,6 +68,8 @@ class Set;
 
 #include <Jakt/Operators.h>
 
+#include <math.h>
+
 namespace JaktInternal {
 
 #ifdef JAKT_CONTINUE_ON_PANIC
