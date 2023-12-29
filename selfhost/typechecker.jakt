@@ -11174,6 +11174,11 @@ struct Typechecker {
 
                         invalid_considered_argument_uses[consumed_arg].push((i, reason))
                     }
+                } else {
+                    if not param.default_value_expression.has_value() {
+                        .error(format("Missing argument for function parameter '{}'", param.variable.name), span)
+                        continue
+                    }
                 }
             }
 

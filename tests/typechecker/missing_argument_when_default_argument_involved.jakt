@@ -1,0 +1,10 @@
+/// Expect:
+/// - error: "Missing argument for function parameter 'b'"
+
+fn test(a: i32 = 1, b: usize) {
+    println("Wrong")
+}
+
+fn main() {
+    test(a: 1)
+}
