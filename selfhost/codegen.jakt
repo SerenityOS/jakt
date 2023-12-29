@@ -2643,7 +2643,7 @@ struct CodeGenerator {
                 output.append(">(")
                 .codegen_expression(expr, &mut output)
                 output.append(")")
-            } 
+            }
             ForcedUnwrap(expr, type_id) => {
                 output.append("(")
                 .codegen_expression(expr, &mut output)
@@ -2884,17 +2884,17 @@ struct CodeGenerator {
                                     cast_type = "assert_type"
                                 } else if type.is_boxed(program: .program) {
                                     cast_type = "infallible_class_cast"
+                                } else if (.program.is_integer(expr.type()) and .program.is_floating(type_id)) or
+                                    (.program.is_floating(expr.type()) and .program.is_integer(type_id)) or
+                                    (.program.is_floating(expr.type()) and .program.is_floating(type_id)) {
+
+                                    cast_type = "infallible_float_cast"
                                 } else if .program.is_integer(type_id) {
                                     cast_type = "infallible_integer_cast"
                                 } else if type is Enum(enum_id) and .program.is_integer(.program.get_enum(enum_id).underlying_type_id) {
                                     cast_type = "infallible_enum_cast"
                                 } else if type is RawPtr(inner) {
                                     cast_type = "reinterpret_cast"
-                                } else if (.program.is_integer(expr.type()) and .program.is_floating(type_id)) or
-                                    (.program.is_floating(expr.type()) and .program.is_integer(type_id)) or
-                                    (.program.is_floating(expr.type()) and .program.is_floating(type_id)) {
-
-                                    cast_type = "infallible_float_cast"
                                 }
                                 yield cast_type
                             }
