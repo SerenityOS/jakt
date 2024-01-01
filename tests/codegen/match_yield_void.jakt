@@ -1,0 +1,16 @@
+/// Expect:
+/// - output: "1\n2\n"
+
+fn is_void() {
+    println("1")
+}
+
+fn main() {
+    match 1 {
+        1 => {
+            yield is_void()
+        }
+        else => { }
+    }
+    println("2")
+}
