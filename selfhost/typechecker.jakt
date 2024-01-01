@@ -7087,6 +7087,11 @@ struct Typechecker {
 
         if rhs_type_id.equals(void_type_id()) {
             .error("Cannot assign `void` to a variable", checked_expr.span())
+        } else {
+            let unwrapped_type = .unwrap_type_from_optional_if_needed(type: .get_type(rhs_type_id))
+            if unwrapped_type.equals(.get_type(void_type_id())) {
+                .error("Cannot assign `Optional<void>` to a variable", checked_expr.span())
+            }
         }
 
         if .get_type(lhs_type_id).qualifiers.is_immutable {
