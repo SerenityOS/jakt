@@ -3245,7 +3245,7 @@ struct CodeGenerator {
                     }
 
                     .control_flow_state = last_control_flow
-                    if catch_block!.yielded_type.has_value() {
+                    if catch_block!.yielded_type.has_value() and not catch_block!.yielded_type!.equals(void_type_id()) {
                         output.append(fresh_var)
                         output.append(" = (")
                         .codegen_block(block: catch_block!, &mut output)
@@ -3695,10 +3695,9 @@ struct CodeGenerator {
                     expr.type() == unknown_type_id() and
                     not expr is OptionalNone
                 ) {
-
-                    output.append("return (")
+                    output.append("return ({")
                     .codegen_expression(expr, &mut output)
-                    output.append("), JaktInternal::ExplicitValue<void>();\n")
+                    output.append(";}), JaktInternal::ExplicitValue<void>();\n")
                 } else {
                     output.append("return JaktInternal::ExplicitValue(")
                     .codegen_expression(expr, &mut output)
@@ -4387,11 +4386,13 @@ struct CodeGenerator {
 
             .entered_yieldable_blocks.push((fresh_var, fresh_label))
 
-            output.append("({ Optional<")
-            output.append(type_output)
-            output.append("> ")
-            output.append(fresh_var)
-            output.append("; ")
+            if not yielded_type.equals(void_type_id()) {
+                output.append("({ Optional<")
+                output.append(type_output)
+                output.append("> ")
+                output.append(fresh_var)
+                output.append("; ")
+            }
         }
 
         output.append("{\n")
@@ -4407,11 +4408,13 @@ struct CodeGenerator {
 
             output.append(label)
             output.append(":; ")
-            output.append(var)
-            if not block.yielded_none {
-                output.append(".release_value()")
+            if not block.yielded_type!.equals(void_type_id()) {
+                output.append(var)
+                if not block.yielded_none {
+                    output.append(".release_value()")
+                }
+                output.append("; })")
             }
-            output.append("; })")
         }
     }
 
@@ -4577,8 +4580,11 @@ struct CodeGenerator {
 
                 let (var_name, end_label) = .entered_yieldable_blocks.last()!
 
-                output.append(var_name)
-                output.append(" = ")
+                if expr.type() != void_type_id() {
+                    output.append(var_name)
+                    output.append(" = ")
+                }
+
                 .codegen_expression(expr, &mut output)
                 output.append("; goto ")
                 output.append(end_label)
