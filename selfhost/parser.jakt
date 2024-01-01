@@ -534,7 +534,11 @@ struct ParsedBlock {
     fn find_yield_span(this) -> Span? {
         for stmt in .stmts {
             if stmt is Yield(expr) {
-                return expr.span()
+                if expr.has_value() {
+                    return expr!.span()
+                }
+
+                return stmt.span()
             }
         }
         return None
@@ -584,7 +588,7 @@ boxed enum ParsedStatement {
     Continue(Span)
     Return(expr: ParsedExpression?, span: Span)
     Throw(expr: ParsedExpression, span: Span)
-    Yield(expr: ParsedExpression, span: Span)
+    Yield(expr: ParsedExpression?, span: Span)
     InlineCpp(block: ParsedBlock, span: Span)
     Guard(expr: ParsedExpression, else_block: ParsedBlock, remaining_code: ParsedBlock, span: Span)
     Garbage(Span)
@@ -685,7 +689,16 @@ boxed enum ParsedStatement {
             else => false
         }
         Yield(expr: lhs_expr) =>  match rhs_statement {
-            Yield(expr: rhs_expr) => lhs_expr.equals(rhs_expr)
+            Yield(expr: rhs_expr) => {
+                if not lhs_expr.has_value() {
+                    return not rhs_expr.has_value()
+                } else {
+                    if not rhs_expr.has_value() {
+                        return false
+                    }
+                    return lhs_expr!.equals(rhs_expr!)
+                }
+            }
             else => false
         }
         InlineCpp(block: lhs_block) =>  match rhs_statement {
@@ -4578,11 +4591,25 @@ struct Parser {
             }
             Yield => {
                 .index++
-                let expr = .parse_expression(allow_assignments: false, allow_newlines: false)
-                if not inside_block {
-                    .error("‘yield’ can only be used inside a block", span: merge_spans(start, end: expr.span()))
+
+                yield match .current() {
+                    Eol | Eof | RCurly => {
+                        if not inside_block {
+                            .error("‘yield’ can only be used inside a block", span: start)
+                        }
+
+                        yield ParsedStatement::Yield(expr: None, span: start)
+                    }
+                    else => {
+                        let expr = .parse_expression(allow_assignments: false, allow_newlines: false)
+
+                        if not inside_block {
+                            .error("‘yield’ can only be used inside a block", span: merge_spans(start, end: expr.span()))
+                        }
+
+                        yield ParsedStatement::Yield(expr, span: merge_spans(start, .previous().span()))
+                    }
                 }
-                yield ParsedStatement::Yield(expr, span: merge_spans(start, .previous().span()))
             }
             Return => {
                 .index++

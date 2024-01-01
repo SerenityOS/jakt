@@ -1,0 +1,21 @@
+/// Expect:
+/// - output: "PASS\n"
+
+fn is_void() {
+    println("PASS")
+}
+
+fn test() {
+    match 1 {
+        1 => {
+            is_void();
+            yield
+        }
+        else => {
+        }
+    }
+}
+
+fn main() {
+    test()
+}

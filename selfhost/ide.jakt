@@ -623,7 +623,10 @@ fn find_span_in_statement(program: CheckedProgram, statement: CheckedStatement, 
             }
             yield find_span_in_statement(program, statement: var_decl, span)
         }
-        Yield(expr) => find_span_in_expression(program, expr, span)
+        Yield(expr) => match expr.has_value() {
+            true => find_span_in_expression(program, expr: expr!, span)
+            false => none
+        }
         Break | Continue | Garbage => none
     }
 }

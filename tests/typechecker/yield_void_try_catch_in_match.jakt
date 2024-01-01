@@ -1,0 +1,31 @@
+/// Expect:
+/// - output: "1\n2\n3\n"
+
+fn maybe_throws(x: i64) throws {
+    println("1")
+
+    if x == 3 {
+        throw Error::from_string_literal("fun")
+    }
+}
+
+fn test() {
+    let x = 3
+    match 1 {
+        1 => {
+            try maybe_throws(x) catch {
+                println("2")
+                yield
+            }
+
+            // Note that this will execute, catch block does not yield out of the match
+            println("3")
+        }
+        else => {
+        }
+    }
+}
+
+fn main() {
+    test()
+}
