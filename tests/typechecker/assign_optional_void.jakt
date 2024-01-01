@@ -1,0 +1,16 @@
+/// Expect:
+/// - error: "Cannot assign `Optional<void>` to a variable"
+
+fn may_throw() throws {}
+
+fn thing() {
+    let a = match 1 {
+        1 => try may_throw() catch {},
+        else => {}
+    }
+}
+
+fn main() {
+    thing()
+    println("PASS")
+}
