@@ -1127,7 +1127,10 @@ class Interpreter {
         }
         Break | Continue | InlineCpp | Garbage => statement
         Throw(expr, span) => CheckedStatement::Throw(expr: .perform_final_interpretation_expr_pass(expr, scope, function_id), span)
-        Yield(expr, span) => CheckedStatement::Yield(expr: .perform_final_interpretation_expr_pass(expr, scope, function_id), span)
+        Yield(expr, span) => match expr.has_value() {
+            true => CheckedStatement::Yield(expr: .perform_final_interpretation_expr_pass(expr: expr!, scope, function_id), span)
+            false => statement
+        }
     }
 
     public fn perform_final_interpretation_expr_pass(
@@ -3829,24 +3832,30 @@ class Interpreter {
             Continue => {
                 return StatementResult::Continue
             }
-            Yield(expr) => match .execute_expression(expr, scope) {
-                JustValue(value) => {
-                    return StatementResult::Yield(value)
+            Yield(expr) => {
+                if not expr.has_value() {
+                    return StatementResult::Yield(Value(impl: ValueImpl::Void, span: call_span))
                 }
-                Throw(value) => {
-                    return StatementResult::Throw(value)
-                }
-                Return(value) => {
-                    return StatementResult::Return(value)
-                }
-                Continue => {
-                    return StatementResult::Continue
-                }
-                Break => {
-                    return StatementResult::Break
-                }
-                Yield => {
-                    panic("Invalid control flow")
+
+                return match .execute_expression(expr!, scope) {
+                    JustValue(value) => {
+                        return StatementResult::Yield(value)
+                    }
+                    Throw(value) => {
+                        return StatementResult::Throw(value)
+                    }
+                    Return(value) => {
+                        return StatementResult::Return(value)
+                    }
+                    Continue => {
+                        return StatementResult::Continue
+                    }
+                    Break => {
+                        return StatementResult::Break
+                    }
+                    Yield => {
+                        panic("Invalid control flow")
+                    }
                 }
             }
             Throw(expr) => match .execute_expression(expr, scope) {

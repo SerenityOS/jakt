@@ -4858,7 +4858,10 @@ struct Typechecker {
         Throw => BlockControlFlow::AlwaysReturns
         Break => BlockControlFlow::AlwaysTransfersControl(might_break: true)
         Continue => BlockControlFlow::AlwaysTransfersControl(might_break: false)
-        Yield(expr) => expr.control_flow().updated(BlockControlFlow::AlwaysTransfersControl(might_break: false))
+        Yield(expr) => match expr.has_value() {
+            true => expr!.control_flow().updated(BlockControlFlow::AlwaysTransfersControl(might_break: false))
+            false => BlockControlFlow::AlwaysTransfersControl(might_break: false)
+        }
         If(condition, then_block, else_statement) => match condition {
             Boolean(val) => match val {
                 true => then_block.control_flow
@@ -5490,33 +5493,54 @@ struct Typechecker {
             checked_block.control_flow = checked_block.control_flow.updated(.statement_control_flow(checked_statement))
 
             let yield_span: Span? = match parsed_statement {
-                ParsedStatement::Yield(expr) => Some(expr.span())
+                ParsedStatement::Yield(expr) => match expr.has_value() {
+                    true => expr!.span()
+                    false => None
+                }
                 ParsedStatement::Guard(expr) => Some(expr.span())
                 else => None
             }
+
+            mut yield_present = false
             let checked_yield_expression: CheckedExpression? = match checked_statement {
-                CheckedStatement::Yield(expr) => Some(expr)
+                CheckedStatement::Yield(expr) => {
+                    yield_present = true
+                    yield expr
+                }
                 else => None
             }
 
-            if yield_span.has_value() and checked_yield_expression.has_value() {
-                let type_var_type_id = checked_yield_expression!.type()
-                let type_ = .resolve_type_var(type_var_type_id , scope_id: block_scope_id)
+            if yield_present {
+                if yield_span.has_value() and checked_yield_expression.has_value() {
+                    let type_var_type_id = checked_yield_expression!.type()
+                    let type_ = .resolve_type_var(type_var_type_id , scope_id: block_scope_id)
 
-                if checked_yield_expression! is OptionalNone {
-                    checked_block.yielded_none = true
-                }
+                    if checked_yield_expression! is OptionalNone {
+                        checked_block.yielded_none = true
+                    }
 
-                if checked_block.yielded_type.has_value() {
-                    // TODO check types for compat
-                    .check_types_for_compat(
-                        lhs_type_id: checked_block.yielded_type.value()
-                        rhs_type_id: type_
-                        generic_inferences: &mut .generic_inferences
-                        span: yield_span.value()
-                    )
+                    if checked_block.yielded_type.has_value() {
+                        // TODO check types for compat
+                        .check_types_for_compat(
+                            lhs_type_id: checked_block.yielded_type.value()
+                            rhs_type_id: type_
+                            generic_inferences: &mut .generic_inferences
+                            span: yield_span.value()
+                        )
+                    } else {
+                        checked_block.yielded_type = Some(type_)
+                    }
                 } else {
-                    checked_block.yielded_type = Some(type_)
+                    if checked_block.yielded_type.has_value() {
+                        .check_types_for_compat(
+                            lhs_type_id: checked_block.yielded_type.value()
+                            rhs_type_id: void_type_id()
+                            generic_inferences: &mut .generic_inferences
+                            span: yield_span.value()
+                        )
+                    } else {
+                        checked_block.yielded_type = Some(void_type_id())
+                    }
                 }
             }
 
@@ -6400,7 +6424,7 @@ struct Typechecker {
     fn typecheck_statement(mut this, anon statement: ParsedStatement, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId? = None) throws -> CheckedStatement => match statement {
         Expression(expr, span) => CheckedStatement::Expression(expr: .typecheck_expression(expr, scope_id, safety_mode, type_hint: TypeId::none()), span)
         UnsafeBlock(block, span) => CheckedStatement::Block(block: .typecheck_block(block, parent_scope_id: scope_id, safety_mode: SafetyMode::Unsafe), span)
-        Yield(expr, span) => CheckedStatement::Yield(expr: .typecheck_expression(expr, scope_id, safety_mode, type_hint: type_hint), span)
+        Yield(expr, span) => .typecheck_yield(expr, span, scope_id, safety_mode, type_hint)
         Return(expr, span) => .typecheck_return(expr, span, scope_id, safety_mode)
         Block(block, span) => .typecheck_block_statement(parsed_block: block, scope_id, safety_mode, span)
         InlineCpp(block, span) => .typecheck_inline_cpp(block, span, safety_mode)
@@ -6416,6 +6440,14 @@ struct Typechecker {
         Garbage(span) => CheckedStatement::Garbage(span)
         For(iterator_name, name_span, is_destructuring, range, block, span) => .typecheck_for(iterator_name, name_span, is_destructuring, range, block, scope_id, safety_mode, span)
         Guard(expr, else_block, remaining_code, span) => .typecheck_guard(expr, else_block, remaining_code, scope_id, safety_mode, span)
+    }
+
+    fn typecheck_yield(mut this, expr: ParsedExpression?, span: Span, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeId? = None) throws -> CheckedStatement {
+        if not expr.has_value() {
+            return CheckedStatement::Yield(expr: None, span)
+        }
+
+        return CheckedStatement::Yield(expr: .typecheck_expression(expr!, scope_id, safety_mode, type_hint), span)
     }
 
     fn typecheck_continue(mut this, span: Span) -> CheckedStatement {

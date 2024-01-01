@@ -1346,7 +1346,7 @@ boxed enum CheckedStatement {
     Break(Span)
     Continue(Span)
     Throw(expr: CheckedExpression, span: Span)
-    Yield(expr: CheckedExpression, span: Span)
+    Yield(expr: CheckedExpression?, span: Span)
     InlineCpp(lines: [String], span: Span)
     Garbage(Span)
 

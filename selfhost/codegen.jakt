@@ -4580,12 +4580,15 @@ struct CodeGenerator {
 
                 let (var_name, end_label) = .entered_yieldable_blocks.last()!
 
-                if expr.type() != void_type_id() {
-                    output.append(var_name)
-                    output.append(" = ")
+                if expr.has_value() {
+                    if expr!.type() != void_type_id() {
+                        output.append(var_name)
+                        output.append(" = ")
+                    }
+
+                    .codegen_expression(expr!, &mut output)
                 }
 
-                .codegen_expression(expr, &mut output)
                 output.append("; goto ")
                 output.append(end_label)
                 output.append(";\n")

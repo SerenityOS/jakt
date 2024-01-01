@@ -1,0 +1,26 @@
+/// Expect:
+/// - output: "1\n2\n"
+
+fn test() {
+    let x = 3
+    match 1 {
+        1 => {
+            match x {
+                2 => println("FAIL")
+                else => {
+                    println("1")
+                    yield
+                }
+            }
+
+            // Note that this will execute, inner match does not yield out of the outer match
+            println("2")
+        }
+        else => {
+        }
+    }
+}
+
+fn main() {
+    test()
+}
