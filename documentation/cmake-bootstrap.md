@@ -41,6 +41,15 @@ If you want to enable optimizations, be sure to set [CMAKE_BUILD_TYPE](https://c
 The CMakeLists have an option for what the final stage of the compiler should be, that defaults to stage 1. If you want to build the stage 2 compiler
 for validation, set the CMake cache variable `FINAL_STAGE` to `2`.
 
+Alternatively, one can build via the provided Dockerfile:
+```sh
+docker build -t jakt:latest -f Dockerfile .
+docker run -it jakt:latest
+> cd samples/basics
+> jakt hello.jakt
+> ./build/hello
+```
+
 ## Supported Platforms
 
 Jakt is known to compile with clang >=15 on Linux, macOS and Windows. g++ also works, provided the version is >=10.2.
