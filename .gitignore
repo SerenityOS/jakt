@@ -2,6 +2,7 @@ target
 a.out
 output.cpp
 build
+result
 
 .vscode/
 .idea/

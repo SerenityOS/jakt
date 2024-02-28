@@ -1,13 +1,39 @@
-{ pkgs ? import <nixpkgs> { } }:
-pkgs.mkShell
 {
-  name = "jakt";
+  stdenv,
+  fetchFromGitHub,
 
-  nativeBuildInputs = with pkgs; [
-    pkgconfig
+  clang_16,
+  cmake,
+  ninja,
+  pkg-config,
+  python3,
+}:
+
+let
+  serenity = fetchFromGitHub {
+    owner = "serenityos";
+    repo = "serenity";
+    rev = "05e78dabdbceea46bae7dca52b63dc0a115e7b52"; # latest at the time
+    hash = "sha256-ymXQ68Uib1xP4eGPuxm3vRgAIhrVK4rmHdGLfuvsOJU=";
+  };
+in stdenv.mkDerivation {
+  name = "jakt-unwrapped";
+  src = ./.;
+
+  nativeBuildInputs = [
+    pkg-config
     cmake
     ninja
+ ];
+
+  buildInputs = [
+    clang_16
     python3
-    clang_15
+  ];
+
+  cmakeFlags = [
+    "-DCMAKE_CXX_COMPILER=${clang_16}/bin/clang++"
+    "-DSERENITY_SOURCE_DIR=${serenity}"
+    "-DCMAKE_INSTALL_BINDIR=bin"
   ];
 }
