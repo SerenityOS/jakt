@@ -995,7 +995,9 @@ fn compiler_main(anon args: [String]) throws -> c_int {
         if target_triple.has_value() {
             if compiler_is("clang++") and target_triple! != Target::active().name() {
                 extra_compiler_flags.push("-target")
-                extra_compiler_flags.push(target_triple!)
+                // FIXME: The Serenity clang toolchain doesn't like getting -unknown appended to the target triple
+                //        This is fine for now unless you're targeting musl libc, in which case, you're out of luck
+                extra_compiler_flags.push(Target::from_triple(target_triple!).name(abbreviate: true))
             }
         }
 
