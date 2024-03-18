@@ -15,7 +15,7 @@ fn run_compiler(
     mut file_path = Path::from_string(cxx_compiler_path)
 
     mut extra_flags: [String] = []
-    if file_path.basename() == "g++" {
+    if file_path.basename().contains("g++") {
         extra_flags.push("-Wno-literal-suffix")
         extra_flags.push("-Wno-unused-parameter")
         extra_flags.push("-Wno-unused-but-set-variable")
