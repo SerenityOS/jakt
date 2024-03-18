@@ -29,7 +29,10 @@ find_package(Clang CONFIG)
 set(JAKT_CPP_AUTO_IMPORT_PROCESSOR_DEFAULT none)
 if (Clang_FOUND)
   set(JAKT_CPP_AUTO_IMPORT_PROCESSOR_DEFAULT clang)
-  find_program(CLANG_PATH clang REQUIRED)
+  find_program(CLANG_PATH clang REQUIRED
+    PATHS "${CLANG_INSTALL_PREFIX}/bin"
+    NO_DEFAULT_PATH
+  )
   execute_process(
     COMMAND
       ${CLANG_PATH} -print-resource-dir
