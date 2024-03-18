@@ -576,7 +576,7 @@ fn compiler_main(anon args: [String]) throws -> c_int {
     }
 
     let compiler_is = fn[cxx_compiler_path](anon name: String) throws -> bool {
-        return Path::from_string(cxx_compiler_path).basename() == name
+        return Path::from_string(cxx_compiler_path).basename().contains(name)
     }
 
     mut file_name: String? = None
