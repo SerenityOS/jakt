@@ -24,7 +24,9 @@ find_package(Threads REQUIRED)
 
 SET(CMAKE_FIND_PACKAGE_SORT_ORDER NATURAL)
 SET(CMAKE_FIND_PACKAGE_SORT_DIRECTION DEC)
-find_package(Clang CONFIG)
+find_package(Clang CONFIG
+  PATHS /opt/homebrew/opt/llvm
+)
 
 set(JAKT_CPP_AUTO_IMPORT_PROCESSOR_DEFAULT none)
 if (Clang_FOUND)
