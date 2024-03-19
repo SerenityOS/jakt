@@ -6730,7 +6730,7 @@ class Interpreter {
 
             yield StatementResult::JustValue(fields[index])
         }
-        Match(expr, match_cases, all_variants_constant, span) => {
+        Match(expr, branches, all_variants_constant, span) => {
             let value = match .execute_expression(expr, scope) {
                 JustValue(value) => value
                 Return(value) => {
@@ -6759,28 +6759,30 @@ class Interpreter {
                     mut found_variant_index: usize? = None
                     mut span: Span? = None
 
-                    for match_case in match_cases {
-                        match match_case {
-                            EnumVariant(name, args, index, body, marker_span) => {
-                                if name != constructor_name {
+                    for branch in branches {
+                        for match_case in branch.cases {
+                            match match_case {
+                                EnumVariant(name, args, index, marker_span) => {
+                                    if name != constructor_name {
+                                        continue
+                                    }
+
+                                    // A match!
+                                    found_body = branch.body
+                                    found_args = args
+                                    found_variant_index = index
+                                    span = marker_span
+                                    break
+                                }
+                                ClassInstance(marker_span) | Expression(marker_span) => {
+                                    .error("Value matches are not allowed on enums", marker_span)
+                                    throw Error::from_string_literal("Invalid type")
+                                }
+                                CatchAll(marker_span) => {
+                                    catch_all_case = branch.body
+                                    span = marker_span
                                     continue
                                 }
-
-                                // A match!
-                                found_body = body
-                                found_args = args
-                                found_variant_index = index
-                                span = marker_span
-                                break
-                            }
-                            ClassInstance(marker_span) | Expression(marker_span) => {
-                                .error("Value matches are not allowed on enums", marker_span)
-                                throw Error::from_string_literal("Invalid type")
-                            }
-                            CatchAll(body, marker_span) => {
-                                catch_all_case = body
-                                span = marker_span
-                                continue
                             }
                         }
                     }
@@ -6852,49 +6854,51 @@ class Interpreter {
                     mut found_body: CheckedMatchBody? = None
                     mut span: Span? = None
 
-                    for match_case in match_cases {
-                        match match_case {
-                            Expression(body, expression, marker_span) => {
-                                let value_to_match_against = match .execute_expression(expression, scope) {
-                                    Return(value) => {
-                                        return StatementResult::Return(value)
+                    for branch in branches {
+                        for match_case in branch.cases {
+                            match match_case {
+                                Expression(expression, marker_span) => {
+                                    let value_to_match_against = match .execute_expression(expression, scope) {
+                                        Return(value) => {
+                                            return StatementResult::Return(value)
+                                        }
+                                        Throw(value) => {
+                                            return StatementResult::Throw(value)
+                                        }
+                                        JustValue(value) => value
+                                        Continue => {
+                                            return StatementResult::Continue
+                                        }
+                                        Break => {
+                                            return StatementResult::Break
+                                        }
+                                        Yield => {
+                                            panic("Invalid control flow")
+                                        }
                                     }
-                                    Throw(value) => {
-                                        return StatementResult::Throw(value)
-                                    }
-                                    JustValue(value) => value
-                                    Continue => {
-                                        return StatementResult::Continue
-                                    }
-                                    Break => {
-                                        return StatementResult::Break
-                                    }
-                                    Yield => {
-                                        panic("Invalid control flow")
-                                    }
-                                }
 
-                                if value_to_match_against.impl.equals(value.impl) {
-                                    found_body = Some(body)
-                                    span = Some(marker_span)
-                                    break
+                                    if value_to_match_against.impl.equals(value.impl) {
+                                        found_body = Some(branch.body)
+                                        span = Some(marker_span)
+                                        break
+                                    }
                                 }
-                            }
-                            CatchAll(body, marker_span) => {
-                                catch_all_case = body
-                                span = marker_span
-                                continue
-                            }
-                            ClassInstance(marker_span) => {
-                                // FIXME: Implement this
-                                .error("Class instance matches are not implemented yet", marker_span)
-                                throw Error::from_string_literal("Invalid type")
-                            }
-                            EnumVariant(marker_span) => {
-                                .error(
-                                    format("Value matches cannot have enum variant arms (matching on {})", value.type_name()),
-                                    marker_span)
-                                throw Error::from_string_literal("Invalid type")
+                                CatchAll(marker_span) => {
+                                    catch_all_case = branch.body
+                                    span = marker_span
+                                    continue
+                                }
+                                ClassInstance(marker_span) => {
+                                    // FIXME: Implement this
+                                    .error("Class instance matches are not implemented yet", marker_span)
+                                    throw Error::from_string_literal("Invalid type")
+                                }
+                                EnumVariant(marker_span) => {
+                                    .error(
+                                        format("Value matches cannot have enum variant arms (matching on {})", value.type_name()),
+                                        marker_span)
+                                    throw Error::from_string_literal("Invalid type")
+                                }
                             }
                         }
                     }

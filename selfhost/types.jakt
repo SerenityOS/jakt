@@ -1484,13 +1484,30 @@ struct ClassInstanceRebind {
     is_reference: bool
 }
 
+struct CheckedMatchBranch {
+    cases: [CheckedMatchCase]
+    body: CheckedMatchBody
+}
+
+fn total_case_count(branches: &[CheckedMatchBranch]) -> usize {
+    mut count = 0uz
+    for branch in branches {
+        // NOTE: currently only unique patterns are allowed, since patterns can't go
+        // deeper: matching Foo(b: Bar(z: 1)) is not supported.
+        // It would be interesting to keep this property in the Checked version even when
+        // support for these kinds of pattern arrives.
+        count += branch.cases.size()
+    }
+    return count
+}
+
 enum CheckedMatchCase {
     defaults: [CheckedStatement]
 
-    EnumVariant(name: String, args: [EnumVariantPatternArgument], subject_type_id: TypeId, index: usize, scope_id: ScopeId, body: CheckedMatchBody, marker_span: Span)
-    Expression(expression: CheckedExpression, body: CheckedMatchBody, marker_span: Span)
-    ClassInstance(type: TypeId, body: CheckedMatchBody, rebind_name: ClassInstanceRebind?, marker_span: Span)
-    CatchAll(has_arguments: bool, body: CheckedMatchBody, marker_span: Span)
+    EnumVariant(name: String, args: [EnumVariantPatternArgument], subject_type_id: TypeId, index: usize, scope_id: ScopeId, marker_span: Span)
+    Expression(expression: CheckedExpression, marker_span: Span)
+    ClassInstance(type: TypeId, rebind_name: ClassInstanceRebind?, marker_span: Span)
+    CatchAll(has_arguments: bool, marker_span: Span)
 }
 
 struct OperatorTraitImplementation {
@@ -1527,7 +1544,7 @@ boxed enum CheckedExpression {
     IndexedStruct(expr: CheckedExpression, name: String, index: VarId?, span: Span, is_optional: bool, type_id: TypeId)
     IndexedCommonEnumMember(expr: CheckedExpression, index: String, span: Span, is_optional: bool, type_id: TypeId)
     ComptimeIndex(expr: CheckedExpression, index: CheckedExpression, is_optional: bool, span: Span)
-    Match(expr: CheckedExpression, match_cases: [CheckedMatchCase], span: Span, type_id: TypeId, all_variants_constant: bool)
+    Match(expr: CheckedExpression, branches: [CheckedMatchBranch], span: Span, type_id: TypeId, all_variants_constant: bool)
     EnumVariantArg(expr: CheckedExpression, arg: CheckedEnumVariantBinding, enum_variant: CheckedEnumVariant, span: Span)
     Call(call: CheckedCall, span: Span, type_id: TypeId)
     MethodCall(expr: CheckedExpression, call: CheckedCall, span: Span, is_optional: bool, type_id: TypeId)
@@ -1670,14 +1687,12 @@ boxed enum CheckedExpression {
     }
 
     fn control_flow(this)-> BlockControlFlow => match this {
-        Match(expr, match_cases, span, type_id, all_variants_constant) => {
+        Match(expr, branches, span, type_id, all_variants_constant) => {
             mut control_flow: BlockControlFlow? = None
-            for case_ in match_cases {
-                let case_control_flow = match case_ {
-                    else(body) => match body {
-                        Block(block) => block.control_flow
-                        Expression(expr) => expr.control_flow()
-                    }
+            for branch in branches {
+                let case_control_flow = match branch.body {
+                    Block(block) => block.control_flow
+                    Expression(expr) => expr.control_flow()
                 }
                 if control_flow.has_value() {
                     control_flow = control_flow!.branch_unify_with(case_control_flow)

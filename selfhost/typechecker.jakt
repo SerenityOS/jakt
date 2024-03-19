@@ -6446,18 +6446,22 @@ struct Typechecker {
             return CheckedStatement::Yield(
                 expr: CheckedExpression::Match(
                     expr: checked_condition,
-                    match_cases: [
-                        CheckedMatchCase::Expression(
-                            defaults: []
-                            expression: CheckedExpression::Boolean(val: true, span)
+                    branches: [
+                        CheckedMatchBranch(
+                            cases: [CheckedMatchCase::Expression(
+                                defaults: []
+                                expression: CheckedExpression::Boolean(val: true, span)
+                                marker_span: span
+                            )]
                             body: CheckedMatchBody::Expression(CheckedExpression::Block(block: checked_block, span, type_id: checked_block.yielded_type!))
-                            marker_span: span
                         ),
-                        CheckedMatchCase::CatchAll(
-                            defaults: []
-                            has_arguments: false
+                        CheckedMatchBranch(
+                            cases: [CheckedMatchCase::CatchAll(
+                                defaults: []
+                                has_arguments: false
+                                marker_span: span
+                            )]
                             body: CheckedMatchBody::Block(checked_else_block)
-                            marker_span: span
                         )
                     ]
                     span
@@ -9131,7 +9135,7 @@ struct Typechecker {
         arguments_span: Span
         scope_id: ScopeId
         safety_mode: SafetyMode
-    ) throws -> (String?, CheckedMatchCase, TypeId?) {
+    ) throws -> (String?, CheckedMatchCase, CheckedMatchBody, TypeId?) {
         mut covered_name: String? = None
 
         let new_scope_id = .create_scope(
@@ -9274,11 +9278,10 @@ struct Typechecker {
             subject_type_id
             index: variant_index
             scope_id: new_scope_id
-            body: checked_body
             marker_span: case_.marker_span
         )
 
-        return (covered_name, checked_match_case, result_type)
+        return (covered_name, checked_match_case, checked_body, result_type)
     }
 
     fn typecheck_match(
@@ -9316,6 +9319,8 @@ struct Typechecker {
             }
         }
 
+        mut branches: [CheckedMatchBranch] = []
+
         match type_to_match_on {
             Enum(enum_id) | GenericEnumInstance(id: enum_id) => {
                 let enum_ = .get_enum(enum_id)
@@ -9326,7 +9331,11 @@ struct Typechecker {
 
                 let case_count = cases.size()
                 mut current_case_index = 0uz
+
+
                 for case_ in cases {
+                    mut checked_cases: [CheckedMatchCase] = []
+                    mut checked_body: CheckedMatchBody? = None
                     for pattern in case_.patterns {
                         match pattern {
                             EnumVariant(variant_names, variant_arguments, arguments_span) => {
@@ -9362,11 +9371,10 @@ struct Typechecker {
 
                                 if not matched_variant.has_value() {
                                     .error(format("Enum '{}' does not contain a variant named '{}'", enum_.name, variant_names_[1].0), case_.marker_span)
-
-                                    return CheckedExpression::Match(expr: checked_expr, match_cases: [], span, type_id: unknown_type_id(), all_variants_constant: false)
+                                    continue
                                 }
 
-                                let (covered_name, checked_match_case, result_type) = .typecheck_match_variant(
+                                let (covered_name, checked_match_case, checked_match_body, result_type) = .typecheck_match_variant(
                                     case_
                                     subject_type_id
                                     variant_index: variant_index!
@@ -9383,6 +9391,7 @@ struct Typechecker {
                                 }
 
                                 final_result_type = result_type
+                                checked_body = checked_match_body
 
                                 checked_cases.push(checked_match_case)
                             }
@@ -9403,7 +9412,7 @@ struct Typechecker {
                                         if not covered_variants.contains(variant.name()) {
                                             expanded_catch_all = true
 
-                                            let (covered_name, checked_match_case, result_type) = .typecheck_match_variant(
+                                            let (covered_name, checked_match_case, checked_match_body, result_type) = .typecheck_match_variant(
                                                 case_
                                                 subject_type_id
                                                 variant_index
@@ -9419,6 +9428,8 @@ struct Typechecker {
                                                 covered_variants.add(covered_name!)
                                             }
 
+
+                                            checked_body = checked_match_body
                                             final_result_type = result_type
 
                                             checked_cases.push(checked_match_case)
@@ -9444,7 +9455,7 @@ struct Typechecker {
                                         defaults.push(checked_var_decl)
                                     }
 
-                                    let (checked_body, result_type) = .typecheck_match_body(
+                                    let (checked_match_body, result_type) = .typecheck_match_body(
                                         body: case_.body
                                         scope_id: new_scope_id
                                         safety_mode
@@ -9453,11 +9464,11 @@ struct Typechecker {
                                         span: case_.marker_span
                                     )
                                     final_result_type = result_type
+                                    checked_body = checked_match_body
 
                                     let checked_match_case = CheckedMatchCase::CatchAll(
                                         defaults
                                         has_arguments: false
-                                        body: checked_body
                                         marker_span: case_.marker_span
                                     )
 
@@ -9469,6 +9480,16 @@ struct Typechecker {
                     }
 
                     current_case_index++
+
+                    guard checked_body is Some(body) else {
+                        // had errors in all of the cases before reaching this
+                        continue
+                    }
+
+                    branches.push(CheckedMatchBranch(
+                        cases: checked_cases
+                        body: checked_body!
+                    ))
                 }
 
                 mut enum_variant_names: [String] = []
@@ -9509,6 +9530,8 @@ struct Typechecker {
                     mut covered_cases: {StructId} = {}
 
                     for case_ in cases {
+                        mut checked_cases: [CheckedMatchCase] = []
+                        mut checked_body: CheckedMatchBody? = None
                         for pattern in case_.patterns {
                             match pattern {
                                 EnumVariant(variant_names, variant_arguments, arguments_span) => {
@@ -9660,7 +9683,7 @@ struct Typechecker {
                                         )
                                     }
 
-                                    let (checked_body, result_type) = .typecheck_match_body(
+                                    let (checked_match_body, result_type) = .typecheck_match_body(
                                         body: case_.body
                                         scope_id: new_scope_id
                                         safety_mode
@@ -9669,11 +9692,11 @@ struct Typechecker {
                                         span: case_.marker_span
                                     )
                                     final_result_type = result_type
+                                    checked_body = checked_match_body
 
                                     checked_cases.push(CheckedMatchCase::ClassInstance(
                                         defaults: []
                                         type
-                                        body: checked_body
                                         rebind_name
                                         marker_span: case_.marker_span
                                     ))
@@ -9698,7 +9721,7 @@ struct Typechecker {
                                             )
                                         }
 
-                                        let (checked_body, result_type) = .typecheck_match_body(
+                                        let (checked_match_body, result_type) = .typecheck_match_body(
                                             body: case_.body
                                             scope_id: new_scope_id
                                             safety_mode
@@ -9707,11 +9730,11 @@ struct Typechecker {
                                             span: case_.marker_span
                                         )
                                         final_result_type = result_type
+                                        checked_body = checked_match_body
 
                                         checked_cases.push(CheckedMatchCase::CatchAll(
                                             defaults: []
                                             has_arguments: false
-                                            body: checked_body
                                             marker_span: case_.marker_span
                                         ))
                                     }
@@ -9724,6 +9747,14 @@ struct Typechecker {
                                 }
                             }
                         }
+                        guard checked_body is Some(body) else {
+                            // had errors in all of the cases before reaching this
+                            continue
+                        }
+                        branches.push(CheckedMatchBranch(
+                            cases: checked_cases
+                            body
+                        ))
                     }
 
                     if not seen_catch_all {
@@ -9767,6 +9798,8 @@ struct Typechecker {
                     let case_count = cases.size()
                     mut current_case_index = 0uz
                     for case_ in cases {
+                        mut checked_cases: [CheckedMatchCase] = []
+                        mut checked_body: CheckedMatchBody? = None
                         for pattern in case_.patterns {
                             match pattern {
                                 EnumVariant(variant_names, variant_arguments, arguments_span) => {
@@ -9798,7 +9831,7 @@ struct Typechecker {
                                         defaults.push(checked_var_decl)
                                     }
 
-                                    let (checked_body, result_type) = .typecheck_match_body(
+                                    let (checked_match_body, result_type) = .typecheck_match_body(
                                         body: case_.body
                                         scope_id: new_scope_id
                                         safety_mode
@@ -9807,6 +9840,7 @@ struct Typechecker {
                                         span: case_.marker_span
                                     )
                                     final_result_type = result_type
+                                    checked_body = checked_match_body
 
                                     let checked_match_case = CheckedMatchCase::EnumVariant(
                                         defaults
@@ -9815,7 +9849,6 @@ struct Typechecker {
                                         subject_type_id
                                         index: 0
                                         scope_id: new_scope_id
-                                        body: checked_body
                                         marker_span: case_.marker_span
                                     )
                                     checked_cases.push(checked_match_case)
@@ -9854,7 +9887,7 @@ struct Typechecker {
                                         defaults.push(checked_var_decl)
                                     }
 
-                                    let (checked_body, result_type) = .typecheck_match_body(
+                                    let (checked_match_body, result_type) = .typecheck_match_body(
                                         body: case_.body
                                         scope_id: new_scope_id
                                         safety_mode
@@ -9863,11 +9896,11 @@ struct Typechecker {
                                         span: case_.marker_span
                                     )
                                     final_result_type = result_type
+                                    checked_body = checked_match_body
 
                                     let checked_match_case = CheckedMatchCase::CatchAll(
                                         defaults
                                         has_arguments: variant_arguments.size() != 0
-                                        body: checked_body
                                         marker_span: case_.marker_span
                                     )
 
@@ -9935,7 +9968,7 @@ struct Typechecker {
                                     }
 
                                     let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: format("catch-expression({})", expr))
-                                    let (checked_body, result_type) = .typecheck_match_body(
+                                    let (checked_match_body, result_type) = .typecheck_match_body(
                                         body: case_.body
                                         scope_id: new_scope_id
                                         safety_mode
@@ -9944,11 +9977,11 @@ struct Typechecker {
                                         span: case_.marker_span
                                     )
                                     final_result_type = result_type
+                                    checked_body = checked_match_body
 
                                     let checked_match_case = CheckedMatchCase::Expression(
                                         defaults: []
                                         expression: checked_expression
-                                        body: checked_body
                                         marker_span: case_.marker_span
                                     )
                                     checked_cases.push(checked_match_case)
@@ -9956,6 +9989,15 @@ struct Typechecker {
                                 else => {}
                             }
                         }
+
+                        guard checked_body is Some(body) else {
+                            // had errors in all of the cases before reaching this
+                            continue
+                        }
+                        branches.push(CheckedMatchBranch(
+                            cases: checked_cases
+                            body
+                        ))
 
                         current_case_index++
                     }
@@ -9974,7 +10016,7 @@ struct Typechecker {
             }
         }
 
-        return CheckedExpression::Match(expr: checked_expr, match_cases: checked_cases, span, type_id: final_result_type ?? void_type_id(), all_variants_constant: true)
+        return CheckedExpression::Match(expr: checked_expr, branches, span, type_id: final_result_type ?? void_type_id(), all_variants_constant: true)
     }
 
     fn typecheck_match_body(mut this, body: ParsedMatchBody, scope_id: ScopeId, safety_mode: SafetyMode, generic_inferences: &mut GenericInferences, final_result_type: TypeId?, span: Span) throws -> (CheckedMatchBody, TypeId?) {
