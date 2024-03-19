@@ -212,8 +212,9 @@ struct CodeGenerator {
     // Modules that this generation depends on, detected from type definitions
     used_modules: {ModuleId} = {}
 
+    // `forward_error_with_try` controls whether errors are handled through the TRY() macro or through an external mechanism put by the caller.
     // noreturn functions may not throw, so let them crash instead.
-    fn current_error_handler(this) -> String {
+    fn current_error_handler(this, forward_error_with_try: bool = true) -> String {
         if .inside_defer or (
             .current_function.has_value() and
             .current_function!.return_type_id == never_type_id() and
@@ -223,7 +224,11 @@ struct CodeGenerator {
             return "MUST"
         }
 
-        return "TRY"
+        if forward_error_with_try {
+            return "TRY"
+        } else {
+            return ""
+        }
     }
 
     fn fresh_var(mut this) -> String => format("__jakt_var_{}", .fresh_var_counter++)
@@ -2593,10 +2598,12 @@ struct CodeGenerator {
         .codegen_expression(expression, &mut output)
     }
 
+    // `forward_error_with_try` controls whether errors are handled through the TRY() macro or through an external mechanism put by the caller.
     fn codegen_expression(
         mut this
         anon expression: CheckedExpression
         output: &mut StringBuilder
+        forward_error_with_try: bool = true
     ) throws {
         .generic_inferences = expression.generic_inferences ?? .generic_inferences
         defer .generic_inferences = None
@@ -2666,7 +2673,7 @@ struct CodeGenerator {
                     }
 
                     let name = .program.get_function(ids![0]).name_for_codegen().as_name_for_use()
-                    let error_handler = match val.may_throw { true => .current_error_handler(), else => "" }
+                    let error_handler = match val.may_throw { true => .current_error_handler(forward_error_with_try), else => "" }
                     output.append(format(
                         "{}({}::{}(\"{}\"sv))"
                         error_handler
@@ -2812,10 +2819,10 @@ struct CodeGenerator {
                 .codegen_block(block, &mut output)
             }
             Call(call) => {
-                .codegen_call(call, &mut output)
+                .codegen_call(call, &mut output, forward_error_with_try)
             }
             MethodCall(expr, call, is_optional) => {
-                .codegen_method_call(expr, call, is_optional, &mut output)
+                .codegen_method_call(expr, call, is_optional, &mut output, forward_error_with_try)
             }
             Boolean(val) => {
                 output.append(match val {
@@ -2973,7 +2980,7 @@ struct CodeGenerator {
                 output.append(")")
             }
             BinaryOp(lhs, rhs, op, type_id) => {
-                .codegen_binary_expression(expression, type_id, lhs, rhs, op, &mut output)
+                .codegen_binary_expression(expression, type_id, lhs, rhs, op, &mut output, forward_error_with_try)
             }
             NumericConstant(val, type_id) => {
                 let suffix = match val {
@@ -3226,7 +3233,10 @@ struct CodeGenerator {
                 output.append(" = [&]() -> ErrorOr<")
                 output.append(.codegen_type(inner_type_id))
                 output.append("> { return ")
-                .codegen_expression(expr, &mut output)
+                // Since it's a return statement, we don't have to wrap the expression with TRY.
+                // Unless it's a "void expression", where we must use TRY() in order to propagate its
+                // effect before returning an ErrorOr<void>{}
+                .codegen_expression(expr, &mut output, forward_error_with_try: is_void)
                 if is_void {
                     output.append(", ErrorOr<void>{}")
                 }
@@ -3726,16 +3736,24 @@ struct CodeGenerator {
         rhs: CheckedExpression
         op: CheckedBinaryOperator
         output: &mut StringBuilder
+        forward_error_with_try: bool = true
     ) throws {
         if op.trait_implementation is Some(implementation) {
+            // Since the binary op is done through a call, then TRY() forwarding
+            // makes sense as the call is now the primary expression.
             .codegen_method_call(
                 expr: lhs
                 call: implementation.call_expression
                 is_optional: false
                 &mut output
+                forward_error_with_try
             )
             return
         }
+
+        // NOTE: We don't propagate `forward_error_with_try` here because none of
+        // the operations here have a way to syntactically replace the TRY()
+        // macro.
 
         if op.op is NoneCoalescing {
             let rhs_type_id = rhs.type()
@@ -4009,9 +4027,10 @@ struct CodeGenerator {
         call: CheckedCall
         is_optional: bool
         output: &mut StringBuilder
+        forward_error_with_try: bool = true
     ) throws {
         if call.callee_throws {
-            output.append(.current_error_handler())
+            output.append(.current_error_handler(forward_error_with_try))
             output.append("((")
         }
 
@@ -4191,7 +4210,7 @@ struct CodeGenerator {
         }
     }
 
-    fn codegen_call(mut this, call: CheckedCall, output: &mut StringBuilder) throws {
+    fn codegen_call(mut this, call: CheckedCall, output: &mut StringBuilder, forward_error_with_try: bool = true) throws {
         if call.function_id.has_value() and .program.get_function(call.function_id!).is_comptime {
             output.append(format(
                 "fail_comptime_call<{}, \"Comptime function {} called outside Jakt compiler\">()"
@@ -4202,7 +4221,7 @@ struct CodeGenerator {
         }
 
         if call.callee_throws {
-            output.append(.current_error_handler())
+            output.append(.current_error_handler(forward_error_with_try))
             output.append("((")
         }
         match call.name {
@@ -4472,8 +4491,9 @@ struct CodeGenerator {
                             .codegen_expression(val!, &mut output)
                             output.append("; return {}")
                         } else {
+                            // Disable forwarding with TRY because we're returning an ErrorOr<Ret> too!
                             output.append("return ")
-                            .codegen_expression(val!, &mut output)
+                            .codegen_expression(val!, &mut output, forward_error_with_try: false)
                         }
 
                         output.append(";")
