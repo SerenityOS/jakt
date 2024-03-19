@@ -633,6 +633,12 @@ struct CodeGenerator {
         return modules
     }
 
+    fn capture_output(anon gen: fn(output: &mut StringBuilder) throws -> void) throws -> String {
+        mut builder = StringBuilder::create()
+        gen(output: &mut builder)
+        return builder.to_string()
+    }
+
     fn postorder_traversal(this, type_id: TypeId, mut visited: {TypeId}, dependency_graph: [TypeId: [TypeId]], mut output: [TypeId]) throws {
         if visited.contains(type_id) {
             return
@@ -3398,6 +3404,11 @@ struct CodeGenerator {
         mut has_default = false
         mut first = true
         for branch in branches {
+            // The body that we generate here might need declaration statements
+            // from case defaults.
+            let body_missing_ctx = capture_output(fn[this, &branch, return_type_id](output: &mut StringBuilder) throws {
+                .codegen_match_body(body: branch.body, return_type_id, output)
+            })
             for case_ in branch.cases {
                 let defaults = case_.defaults
 
@@ -3448,7 +3459,7 @@ struct CodeGenerator {
                             .codegen_statement(statement: default_, &mut output)
                         }
 
-                        .codegen_match_body(body: branch.body, return_type_id, &mut output)
+                        output.append(body_missing_ctx)
                         output.append("}\n")
                     }
                     CatchAll(has_arguments,  marker_span) => {
@@ -3469,7 +3480,7 @@ struct CodeGenerator {
                             .codegen_statement(statement: default_, &mut output)
                         }
 
-                        .codegen_match_body(body: branch.body, return_type_id, &mut output)
+                        output.append(body_missing_ctx)
                         output.append("}\n")
                     }
                     Expression(expression, marker_span) => {
@@ -3505,7 +3516,7 @@ struct CodeGenerator {
                             }
                         }
                         output.append(") {\n")
-                        .codegen_match_body(body: branch.body, return_type_id, &mut output)
+                        output.append(body_missing_ctx)
                         output.append("}\n")
                     }
                     ClassInstance(type, rebind_name, marker_span) => {
@@ -3521,7 +3532,7 @@ struct CodeGenerator {
                             .codegen_statement(statement: default_, &mut output)
                         }
 
-                        .codegen_match_body(body: branch.body, return_type_id, &mut output)
+                        output.append(body_missing_ctx)
                         output.append("}\n")
                     }
                 }
@@ -3568,6 +3579,11 @@ struct CodeGenerator {
 
             mut has_default = false
             for branch in branches {
+                // The body that we generate here might need declaration statements
+                // from case defaults.
+                let body_missing_ctx = capture_output(fn[this, &branch, type_id](output: &mut StringBuilder) throws {
+                    .codegen_match_body(body: branch.body, return_type_id: type_id, output)
+                })
                 for match_case in branch.cases {
                 match match_case {
                     EnumVariant(name, args, subject_type_id, index, scope_id) => {
@@ -3631,7 +3647,7 @@ struct CodeGenerator {
                             .codegen_statement(statement: default_, &mut output)
                         }
 
-                        .codegen_match_body(body: branch.body, return_type_id: type_id, &mut output)
+                        output.append(body_missing_ctx)
                         output.append("};/*case end*/\n")
                     }
                     CatchAll => {
@@ -3642,7 +3658,7 @@ struct CodeGenerator {
                             .codegen_statement(statement: default_, &mut output)
                         }
 
-                        .codegen_match_body(body: branch.body, return_type_id: type_id, &mut output)
+                        output.append(body_missing_ctx)
                         output.append("};/*case end*/\n")
                     }
                     else => {
@@ -3670,16 +3686,21 @@ struct CodeGenerator {
             output.append(") {\n")
 
             for branch in branches {
+                // The body that we generate here might need declaration statements
+                // from case defaults.
+                let body_missing_ctx = capture_output(fn[this, &branch, type_id](output: &mut StringBuilder) throws {
+                    .codegen_match_body(body: branch.body, return_type_id: type_id, output)
+                })
                 for match_case in branch.cases {
                     match match_case {
                         EnumVariant(name) => {
                             output.append("case " + enum_.name + "::" + name + ": {\n")
-                            .codegen_match_body(body: branch.body, return_type_id: type_id, &mut output)
+                            output.append(body_missing_ctx)
                             output.append("}\n")
                         }
                         CatchAll => {
                             output.append("default: {\n")
-                            .codegen_match_body(body: branch.body, return_type_id: type_id, &mut output)
+                            output.append(body_missing_ctx)
                             output.append("}\n")
                         }
                         else => {
