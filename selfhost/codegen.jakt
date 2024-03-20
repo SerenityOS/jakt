@@ -1057,9 +1057,8 @@ struct CodeGenerator {
         if scope.alias_path.has_value() or scope.import_path_if_extern.has_value() {
             return
         }
-        if scope.namespace_name.has_value() {
-            output.append("namespace " + scope.namespace_name! + " {\n")
-        }
+
+        mut inside_namespace = StringBuilder::create()
 
         mut seen_types: {TypeId} = {}
 
@@ -1081,14 +1080,14 @@ struct CodeGenerator {
                             continue
                         }
                         let enum_ = .program.get_enum(enum_id)
-                        .codegen_enum(enum_, &mut output)
+                        .codegen_enum(enum_, output: &mut inside_namespace)
                     }
                     Struct(struct_id) => {
                         if not struct_id.module.equals(current_module.id) {
                             // Skip over imports from other modules
                             continue
                         }
-                        .codegen_struct(struct_: .program.get_struct(struct_id), &mut output)
+                        .codegen_struct(struct_: .program.get_struct(struct_id), output: &mut inside_namespace)
                     }
                     Trait => { }
                     else => {
@@ -1107,7 +1106,7 @@ struct CodeGenerator {
             if seen_types.contains(struct_.type_id) {
                 continue
             }
-            .codegen_struct(struct_, &mut output)
+            .codegen_struct(struct_, output: &mut inside_namespace)
             output.append("\n")
         }
 
@@ -1119,7 +1118,7 @@ struct CodeGenerator {
             if seen_types.contains(enum_.type_id) {
                 continue
             }
-            .codegen_enum(enum_, &mut output)
+            .codegen_enum(enum_, output: &mut inside_namespace)
             output.append("\n")
         }
 
@@ -1151,7 +1150,7 @@ struct CodeGenerator {
                 }
 
                 if not function.specialization_index.has_value() {
-                    .codegen_function_predecl(function, allow_generics: true, &mut output)
+                    .codegen_function_predecl(function, allow_generics: true, output: &mut inside_namespace)
                 }
             }
         }
@@ -1161,14 +1160,20 @@ struct CodeGenerator {
             if child_scope.namespace_name.has_value() {
                 let name = child_scope.namespace_name!
                 .namespace_stack.push(name)
-                .codegen_namespace_forward(scope: child_scope, current_module, &mut output)
+                .codegen_namespace_forward(scope: child_scope, current_module, output: &mut inside_namespace)
                 // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
                 let dummy = .namespace_stack.pop()
             }
         }
 
-        if scope.namespace_name.has_value() {
-            output.append("}\n")
+        if inside_namespace.length() != 0 {
+            if scope.namespace_name.has_value() {
+                output.append("namespace " + scope.namespace_name! + " {\n")
+            }
+            output.append(inside_namespace.to_string())
+            if scope.namespace_name.has_value() {
+                output.append("}\n")
+            }
         }
     }
 
