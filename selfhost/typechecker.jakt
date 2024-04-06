@@ -4930,70 +4930,6 @@ struct Typechecker {
         }
     }
 
-    fn statement_control_flow(this, anon statement: CheckedStatement) -> BlockControlFlow => match statement {
-        Return => BlockControlFlow::AlwaysReturns
-        Throw => BlockControlFlow::AlwaysReturns
-        Break => BlockControlFlow::AlwaysTransfersControl(might_break: true)
-        Continue => BlockControlFlow::AlwaysTransfersControl(might_break: false)
-        Yield(expr) => match expr.has_value() {
-            true => expr!.control_flow().updated(BlockControlFlow::AlwaysTransfersControl(might_break: false))
-            false => BlockControlFlow::AlwaysTransfersControl(might_break: false)
-        }
-        If(condition, then_block, else_statement) => match condition {
-            Boolean(val) => match val {
-                true => then_block.control_flow
-                false => match else_statement.has_value() {
-                    true => .statement_control_flow(else_statement!)
-                    false => BlockControlFlow::MayReturn
-                }
-            }
-            // Note that a missing 'else' branch produces a partial result.
-            else => then_block.control_flow.branch_unify_with(.maybe_statement_control_flow(else_statement, then_block.control_flow))
-        }
-        Block(block) => block.control_flow
-        // Note that 'while' blocks, which conditions are not always true,
-        // similarly to 'if's with a missing 'else' branch, produce a partial result.
-        // But also: every 'break' and 'continue' inside of it, does not apply to the outer blocks,
-        // and without a need for that info, Partials can just get degraded to the MayReturn.
-        While(condition, block) => match condition {
-            Boolean(val) => match val {
-                true => match block.control_flow {
-                    AlwaysReturns => BlockControlFlow::AlwaysReturns
-                    NeverReturns => BlockControlFlow::NeverReturns
-                    else => BlockControlFlow::MayReturn
-                }
-                else => BlockControlFlow::MayReturn
-            }
-            else => BlockControlFlow::MayReturn
-        }
-        Loop(block) => match block.control_flow {
-            AlwaysTransfersControl(might_break) => match might_break {
-                false => BlockControlFlow::AlwaysTransfersControl(might_break)
-                true => BlockControlFlow::MayReturn
-            }
-            NeverReturns => BlockControlFlow::NeverReturns
-            AlwaysReturns => BlockControlFlow::AlwaysReturns
-            MayReturn => BlockControlFlow::MayReturn
-            else => match block.control_flow.may_break() {
-                true => BlockControlFlow::MayReturn
-                // Loop will always continue, so upgrade partial results to full ones
-                false => match block.control_flow {
-                    PartialAlwaysReturns => BlockControlFlow::AlwaysReturns
-                    PartialNeverReturns => BlockControlFlow::NeverReturns
-                    PartialAlwaysTransfersControl(might_break) => BlockControlFlow::AlwaysTransfersControl(might_break)
-                    else => BlockControlFlow::MayReturn // unreachable, logically.
-                }
-            }
-        }
-        Expression(expr) => expr.control_flow()
-        else => BlockControlFlow::MayReturn
-    }
-
-    fn maybe_statement_control_flow(this, anon statement: CheckedStatement?, anon other_branch: BlockControlFlow) -> BlockControlFlow => match statement.has_value() {
-        true => .statement_control_flow(statement!)
-        false => other_branch.partial()
-    }
-
     fn check_types_for_compat(
         mut this
         lhs_type_id: TypeId
@@ -5567,7 +5503,7 @@ struct Typechecker {
                 safety_mode
                 type_hint: yield_type_hint
             )
-            checked_block.control_flow = checked_block.control_flow.updated(.statement_control_flow(checked_statement))
+            checked_block.control_flow = checked_block.control_flow.updated(checked_statement.control_flow())
 
             let yield_span: Span? = match parsed_statement {
                 ParsedStatement::Yield(expr) => match expr.has_value() {
