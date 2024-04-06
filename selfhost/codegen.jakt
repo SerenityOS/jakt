@@ -193,6 +193,15 @@ struct CodegenDebugInfo {
     }
 }
 
+
+enum YieldMethod {
+    // return ExplicitValue from match.
+    // the template is for JaktInternal::Explicit
+    ReturnExplicitValue(ctor: String)
+    AssignAndGoto(name: String, label: String)
+}
+
+
 struct CodeGenerator {
 
     compiler: Compiler
@@ -211,6 +220,7 @@ struct CodeGenerator {
     generic_inferences: [TypeId:TypeId]? = None
     // Modules that this generation depends on, detected from type definitions
     used_modules: {ModuleId} = {}
+    yield_method: YieldMethod? = None
 
     // `forward_error_with_try` controls whether errors are handled through the TRY() macro or through an external mechanism put by the caller.
     // noreturn functions may not throw, so let them crash instead.
@@ -3266,10 +3276,16 @@ struct CodeGenerator {
                     }
 
                     if catch_block!.yielded_type.has_value() {
-                        output.append(fresh_var)
-                        output.append(" = (")
+                        let label = .fresh_label()
+                        let old_yield_method = .yield_method
+                        .yield_method = YieldMethod::AssignAndGoto(name: fresh_var, label)
+                        defer .yield_method = old_yield_method
+
+
                         .codegen_block(block: catch_block!, &mut output)
-                        output.append(");\n")
+
+                        output.append(label)
+                        output.append(":;\n")
                     } else {
                         .codegen_block(block: catch_block!, &mut output)
                     }
@@ -3338,6 +3354,11 @@ struct CodeGenerator {
 
         let cpp_match_result_type = .codegen_type(type_id)
         let expr_type = .program.get_type(expr.type())
+
+        let old_yield_method = .yield_method
+        .yield_method = YieldMethod::ReturnExplicitValue(ctor: format("JaktInternal::ExplicitValue<{}>", cpp_match_result_type))
+        defer .yield_method = old_yield_method
+
         if expr_type is Enum(enum_id) {
             .codegen_enum_match(
                 enum_: .program.get_enum(enum_id)
@@ -3734,7 +3755,12 @@ struct CodeGenerator {
                 }
             }
             Expression(expr) => {
-                if expr.type() == void_type_id() or expr.type() == never_type_id() or (
+
+                if expr is Block(block) {
+                    .codegen_block(block, output)
+                    // NOTE: should not need any guarding
+                    output.append("VERIFY_NOT_REACHED();\n")
+                } else if expr.type() == void_type_id() or expr.type() == never_type_id() or (
                     expr.type() == unknown_type_id() and
                     not expr is OptionalNone
                 ) {
@@ -4431,21 +4457,6 @@ struct CodeGenerator {
     }
 
     fn codegen_block(mut this, block: CheckedBlock, output: &mut StringBuilder) throws {
-        if block.yielded_type.has_value() {
-            let yielded_type = block.yielded_type!
-            let type_output = .codegen_type(yielded_type)
-            let fresh_var = .fresh_var()
-            let fresh_label = .fresh_label()
-
-            .entered_yieldable_blocks.push((fresh_var, fresh_label))
-
-            output.append("({ Optional<")
-            output.append(type_output)
-            output.append("> ")
-            output.append(fresh_var)
-            output.append("; ")
-        }
-
         output.append("{\n")
 
         for statement in block.statements {
@@ -4453,18 +4464,6 @@ struct CodeGenerator {
         }
 
         output.append("}\n")
-
-        if block.yielded_type.has_value() {
-            let (var, label) = .entered_yieldable_blocks.pop()!
-
-            output.append(label)
-            output.append(":; ")
-            output.append(var)
-            if not block.yielded_none {
-                output.append(".release_value()")
-            }
-            output.append("; })")
-        }
     }
 
     fn codegen_statement(
@@ -4624,18 +4623,23 @@ struct CodeGenerator {
                 add_newline = false
             }
             Yield(expr, span) => {
-                if .entered_yieldable_blocks.size() == 0 {
-                    panic("Must be in a block to yield")
+                match .yield_method! {
+                    ReturnExplicitValue(ctor) => {
+                        output.append("return ")
+                        output.append(ctor)
+                        output.append('(')
+                        .codegen_expression(expr, &mut output)
+                        output.append(");")
+                    }
+                    AssignAndGoto(name, label) => {
+                        output.append(name)
+                        output.append(" = ")
+                        .codegen_expression(expr, &mut output)
+                        output.append("; goto ")
+                        output.append(label)
+                        output.append(";\n")
+                    }
                 }
-
-                let (var_name, end_label) = .entered_yieldable_blocks.last()!
-
-                output.append(var_name)
-                output.append(" = ")
-                .codegen_expression(expr, &mut output)
-                output.append("; goto ")
-                output.append(end_label)
-                output.append(";\n")
             }
         }
 
