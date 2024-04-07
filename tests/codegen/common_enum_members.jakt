@@ -15,6 +15,10 @@ fn do_match(thing: Thing) {
 		}
 		else => {}
 	}
+
+	if thing is Bar(shared) {
+		println("should not match, but should compile: {}", shared)
+	}
 }
 
 
