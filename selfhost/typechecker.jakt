@@ -8763,13 +8763,16 @@ struct Typechecker {
             return [CheckedEnumVariantBinding(name: None, binding: bindings[0].binding, type_id, span)]
         }
 
-        guard variant is StructLike(fields) else {
-            return None
-        }
         mut checked_vars: [CheckedVariable] = []
         mut checked_enum_variant_bindings: [CheckedEnumVariantBinding] = []
-        for field in fields {
-            checked_vars.push(.get_variable(field))
+        if variant is StructLike(fields) {
+            for field in fields {
+                checked_vars.push(.get_variable(field))
+            }
+        } else {
+            for field in .program.get_enum(variant.enum_id()).fields {
+                checked_vars.push(.get_variable(field.variable_id))
+            }
         }
         for binding in bindings {
             mut found = false
