@@ -3051,10 +3051,6 @@ struct CodeGenerator {
             }
             EnumVariantArg(expr, arg, enum_variant) => {
                 let variant_name = enum_variant.name()
-                mut arg_name = "value"
-                if enum_variant is StructLike {
-                    arg_name = arg.name ?? arg.binding
-                }
 
                 let enum_ = .program.get_enum(enum_variant.enum_id())
 
@@ -3065,11 +3061,20 @@ struct CodeGenerator {
 
                 // use the common section if the binding uses a common field
                 mut section = format("as.{}", variant_name)
+
+                mut is_common_field = false
+                mut field_name = arg.name ?? arg.binding
                 for field in enum_.fields {
-                    let field_name = .program.get_variable(field.variable_id).name_for_codegen().as_name_for_use()
-                    if field_name == arg_name {
+                    let var_name = .program.get_variable(field.variable_id).name_for_codegen().as_name_for_use()
+                    if var_name == field_name {
                         section = "common.init_common"
+                        is_common_field = true
+                        break
                     }
+                }
+
+                if not is_common_field and not enum_variant is StructLike {
+                    field_name = "value"
                 }
 
                 output.append("(")
@@ -3078,7 +3083,7 @@ struct CodeGenerator {
                 output.append(cpp_deref_operator)
                 output.append(section)
                 output.append(".")
-                output.append(arg_name)
+                output.append(field_name)
             }
             JaktArray(vals, repeat, span, type_id, inner_type_id) => {
                 if repeat.has_value() {
