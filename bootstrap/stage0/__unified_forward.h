@@ -268,6 +268,7 @@ struct CheckedGenericParameter;
 struct CheckedEnumVariantBinding;
 struct CheckedStringLiteral;
 struct ClassInstanceRebind;
+struct CheckedMatchBranch;
 struct OperatorTraitImplementation;
 struct CheckedBinaryOperator;
 struct ResolvedNamespace;
@@ -320,6 +321,8 @@ struct CheckedExpression;
 struct ValueImpl;
 
 struct NumericOrStringValue;
+
+size_t total_case_count(JaktInternal::DynamicArray<types::CheckedMatchBranch> const& branches);
 
 ids::TypeId unknown_type_id();
 
@@ -389,6 +392,8 @@ struct LineSpan;
 struct CodegenDebugInfo;
 struct CodeGenerator;
 struct AllowedControlExits;
+
+struct YieldMethod;
 
 bool are_loop_exits_allowed(codegen::AllowedControlExits const allowed_control_exits);
 

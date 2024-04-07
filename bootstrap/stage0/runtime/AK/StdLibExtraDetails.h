@@ -9,6 +9,7 @@
 #pragma once
 
 #include <AK/Platform.h>
+#include <AK/Types.h>
 
 namespace AK::Detail {
 
@@ -25,7 +26,7 @@ using FalseType = IntegralConstant<bool, false>;
 using TrueType = IntegralConstant<bool, true>;
 
 template<class T>
-using AddConst = const T;
+using AddConst = T const;
 
 template<class T>
 struct __AddConstToReferencedType {
@@ -175,19 +176,6 @@ inline constexpr bool IsSame = false;
 template<typename T>
 inline constexpr bool IsSame<T, T> = true;
 
-template<bool condition, class TrueType, class FalseType>
-struct __Conditional {
-    using Type = TrueType;
-};
-
-template<class TrueType, class FalseType>
-struct __Conditional<false, TrueType, FalseType> {
-    using Type = FalseType;
-};
-
-template<bool condition, class TrueType, class FalseType>
-using Conditional = typename __Conditional<condition, TrueType, FalseType>::Type;
-
 template<typename T>
 inline constexpr bool IsNullPointer = IsSame<decltype(nullptr), RemoveCV<T>>;
 
@@ -283,64 +271,6 @@ struct __MakeUnsigned<wchar_t> {
 
 template<typename T>
 using MakeUnsigned = typename __MakeUnsigned<T>::Type;
-
-template<typename T>
-struct __MakeSigned {
-    using Type = void;
-};
-template<>
-struct __MakeSigned<signed char> {
-    using Type = signed char;
-};
-template<>
-struct __MakeSigned<short> {
-    using Type = short;
-};
-template<>
-struct __MakeSigned<int> {
-    using Type = int;
-};
-template<>
-struct __MakeSigned<long> {
-    using Type = long;
-};
-template<>
-struct __MakeSigned<long long> {
-    using Type = long long;
-};
-template<>
-struct __MakeSigned<unsigned char> {
-    using Type = char;
-};
-template<>
-struct __MakeSigned<unsigned short> {
-    using Type = short;
-};
-template<>
-struct __MakeSigned<unsigned int> {
-    using Type = int;
-};
-template<>
-struct __MakeSigned<unsigned long> {
-    using Type = long;
-};
-template<>
-struct __MakeSigned<unsigned long long> {
-    using Type = long long;
-};
-template<>
-struct __MakeSigned<char> {
-    using Type = char;
-};
-#if ARCH(AARCH64)
-template<>
-struct __MakeSigned<wchar_t> {
-    using Type = void;
-};
-#endif
-
-template<typename T>
-using MakeSigned = typename __MakeSigned<T>::Type;
 
 template<typename T>
 auto declval() -> T;
@@ -451,8 +381,8 @@ struct IntegerSequence {
     static constexpr unsigned size() noexcept { return sizeof...(Ts); }
 };
 
-template<unsigned... Indices>
-using IndexSequence = IntegerSequence<unsigned, Indices...>;
+template<size_t... Indices>
+using IndexSequence = IntegerSequence<size_t, Indices...>;
 
 #if __has_builtin(__make_integer_seq)
 template<typename T, T N>
@@ -474,8 +404,8 @@ template<typename T, T N>
 using MakeIntegerSequence = decltype(make_integer_sequence_impl<T, N>());
 #endif
 
-template<unsigned N>
-using MakeIndexSequence = MakeIntegerSequence<unsigned, N>;
+template<size_t N>
+using MakeIndexSequence = MakeIntegerSequence<size_t, N>;
 
 template<typename T>
 struct __IdentityType {
@@ -636,6 +566,42 @@ struct __InvokeResult<F, Args...> {
 template<typename F, typename... Args>
 using InvokeResult = typename __InvokeResult<F, Args...>::type;
 
+template<typename Callable>
+struct EquivalentFunctionTypeImpl;
+
+template<template<typename> class Function, typename T, typename... Args>
+struct EquivalentFunctionTypeImpl<Function<T(Args...)>> {
+    using Type = T(Args...);
+};
+
+template<typename T, typename... Args>
+struct EquivalentFunctionTypeImpl<T(Args...)> {
+    using Type = T(Args...);
+};
+
+template<typename T, typename... Args>
+struct EquivalentFunctionTypeImpl<T (*)(Args...)> {
+    using Type = T(Args...);
+};
+
+template<typename L>
+struct EquivalentFunctionTypeImpl {
+    using Type = typename EquivalentFunctionTypeImpl<decltype(&L::operator())>::Type;
+};
+
+template<typename T, typename C, typename... Args>
+struct EquivalentFunctionTypeImpl<T (C::*)(Args...)> {
+    using Type = T(Args...);
+};
+
+template<typename T, typename C, typename... Args>
+struct EquivalentFunctionTypeImpl<T (C::*)(Args...) const> {
+    using Type = T(Args...);
+};
+
+template<typename Callable>
+using EquivalentFunctionType = typename EquivalentFunctionTypeImpl<Callable>::Type;
+
 }
 
 #if !USING_AK_GLOBALLY
@@ -651,6 +617,7 @@ using AK::Detail::Conditional;
 using AK::Detail::CopyConst;
 using AK::Detail::declval;
 using AK::Detail::DependentFalse;
+using AK::Detail::EquivalentFunctionType;
 using AK::Detail::FalseType;
 using AK::Detail::IdentityType;
 using AK::Detail::IndexSequence;

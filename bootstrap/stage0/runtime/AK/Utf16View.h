@@ -71,6 +71,14 @@ public:
     {
     }
 
+    template<size_t Size>
+    Utf16View(char16_t const (&code_units)[Size])
+        : m_code_units(
+            reinterpret_cast<u16 const*>(&code_units[0]),
+            code_units[Size - 1] == u'\0' ? Size - 1 : Size)
+    {
+    }
+
     bool operator==(Utf16View const& other) const { return m_code_units == other.m_code_units; }
 
     enum class AllowInvalidCodeUnits {
@@ -102,6 +110,8 @@ public:
 
     Utf16View unicode_substring_view(size_t code_point_offset, size_t code_point_length) const;
     Utf16View unicode_substring_view(size_t code_point_offset) const { return unicode_substring_view(code_point_offset, length_in_code_points() - code_point_offset); }
+
+    bool starts_with(Utf16View const&) const;
 
     bool validate(size_t& valid_code_units) const;
     bool validate() const

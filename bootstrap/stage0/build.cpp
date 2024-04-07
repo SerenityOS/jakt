@@ -72,7 +72,7 @@ size_t const index = ((jakt__index__process__).template get<0>());
 jakt__platform__unknown_process::Process const process = ((jakt__index__process__).template get<1>());
 
 JaktInternal::Optional<jakt__platform__unknown_process::ExitPollResult> const status = ({ Optional<JaktInternal::Optional<jakt__platform__unknown_process::ExitPollResult>> __jakt_var_0;
-auto __jakt_var_1 = [&]() -> ErrorOr<JaktInternal::Optional<jakt__platform__unknown_process::ExitPollResult>> { return TRY((jakt__platform__unknown_process::poll_process_exit(((process))))); }();
+auto __jakt_var_1 = [&]() -> ErrorOr<JaktInternal::Optional<jakt__platform__unknown_process::ExitPollResult>> { return ((jakt__platform__unknown_process::poll_process_exit(((process))))); }();
 if (__jakt_var_1.is_error()) {{
 ((pids_to_remove).set(index,finished_status));
 continue;

@@ -1398,12 +1398,11 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 3 /* Identifier */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Identifier;ByteString const& name = __jakt_match_value.name;
 utility::Span const& span = __jakt_match_value.span;
-return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Optional<JaktInternal::Tuple<ByteString,utility::Span>>> __jakt_var_7; {
+{
 ((((*this).index)++));
-__jakt_var_7 = static_cast<JaktInternal::Optional<JaktInternal::Tuple<ByteString,utility::Span>>>((Tuple{name, span})); goto __jakt_label_3;
-
+return JaktInternal::ExplicitValue<JaktInternal::Optional<JaktInternal::Tuple<ByteString,utility::Span>>>(static_cast<JaktInternal::Optional<JaktInternal::Tuple<ByteString,utility::Span>>>((Tuple{name, span})));
 }
-__jakt_label_3:; __jakt_var_7.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(JaktInternal::OptionalNone());
@@ -2004,7 +2003,7 @@ break;
 }
 parser::ParsedParameter param = (_magic_value.value());
 {
-ScopeGuard __jakt_var_8([&] {
+ScopeGuard __jakt_var_4([&] {
 ((index) += (static_cast<size_t>(1ULL)));
 });
 if (((((((param).variable)).name)) == (((argument).name)))){
@@ -2162,20 +2161,18 @@ auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 3 /* Identifier */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Identifier;ByteString const& name = __jakt_match_value.name;
-return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_9; {
+{
 ((((*this).index)++));
-__jakt_var_9 = name; goto __jakt_label_4;
-
+return JaktInternal::ExplicitValue<ByteString>(name);
 }
-__jakt_label_4:; __jakt_var_9.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 99 /* This */: {
-return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_10; {
+{
 ((((*this).index)++));
-__jakt_var_10 = (ByteString::from_utf8_without_validation("this"sv)); goto __jakt_label_5;
-
+return JaktInternal::ExplicitValue<ByteString>((ByteString::from_utf8_without_validation("this"sv)));
 }
-__jakt_label_5:; __jakt_var_10.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 default: {
 {
@@ -2202,29 +2199,26 @@ auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 3 /* Identifier */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Identifier;ByteString const& name = __jakt_match_value.name;
-return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_11; {
+{
 ((((*this).index)++));
-__jakt_var_11 = name; goto __jakt_label_6;
-
+return JaktInternal::ExplicitValue<ByteString>(name);
 }
-__jakt_label_6:; __jakt_var_11.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 99 /* This */: {
-return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_12; {
+{
 ((((*this).index)++));
-__jakt_var_12 = (ByteString::from_utf8_without_validation("this"sv)); goto __jakt_label_7;
-
+return JaktInternal::ExplicitValue<ByteString>((ByteString::from_utf8_without_validation("this"sv)));
 }
-__jakt_label_7:; __jakt_var_12.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 1 /* QuotedString */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.QuotedString;ByteString const& quote = __jakt_match_value.quote;
-return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_13; {
+{
 ((((*this).index)++));
-__jakt_var_13 = quote; goto __jakt_label_8;
-
+return JaktInternal::ExplicitValue<ByteString>(quote);
 }
-__jakt_label_8:; __jakt_var_13.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 default: {
 {
@@ -2252,29 +2246,26 @@ auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 3 /* Identifier */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Identifier;ByteString const& name = __jakt_match_value.name;
-return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_14; {
+{
 ((((*this).index)++));
-__jakt_var_14 = name; goto __jakt_label_9;
-
+return JaktInternal::ExplicitValue<JaktInternal::Optional<ByteString>>(name);
 }
-__jakt_label_9:; __jakt_var_14.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 99 /* This */: {
-return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_15; {
+{
 ((((*this).index)++));
-__jakt_var_15 = (ByteString::from_utf8_without_validation("this"sv)); goto __jakt_label_10;
-
+return JaktInternal::ExplicitValue<JaktInternal::Optional<ByteString>>((ByteString::from_utf8_without_validation("this"sv)));
 }
-__jakt_label_10:; __jakt_var_15.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 1 /* QuotedString */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.QuotedString;ByteString const& quote = __jakt_match_value.quote;
-return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_16; {
+{
 ((((*this).index)++));
-__jakt_var_16 = quote; goto __jakt_label_11;
-
+return JaktInternal::ExplicitValue<JaktInternal::Optional<ByteString>>(quote);
 }
-__jakt_label_11:; __jakt_var_16.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 default: {
 {
@@ -2320,37 +2311,33 @@ auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 3 /* Identifier */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Identifier;ByteString const& name = __jakt_match_value.name;
-return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Optional<ByteString>> __jakt_var_17; {
+{
 ((((*this).index)++));
-__jakt_var_17 = static_cast<JaktInternal::Optional<ByteString>>(name); goto __jakt_label_12;
-
+return JaktInternal::ExplicitValue<JaktInternal::Optional<ByteString>>(static_cast<JaktInternal::Optional<ByteString>>(name));
 }
-__jakt_label_12:; __jakt_var_17.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 99 /* This */: {
-return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_18; {
+{
 ((((*this).index)++));
-__jakt_var_18 = (ByteString::from_utf8_without_validation("this"sv)); goto __jakt_label_13;
-
+return JaktInternal::ExplicitValue<JaktInternal::Optional<ByteString>>((ByteString::from_utf8_without_validation("this"sv)));
 }
-__jakt_label_13:; __jakt_var_18.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 1 /* QuotedString */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.QuotedString;ByteString const& quote = __jakt_match_value.quote;
-return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Optional<ByteString>> __jakt_var_19; {
+{
 ((((*this).index)++));
-__jakt_var_19 = static_cast<JaktInternal::Optional<ByteString>>(quote); goto __jakt_label_14;
-
+return JaktInternal::ExplicitValue<JaktInternal::Optional<ByteString>>(static_cast<JaktInternal::Optional<ByteString>>(quote));
 }
-__jakt_label_14:; __jakt_var_19.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_20; {
+{
 ((*this).error((ByteString::from_utf8_without_validation("Expected identifier or string literal"sv)),((((*this).current())).span())));
-__jakt_var_20 = JaktInternal::OptionalNone(); goto __jakt_label_15;
-
+return JaktInternal::ExplicitValue<JaktInternal::Optional<ByteString>>(JaktInternal::OptionalNone());
 }
-__jakt_label_15:; __jakt_var_20; }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 }/*switch end*/
 }()
@@ -5220,20 +5207,18 @@ case 71 /* Enum */: {
 return JaktInternal::ExplicitValue(((*this).parse_enum(definition_linkage,false)));
 };/*case end*/
 case 62 /* Boxed */: {
-return JaktInternal::ExplicitValue(({ Optional<parser::ParsedRecord> __jakt_var_21; {
+{
 ((((*this).index)++));
-__jakt_var_21 = ((*this).parse_enum(definition_linkage,true)); goto __jakt_label_16;
-
+return JaktInternal::ExplicitValue<parser::ParsedRecord>(((*this).parse_enum(definition_linkage,true)));
 }
-__jakt_label_16:; __jakt_var_21.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<parser::ParsedRecord> __jakt_var_22; {
+{
 ((*this).error((ByteString::from_utf8_without_validation("Expected `struct`, `class`, `enum`, or `boxed`"sv)),((((*this).current())).span())));
-__jakt_var_22 = parser::ParsedRecord((ByteString::from_utf8_without_validation(""sv)),((*this).empty_span()),DynamicArray<parser::ParsedGenericParameter>::create_with({}),definition_linkage,JaktInternal::OptionalNone(),DynamicArray<parser::ParsedMethod>::create_with({}),parser::RecordType::Garbage(),DynamicArray<parser::ParsedRecord>::create_with({}),JaktInternal::OptionalNone()); goto __jakt_label_17;
-
+return JaktInternal::ExplicitValue<parser::ParsedRecord>(parser::ParsedRecord((ByteString::from_utf8_without_validation(""sv)),((*this).empty_span()),DynamicArray<parser::ParsedGenericParameter>::create_with({}),definition_linkage,JaktInternal::OptionalNone(),DynamicArray<parser::ParsedMethod>::create_with({}),parser::RecordType::Garbage(),DynamicArray<parser::ParsedRecord>::create_with({}),JaktInternal::OptionalNone()));
 }
-__jakt_label_17:; __jakt_var_22.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 }/*switch end*/
 }()
@@ -5280,20 +5265,18 @@ auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 1 /* QuotedString */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.QuotedString;ByteString const& quote = __jakt_match_value.quote;
-return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_23; {
+{
 ((((*this).index)++));
-__jakt_var_23 = quote; goto __jakt_label_18;
-
+return JaktInternal::ExplicitValue<ByteString>(quote);
 }
-__jakt_label_18:; __jakt_var_23.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_24; {
+{
 ((*this).error((ByteString::from_utf8_without_validation("Expected path after `import extern`"sv)),((((*this).current())).span())));
-__jakt_var_24 = (ByteString::from_utf8_without_validation(""sv)); goto __jakt_label_19;
-
+return JaktInternal::ExplicitValue<ByteString>((ByteString::from_utf8_without_validation(""sv)));
 }
-__jakt_label_19:; __jakt_var_24.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 }/*switch end*/
 }()
@@ -5433,20 +5416,18 @@ auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 1 /* QuotedString */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.QuotedString;ByteString const& quote = __jakt_match_value.quote;
-return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_25; {
+{
 ((((*this).index)++));
-__jakt_var_25 = quote; goto __jakt_label_20;
-
+return JaktInternal::ExplicitValue<ByteString>(quote);
 }
-__jakt_label_20:; __jakt_var_25.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<ByteString> __jakt_var_26; {
+{
 ((*this).error((ByteString::from_utf8_without_validation("Expected quoted string to assign value to defined symbols"sv)),((((*this).current())).span())));
-__jakt_var_26 = (ByteString::from_utf8_without_validation(""sv)); goto __jakt_label_21;
-
+return JaktInternal::ExplicitValue<ByteString>((ByteString::from_utf8_without_validation(""sv)));
 }
-__jakt_label_21:; __jakt_var_26.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 }/*switch end*/
 }()
@@ -5672,16 +5653,15 @@ return JaktInternal::ExplicitValue(({
 auto&& __jakt_match_variant = ((*this).peek(static_cast<size_t>(1ULL)));
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 7 /* LParen */: {
-return JaktInternal::ExplicitValue(({ Optional<parser::ImportName> __jakt_var_27; {
+{
 bool const previous_can_have_trailing_closure = ((*this).can_have_trailing_closure);
 (((*this).can_have_trailing_closure) = false);
 NonnullRefPtr<typename parser::ParsedExpression> const expression = parser::ParsedExpression::Call((((*this).parse_call()).value()),span);
 (((*this).can_have_trailing_closure) = previous_can_have_trailing_closure);
 ((((*this).index)--));
-__jakt_var_27 = parser::ImportName::Comptime(expression); goto __jakt_label_22;
-
+return JaktInternal::ExplicitValue<parser::ImportName>(parser::ImportName::Comptime(expression));
 }
-__jakt_label_22:; __jakt_var_27.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(parser::ImportName::Literal(name,span));
@@ -7810,12 +7790,12 @@ return ({
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 93 /* Raw */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedType>> __jakt_var_28; {
+{
 utility::Span const start = ((((*this).current())).span());
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedType> const inner = ((*this).parse_typename());
 utility::Span const span = parser::merge_spans(start,((((*this).current())).span()));
-__jakt_var_28 = ({
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedType>>(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedType>, NonnullRefPtr<typename parser::ParsedType>>{
 auto&& __jakt_match_variant = *inner;
 switch(__jakt_match_variant.__jakt_init_index()) {
@@ -7832,25 +7812,23 @@ return JaktInternal::ExplicitValue(parser::ParsedType::RawPtr(qualifiers,inner,s
     if (_jakt_value.is_return())
         return _jakt_value.release_return();
     _jakt_value.release_value();
-}); goto __jakt_label_23;
-
+}));
 }
-__jakt_label_23:; __jakt_var_28.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 106 /* Weak */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedType>> __jakt_var_29; {
+{
 utility::Span const start = ((((*this).current())).span());
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedType> const inner = ((*this).parse_typename());
 utility::Span const span = parser::merge_spans(start,((((*this).current())).span()));
-__jakt_var_29 = parser::ParsedType::WeakPtr(qualifiers,inner,span); goto __jakt_label_24;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedType>>(parser::ParsedType::WeakPtr(qualifiers,inner,span));
 }
-__jakt_label_24:; __jakt_var_29.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 3 /* Identifier */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Identifier;ByteString const& name = __jakt_match_value.name;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedType>> __jakt_var_30; {
+{
 utility::Span const span = ((((*this).current())).span());
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedType> parsed_type = parser::ParsedType::Name(qualifiers,name,span);
@@ -7916,13 +7894,12 @@ ByteString const type_name = (((namespaces).pop()).value());
 JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedType>> params = ((*this).parse_type_parameter_list());
 (parsed_type = parser::ParsedType::NamespacedName(JaktInternal::OptionalNone(),type_name,namespaces,params,((((*this).previous())).span())));
 }
-__jakt_var_30 = parsed_type; goto __jakt_label_25;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedType>>(parsed_type);
 }
-__jakt_label_25:; __jakt_var_30.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 75 /* Fn */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedType>> __jakt_var_31; {
+{
 utility::Span const start = ((((*this).current())).span());
 ((((*this).index)++));
 parser::ParsedFunctionParameters const fn_parameters = ((*this).parse_function_parameters(false));
@@ -7942,18 +7919,16 @@ else {
 ((*this).error((ByteString::from_utf8_without_validation("Expected '->'"sv)),((((*this).current())).span())));
 }
 
-__jakt_var_31 = parser::ParsedType::Function(qualifiers,((fn_parameters).parameters),can_throw,return_type,parser::merge_spans(start,((return_type)->span()))); goto __jakt_label_26;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedType>>(parser::ParsedType::Function(qualifiers,((fn_parameters).parameters),can_throw,return_type,parser::merge_spans(start,((return_type)->span()))));
 }
-__jakt_label_26:; __jakt_var_31.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedType>> __jakt_var_32; {
+{
 ((*this).error((ByteString::from_utf8_without_validation("Expected type name"sv)),((((*this).current())).span())));
-__jakt_var_32 = parser::ParsedType::Empty(qualifiers); goto __jakt_label_27;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedType>>(parser::ParsedType::Empty(qualifiers));
 }
-__jakt_label_27:; __jakt_var_32.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 }/*switch end*/
 }()
@@ -8211,21 +8186,19 @@ return ({
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 67 /* Cpp */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_33; {
+{
 ((((*this).index)++));
-__jakt_var_33 = parser::ParsedStatement::InlineCpp(((*this).parse_block()),parser::merge_spans(start,((((*this).previous())).span()))); goto __jakt_label_28;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedStatement>>(parser::ParsedStatement::InlineCpp(((*this).parse_block()),parser::merge_spans(start,((((*this).previous())).span()))));
 }
-__jakt_label_28:; __jakt_var_33.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 68 /* Defer */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_34; {
+{
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedStatement> const statement = ((*this).parse_statement(false));
-__jakt_var_34 = parser::ParsedStatement::Defer(statement,parser::merge_spans(start,((((*this).previous())).span()))); goto __jakt_label_29;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedStatement>>(parser::ParsedStatement::Defer(statement,parser::merge_spans(start,((((*this).previous())).span()))));
 }
-__jakt_label_29:; __jakt_var_34.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 104 /* Unsafe */: {
 return JaktInternal::ExplicitValue(({
@@ -8233,21 +8206,19 @@ return JaktInternal::ExplicitValue(({
 auto&& __jakt_match_variant = ((*this).peek(static_cast<size_t>(1ULL)));
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 9 /* LCurly */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_35; {
+{
 ((((*this).index)++));
 parser::ParsedBlock const block = ((*this).parse_block());
-__jakt_var_35 = parser::ParsedStatement::UnsafeBlock(block,parser::merge_spans(start,((((*this).previous())).span()))); goto __jakt_label_30;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedStatement>>(parser::ParsedStatement::UnsafeBlock(block,parser::merge_spans(start,((((*this).previous())).span()))));
 }
-__jakt_label_30:; __jakt_var_35.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_36; {
+{
 NonnullRefPtr<typename parser::ParsedExpression> const expr = ((*this).parse_expression(true,false));
-__jakt_var_36 = parser::ParsedStatement::Expression(expr,parser::merge_spans(start,((((*this).previous())).span()))); goto __jakt_label_31;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedStatement>>(parser::ParsedStatement::Expression(expr,parser::merge_spans(start,((((*this).previous())).span()))));
 }
-__jakt_label_31:; __jakt_var_36.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 }/*switch end*/
 }()
@@ -8258,68 +8229,62 @@ __jakt_label_31:; __jakt_var_36.release_value(); }));
 }));
 };/*case end*/
 case 63 /* Break */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_37; {
+{
 ((((*this).index)++));
-__jakt_var_37 = parser::ParsedStatement::Break(start); goto __jakt_label_32;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedStatement>>(parser::ParsedStatement::Break(start));
 }
-__jakt_label_32:; __jakt_var_37.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 66 /* Continue */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_38; {
+{
 ((((*this).index)++));
-__jakt_var_38 = parser::ParsedStatement::Continue(start); goto __jakt_label_33;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedStatement>>(parser::ParsedStatement::Continue(start));
 }
-__jakt_label_33:; __jakt_var_38.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 83 /* Loop */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_39; {
+{
 ((((*this).index)++));
 parser::ParsedBlock const block = ((*this).parse_block());
-__jakt_var_39 = parser::ParsedStatement::Loop(block,parser::merge_spans(start,((((*this).previous())).span()))); goto __jakt_label_34;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedStatement>>(parser::ParsedStatement::Loop(block,parser::merge_spans(start,((((*this).previous())).span()))));
 }
-__jakt_label_34:; __jakt_var_39.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 100 /* Throw */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_40; {
+{
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedExpression> const expr = ((*this).parse_expression(false,false));
-__jakt_var_40 = parser::ParsedStatement::Throw(expr,parser::merge_spans(start,((((*this).previous())).span()))); goto __jakt_label_35;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedStatement>>(parser::ParsedStatement::Throw(expr,parser::merge_spans(start,((((*this).previous())).span()))));
 }
-__jakt_label_35:; __jakt_var_40.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 107 /* While */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_41; {
+{
 ((((*this).index)++));
 bool const previous_can_have_trailing_closure = ((*this).can_have_trailing_closure);
 (((*this).can_have_trailing_closure) = false);
 NonnullRefPtr<typename parser::ParsedExpression> const condition = ((*this).parse_expression(false,true));
 (((*this).can_have_trailing_closure) = previous_can_have_trailing_closure);
 parser::ParsedBlock const block = ((*this).parse_block());
-__jakt_var_41 = parser::ParsedStatement::While(condition,block,parser::merge_spans(start,((((*this).previous())).span()))); goto __jakt_label_36;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedStatement>>(parser::ParsedStatement::While(condition,block,parser::merge_spans(start,((((*this).previous())).span()))));
 }
-__jakt_label_36:; __jakt_var_41.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 108 /* Yield */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_42; {
+{
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedExpression> const expr = ((*this).parse_expression(false,false));
 if ((!(inside_block))){
 ((*this).error((ByteString::from_utf8_without_validation("‘yield’ can only be used inside a block"sv)),parser::merge_spans(start,((expr)->span()))));
 }
-__jakt_var_42 = parser::ParsedStatement::Yield(expr,parser::merge_spans(start,((((*this).previous())).span()))); goto __jakt_label_37;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedStatement>>(parser::ParsedStatement::Yield(expr,parser::merge_spans(start,((((*this).previous())).span()))));
 }
-__jakt_label_37:; __jakt_var_42.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 95 /* Return */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_43; {
+{
 ((((*this).index)++));
-__jakt_var_43 = ({
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedStatement>>(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedStatement>, NonnullRefPtr<typename parser::ParsedStatement>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.__jakt_init_index()) {
@@ -8341,13 +8306,12 @@ return JaktInternal::ExplicitValue(parser::ParsedStatement::Return(((*this).pars
     if (_jakt_value.is_return())
         return _jakt_value.release_return();
     _jakt_value.release_value();
-}); goto __jakt_label_38;
-
+}));
 }
-__jakt_label_38:; __jakt_var_43.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 82 /* Let */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_44; {
+{
 bool const is_mutable = ((((*this).current())).__jakt_init_index() == 86 /* Mut */);
 ((((*this).index)++));
 JaktInternal::DynamicArray<parser::ParsedVarDecl> vars = DynamicArray<parser::ParsedVarDecl>::create_with({});
@@ -8392,20 +8356,18 @@ NonnullRefPtr<typename parser::ParsedExpression> const init = ({
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 16 /* Equal */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_45; {
+{
 ((((*this).index)++));
-__jakt_var_45 = ((*this).parse_expression(false,false)); goto __jakt_label_40;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(((*this).parse_expression(false,false)));
 }
-__jakt_label_40:; __jakt_var_45.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_46; {
+{
 ((*this).error((ByteString::from_utf8_without_validation("Expected initializer"sv)),((((*this).current())).span())));
-__jakt_var_46 = parser::ParsedExpression::Garbage(((((*this).current())).span())); goto __jakt_label_41;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(parser::ParsedExpression::Garbage(((((*this).current())).span())));
 }
-__jakt_label_41:; __jakt_var_46.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 }/*switch end*/
 }()
@@ -8419,13 +8381,12 @@ if (is_destructuring_assingment){
 NonnullRefPtr<typename parser::ParsedStatement> const old_return_statement = return_statement;
 (return_statement = parser::ParsedStatement::DestructuringAssignment(vars,old_return_statement,parser::merge_spans(start,((((*this).previous())).span()))));
 }
-__jakt_var_44 = return_statement; goto __jakt_label_39;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedStatement>>(return_statement);
 }
-__jakt_label_39:; __jakt_var_44.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 86 /* Mut */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_47; {
+{
 bool const is_mutable = ((((*this).current())).__jakt_init_index() == 86 /* Mut */);
 ((((*this).index)++));
 JaktInternal::DynamicArray<parser::ParsedVarDecl> vars = DynamicArray<parser::ParsedVarDecl>::create_with({});
@@ -8470,20 +8431,18 @@ NonnullRefPtr<typename parser::ParsedExpression> const init = ({
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 16 /* Equal */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_48; {
+{
 ((((*this).index)++));
-__jakt_var_48 = ((*this).parse_expression(false,false)); goto __jakt_label_43;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(((*this).parse_expression(false,false)));
 }
-__jakt_label_43:; __jakt_var_48.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_49; {
+{
 ((*this).error((ByteString::from_utf8_without_validation("Expected initializer"sv)),((((*this).current())).span())));
-__jakt_var_49 = parser::ParsedExpression::Garbage(((((*this).current())).span())); goto __jakt_label_44;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(parser::ParsedExpression::Garbage(((((*this).current())).span())));
 }
-__jakt_label_44:; __jakt_var_49.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 }/*switch end*/
 }()
@@ -8497,10 +8456,9 @@ if (is_destructuring_assingment){
 NonnullRefPtr<typename parser::ParsedStatement> const old_return_statement = return_statement;
 (return_statement = parser::ParsedStatement::DestructuringAssignment(vars,old_return_statement,parser::merge_spans(start,((((*this).previous())).span()))));
 }
-__jakt_var_47 = return_statement; goto __jakt_label_42;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedStatement>>(return_statement);
 }
-__jakt_label_42:; __jakt_var_47.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 77 /* If */: {
 return JaktInternal::ExplicitValue(((*this).parse_if_statement()));
@@ -8509,23 +8467,21 @@ case 74 /* For */: {
 return JaktInternal::ExplicitValue(((*this).parse_for_statement()));
 };/*case end*/
 case 9 /* LCurly */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_50; {
+{
 parser::ParsedBlock const block = ((*this).parse_block());
-__jakt_var_50 = parser::ParsedStatement::Block(block,parser::merge_spans(start,((((*this).previous())).span()))); goto __jakt_label_45;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedStatement>>(parser::ParsedStatement::Block(block,parser::merge_spans(start,((((*this).previous())).span()))));
 }
-__jakt_label_45:; __jakt_var_50.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 109 /* Guard */: {
 return JaktInternal::ExplicitValue(((*this).parse_guard_statement()));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedStatement>> __jakt_var_51; {
+{
 NonnullRefPtr<typename parser::ParsedExpression> const expr = ((*this).parse_expression(true,false));
-__jakt_var_51 = parser::ParsedStatement::Expression(expr,parser::merge_spans(start,((((*this).previous())).span()))); goto __jakt_label_46;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedStatement>>(parser::ParsedStatement::Expression(expr,parser::merge_spans(start,((((*this).previous())).span()))));
 }
-__jakt_label_46:; __jakt_var_51.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 }/*switch end*/
 }()
@@ -8939,29 +8895,27 @@ auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 53 /* Dot */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Dot;utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_52; {
-__jakt_var_52 = parser::ParsedExpression::Var((ByteString::from_utf8_without_validation("this"sv)),span); goto __jakt_label_47;
-
+{
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(parser::ParsedExpression::Var((ByteString::from_utf8_without_validation("this"sv)),span));
 }
-__jakt_label_47:; __jakt_var_52.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 85 /* Must */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Must;utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_53; {
+{
 utility::Span const start = ((((*this).current())).span());
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedExpression> const expr = ((*this).parse_operand());
 utility::Span const span = parser::merge_spans(start,((expr)->span()));
-__jakt_var_53 = parser::ParsedExpression::Must(expr,span); goto __jakt_label_48;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(parser::ParsedExpression::Must(expr,span));
 }
-__jakt_label_48:; __jakt_var_53.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 103 /* Try */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Try;utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_54; {
+{
 ((((*this).index)++));
-__jakt_var_54 = ({
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedExpression>, NonnullRefPtr<typename parser::ParsedExpression>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.__jakt_init_index()) {
@@ -8969,7 +8923,7 @@ case 9 /* LCurly */: {
 return JaktInternal::ExplicitValue(((*this).parse_try_block()));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_55; {
+{
 NonnullRefPtr<typename parser::ParsedExpression> const expression = ((*this).parse_expression(true,true));
 JaktInternal::Optional<parser::ParsedBlock> catch_block = JaktInternal::OptionalNone();
 JaktInternal::Optional<ByteString> catch_name = JaktInternal::OptionalNone();
@@ -8984,10 +8938,9 @@ ByteString const name = (((*this).current())).as.Identifier.name;
 }
 (catch_block = ((*this).parse_block()));
 }
-__jakt_var_55 = parser::ParsedExpression::Try(expression,catch_block,catch_span,catch_name,span); goto __jakt_label_50;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(parser::ParsedExpression::Try(expression,catch_block,catch_span,catch_name,span));
 }
-__jakt_label_50:; __jakt_var_55.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 }/*switch end*/
 }()
@@ -8995,31 +8948,28 @@ __jakt_label_50:; __jakt_var_55.release_value(); }));
     if (_jakt_value.is_return())
         return _jakt_value.release_return();
     _jakt_value.release_value();
-}); goto __jakt_label_49;
-
+}));
 }
-__jakt_label_49:; __jakt_var_54.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 1 /* QuotedString */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.QuotedString;ByteString const& quote = __jakt_match_value.quote;
 utility::Span const& span = __jakt_match_value.span;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_56; {
+{
 ((((*this).index)++));
-__jakt_var_56 = parser::ParsedExpression::QuotedString(quote,span); goto __jakt_label_51;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(parser::ParsedExpression::QuotedString(quote,span));
 }
-__jakt_label_51:; __jakt_var_56.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 0 /* SingleQuotedString */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.SingleQuotedString;ByteString const& quote = __jakt_match_value.quote;
 JaktInternal::Optional<ByteString> const& prefix = __jakt_match_value.prefix;
 utility::Span const& span = __jakt_match_value.span;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_57; {
+{
 ((((*this).index)++));
-__jakt_var_57 = parser::ParsedExpression::SingleQuotedString(quote,prefix,span); goto __jakt_label_52;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(parser::ParsedExpression::SingleQuotedString(quote,prefix,span));
 }
-__jakt_label_52:; __jakt_var_57.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 2 /* Number */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Number;lexer::LiteralPrefix const& prefix = __jakt_match_value.prefix;
@@ -9030,83 +8980,76 @@ return JaktInternal::ExplicitValue(((*this).parse_number(prefix,number,suffix,sp
 };/*case end*/
 case 102 /* True */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.True;utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_58; {
+{
 ((((*this).index)++));
-__jakt_var_58 = parser::ParsedExpression::Boolean(true,span); goto __jakt_label_53;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(parser::ParsedExpression::Boolean(true,span));
 }
-__jakt_label_53:; __jakt_var_58.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 73 /* False */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.False;utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_59; {
+{
 ((((*this).index)++));
-__jakt_var_59 = parser::ParsedExpression::Boolean(false,span); goto __jakt_label_54;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(parser::ParsedExpression::Boolean(false,span));
 }
-__jakt_label_54:; __jakt_var_59.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 99 /* This */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.This;utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_60; {
+{
 ((((*this).index)++));
-__jakt_var_60 = parser::ParsedExpression::Var((ByteString::from_utf8_without_validation("this"sv)),span); goto __jakt_label_55;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(parser::ParsedExpression::Var((ByteString::from_utf8_without_validation("this"sv)),span));
 }
-__jakt_label_55:; __jakt_var_60.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 88 /* Not */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Not;utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_61; {
+{
 utility::Span const start = ((((*this).current())).span());
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedExpression> const expr = ((*this).parse_operand());
 utility::Span const span = parser::merge_spans(start,((expr)->span()));
-__jakt_var_61 = parser::ParsedExpression::UnaryOp(expr,parser::UnaryOperator::LogicalNot(),span); goto __jakt_label_56;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(parser::ParsedExpression::UnaryOp(expr,parser::UnaryOperator::LogicalNot(),span));
 }
-__jakt_label_56:; __jakt_var_61.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 46 /* Tilde */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Tilde;utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_62; {
+{
 utility::Span const start = ((((*this).current())).span());
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedExpression> const expr = ((*this).parse_operand());
 utility::Span const span = parser::merge_spans(start,((expr)->span()));
-__jakt_var_62 = parser::ParsedExpression::UnaryOp(expr,parser::UnaryOperator::BitwiseNot(),span); goto __jakt_label_57;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(parser::ParsedExpression::UnaryOp(expr,parser::UnaryOperator::BitwiseNot(),span));
 }
-__jakt_label_57:; __jakt_var_62.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 97 /* Sizeof */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Sizeof;utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_63; {
+{
 utility::Span const start = ((((*this).current())).span());
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedType> const parsed_type = ((*this).parse_typename());
 utility::Span const span = parser::merge_spans(start,((parsed_type)->span()));
-__jakt_var_63 = parser::ParsedExpression::UnaryOp(parser::ParsedExpression::Garbage(span),parser::UnaryOperator::Sizeof(parsed_type),span); goto __jakt_label_58;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(parser::ParsedExpression::UnaryOp(parser::ParsedExpression::Garbage(span),parser::UnaryOperator::Sizeof(parsed_type),span));
 }
-__jakt_label_58:; __jakt_var_63.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 94 /* Reflect */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Reflect;utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_64; {
+{
 utility::Span const start = ((((*this).current())).span());
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedType> const type = ((*this).parse_typename());
 utility::Span const span = parser::merge_spans(start,((type)->span()));
-__jakt_var_64 = parser::ParsedExpression::Reflect(type,span); goto __jakt_label_59;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(parser::ParsedExpression::Reflect(type,span));
 }
-__jakt_label_59:; __jakt_var_64.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 3 /* Identifier */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Identifier;ByteString const& name = __jakt_match_value.name;
 utility::Span const& span = __jakt_match_value.span;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_65; {
+{
 if (((((*this).peek(static_cast<size_t>(1ULL)))).__jakt_init_index() == 7 /* LParen */)){
 if (((name) == ((ByteString::from_utf8_without_validation("Some"sv))))){
 ((((*this).index)++));
@@ -9142,14 +9085,13 @@ return parser::ParsedExpression::Call((call.value()),span);
 if (((name) == ((ByteString::from_utf8_without_validation("None"sv))))){
 return parser::ParsedExpression::OptionalNone(span);
 }
-__jakt_var_65 = parser::ParsedExpression::Var(name,span); goto __jakt_label_60;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(parser::ParsedExpression::Var(name,span));
 }
-__jakt_label_60:; __jakt_var_65.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 7 /* LParen */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.LParen;utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_66; {
+{
 utility::Span const start_span = ((((*this).current())).span());
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedExpression> expr = ((*this).parse_expression(false,false));
@@ -9233,14 +9175,13 @@ return JaktInternal::ExplicitValue<void>();
         return _jakt_value.release_return();
     _jakt_value.release_value();
 });
-__jakt_var_66 = expr; goto __jakt_label_61;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(expr);
 }
-__jakt_label_61:; __jakt_var_66.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 18 /* PlusPlus */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.PlusPlus;utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_67; {
+{
 parser::UnaryOperator const op = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<parser::UnaryOperator, NonnullRefPtr<typename parser::ParsedExpression>>{
 auto&& __jakt_match_variant = ((*this).current());
@@ -9270,14 +9211,13 @@ utility::Span const start = ((((*this).current())).span());
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedExpression> const expr = ((*this).parse_operand());
 utility::Span const span = parser::merge_spans(start,((expr)->span()));
-__jakt_var_67 = parser::ParsedExpression::UnaryOp(expr,op,span); goto __jakt_label_62;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(parser::ParsedExpression::UnaryOp(expr,op,span));
 }
-__jakt_label_62:; __jakt_var_67.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 20 /* MinusMinus */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.MinusMinus;utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_68; {
+{
 parser::UnaryOperator const op = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<parser::UnaryOperator, NonnullRefPtr<typename parser::ParsedExpression>>{
 auto&& __jakt_match_variant = ((*this).current());
@@ -9307,14 +9247,13 @@ utility::Span const start = ((((*this).current())).span());
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedExpression> const expr = ((*this).parse_operand());
 utility::Span const span = parser::merge_spans(start,((expr)->span()));
-__jakt_var_68 = parser::ParsedExpression::UnaryOp(expr,op,span); goto __jakt_label_63;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(parser::ParsedExpression::UnaryOp(expr,op,span));
 }
-__jakt_label_63:; __jakt_var_68.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 15 /* Minus */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Minus;utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_69; {
+{
 parser::UnaryOperator const op = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<parser::UnaryOperator, NonnullRefPtr<typename parser::ParsedExpression>>{
 auto&& __jakt_match_variant = ((*this).current());
@@ -9344,31 +9283,27 @@ utility::Span const start = ((((*this).current())).span());
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedExpression> const expr = ((*this).parse_operand());
 utility::Span const span = parser::merge_spans(start,((expr)->span()));
-__jakt_var_69 = parser::ParsedExpression::UnaryOp(expr,op,span); goto __jakt_label_64;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(parser::ParsedExpression::UnaryOp(expr,op,span));
 }
-__jakt_label_64:; __jakt_var_69.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 11 /* LSquare */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_70; {
-__jakt_var_70 = ((*this).parse_array_or_dictionary_literal()); goto __jakt_label_65;
-
+{
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(((*this).parse_array_or_dictionary_literal()));
 }
-__jakt_label_65:; __jakt_var_70.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 84 /* Match */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_71; {
-__jakt_var_71 = ((*this).parse_match_expression()); goto __jakt_label_66;
-
+{
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(((*this).parse_match_expression()));
 }
-__jakt_label_66:; __jakt_var_71.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 9 /* LCurly */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_72; {
-__jakt_var_72 = ((*this).parse_set_literal()); goto __jakt_label_67;
-
+{
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(((*this).parse_set_literal()));
 }
-__jakt_label_67:; __jakt_var_72.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 37 /* Ampersand */: {
 return JaktInternal::ExplicitValue(((*this).parse_ampersand()));
@@ -9386,14 +9321,13 @@ case 104 /* Unsafe */: {
 return JaktInternal::ExplicitValue(((*this).parse_unsafe_expr()));
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_73; {
+{
 utility::Span const span = ((((*this).current())).span());
 ((((*this).index)++));
 ((*this).error((ByteString::from_utf8_without_validation("Unsupported expression"sv)),span));
-__jakt_var_73 = parser::ParsedExpression::Garbage(span); goto __jakt_label_68;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(parser::ParsedExpression::Garbage(span));
 }
-__jakt_label_68:; __jakt_var_73.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 }/*switch end*/
 }()
@@ -9641,20 +9575,18 @@ JaktInternal::Optional<parser::NumericConstant> const constant_value = ({
 auto&& __jakt_match_variant = suffix;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 10 /* F32 */: {
-return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Optional<parser::NumericConstant>> __jakt_var_74; {
+{
 f64 const number = ((parser::u64_to_float<f64>(total)) + (((parser::u64_to_float<f64>(fraction_nominator)) / (parser::u64_to_float<f64>(fraction_denominator)))));
-__jakt_var_74 = ((*this).make_float_numeric_constant(number,suffix,span)); goto __jakt_label_69;
-
+return JaktInternal::ExplicitValue<JaktInternal::Optional<parser::NumericConstant>>(((*this).make_float_numeric_constant(number,suffix,span)));
 }
-__jakt_label_69:; __jakt_var_74.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 11 /* F64 */: {
-return JaktInternal::ExplicitValue(({ Optional<JaktInternal::Optional<parser::NumericConstant>> __jakt_var_75; {
+{
 f64 const number = ((parser::u64_to_float<f64>(total)) + (((parser::u64_to_float<f64>(fraction_nominator)) / (parser::u64_to_float<f64>(fraction_denominator)))));
-__jakt_var_75 = ((*this).make_float_numeric_constant(number,suffix,span)); goto __jakt_label_70;
-
+return JaktInternal::ExplicitValue<JaktInternal::Optional<parser::NumericConstant>>(((*this).make_float_numeric_constant(number,suffix,span)));
 }
-__jakt_label_70:; __jakt_var_75.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(((*this).make_integer_numeric_constant(total,suffix,span)));
@@ -9987,12 +9919,11 @@ NonnullRefPtr<typename parser::ParsedType> return_type = ({
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 58 /* Arrow */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedType>> __jakt_var_76; {
+{
 ((((*this).index)++));
-__jakt_var_76 = ((*this).parse_typename()); goto __jakt_label_71;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedType>>(((*this).parse_typename()));
 }
-__jakt_label_71:; __jakt_var_76.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(parser::ParsedType::Empty(JaktInternal::OptionalNone()));
@@ -10010,15 +9941,14 @@ parser::ParsedBlock const block = ({
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 57 /* FatArrow */: {
-return JaktInternal::ExplicitValue(({ Optional<parser::ParsedBlock> __jakt_var_77; {
+{
 (is_fat_arrow = true);
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedExpression> const expr = ((*this).parse_expression(true,false));
 utility::Span const span = ((expr)->span());
-__jakt_var_77 = parser::ParsedBlock(DynamicArray<NonnullRefPtr<typename parser::ParsedStatement>>::create_with({parser::ParsedStatement::Return(expr,span)})); goto __jakt_label_72;
-
+return JaktInternal::ExplicitValue<parser::ParsedBlock>(parser::ParsedBlock(DynamicArray<NonnullRefPtr<typename parser::ParsedStatement>>::create_with({parser::ParsedStatement::Return(expr,span)})));
 }
-__jakt_label_72:; __jakt_var_77.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(((*this).parse_block()));
@@ -10207,7 +10137,7 @@ for (;;){
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 54 /* DotDot */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_78; {
+{
 ((((*this).index)++));
 JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> to = JaktInternal::OptionalNone();
 utility::Span span_end = ((((*this).current())).span());
@@ -10253,37 +10183,33 @@ return JaktInternal::ExplicitValue<void>();
         return JaktInternal::LoopContinue {};
     _jakt_value.release_value();
 });
-__jakt_var_78 = parser::ParsedExpression::Range(result,to,parser::merge_spans(start,span_end)); goto __jakt_label_73;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(parser::ParsedExpression::Range(result,to,parser::merge_spans(start,span_end)));
 }
-__jakt_label_73:; __jakt_var_78.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 48 /* ExclamationPoint */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_79; {
+{
 ((((*this).index)++));
-__jakt_var_79 = parser::ParsedExpression::ForcedUnwrap(result,parser::merge_spans(start,((((*this).previous())).span()))); goto __jakt_label_74;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(parser::ParsedExpression::ForcedUnwrap(result,parser::merge_spans(start,((((*this).previous())).span()))));
 }
-__jakt_label_74:; __jakt_var_79.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 18 /* PlusPlus */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_80; {
+{
 ((((*this).index)++));
-__jakt_var_80 = parser::ParsedExpression::UnaryOp(result,parser::UnaryOperator::PostIncrement(),parser::merge_spans(start,((((*this).previous())).span()))); goto __jakt_label_75;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(parser::ParsedExpression::UnaryOp(result,parser::UnaryOperator::PostIncrement(),parser::merge_spans(start,((((*this).previous())).span()))));
 }
-__jakt_label_75:; __jakt_var_80.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 20 /* MinusMinus */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_81; {
+{
 ((((*this).index)++));
-__jakt_var_81 = parser::ParsedExpression::UnaryOp(result,parser::UnaryOperator::PostDecrement(),parser::merge_spans(start,((((*this).previous())).span()))); goto __jakt_label_76;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(parser::ParsedExpression::UnaryOp(result,parser::UnaryOperator::PostDecrement(),parser::merge_spans(start,((((*this).previous())).span()))));
 }
-__jakt_label_76:; __jakt_var_81.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 61 /* As */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_82; {
+{
 ((((*this).index)++));
 utility::Span const cast_span = parser::merge_spans(((((*this).previous())).span()),((((*this).current())).span()));
 parser::TypeCast const cast = ({
@@ -10291,28 +10217,25 @@ parser::TypeCast const cast = ({
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 48 /* ExclamationPoint */: {
-return JaktInternal::ExplicitValue(({ Optional<parser::TypeCast> __jakt_var_83; {
+{
 ((((*this).index)++));
-__jakt_var_83 = parser::TypeCast::Infallible(((*this).parse_typename())); goto __jakt_label_78;
-
+return JaktInternal::ExplicitValue<parser::TypeCast>(parser::TypeCast::Infallible(((*this).parse_typename())));
 }
-__jakt_label_78:; __jakt_var_83.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 49 /* QuestionMark */: {
-return JaktInternal::ExplicitValue(({ Optional<parser::TypeCast> __jakt_var_84; {
+{
 ((((*this).index)++));
-__jakt_var_84 = parser::TypeCast::Fallible(((*this).parse_typename())); goto __jakt_label_79;
-
+return JaktInternal::ExplicitValue<parser::TypeCast>(parser::TypeCast::Fallible(((*this).parse_typename())));
 }
-__jakt_label_79:; __jakt_var_84.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<parser::TypeCast> __jakt_var_85; {
+{
 ((*this).error_with_hint((ByteString::from_utf8_without_validation("Invalid cast syntax"sv)),cast_span,(ByteString::from_utf8_without_validation("Use `as!` for an infallible cast, or `as?` for a fallible cast"sv)),((((*this).previous())).span())));
-__jakt_var_85 = parser::TypeCast::Fallible(((*this).parse_typename())); goto __jakt_label_80;
-
+return JaktInternal::ExplicitValue<parser::TypeCast>(parser::TypeCast::Fallible(((*this).parse_typename())));
 }
-__jakt_label_80:; __jakt_var_85.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 }/*switch end*/
 }()
@@ -10326,13 +10249,12 @@ __jakt_label_80:; __jakt_var_85.release_value(); }));
     _jakt_value.release_value();
 });
 utility::Span const span = parser::merge_spans(start,parser::merge_spans(cast_span,((((*this).current())).span())));
-__jakt_var_82 = parser::ParsedExpression::UnaryOp(result,parser::UnaryOperator::TypeCast(cast),span); goto __jakt_label_77;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(parser::ParsedExpression::UnaryOp(result,parser::UnaryOperator::TypeCast(cast),span));
 }
-__jakt_label_77:; __jakt_var_82.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 81 /* Is */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_86; {
+{
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedType> const parsed_type = ((*this).parse_typename());
 utility::Span const span = parser::merge_spans(start,((((*this).current())).span()));
@@ -10346,16 +10268,15 @@ else {
 (unary_operator_is = parser::ParsedExpression::UnaryOp(result,parser::UnaryOperator::Is(parsed_type),span));
 }
 
-__jakt_var_86 = (unary_operator_is.value()); goto __jakt_label_81;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>((unary_operator_is.value()));
 }
-__jakt_label_81:; __jakt_var_86.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 6 /* ColonColon */: {
 return JaktInternal::ExplicitValue(((*this).parse_postfix_colon_colon(start,result)));
 };/*case end*/
 case 49 /* QuestionMark */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_87; {
+{
 bool const is_optional = ((((*this).current())).__jakt_init_index() == 49 /* QuestionMark */);
 if (is_optional){
 ((((*this).index)++));
@@ -10364,7 +10285,7 @@ if ((!(((((*this).current())).__jakt_init_index() == 53 /* Dot */)))){
 }
 }
 ((((*this).index)++));
-__jakt_var_87 = ({
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedExpression>, NonnullRefPtr<typename parser::ParsedExpression>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.__jakt_init_index()) {
@@ -10373,19 +10294,18 @@ auto&& __jakt_match_value = __jakt_match_variant.as.Number;lexer::LiteralPrefix 
 ByteString const& number = __jakt_match_value.number;
 lexer::LiteralSuffix const& suffix = __jakt_match_value.suffix;
 utility::Span const& span = __jakt_match_value.span;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_88; {
+{
 NonnullRefPtr<typename parser::ParsedExpression> const numeric_constant = ((*this).parse_number(prefix,number,suffix,span));
-__jakt_var_88 = ({
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedExpression>,NonnullRefPtr<typename parser::ParsedExpression>> {
 auto __jakt_enum_value = (((numeric_constant)->__jakt_init_index() == 1 /* NumericConstant */));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_89; {
+{
 parser::NumericConstant const val = (numeric_constant)->as.NumericConstant.val;
 size_t const num = ((val).to_usize());
-__jakt_var_89 = parser::ParsedExpression::IndexedTuple(result,num,is_optional,parser::merge_spans(start,((((*this).previous())).span()))); goto __jakt_label_84;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(parser::ParsedExpression::IndexedTuple(result,num,is_optional,parser::merge_spans(start,((((*this).previous())).span()))));
 }
-__jakt_label_84:; __jakt_var_89.release_value(); }));
+VERIFY_NOT_REACHED();
 }
 else {
 {
@@ -10401,39 +10321,37 @@ return expr;
     if (_jakt_value.is_loop_continue())
         return JaktInternal::LoopContinue {};
     _jakt_value.release_value();
-}); goto __jakt_label_83;
-
+}));
 }
-__jakt_label_83:; __jakt_var_88.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 3 /* Identifier */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Identifier;ByteString const& name = __jakt_match_value.name;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_90; {
+{
 ((((*this).index)++));
-__jakt_var_90 = ({
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedExpression>, NonnullRefPtr<typename parser::ParsedExpression>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 28 /* LessThan */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_91; {
+{
 size_t const original_index = ((*this).index);
 JaktInternal::DynamicArray<error::JaktError> const existing_errors = ((((((((*this).compiler))->errors))[(JaktInternal::Range<i64>{static_cast<i64>(0LL),static_cast<i64>(9223372036854775807LL)})])).to_array());
 ((((*this).index)--));
 JaktInternal::Optional<parser::ParsedCall> const call = ((*this).parse_call());
-__jakt_var_91 = ({
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedExpression>,NonnullRefPtr<typename parser::ParsedExpression>> {
 auto __jakt_enum_value = (((call).has_value()));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(parser::ParsedExpression::MethodCall(result,(call.value()),is_optional,parser::merge_spans(start,((((*this).previous())).span()))));
 }
 else {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_92; {
+{
 (((*this).index) = original_index);
 (((((*this).compiler))->errors) = existing_errors);
-__jakt_var_92 = parser::ParsedExpression::IndexedStruct(result,name,is_optional,parser::merge_spans(start,((((*this).current())).span()))); goto __jakt_label_87;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(parser::ParsedExpression::IndexedStruct(result,name,is_optional,parser::merge_spans(start,((((*this).current())).span()))));
 }
-__jakt_label_87:; __jakt_var_92.release_value(); }));
+VERIFY_NOT_REACHED();
 }
 }());
     if (_jakt_value.is_return())
@@ -10443,19 +10361,17 @@ __jakt_label_87:; __jakt_var_92.release_value(); }));
     if (_jakt_value.is_loop_continue())
         return JaktInternal::LoopContinue {};
     _jakt_value.release_value();
-}); goto __jakt_label_86;
-
+}));
 }
-__jakt_label_86:; __jakt_var_91.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 7 /* LParen */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_93; {
+{
 ((((*this).index)--));
 JaktInternal::Optional<parser::ParsedCall> const call = ((*this).parse_call());
-__jakt_var_93 = parser::ParsedExpression::MethodCall(result,(call.value()),is_optional,parser::merge_spans(start,((((*this).previous())).span()))); goto __jakt_label_88;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(parser::ParsedExpression::MethodCall(result,(call.value()),is_optional,parser::merge_spans(start,((((*this).previous())).span()))));
 }
-__jakt_label_88:; __jakt_var_93.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(parser::ParsedExpression::IndexedStruct(result,name,is_optional,parser::merge_spans(start,((((*this).current())).span()))));
@@ -10470,32 +10386,29 @@ return JaktInternal::ExplicitValue(parser::ParsedExpression::IndexedStruct(resul
     if (_jakt_value.is_loop_continue())
         return JaktInternal::LoopContinue {};
     _jakt_value.release_value();
-}); goto __jakt_label_85;
-
+}));
 }
-__jakt_label_85:; __jakt_var_90.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 11 /* LSquare */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_94; {
+{
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedExpression> const index = ((*this).parse_expression(false,false));
 if ((!(((((*this).current())).__jakt_init_index() == 12 /* RSquare */)))){
 ((*this).error((ByteString::from_utf8_without_validation("Expected ‘]’ to close the index"sv)),((((*this).current())).span())));
 }
 ((((*this).index)++));
-__jakt_var_94 = parser::ParsedExpression::ComptimeIndex(result,index,is_optional,parser::merge_spans(start,((((*this).previous())).span()))); goto __jakt_label_89;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(parser::ParsedExpression::ComptimeIndex(result,index,is_optional,parser::merge_spans(start,((((*this).previous())).span()))));
 }
-__jakt_label_89:; __jakt_var_94.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_95; {
+{
 ((*this).error((ByteString::from_utf8_without_validation("Unsupported dot operation"sv)),((((*this).current())).span())));
 ((((*this).index)++));
-__jakt_var_95 = result; goto __jakt_label_90;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(result);
 }
-__jakt_label_90:; __jakt_var_95.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 }/*switch end*/
 }()
@@ -10507,13 +10420,12 @@ __jakt_label_90:; __jakt_var_95.release_value(); }));
     if (_jakt_value.is_loop_continue())
         return JaktInternal::LoopContinue {};
     _jakt_value.release_value();
-}); goto __jakt_label_82;
-
+}));
 }
-__jakt_label_82:; __jakt_var_87.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 53 /* Dot */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_96; {
+{
 bool const is_optional = ((((*this).current())).__jakt_init_index() == 49 /* QuestionMark */);
 if (is_optional){
 ((((*this).index)++));
@@ -10522,7 +10434,7 @@ if ((!(((((*this).current())).__jakt_init_index() == 53 /* Dot */)))){
 }
 }
 ((((*this).index)++));
-__jakt_var_96 = ({
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedExpression>, NonnullRefPtr<typename parser::ParsedExpression>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.__jakt_init_index()) {
@@ -10531,19 +10443,18 @@ auto&& __jakt_match_value = __jakt_match_variant.as.Number;lexer::LiteralPrefix 
 ByteString const& number = __jakt_match_value.number;
 lexer::LiteralSuffix const& suffix = __jakt_match_value.suffix;
 utility::Span const& span = __jakt_match_value.span;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_97; {
+{
 NonnullRefPtr<typename parser::ParsedExpression> const numeric_constant = ((*this).parse_number(prefix,number,suffix,span));
-__jakt_var_97 = ({
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedExpression>,NonnullRefPtr<typename parser::ParsedExpression>> {
 auto __jakt_enum_value = (((numeric_constant)->__jakt_init_index() == 1 /* NumericConstant */));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_98; {
+{
 parser::NumericConstant const val = (numeric_constant)->as.NumericConstant.val;
 size_t const num = ((val).to_usize());
-__jakt_var_98 = parser::ParsedExpression::IndexedTuple(result,num,is_optional,parser::merge_spans(start,((((*this).previous())).span()))); goto __jakt_label_93;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(parser::ParsedExpression::IndexedTuple(result,num,is_optional,parser::merge_spans(start,((((*this).previous())).span()))));
 }
-__jakt_label_93:; __jakt_var_98.release_value(); }));
+VERIFY_NOT_REACHED();
 }
 else {
 {
@@ -10559,39 +10470,37 @@ return expr;
     if (_jakt_value.is_loop_continue())
         return JaktInternal::LoopContinue {};
     _jakt_value.release_value();
-}); goto __jakt_label_92;
-
+}));
 }
-__jakt_label_92:; __jakt_var_97.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 3 /* Identifier */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Identifier;ByteString const& name = __jakt_match_value.name;
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_99; {
+{
 ((((*this).index)++));
-__jakt_var_99 = ({
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedExpression>, NonnullRefPtr<typename parser::ParsedExpression>>{
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 28 /* LessThan */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_100; {
+{
 size_t const original_index = ((*this).index);
 JaktInternal::DynamicArray<error::JaktError> const existing_errors = ((((((((*this).compiler))->errors))[(JaktInternal::Range<i64>{static_cast<i64>(0LL),static_cast<i64>(9223372036854775807LL)})])).to_array());
 ((((*this).index)--));
 JaktInternal::Optional<parser::ParsedCall> const call = ((*this).parse_call());
-__jakt_var_100 = ({
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename parser::ParsedExpression>,NonnullRefPtr<typename parser::ParsedExpression>> {
 auto __jakt_enum_value = (((call).has_value()));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue(parser::ParsedExpression::MethodCall(result,(call.value()),is_optional,parser::merge_spans(start,((((*this).previous())).span()))));
 }
 else {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_101; {
+{
 (((*this).index) = original_index);
 (((((*this).compiler))->errors) = existing_errors);
-__jakt_var_101 = parser::ParsedExpression::IndexedStruct(result,name,is_optional,parser::merge_spans(start,((((*this).current())).span()))); goto __jakt_label_96;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(parser::ParsedExpression::IndexedStruct(result,name,is_optional,parser::merge_spans(start,((((*this).current())).span()))));
 }
-__jakt_label_96:; __jakt_var_101.release_value(); }));
+VERIFY_NOT_REACHED();
 }
 }());
     if (_jakt_value.is_return())
@@ -10601,19 +10510,17 @@ __jakt_label_96:; __jakt_var_101.release_value(); }));
     if (_jakt_value.is_loop_continue())
         return JaktInternal::LoopContinue {};
     _jakt_value.release_value();
-}); goto __jakt_label_95;
-
+}));
 }
-__jakt_label_95:; __jakt_var_100.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 7 /* LParen */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_102; {
+{
 ((((*this).index)--));
 JaktInternal::Optional<parser::ParsedCall> const call = ((*this).parse_call());
-__jakt_var_102 = parser::ParsedExpression::MethodCall(result,(call.value()),is_optional,parser::merge_spans(start,((((*this).previous())).span()))); goto __jakt_label_97;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(parser::ParsedExpression::MethodCall(result,(call.value()),is_optional,parser::merge_spans(start,((((*this).previous())).span()))));
 }
-__jakt_label_97:; __jakt_var_102.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(parser::ParsedExpression::IndexedStruct(result,name,is_optional,parser::merge_spans(start,((((*this).current())).span()))));
@@ -10628,32 +10535,29 @@ return JaktInternal::ExplicitValue(parser::ParsedExpression::IndexedStruct(resul
     if (_jakt_value.is_loop_continue())
         return JaktInternal::LoopContinue {};
     _jakt_value.release_value();
-}); goto __jakt_label_94;
-
+}));
 }
-__jakt_label_94:; __jakt_var_99.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 11 /* LSquare */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_103; {
+{
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedExpression> const index = ((*this).parse_expression(false,false));
 if ((!(((((*this).current())).__jakt_init_index() == 12 /* RSquare */)))){
 ((*this).error((ByteString::from_utf8_without_validation("Expected ‘]’ to close the index"sv)),((((*this).current())).span())));
 }
 ((((*this).index)++));
-__jakt_var_103 = parser::ParsedExpression::ComptimeIndex(result,index,is_optional,parser::merge_spans(start,((((*this).previous())).span()))); goto __jakt_label_98;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(parser::ParsedExpression::ComptimeIndex(result,index,is_optional,parser::merge_spans(start,((((*this).previous())).span()))));
 }
-__jakt_label_98:; __jakt_var_103.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_104; {
+{
 ((*this).error((ByteString::from_utf8_without_validation("Unsupported dot operation"sv)),((((*this).current())).span())));
 ((((*this).index)++));
-__jakt_var_104 = result; goto __jakt_label_99;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(result);
 }
-__jakt_label_99:; __jakt_var_104.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 }/*switch end*/
 }()
@@ -10665,13 +10569,12 @@ __jakt_label_99:; __jakt_var_104.release_value(); }));
     if (_jakt_value.is_loop_continue())
         return JaktInternal::LoopContinue {};
     _jakt_value.release_value();
-}); goto __jakt_label_91;
-
+}));
 }
-__jakt_label_91:; __jakt_var_96.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 11 /* LSquare */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_105; {
+{
 ((((*this).index)++));
 NonnullRefPtr<typename parser::ParsedExpression> const index_expr = ((*this).parse_expression(false,true));
 if (((((*this).current())).__jakt_init_index() == 12 /* RSquare */)){
@@ -10682,10 +10585,9 @@ else {
 }
 
 size_t const end = JaktInternal::checked_sub(((*this).index),static_cast<size_t>(1ULL));
-__jakt_var_105 = parser::ParsedExpression::IndexedExpression(result,index_expr,parser::merge_spans(start,((((((*this).tokens))[end])).span()))); goto __jakt_label_100;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(parser::ParsedExpression::IndexedExpression(result,index_expr,parser::merge_spans(start,((((((*this).tokens))[end])).span()))));
 }
-__jakt_label_100:; __jakt_var_105.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 default: {
 {
@@ -10820,23 +10722,21 @@ case 37 /* Ampersand */: {
 return JaktInternal::ExplicitValue(parser::BinaryOperator::BitwiseAnd());
 };/*case end*/
 case 39 /* AmpersandAmpersand */: {
-return JaktInternal::ExplicitValue(({ Optional<parser::BinaryOperator> __jakt_var_106; {
+{
 ((*this).error((ByteString::from_utf8_without_validation("‘&&’ is not allowed, use ‘and’ instead"sv)),span));
-__jakt_var_106 = parser::BinaryOperator::LogicalAnd(); goto __jakt_label_101;
-
+return JaktInternal::ExplicitValue<parser::BinaryOperator>(parser::BinaryOperator::LogicalAnd());
 }
-__jakt_label_101:; __jakt_var_106.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 40 /* Pipe */: {
 return JaktInternal::ExplicitValue(parser::BinaryOperator::BitwiseOr());
 };/*case end*/
 case 42 /* PipePipe */: {
-return JaktInternal::ExplicitValue(({ Optional<parser::BinaryOperator> __jakt_var_107; {
+{
 ((*this).error((ByteString::from_utf8_without_validation("‘||’ is not allowed, use ‘or’ instead"sv)),span));
-__jakt_var_107 = parser::BinaryOperator::LogicalOr(); goto __jakt_label_102;
-
+return JaktInternal::ExplicitValue<parser::BinaryOperator>(parser::BinaryOperator::LogicalOr());
 }
-__jakt_label_102:; __jakt_var_107.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 43 /* Caret */: {
 return JaktInternal::ExplicitValue(parser::BinaryOperator::BitwiseXor());
@@ -11046,7 +10946,7 @@ JaktInternal::DynamicArray<parser::ParsedMatchPattern> patterns = DynamicArray<p
 ((*this).skip_newlines());
 while ((!(((*this).eof())))){
 parser::ParsedMatchPattern pattern = ((*this).parse_match_pattern());
-ScopeGuard __jakt_var_108([&] {
+ScopeGuard __jakt_var_5([&] {
 ((patterns).push(pattern));
 });
 JaktInternal::Dictionary<ByteString,parser::ParsedPatternDefault> defaults = ((pattern).common.init_common.defaults);
@@ -11072,20 +10972,18 @@ NonnullRefPtr<typename parser::ParsedExpression> const value = ({
 auto&& __jakt_match_variant = ((*this).current());
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 16 /* Equal */: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_109; {
+{
 ((((*this).index)++));
-__jakt_var_109 = ((*this).parse_expression(false,false)); goto __jakt_label_103;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(((*this).parse_expression(false,false)));
 }
-__jakt_label_103:; __jakt_var_109.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<NonnullRefPtr<typename parser::ParsedExpression>> __jakt_var_110; {
+{
 ((*this).error((ByteString::from_utf8_without_validation("Expected initializer"sv)),((((*this).current())).span())));
-__jakt_var_110 = parser::ParsedExpression::Garbage(((((*this).current())).span())); goto __jakt_label_104;
-
+return JaktInternal::ExplicitValue<NonnullRefPtr<typename parser::ParsedExpression>>(parser::ParsedExpression::Garbage(((((*this).current())).span())));
 }
-__jakt_label_104:; __jakt_var_110.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 }/*switch end*/
 }()
@@ -11145,19 +11043,18 @@ case 7 /* LParen */: {
 return JaktInternal::ExplicitValue(parser::ParsedMatchPattern::Expression(Dictionary<ByteString, parser::ParsedPatternDefault>::create_with_entries({}),((*this).parse_operand())));
 };/*case end*/
 case 70 /* Else */: {
-return JaktInternal::ExplicitValue(({ Optional<parser::ParsedMatchPattern> __jakt_var_111; {
+{
 ((((*this).index)++));
 JaktInternal::DynamicArray<parser::EnumVariantPatternArgument> variant_arguments = ((*this).parse_variant_arguments());
 utility::Span const arguments_start = ((((*this).current())).span());
 utility::Span const arguments_end = ((((*this).previous())).span());
 utility::Span const arguments_span = parser::merge_spans(arguments_start,arguments_end);
-__jakt_var_111 = parser::ParsedMatchPattern::CatchAll(Dictionary<ByteString, parser::ParsedPatternDefault>::create_with_entries({}),variant_arguments,arguments_span); goto __jakt_label_105;
-
+return JaktInternal::ExplicitValue<parser::ParsedMatchPattern>(parser::ParsedMatchPattern::CatchAll(Dictionary<ByteString, parser::ParsedPatternDefault>::create_with_entries({}),variant_arguments,arguments_span));
 }
-__jakt_label_105:; __jakt_var_111.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 3 /* Identifier */: {
-return JaktInternal::ExplicitValue(({ Optional<parser::ParsedMatchPattern> __jakt_var_112; {
+{
 JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>> variant_names = DynamicArray<JaktInternal::Tuple<ByteString,utility::Span>>::create_with({});
 bool just_saw_name = false;
 while ((!(((*this).eof())))){
@@ -11207,18 +11104,16 @@ JaktInternal::DynamicArray<parser::EnumVariantPatternArgument> variant_arguments
 utility::Span const arguments_start = ((((*this).current())).span());
 utility::Span const arguments_end = ((((*this).previous())).span());
 utility::Span const arguments_span = parser::merge_spans(arguments_start,arguments_end);
-__jakt_var_112 = parser::ParsedMatchPattern::EnumVariant(Dictionary<ByteString, parser::ParsedPatternDefault>::create_with_entries({}),variant_names,variant_arguments,arguments_span); goto __jakt_label_106;
-
+return JaktInternal::ExplicitValue<parser::ParsedMatchPattern>(parser::ParsedMatchPattern::EnumVariant(Dictionary<ByteString, parser::ParsedPatternDefault>::create_with_entries({}),variant_names,variant_arguments,arguments_span));
 }
-__jakt_label_106:; __jakt_var_112.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 default: {
-return JaktInternal::ExplicitValue(({ Optional<parser::ParsedMatchPattern> __jakt_var_113; {
+{
 ((*this).error((ByteString::from_utf8_without_validation("Expected pattern or ‘else’"sv)),((((*this).current())).span())));
-__jakt_var_113 = parser::ParsedMatchPattern::Invalid(Dictionary<ByteString, parser::ParsedPatternDefault>::create_with_entries({})); goto __jakt_label_107;
-
+return JaktInternal::ExplicitValue<parser::ParsedMatchPattern>(parser::ParsedMatchPattern::Invalid(Dictionary<ByteString, parser::ParsedPatternDefault>::create_with_entries({})));
 }
-__jakt_label_107:; __jakt_var_113.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 }/*switch end*/
 }()
@@ -16274,11 +16169,10 @@ case 9 /* For */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.For;ByteString const& rhs_iterator_name = __jakt_match_value.iterator_name;
 NonnullRefPtr<typename parser::ParsedExpression> const& rhs_range = __jakt_match_value.range;
 parser::ParsedBlock const& rhs_block = __jakt_match_value.block;
-return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_114; {
-__jakt_var_114 = ((((lhs_iterator_name) == (rhs_iterator_name)) && ((lhs_range)->equals(rhs_range))) && ((lhs_block).equals(rhs_block))); goto __jakt_label_108;
-
+{
+return JaktInternal::ExplicitValue<bool>(((((lhs_iterator_name) == (rhs_iterator_name)) && ((lhs_range)->equals(rhs_range))) && ((lhs_block).equals(rhs_block))));
 }
-__jakt_label_108:; __jakt_var_114.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(false);
@@ -18128,7 +18022,7 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 13 /* IsEnumVariant */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.IsEnumVariant;NonnullRefPtr<typename parser::ParsedType> const& rhs_inner_type = __jakt_match_value.inner;
 JaktInternal::DynamicArray<parser::EnumVariantPatternArgument> const& rhs_bindings = __jakt_match_value.bindings;
-return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_115; {
+{
 bool equal = false;
 if ((((lhs_inner_type)->equals(rhs_inner_type)) && ((((lhs_bindings).size())) == (((rhs_bindings).size()))))){
 bool bindings_equal = true;
@@ -18154,10 +18048,9 @@ if (bindings_equal){
 (equal = true);
 }
 }
-__jakt_var_115 = equal; goto __jakt_label_109;
-
+return JaktInternal::ExplicitValue<bool>(equal);
 }
-__jakt_label_109:; __jakt_var_115.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(false);
@@ -18699,17 +18592,16 @@ auto&& __jakt_match_variant = *this;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Expression */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Expression;NonnullRefPtr<typename parser::ParsedExpression> const& lhs_expr = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_116; {
-__jakt_var_116 = ({
+{
+return JaktInternal::ExplicitValue<bool>(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool,bool> {
 auto __jakt_enum_value = (((rhs_match_body).__jakt_init_index() == 0 /* Expression */));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_117; {
+{
 NonnullRefPtr<typename parser::ParsedExpression> const rhs_expr = (rhs_match_body).as.Expression.value;
-__jakt_var_117 = ((lhs_expr)->equals(rhs_expr)); goto __jakt_label_111;
-
+return JaktInternal::ExplicitValue<bool>(((lhs_expr)->equals(rhs_expr)));
 }
-__jakt_label_111:; __jakt_var_117.release_value(); }));
+VERIFY_NOT_REACHED();
 }
 else {
 {
@@ -18720,24 +18612,22 @@ return false;
     if (_jakt_value.is_return())
         return _jakt_value.release_return();
     _jakt_value.release_value();
-}); goto __jakt_label_110;
-
+}));
 }
-__jakt_label_110:; __jakt_var_116.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 case 1 /* Block */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Block;parser::ParsedBlock const& lhs_block = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_118; {
-__jakt_var_118 = ({
+{
+return JaktInternal::ExplicitValue<bool>(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool,bool> {
 auto __jakt_enum_value = (((rhs_match_body).__jakt_init_index() == 1 /* Block */));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_119; {
+{
 parser::ParsedBlock const rhs_block = (rhs_match_body).as.Block.value;
-__jakt_var_119 = ((lhs_block).equals(rhs_block)); goto __jakt_label_113;
-
+return JaktInternal::ExplicitValue<bool>(((lhs_block).equals(rhs_block)));
 }
-__jakt_label_113:; __jakt_var_119.release_value(); }));
+VERIFY_NOT_REACHED();
 }
 else {
 {
@@ -18748,10 +18638,9 @@ return false;
     if (_jakt_value.is_return())
         return _jakt_value.release_return();
     _jakt_value.release_value();
-}); goto __jakt_label_112;
-
+}));
 }
-__jakt_label_112:; __jakt_var_118.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
 }()
@@ -21404,7 +21293,7 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 16 /* JaktArray */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.JaktArray;JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedExpression>> const& rhs_values = __jakt_match_value.values;
 JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> const& rhs_fill_size = __jakt_match_value.fill_size;
-return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_120; {
+{
 if ((!(((lhs_fill_size).has_value())))){
 if (((rhs_fill_size).has_value())){
 return false;
@@ -21419,11 +21308,11 @@ return false;
 }
 }
 
-__jakt_var_120 = ({
+return JaktInternal::ExplicitValue<bool>(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool,bool> {
 auto __jakt_enum_value = (((((lhs_values).size())) == (((rhs_values).size()))));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_121; {
+{
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((lhs_values).size()))});
 for (;;){
@@ -21441,10 +21330,9 @@ return false;
 }
 }
 
-__jakt_var_121 = true; goto __jakt_label_115;
-
+return JaktInternal::ExplicitValue<bool>(true);
 }
-__jakt_label_115:; __jakt_var_121.release_value(); }));
+VERIFY_NOT_REACHED();
 }
 else {
 {
@@ -21455,10 +21343,9 @@ return false;
     if (_jakt_value.is_return())
         return _jakt_value.release_return();
     _jakt_value.release_value();
-}); goto __jakt_label_114;
-
+}));
 }
-__jakt_label_114:; __jakt_var_120.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(false);
@@ -21479,12 +21366,12 @@ auto&& __jakt_match_variant = *rhs_expression;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 17 /* JaktDictionary */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.JaktDictionary;JaktInternal::DynamicArray<JaktInternal::Tuple<NonnullRefPtr<typename parser::ParsedExpression>,NonnullRefPtr<typename parser::ParsedExpression>>> const& rhs_values = __jakt_match_value.values;
-return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_122; {
-__jakt_var_122 = ({
+{
+return JaktInternal::ExplicitValue<bool>(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool,bool> {
 auto __jakt_enum_value = (((((lhs_values).size())) == (((rhs_values).size()))));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_123; {
+{
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((lhs_values).size()))});
 for (;;){
@@ -21502,10 +21389,9 @@ return false;
 }
 }
 
-__jakt_var_123 = true; goto __jakt_label_117;
-
+return JaktInternal::ExplicitValue<bool>(true);
 }
-__jakt_label_117:; __jakt_var_123.release_value(); }));
+VERIFY_NOT_REACHED();
 }
 else {
 {
@@ -21516,10 +21402,9 @@ return false;
     if (_jakt_value.is_return())
         return _jakt_value.release_return();
     _jakt_value.release_value();
-}); goto __jakt_label_116;
-
+}));
 }
-__jakt_label_116:; __jakt_var_122.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(false);
@@ -21540,12 +21425,12 @@ auto&& __jakt_match_variant = *rhs_expression;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 18 /* Set */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Set;JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedExpression>> const& rhs_values = __jakt_match_value.values;
-return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_124; {
-__jakt_var_124 = ({
+{
+return JaktInternal::ExplicitValue<bool>(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool,bool> {
 auto __jakt_enum_value = (((((lhs_values).size())) == (((rhs_values).size()))));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_125; {
+{
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((lhs_values).size()))});
 for (;;){
@@ -21563,10 +21448,9 @@ return false;
 }
 }
 
-__jakt_var_125 = true; goto __jakt_label_119;
-
+return JaktInternal::ExplicitValue<bool>(true);
 }
-__jakt_label_119:; __jakt_var_125.release_value(); }));
+VERIFY_NOT_REACHED();
 }
 else {
 {
@@ -21577,10 +21461,9 @@ return false;
     if (_jakt_value.is_return())
         return _jakt_value.release_return();
     _jakt_value.release_value();
-}); goto __jakt_label_118;
-
+}));
 }
-__jakt_label_118:; __jakt_var_124.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(false);
@@ -21601,12 +21484,12 @@ auto&& __jakt_match_variant = *rhs_expression;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 19 /* JaktTuple */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.JaktTuple;JaktInternal::DynamicArray<NonnullRefPtr<typename parser::ParsedExpression>> const& rhs_values = __jakt_match_value.values;
-return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_126; {
-__jakt_var_126 = ({
+{
+return JaktInternal::ExplicitValue<bool>(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool,bool> {
 auto __jakt_enum_value = (((((lhs_values).size())) == (((rhs_values).size()))));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_127; {
+{
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((lhs_values).size()))});
 for (;;){
@@ -21624,10 +21507,9 @@ return false;
 }
 }
 
-__jakt_var_127 = true; goto __jakt_label_121;
-
+return JaktInternal::ExplicitValue<bool>(true);
 }
-__jakt_label_121:; __jakt_var_127.release_value(); }));
+VERIFY_NOT_REACHED();
 }
 else {
 {
@@ -21638,10 +21520,9 @@ return false;
     if (_jakt_value.is_return())
         return _jakt_value.release_return();
     _jakt_value.release_value();
-}); goto __jakt_label_120;
-
+}));
 }
-__jakt_label_120:; __jakt_var_126.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(false);
@@ -21664,7 +21545,7 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 20 /* Range */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Range;JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> const& rhs_from = __jakt_match_value.from;
 JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> const& rhs_to = __jakt_match_value.to;
-return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_128; {
+{
 bool equal = false;
 if ((((((lhs_from).has_value())) == (((rhs_from).has_value()))) && ((((lhs_to).has_value())) == (((rhs_to).has_value()))))){
 if ((((lhs_from).has_value()) && ((lhs_to).has_value()))){
@@ -21675,10 +21556,9 @@ else {
 }
 
 }
-__jakt_var_128 = equal; goto __jakt_label_122;
-
+return JaktInternal::ExplicitValue<bool>(equal);
 }
-__jakt_label_122:; __jakt_var_128.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(false);
@@ -21813,7 +21693,7 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 24 /* NamespacedVar */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.NamespacedVar;ByteString const& rhs_name = __jakt_match_value.name;
 JaktInternal::DynamicArray<ByteString> const& rhs_namespace = __jakt_match_value.namespace_;
-return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_129; {
+{
 if (((((lhs_namespace).size())) != (((rhs_namespace).size())))){
 return false;
 }
@@ -21838,10 +21718,9 @@ return false;
 }
 }
 
-__jakt_var_129 = ((lhs_name) == (rhs_name)); goto __jakt_label_123;
-
+return JaktInternal::ExplicitValue<bool>(((lhs_name) == (rhs_name)));
 }
-__jakt_label_123:; __jakt_var_129.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(false);
@@ -21864,15 +21743,14 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 26 /* Must */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Must;NonnullRefPtr<typename parser::ParsedExpression> const& rhs_expr = __jakt_match_value.expr;
 utility::Span const& rhs_span = __jakt_match_value.span;
-return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_130; {
+{
 bool equals = (((((rhs_span).start)) == (((lhs_span).start))) && ((((rhs_span).end)) == (((lhs_span).end))));
 if ((!(equals))){
 (equals = ((lhs_expr)->equals(rhs_expr)));
 }
-__jakt_var_130 = equals; goto __jakt_label_124;
-
+return JaktInternal::ExplicitValue<bool>(equals);
 }
-__jakt_label_124:; __jakt_var_130.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(false);
@@ -21895,7 +21773,7 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 27 /* Try */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Try;NonnullRefPtr<typename parser::ParsedExpression> const& rhs_expr = __jakt_match_value.expr;
 JaktInternal::Optional<parser::ParsedBlock> const& rhs_catch_block = __jakt_match_value.catch_block;
-return JaktInternal::ExplicitValue(({ Optional<bool> __jakt_var_131; {
+{
 bool equals = ((lhs_expr)->equals(rhs_expr));
 if (equals){
 if (((lhs_catch_block).has_value())){
@@ -21912,10 +21790,9 @@ else {
 }
 
 }
-__jakt_var_131 = equals; goto __jakt_label_125;
-
+return JaktInternal::ExplicitValue<bool>(equals);
 }
-__jakt_label_125:; __jakt_var_131.release_value(); }));
+VERIFY_NOT_REACHED();
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(false);

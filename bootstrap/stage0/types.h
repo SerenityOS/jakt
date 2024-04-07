@@ -992,6 +992,11 @@ struct ClassInstanceRebind {
 public: ByteString name;public: utility::Span name_span;public: bool is_mutable;public: bool is_reference;public: ClassInstanceRebind(ByteString a_name, utility::Span a_name_span, bool a_is_mutable, bool a_is_reference);
 
 public: ByteString debug_description() const;
+};struct CheckedMatchBranch {
+  public:
+public: JaktInternal::DynamicArray<types::CheckedMatchCase> cases;public: types::CheckedMatchBody body;public: CheckedMatchBranch(JaktInternal::DynamicArray<types::CheckedMatchCase> a_cases, types::CheckedMatchBody a_body);
+
+public: ByteString debug_description() const;
 };struct CheckedMatchCase {
 u8 __jakt_variant_index = 0;
 union CommonData {
@@ -1010,33 +1015,29 @@ JaktInternal::DynamicArray<parser::EnumVariantPatternArgument> args;
 ids::TypeId subject_type_id;
 size_t index;
 ids::ScopeId scope_id;
-types::CheckedMatchBody body;
 utility::Span marker_span;
 } EnumVariant;
 struct {
 NonnullRefPtr<typename types::CheckedExpression> expression;
-types::CheckedMatchBody body;
 utility::Span marker_span;
 } Expression;
 struct {
 ids::TypeId type;
-types::CheckedMatchBody body;
 JaktInternal::Optional<types::ClassInstanceRebind> rebind_name;
 utility::Span marker_span;
 } ClassInstance;
 struct {
 bool has_arguments;
-types::CheckedMatchBody body;
 utility::Span marker_span;
 } CatchAll;
 constexpr VariantData() {}
 ~VariantData() {}
 } as;
 constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ByteString debug_description() const;
-[[nodiscard]] static CheckedMatchCase EnumVariant(JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> defaults, ByteString name, JaktInternal::DynamicArray<parser::EnumVariantPatternArgument> args, ids::TypeId subject_type_id, size_t index, ids::ScopeId scope_id, types::CheckedMatchBody body, utility::Span marker_span);
-[[nodiscard]] static CheckedMatchCase Expression(JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> defaults, NonnullRefPtr<typename types::CheckedExpression> expression, types::CheckedMatchBody body, utility::Span marker_span);
-[[nodiscard]] static CheckedMatchCase ClassInstance(JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> defaults, ids::TypeId type, types::CheckedMatchBody body, JaktInternal::Optional<types::ClassInstanceRebind> rebind_name, utility::Span marker_span);
-[[nodiscard]] static CheckedMatchCase CatchAll(JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> defaults, bool has_arguments, types::CheckedMatchBody body, utility::Span marker_span);
+[[nodiscard]] static CheckedMatchCase EnumVariant(JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> defaults, ByteString name, JaktInternal::DynamicArray<parser::EnumVariantPatternArgument> args, ids::TypeId subject_type_id, size_t index, ids::ScopeId scope_id, utility::Span marker_span);
+[[nodiscard]] static CheckedMatchCase Expression(JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> defaults, NonnullRefPtr<typename types::CheckedExpression> expression, utility::Span marker_span);
+[[nodiscard]] static CheckedMatchCase ClassInstance(JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> defaults, ids::TypeId type, JaktInternal::Optional<types::ClassInstanceRebind> rebind_name, utility::Span marker_span);
+[[nodiscard]] static CheckedMatchCase CatchAll(JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> defaults, bool has_arguments, utility::Span marker_span);
 ~CheckedMatchCase();
 CheckedMatchCase& operator=(CheckedMatchCase const &);
 CheckedMatchCase& operator=(CheckedMatchCase &&);
@@ -1186,7 +1187,7 @@ utility::Span span;
 } ComptimeIndex;
 struct {
 NonnullRefPtr<typename types::CheckedExpression> expr;
-JaktInternal::DynamicArray<types::CheckedMatchCase> match_cases;
+JaktInternal::DynamicArray<types::CheckedMatchBranch> branches;
 utility::Span span;
 ids::TypeId type_id;
 bool all_variants_constant;
@@ -1313,7 +1314,7 @@ constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 
 [[nodiscard]] static NonnullRefPtr<CheckedExpression> IndexedStruct(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, NonnullRefPtr<typename types::CheckedExpression> expr, ByteString name, JaktInternal::Optional<ids::VarId> index, utility::Span span, bool is_optional, ids::TypeId type_id);
 [[nodiscard]] static NonnullRefPtr<CheckedExpression> IndexedCommonEnumMember(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, NonnullRefPtr<typename types::CheckedExpression> expr, ByteString index, utility::Span span, bool is_optional, ids::TypeId type_id);
 [[nodiscard]] static NonnullRefPtr<CheckedExpression> ComptimeIndex(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, NonnullRefPtr<typename types::CheckedExpression> expr, NonnullRefPtr<typename types::CheckedExpression> index, bool is_optional, utility::Span span);
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> Match(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, NonnullRefPtr<typename types::CheckedExpression> expr, JaktInternal::DynamicArray<types::CheckedMatchCase> match_cases, utility::Span span, ids::TypeId type_id, bool all_variants_constant);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> Match(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, NonnullRefPtr<typename types::CheckedExpression> expr, JaktInternal::DynamicArray<types::CheckedMatchBranch> branches, utility::Span span, ids::TypeId type_id, bool all_variants_constant);
 [[nodiscard]] static NonnullRefPtr<CheckedExpression> EnumVariantArg(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, NonnullRefPtr<typename types::CheckedExpression> expr, types::CheckedEnumVariantBinding arg, types::CheckedEnumVariant enum_variant, utility::Span span);
 [[nodiscard]] static NonnullRefPtr<CheckedExpression> Call(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, types::CheckedCall call, utility::Span span, ids::TypeId type_id);
 [[nodiscard]] static NonnullRefPtr<CheckedExpression> MethodCall(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, NonnullRefPtr<typename types::CheckedExpression> expr, types::CheckedCall call, utility::Span span, bool is_optional, ids::TypeId type_id);
@@ -1853,6 +1854,12 @@ namespace Jakt {
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::types::ClassInstanceRebind> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::types::ClassInstanceRebind const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, value.debug_description());return format_error;}
+};
+namespace Jakt {
+} // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::types::CheckedMatchBranch> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::types::CheckedMatchBranch const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, value.debug_description());return format_error;}
 };
 namespace Jakt {

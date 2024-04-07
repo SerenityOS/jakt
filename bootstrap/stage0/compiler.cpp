@@ -269,7 +269,7 @@ if (((candidate_path).exists())){
 return candidate_path;
 }
 }
-return TRY((((*this).find_in_search_paths(jakt__path::Path::from_string(((module_name) + ((ByteString::from_utf8_without_validation(".jakt"sv))))),relative_import,parent_path_count))));
+return ((((*this).find_in_search_paths(jakt__path::Path::from_string(((module_name) + ((ByteString::from_utf8_without_validation(".jakt"sv))))),relative_import,parent_path_count))));
 }
 }
 

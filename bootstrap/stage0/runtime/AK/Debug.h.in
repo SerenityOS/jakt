@@ -234,12 +234,20 @@
 #    cmakedefine01 ITEM_RECTS_DEBUG
 #endif
 
+#ifndef JBIG2_DEBUG
+#    cmakedefine01 JBIG2_DEBUG
+#endif
+
 #ifndef JOB_DEBUG
 #    cmakedefine01 JOB_DEBUG
 #endif
 
 #ifndef JPEG_DEBUG
 #    cmakedefine01 JPEG_DEBUG
+#endif
+
+#ifndef JPEG2000_DEBUG
+#    cmakedefine01 JPEG2000_DEBUG
 #endif
 
 #ifndef JS_BYTECODE_DEBUG
@@ -528,6 +536,10 @@
 
 #ifndef WEBDRIVER_DEBUG
 #    cmakedefine01 WEBDRIVER_DEBUG
+#endif
+
+#ifndef WEBDRIVER_ROUTE_DEBUG
+#    cmakedefine01 WEBDRIVER_ROUTE_DEBUG
 #endif
 
 #ifndef WEBGL_CONTEXT_DEBUG

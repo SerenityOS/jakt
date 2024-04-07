@@ -7,6 +7,4 @@
 #include "jakt__prelude__iteration.h"
 #include "jakt__prelude__static_array.h"
 namespace Jakt {
-namespace jakt__prelude__prelude {
-}
 } // namespace Jakt

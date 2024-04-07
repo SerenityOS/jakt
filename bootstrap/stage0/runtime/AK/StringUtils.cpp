@@ -174,7 +174,7 @@ Optional<T> convert_to_uint_from_hex(StringView str, TrimWhitespace trim_whitesp
 
     T value = 0;
     auto const count = string.length();
-    const T upper_bound = NumericLimits<T>::max();
+    T const upper_bound = NumericLimits<T>::max();
 
     for (size_t i = 0; i < count; i++) {
         char digit = string[i];
@@ -213,7 +213,7 @@ Optional<T> convert_to_uint_from_octal(StringView str, TrimWhitespace trim_white
 
     T value = 0;
     auto const count = string.length();
-    const T upper_bound = NumericLimits<T>::max();
+    T const upper_bound = NumericLimits<T>::max();
 
     for (size_t i = 0; i < count; i++) {
         char digit = string[i];
@@ -412,10 +412,15 @@ Optional<size_t> find_last(StringView haystack, char needle)
 
 Optional<size_t> find_last(StringView haystack, StringView needle)
 {
-    for (size_t i = haystack.length(); i > 0; --i) {
-        auto value = StringUtils::find(haystack, needle, i - 1);
-        if (value.has_value())
-            return value;
+    if (needle.length() > haystack.length())
+        return {};
+
+    for (size_t i = haystack.length() - needle.length();; --i) {
+        if (haystack.substring_view(i, needle.length()) == needle)
+            return i;
+
+        if (i == 0)
+            break;
     }
 
     return {};

@@ -210,16 +210,17 @@ public:
         return size();
     }
 
-    [[nodiscard]] bool constexpr contains_slow(T const& value) const
+    template<typename V>
+    [[nodiscard]] constexpr bool contains_slow(V const& value) const
     {
         for (size_t i = 0; i < size(); ++i) {
-            if (at(i) == value)
+            if (Traits<RemoveReference<T>>::equals(at(i), value))
                 return true;
         }
         return false;
     }
 
-    [[nodiscard]] bool constexpr starts_with(ReadonlySpan<T> other) const
+    [[nodiscard]] constexpr bool starts_with(ReadonlySpan<T> other) const
     {
         if (size() < other.size())
             return false;
@@ -227,7 +228,7 @@ public:
         return TypedTransfer<T>::compare(data(), other.data(), other.size());
     }
 
-    [[nodiscard]] size_t constexpr matching_prefix_length(ReadonlySpan<T> other) const
+    [[nodiscard]] constexpr size_t matching_prefix_length(ReadonlySpan<T> other) const
     {
         auto maximum_length = min(size(), other.size());
 
@@ -326,7 +327,7 @@ template<typename T>
 requires(IsTrivial<T>)
 ReadonlyBytes to_readonly_bytes(Span<T> span)
 {
-    return ReadonlyBytes { static_cast<void*>(span.data()), span.size() * sizeof(T) };
+    return ReadonlyBytes { static_cast<void const*>(span.data()), span.size() * sizeof(T) };
 }
 
 template<typename T>

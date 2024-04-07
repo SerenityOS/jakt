@@ -45,19 +45,19 @@ if (((next).has_value())){
 jakt__path::Path new_path = ((TRY(((((((*this).current_directory).value()))->get_path())))).join((((((next.value())).template get<0>())).to_string())));
 if ((((next.value())).template get<1>())){
 ((((*this).directory_list)).push(new_path));
-return TRY((((*this).next())));
+return ((((*this).next())));
 }
 if (((((new_path).extension())) == (((*this).extension)))){
 return new_path;
 }
 else {
-return TRY((((*this).next())));
+return ((((*this).next())));
 }
 
 }
 else if ((!(((((*this).directory_list)).is_empty())))){
 (((*this).current_directory) = TRY((jakt__platform__unknown_fs::DirectoryIterator::from_path((((((*this).directory_list)).pop()).value())))));
-return TRY((((*this).next())));
+return ((((*this).next())));
 }
 return JaktInternal::OptionalNone();
 }

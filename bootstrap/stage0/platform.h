@@ -3,6 +3,4 @@
 #include "jakt__prelude__configuration.h"
 #include "jakt__platform.h"
 namespace Jakt {
-namespace platform {
-}
 } // namespace Jakt

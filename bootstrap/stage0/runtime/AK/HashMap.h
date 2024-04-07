@@ -39,8 +39,8 @@ public:
     HashMap(std::initializer_list<Entry> list)
     {
         MUST(try_ensure_capacity(list.size()));
-        for (auto& item : list)
-            set(item.key, item.value);
+        for (auto& [key, value] : list)
+            set(key, value);
     }
 
     HashMap(HashMap const&) = default; // FIXME: Not OOM-safe! Use clone() instead.
@@ -101,6 +101,8 @@ public:
     [[nodiscard]] IteratorType end() { return m_table.end(); }
     [[nodiscard]] IteratorType find(K const& key)
     {
+        if (m_table.is_empty())
+            return m_table.end();
         return m_table.find(KeyTraits::hash(key), [&](auto& entry) { return KeyTraits::equals(entry.key, key); });
     }
     template<typename TUnaryPredicate>
@@ -113,6 +115,8 @@ public:
     [[nodiscard]] ConstIteratorType end() const { return m_table.end(); }
     [[nodiscard]] ConstIteratorType find(K const& key) const
     {
+        if (m_table.is_empty())
+            return m_table.end();
         return m_table.find(KeyTraits::hash(key), [&](auto& entry) { return KeyTraits::equals(entry.key, key); });
     }
     template<typename TUnaryPredicate>
@@ -124,16 +128,22 @@ public:
     template<Concepts::HashCompatible<K> Key>
     requires(IsSame<KeyTraits, Traits<K>>) [[nodiscard]] IteratorType find(Key const& key)
     {
+        if (m_table.is_empty())
+            return m_table.end();
         return m_table.find(Traits<Key>::hash(key), [&](auto& entry) { return Traits<K>::equals(entry.key, key); });
     }
 
     template<Concepts::HashCompatible<K> Key>
     requires(IsSame<KeyTraits, Traits<K>>) [[nodiscard]] ConstIteratorType find(Key const& key) const
     {
+        if (m_table.is_empty())
+            return m_table.end();
         return m_table.find(Traits<Key>::hash(key), [&](auto& entry) { return Traits<K>::equals(entry.key, key); });
     }
 
     ErrorOr<void> try_ensure_capacity(size_t capacity) { return m_table.try_ensure_capacity(capacity); }
+
+    void ensure_capacity(size_t capacity) { return m_table.ensure_capacity(capacity); }
 
     Optional<typename ValueTraits::ConstPeekType> get(K const& key) const
     requires(!IsPointer<typename ValueTraits::PeekType>)
@@ -274,16 +284,16 @@ public:
     {
         Vector<K> list;
         list.ensure_capacity(size());
-        for (auto& it : *this)
-            list.unchecked_append(it.key);
+        for (auto const& [key, _] : *this)
+            list.unchecked_append(key);
         return list;
     }
 
     [[nodiscard]] u32 hash() const
     {
         u32 hash = 0;
-        for (auto& it : *this) {
-            auto entry_hash = pair_int_hash(it.key.hash(), it.value.hash());
+        for (auto const& [key, value] : *this) {
+            auto entry_hash = pair_int_hash(key.hash(), value.hash());
             hash = pair_int_hash(hash, entry_hash);
         }
         return hash;
@@ -293,8 +303,9 @@ public:
     ErrorOr<HashMap<K, V, NewKeyTraits, NewValueTraits, NewIsOrdered>> clone() const
     {
         HashMap<K, V, NewKeyTraits, NewValueTraits, NewIsOrdered> hash_map_clone;
-        for (auto& it : *this)
-            TRY(hash_map_clone.try_set(it.key, it.value));
+        TRY(hash_map_clone.try_ensure_capacity(size()));
+        for (auto const& [key, value] : *this)
+            hash_map_clone.set(key, value);
         return hash_map_clone;
     }
 

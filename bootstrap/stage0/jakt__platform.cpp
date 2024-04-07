@@ -121,7 +121,7 @@ return jakt__platform::Target(((parts)[static_cast<i64>(0LL)]),((parts)[static_c
 ErrorOr<jakt__platform::Target> jakt__platform::Target::active() {
 {
 ByteString const triple = TRY((___jakt_get_target_triple_string()));
-return TRY((jakt__platform::Target::from_triple(triple)));
+return ((jakt__platform::Target::from_triple(triple)));
 }
 }
 
@@ -221,19 +221,19 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("int s
 
 ErrorOr<size_t> jakt__platform::Target::size_t_alignment() const {
 {
-return TRY((((*this).size_t_size())));
+return ((((*this).size_t_size())));
 }
 }
 
 ErrorOr<size_t> jakt__platform::Target::pointer_alignment() const {
 {
-return TRY((((*this).pointer_size())));
+return ((((*this).pointer_size())));
 }
 }
 
 ErrorOr<size_t> jakt__platform::Target::int_alignment() const {
 {
-return TRY((((*this).int_size())));
+return ((((*this).int_size())));
 }
 }
 

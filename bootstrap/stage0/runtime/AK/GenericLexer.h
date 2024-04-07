@@ -7,6 +7,7 @@
 #pragma once
 
 #include <AK/Result.h>
+#include <AK/String.h>
 #include <AK/StringView.h>
 
 namespace AK {
@@ -92,9 +93,11 @@ public:
     }
 
 #ifndef KERNEL
-    bool consume_specific(ByteString const& next)
+    bool consume_specific(ByteString next) = delete;
+
+    bool consume_specific(String const& next)
     {
-        return consume_specific(StringView { next });
+        return consume_specific(next.bytes_as_string_view());
     }
 #endif
 
@@ -231,6 +234,34 @@ private:
 #endif
 };
 
+class LineTrackingLexer : public GenericLexer {
+public:
+    using GenericLexer::GenericLexer;
+
+    struct Position {
+        size_t offset { 0 };
+        size_t line { 0 };
+        size_t column { 0 };
+    };
+
+    LineTrackingLexer(StringView input, Position start_position)
+        : GenericLexer(input)
+        , m_cached_position {
+            .line = start_position.line,
+            .column = start_position.column,
+        }
+    {
+    }
+
+    Position cached_position() const { return m_cached_position; }
+    void restore_cached_offset(Position cached_position) { m_cached_position = cached_position; }
+    Position position_for(size_t) const;
+    Position current_position() const { return position_for(m_index); }
+
+protected:
+    mutable Position m_cached_position;
+};
+
 constexpr auto is_any_of(StringView values)
 {
     return [values](auto c) { return values.contains(c); };
@@ -251,4 +282,5 @@ using AK::GenericLexer;
 using AK::is_any_of;
 using AK::is_path_separator;
 using AK::is_quote;
+using AK::LineTrackingLexer;
 #endif
