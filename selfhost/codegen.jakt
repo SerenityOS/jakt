@@ -3475,8 +3475,25 @@ struct CodeGenerator {
                             for arg in args {
                                 output.append("auto& ")
                                 output.append(arg.binding)
-                                output.append(" = __jakt_match_value.")
-                                output.append(arg.name ?? "value")
+
+                                mut is_common_member = false
+                                if arg.name is Some(name) {
+                                    for field in enum_.fields {
+                                        let var = .program.get_variable(field.variable_id)
+                                        if var.name == name {
+                                            is_common_member = true
+                                            break
+                                        }
+                                    }
+                                }
+
+                                if is_common_member {
+                                    output.append(" = __jakt_enum_value.common.init_common.")
+                                    output.append(arg.name!)
+                                } else {
+                                    output.append(" = __jakt_match_value.")
+                                    output.append(arg.name ?? "value")
+                                }
                                 output.append(";\n")
                             }
                         }
@@ -3658,8 +3675,25 @@ struct CodeGenerator {
                                         }
                                         output.append("& ")
                                         output.append(arg.binding)
-                                        output.append(" = __jakt_match_value.")
-                                        output.append(arg.name.value_or(arg.binding))
+
+
+                                        let accessor = arg.name ?? arg.binding
+                                        mut is_common_member = false
+                                        for field in enum_.fields {
+                                            let var = .program.get_variable(field.variable_id)
+                                            if var.name == accessor {
+                                                is_common_member = true
+                                                break
+                                            }
+                                        }
+
+                                        if is_common_member {
+                                            output.append(" = __jakt_match_variant.common.init_common.")
+                                            output.append(accessor)
+                                        } else {
+                                            output.append(" = __jakt_match_value.")
+                                            output.append(accessor)
+                                        }
                                         output.append(";\n")
                                     }
                                 }
