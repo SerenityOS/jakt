@@ -1740,7 +1740,7 @@ struct Parser {
 
     fn previous(this) -> Token {
         if .index == 0 or .index > .tokens.size() {
-            return Token::Eof(.span(start: 0, end: 0))
+            return Token::Eof(span: .span(start: 0, end: 0))
         }
         return .tokens[.index - 1]
     }
@@ -1809,7 +1809,7 @@ struct Parser {
                     }
                     else => {
                         active_attributes = []
-                        .error("Unexpected token (expected keyword)", .current().span())
+                        .error("Unexpected token (expected keyword)", .current().span)
                         break
                     }
                 }
@@ -1827,7 +1827,7 @@ struct Parser {
                         .index += 2
                         .parse_attribute_list(&mut active_attributes)
                     } else {
-                        .error("Unexpected token (expected ‘[[’)", .current().span())
+                        .error("Unexpected token (expected ‘[[’)", .current().span)
                         .index += 1
                     }
                 }
@@ -1846,7 +1846,7 @@ struct Parser {
                         parsed_namespace.functions.push(parsed_function)
                         saw_an_entity = true
                     } else {
-                        .error("Expected 'fn' after 'unsafe'", .current().span())
+                        .error("Expected 'fn' after 'unsafe'", .current().span)
                     }
                 }
                 Fn | Comptime => {
@@ -1882,13 +1882,13 @@ struct Parser {
                     if .current() is LCurly {
                         .index++
                     } else {
-                        .error("Expected ‘{’", .current().span())
+                        .error("Expected ‘{’", .current().span)
                     }
                     mut namespace_ = .parse_namespace()
                     if .current() is RCurly {
                         .index++
                     } else {
-                        .error("Incomplete namespace", .previous().span())
+                        .error("Incomplete namespace", .previous().span)
                     }
                     if name.has_value() {
                         namespace_.name = name!.0
@@ -1919,7 +1919,7 @@ struct Parser {
                                 parsed_namespace.functions.push(parsed_function)
                                 saw_an_entity = true
                             } else {
-                                .error("Expected 'fn' after 'unsafe'", .current().span())
+                                .error("Expected 'fn' after 'unsafe'", .current().span)
                             }
                         }
                         Fn => {
@@ -1958,7 +1958,7 @@ struct Parser {
                         }
                         else => {
                             active_attributes = []
-                            .error("Unexpected keyword", .current().span())
+                            .error("Unexpected keyword", .current().span)
                         }
                     }
                 }
@@ -1970,7 +1970,7 @@ struct Parser {
                     break
                 }
                 else => {
-                    .error("Unexpected token (expected keyword)", .current().span())
+                    .error("Unexpected token (expected keyword)", .current().span)
                     break
                 }
             }
@@ -2283,13 +2283,13 @@ struct Parser {
         if .current() is RSquare and .peek(1) is RSquare {
             .index += 2
         } else {
-            .error("Expected ‘]]’", .current().span())
+            .error("Expected ‘]]’", .current().span)
         }
     }
 
     fn parse_attribute(mut this) -> ParsedAttribute? {
         // Ident ('(' ((Ident|String) (':' (Ident|String))? ','?)* ')')? ('=' (Ident|String))?
-        let span = .current().span()
+        let span = .current().span
         let name = match .current() {
             Identifier(name) => {
                 .index++
@@ -2300,7 +2300,7 @@ struct Parser {
                 yield "this"
             }
             else => {
-                .error("Expected identifier", .current().span())
+                .error("Expected identifier", .current().span)
                 .index++
                 return None
             }
@@ -2310,7 +2310,7 @@ struct Parser {
         if .current() is LParen {
             .index++
             while not .eof() and not .current() is RParen {
-                let span = .current().span()
+                let span = .current().span
 
                 let argument_name = match .current() {
                     Identifier(name) => {
@@ -2326,7 +2326,7 @@ struct Parser {
                         yield quote
                     }
                     else => {
-                        .error("Expected identifier or string literal", .current().span())
+                        .error("Expected identifier or string literal", .current().span)
                         return None
                     }
                 }
@@ -2348,7 +2348,7 @@ struct Parser {
                             yield quote
                         }
                         else => {
-                            .error("Expected identifier or string literal", .current().span())
+                            .error("Expected identifier or string literal", .current().span)
                             return None
                         }
                     }
@@ -2363,7 +2363,7 @@ struct Parser {
                 if .current() is Comma {
                     .index++
                 } else if not .current() is RParen {
-                    .error("Expected ‘,’ or ‘)’", .current().span())
+                    .error("Expected ‘,’ or ‘)’", .current().span)
                     break
                 }
             }
@@ -2371,7 +2371,7 @@ struct Parser {
             if .current() is RParen {
                 .index++
             } else {
-                .error("Expected ‘)’", .current().span())
+                .error("Expected ‘)’", .current().span)
             }
         }
 
@@ -2392,7 +2392,7 @@ struct Parser {
                     yield Some(quote)
                 }
                 else => {
-                    .error("Expected identifier or string literal", .current().span())
+                    .error("Expected identifier or string literal", .current().span)
                     yield None
                 }
             }
@@ -2440,7 +2440,7 @@ struct Parser {
                                     .index++
                                 }
                                 RightShift => {
-                                    .inject_token(token: Token::GreaterThan(.current().span()))
+                                    .inject_token(token: Token::GreaterThan(span: .current().span))
                                     .index += 1
                                     break
                                 }
@@ -2448,7 +2448,7 @@ struct Parser {
                                     let index_before = .index
                                     let inner_type = .parse_typename()
                                     if index_before == .index {
-                                        .error("Expected type name", .current().span())
+                                        .error("Expected type name", .current().span)
                                         break
                                     }
                                     parsed_name.generic_parameters.push(inner_type)
@@ -2458,8 +2458,8 @@ struct Parser {
                     }
                     alias.target.push(parsed_name)
                 }
-                else(span) => {
-                    .error("Expected alias target name", span)
+                else => {
+                    .error("Expected alias target name", .current().span)
                     break
                 }
             }
@@ -2480,8 +2480,8 @@ struct Parser {
                     )
                     .index++
                 }
-                else(span) => {
-                    .error("Expected alias name", span)
+                else => {
+                    .error("Expected alias name", .current().span)
                 }
             }
         }
@@ -2496,18 +2496,18 @@ struct Parser {
         if .current() is Implements {
             .index++
         } else {
-            .error("Expected ‘implements’", .current().span())
+            .error("Expected ‘implements’", .current().span)
         }
         let trait_list = .parse_trait_list()
         if not trait_list.has_value() {
-            .error("Expected non-empty trait list", .current().span())
+            .error("Expected non-empty trait list", .current().span)
             return ParsedExternalTraitImplementation(for_type: type_name)
         }
 
         .skip_newlines()
 
         guard .current() is LCurly else {
-            .error("Expected ‘{’", .current().span())
+            .error("Expected ‘{’", .current().span)
             return ParsedExternalTraitImplementation(for_type: type_name, traits: trait_list!)
         }
 
@@ -2538,7 +2538,7 @@ struct Parser {
         )
 
         guard .current() is Identifier(name, span: name_span) else {
-            .error("Expected trait name", .current().span())
+            .error("Expected trait name", .current().span)
             return parsed_trait
         }
         parsed_trait.name = name
@@ -2563,15 +2563,15 @@ struct Parser {
                             .index++
                             break
                         }
-                        Eof(span) => {
-                            .error("Expected '}' to close the trait body", span)
+                        Eof => {
+                            .error("Expected '}' to close the trait body", .current().span)
                         }
                         LSquare => {
                             if .peek(1) is LSquare {
                                 .index += 2
                                 .parse_attribute_list(&mut active_attributes)
                             } else {
-                                .error("Unexpected token (expected ‘[[’)", .current().span())
+                                .error("Unexpected token (expected ‘[[’)", .current().span)
                                 .index += 1
                             }
                         }
@@ -2598,8 +2598,8 @@ struct Parser {
 
                             methods.push(method)
                         }
-                        else(span) => {
-                            .error_with_hint("Expected 'function' keyword inside trait definition", span,
+                        else => {
+                            .error_with_hint("Expected 'function' keyword inside trait definition", .current().span,
                                 format(
                                     "Inside '{}' trait's definition only function declarations can appear"
                                     parsed_trait.name
@@ -2618,7 +2618,7 @@ struct Parser {
             }
             else => {
                 .error("Expected '{' to enter the body of the trait, or '=' to specify trait requirements",
-                    .current().span())
+                    .current().span)
                 return parsed_trait
             }
         }
@@ -2635,7 +2635,7 @@ struct Parser {
             yield .parse_enum(definition_linkage, is_boxed: true)
         }
         else => {
-            .error("Expected `struct`, `class`, `enum`, or `boxed`", .current().span())
+            .error("Expected `struct`, `class`, `enum`, or `boxed`", .current().span)
             yield ParsedRecord(
                 name: "",
                 name_span: .empty_span(),
@@ -2665,10 +2665,10 @@ struct Parser {
                 parsed_import.is_c = true
             } else {
                 .error("Expected 'c' or path after `import extern`"
-                       .current().span())
+                       .current().span)
             }
         }
-        parsed_import.assigned_namespace.name_span = .current().span()
+        parsed_import.assigned_namespace.name_span = .current().span
 
         let import_path = match .current() {
             QuotedString(quote) => {
@@ -2677,7 +2677,7 @@ struct Parser {
             }
             else => {
                 .error("Expected path after `import extern`"
-                       .current().span())
+                       .current().span)
                 yield ""
             }
         }
@@ -2690,7 +2690,7 @@ struct Parser {
                 parsed_import.assigned_namespace.name_span = span
             } else {
                 .error("Expected name after 'as' keyword to name the extern import"
-                        .current().span())
+                        .current().span)
             }
         }
 
@@ -2705,7 +2705,7 @@ struct Parser {
                 .index++
             } else {
                 .error("Expected '}' to end namespace for the extern import"
-                        .current().span())
+                        .current().span)
             }
         } else {
             parsed_import.should_auto_import = true
@@ -2759,20 +2759,20 @@ struct Parser {
                         .index++
                         .skip_newlines()
                     } else {
-                        .error("Expected '{' to start define action", .current().span())
+                        .error("Expected '{' to start define action", .current().span)
                         return None
                     }
 
                     mut defines: [IncludeAction] = []
                     loop {
                         if .current() is Identifier(name) {
-                            let span = .current().span()
+                            let span = .current().span
                             .index++
                             .skip_newlines()
                             if .current() is Equal {
                                 .index++
                             } else {
-                                .error("Expected '=' to assign value to defined symbols", .current().span())
+                                .error("Expected '=' to assign value to defined symbols", .current().span)
                                 continue
                             }
 
@@ -2782,7 +2782,7 @@ struct Parser {
                                     yield quote
                                 }
                                 else => {
-                                    .error("Expected quoted string to assign value to defined symbols", .current().span())
+                                    .error("Expected quoted string to assign value to defined symbols", .current().span)
                                     yield ""
                                 }
                             }
@@ -2801,7 +2801,7 @@ struct Parser {
                     if .current() is RCurly {
                         .index++
                     } else {
-                        .error("Expected '}' to end define action", .current().span())
+                        .error("Expected '}' to end define action", .current().span)
                     }
 
                     return Some(defines)
@@ -2813,14 +2813,14 @@ struct Parser {
                         .index++
                         .skip_newlines()
                     } else {
-                        .error("Expected '{' to start undefine include action", .current().span())
+                        .error("Expected '{' to start undefine include action", .current().span)
                         return None
                     }
 
                     mut defines: [IncludeAction] = []
                     loop {
                         if .current() is Identifier(name) {
-                            let span = .current().span()
+                            let span = .current().span
                             .index++
 
                             defines.push(IncludeAction::Undefine(name, span))
@@ -2838,7 +2838,7 @@ struct Parser {
                     if .current() is RCurly {
                         .index++
                     } else {
-                        .error("Expected '}' to end undefine action", .current().span())
+                        .error("Expected '}' to end undefine action", .current().span)
                     }
 
                     return Some(defines)
@@ -2847,11 +2847,11 @@ struct Parser {
             }
 
             .error("Expected 'define' or 'undefine' in include action"
-                    .current().span())
+                    .current().span)
             return None
         } else {
             .error("Expected 'define' or 'undefine' in include action"
-                    .current().span())
+                    .current().span)
             return None
         }
     }
@@ -2900,7 +2900,7 @@ struct Parser {
                                 parsed_import.parent_path_count = val.to_usize()
                             }
                             else => {
-                                .error(format("Incomplete relative import defintion, `)`; got ‘{}’", .current()), .current().span())
+                                .error(format("Incomplete relative import defintion, `)`; got ‘{}’", .current()), .current().span)
                                 return parsed_import
                             }
                         }
@@ -2908,7 +2908,7 @@ struct Parser {
                     if .current() is ColonColon {
                         .index++
                     } else {
-                        .error(format("Expected `::` after {}, got ‘{}’", .previous(), .current()), .current().span())
+                        .error(format("Expected `::` after {}, got ‘{}’", .previous(), .current()), .current().span)
                         return parsed_import
                     }
                 }
@@ -2931,7 +2931,7 @@ struct Parser {
                 else => ImportName::Literal(name, span)
             }
             else => {
-                .error("Expected module name", .current().span())
+                .error("Expected module name", .current().span)
                 return parsed_import
             }
         }
@@ -2956,7 +2956,7 @@ struct Parser {
                     }
                     As | LCurly => { break }
                     else => {
-                        .error("Expected module name fragment", .current().span())
+                        .error("Expected module name fragment", .current().span)
                         return parsed_import
                     }
                 }
@@ -2971,7 +2971,7 @@ struct Parser {
                 .index++
                 parsed_import.alias_name = ImportName::Literal(name, span)
             } else  {
-                .error("Expected name", .current().span())
+                .error("Expected name", .current().span)
                 .index++
             }
         }
@@ -2981,7 +2981,7 @@ struct Parser {
         }
 
         if not (.current() is LCurly) {
-            .error("Expected '{'", .current().span())
+            .error("Expected '{'", .current().span)
         }
         .index++
 
@@ -2994,9 +2994,9 @@ struct Parser {
                     } else {
                         .error_with_hint(
                             format("Already importing everything from '{}'", parsed_import.module_name.literal_name()),
-                            .current().span()
+                            .current().span
                             "Remove the '*' to import specific names"
-                            .current().span()
+                            .current().span
                         )
                     }
                     .index++
@@ -3008,12 +3008,12 @@ struct Parser {
                         if parsed_import.import_list is All {
                             .error(
                                 format("Cannot repeat '*' in import list for '{}'", parsed_import.module_name.literal_name()),
-                                .current().span()
+                                .current().span
                             )
                         } else {
                             .error(
                                 format("Cannot mix '*' and specific names in import list for '{}'", parsed_import.module_name.literal_name()),
-                                .current().span()
+                                .current().span
                             )
                         }
                     }
@@ -3027,7 +3027,7 @@ struct Parser {
                     break
                 }
                 else => {
-                    .error("Expected import symbol", .current().span())
+                    .error("Expected import symbol", .current().span)
                     .index++
                 }
             }
@@ -3043,13 +3043,13 @@ struct Parser {
         if .current() is LCurly {
             .index++
         } else {
-            .error("Expected `{` to start the enum body", .current().span())
+            .error("Expected `{` to start the enum body", .current().span)
         }
 
         .skip_newlines()
 
         if .eof() {
-            .error("Incomplete enum definition, expected variant name", .previous().span())
+            .error("Incomplete enum definition, expected variant name", .previous().span)
             return (variants, methods)
         }
 
@@ -3073,20 +3073,20 @@ struct Parser {
                 Comma | Eol => {
                     .index++
                 }
-                Private(span) => {
+                Private => {
                     if last_visibility.has_value() {
-                        .error_with_hint("Multiple visibility modifiers on one field or method are not allowed", span, "Previous modifier is here", last_visibility_span!)
+                        .error_with_hint("Multiple visibility modifiers on one field or method are not allowed", .current().span, "Previous modifier is here", last_visibility_span!)
                     }
                     last_visibility = Visibility::Private
-                    last_visibility_span = span
+                    last_visibility_span = .current().span
                     .index++
                 }
-                Public(span) => {
+                Public => {
                     if last_visibility.has_value() {
-                        .error_with_hint("Multiple visibility modifiers on one field or method are not allowed", span, "Previous modifier is here", last_visibility_span!)
+                        .error_with_hint("Multiple visibility modifiers on one field or method are not allowed", .current().span, "Previous modifier is here", last_visibility_span!)
                     }
                     last_visibility = Visibility::Public
-                    last_visibility_span = span
+                    last_visibility_span = .current().span
                     .index++
                 }
                 Fn | Comptime => {
@@ -3098,7 +3098,7 @@ struct Parser {
                     }
 
                     if function_linkage is External and is_comptime {
-                        .error("External functions cannot be comptime", .current().span())
+                        .error("External functions cannot be comptime", .current().span)
                     }
 
                     let visibility = last_visibility ?? Visibility::Public
@@ -3118,14 +3118,14 @@ struct Parser {
                     methods.push(parsed_method)
                 }
                 else => {
-                    .error("Expected identifier or the end of enum block", .current().span())
+                    .error("Expected identifier or the end of enum block", .current().span)
                     .index++
                 }
             }
         }
 
         if not .current() is RCurly {
-            .error("Invalid enum definition, expected `}`", .current().span())
+            .error("Invalid enum definition, expected `}`", .current().span)
             return (variants, methods)
         }
 
@@ -3152,13 +3152,13 @@ struct Parser {
         if .current() is LCurly {
             .index++
         } else {
-            .error("Expected `{` to start the enum body", .current().span())
+            .error("Expected `{` to start the enum body", .current().span)
         }
 
         .skip_newlines()
 
         if .eof() {
-            .error("Incomplete enum definition, expected variant or field name", .previous().span())
+            .error("Incomplete enum definition, expected variant or field name", .previous().span)
             return (variants, fields, methods, records)
         }
 
@@ -3171,7 +3171,7 @@ struct Parser {
             match .current() {
                 Extern => {
                     if last_extern {
-                        .error("Multiple extern modifiers are not allowed", .current().span())
+                        .error("Multiple extern modifiers are not allowed", .current().span)
                     }
                     last_extern = true
                     .index++
@@ -3215,7 +3215,7 @@ struct Parser {
                     while not .eof() {
                         if .peek(1) is Colon {
                             guard .current() is Identifier else {
-                                .error("Enum variant missing type", .current().span())
+                                .error("Enum variant missing type", .current().span)
                                 .index++
                                 continue
                             }
@@ -3238,7 +3238,7 @@ struct Parser {
                                     parsed_type: .parse_typename()
                                     is_mutable: false
                                     inlay_span: None
-                                    span: .current().span()
+                                    span: .current().span
                                 ))
                             }
                             else => {}
@@ -3264,7 +3264,7 @@ struct Parser {
                                 .index++
                             }
                             else => {
-                                .error(format("Incomplete enum variant definition, expected `,` or `)`; got ‘{}’", .current()), .current().span())
+                                .error(format("Incomplete enum variant definition, expected `,` or `)`; got ‘{}’", .current()), .current().span)
                                 break;
                             }
                         }
@@ -3282,24 +3282,24 @@ struct Parser {
                         .index += 2
                         .parse_attribute_list(&mut active_attributes)
                     } else {
-                        .error("Unexpected token (expected ‘[[’)", .current().span())
+                        .error("Unexpected token (expected ‘[[’)", .current().span)
                         .index += 1
                     }
                 }
-                Private(span) => {
+                Private => {
                     if last_visibility.has_value() {
-                        .error_with_hint("Multiple visibility modifiers on one field or method are not allowed", span, "Previous modifier is here", last_visibility_span!)
+                        .error_with_hint("Multiple visibility modifiers on one field or method are not allowed", .current().span, "Previous modifier is here", last_visibility_span!)
                     }
                     last_visibility = Visibility::Private
-                    last_visibility_span = span
+                    last_visibility_span = .current().span
                     .index++
                 }
-                Public(span) => {
+                Public => {
                     if last_visibility.has_value() {
-                        .error_with_hint("Multiple visibility modifiers on one field or method are not allowed", span, "Previous modifier is here", last_visibility_span!)
+                        .error_with_hint("Multiple visibility modifiers on one field or method are not allowed", .current().span, "Previous modifier is here", last_visibility_span!)
                     }
                     last_visibility = Visibility::Public
-                    last_visibility_span = span
+                    last_visibility_span = .current().span
                     .index++
                 }
                 Fn | Comptime => {
@@ -3314,7 +3314,7 @@ struct Parser {
                     }
 
                     if function_linkage is External and is_comptime {
-                        .error("External functions cannot be comptime", .current().span())
+                        .error("External functions cannot be comptime", .current().span)
                     }
 
                     let visibility = last_visibility ?? Visibility::Public
@@ -3338,7 +3338,7 @@ struct Parser {
                 }
                 Struct | Enum | Boxed | Class => {
                     if last_visibility.has_value() {
-                        .error("Nested types cannot have visibility modifiers", .current().span())
+                        .error("Nested types cannot have visibility modifiers", .current().span)
                         last_visibility = None
                     }
 
@@ -3350,14 +3350,14 @@ struct Parser {
                     records.push(parsed_record)
                 }
                 else => {
-                    .error("Expected identifier or the end of enum block", .current().span())
+                    .error("Expected identifier or the end of enum block", .current().span)
                     .index++
                 }
             }
         }
 
         if not .current() is RCurly {
-            .error("Invalid enum definition, expected `}`", .current().span())
+            .error("Invalid enum definition, expected `}`", .current().span)
             return (variants, fields, methods, records)
         }
         .index++
@@ -3379,12 +3379,12 @@ struct Parser {
         if .current() is Enum {
             .index++
         } else {
-            .error("Expected ‘enum’ keyword", .current().span())
+            .error("Expected ‘enum’ keyword", .current().span)
             return parsed_enum
         }
 
         if .eof() {
-            .error("Incomplete enum definition, expected name", .current().span())
+            .error("Incomplete enum definition, expected name", .current().span)
             return parsed_enum
         }
 
@@ -3393,11 +3393,11 @@ struct Parser {
             parsed_enum.name_span = span
             .index++
         } else {
-            .error("Incomplete enum definition, expected name", .current().span())
+            .error("Incomplete enum definition, expected name", .current().span)
         }
 
         if .eof() {
-            .error("Incomplete enum definition, expected generic parameters or underlying type or body", .current().span())
+            .error("Incomplete enum definition, expected generic parameters or underlying type or body", .current().span)
             return parsed_enum
         }
 
@@ -3411,13 +3411,13 @@ struct Parser {
         }
 
         if .eof() {
-            .error("Incomplete enum definition, expected underlying type or body", .current(). span())
+            .error("Incomplete enum definition, expected underlying type or body", .current(). span)
             return parsed_enum
         }
 
         if .current() is Colon {
             if is_boxed {
-                .error("Invalid enum definition: Value enums must not have an underlying type", .current().span())
+                .error("Invalid enum definition: Value enums must not have an underlying type", .current().span)
             }
             .index++
             underlying_type = .parse_typename()
@@ -3426,7 +3426,7 @@ struct Parser {
         .skip_newlines()
 
         if .eof() {
-            .error("Incomplete enum definition, expected body", .current().span())
+            .error("Incomplete enum definition, expected body", .current().span)
             return parsed_enum
         }
 
@@ -3464,7 +3464,7 @@ struct Parser {
         if .current() is LCurly {
             .index++
         } else {
-            .error("Expected ‘{’", .current().span())
+            .error("Expected ‘{’", .current().span)
         }
 
         mut fields: [ParsedField] = []
@@ -3489,10 +3489,10 @@ struct Parser {
             match token {
                 RCurly => {
                     if last_visibility.has_value() {
-                        .error("Expected function or parameter after visibility modifier", token.span())
+                        .error("Expected function or parameter after visibility modifier", token.span)
                     }
                     if not active_attributes.is_empty() {
-                        .error("Expected function after attribute", token.span())
+                        .error("Expected function after attribute", token.span)
                     }
                     .index++
                     return (fields, methods, records)
@@ -3505,35 +3505,35 @@ struct Parser {
                     last_extern = true
                     .index++
                 }
-                Public(span) => {
+                Public => {
                     if last_visibility.has_value() {
-                        .error_with_hint("Multiple visibility modifiers on one field or method are not allowed", span, "Previous modifier is here", last_visibility_span!)
+                        .error_with_hint("Multiple visibility modifiers on one field or method are not allowed", .current().span, "Previous modifier is here", last_visibility_span!)
                     }
                     last_visibility = Visibility::Public
-                    last_visibility_span = span
+                    last_visibility_span = .current().span
                     .index++
                 }
-                Private(span) => {
+                Private => {
                     if last_visibility.has_value() {
-                        .error_with_hint("Multiple visibility modifiers on one field or method are not allowed", span, "Previous modifier is here", last_visibility_span!)
+                        .error_with_hint("Multiple visibility modifiers on one field or method are not allowed", .current().span, "Previous modifier is here", last_visibility_span!)
                     }
                     last_visibility = Visibility::Private
-                    last_visibility_span = span
+                    last_visibility_span = .current().span
                     .index++
                 }
-                Restricted(span) => {
+                Restricted => {
                     if last_visibility.has_value() {
-                        .error_with_hint("Multiple visibility modifiers on one field or method are not allowed", span, "Previous modifier is here", last_visibility_span!)
+                        .error_with_hint("Multiple visibility modifiers on one field or method are not allowed", .current().span, "Previous modifier is here", last_visibility_span!)
                     }
                     last_visibility = .parse_restricted_visibility_modifier()
-                    last_visibility_span = span
+                    last_visibility_span = .current().span
                 }
                 LSquare => {
                     if .peek(1) is LSquare {
                         .index += 2
                         .parse_attribute_list(&mut active_attributes)
                     } else {
-                        .error("Unexpected token (expected ‘[[’)", .current().span())
+                        .error("Unexpected token (expected ‘[[’)", .current().span)
                         .index += 1
                     }
                 }
@@ -3544,13 +3544,13 @@ struct Parser {
                     last_visibility_span = None
 
                     if last_virtual or last_override {
-                        .error("Fields cannot be ‘virtual’ or ‘override’", .current().span())
+                        .error("Fields cannot be ‘virtual’ or ‘override’", .current().span)
                     }
                     last_virtual = false
                     last_override = false
 
                     if last_extern {
-                        .error("Fields cannot be ‘extern’", .current().span())
+                        .error("Fields cannot be ‘extern’", .current().span)
                     }
                     last_extern = false
 
@@ -3575,7 +3575,7 @@ struct Parser {
                     last_extern = false
 
                     if function_linkage is External and is_comptime {
-                        .error("External functions cannot be comptime", .current().span())
+                        .error("External functions cannot be comptime", .current().span)
                     }
 
                     let visibility = last_visibility ?? default_visibility
@@ -3611,12 +3611,12 @@ struct Parser {
                 }
                 Struct | Enum | Boxed | Class => {
                     if last_virtual or last_override {
-                        .error("Nested types cannot be ‘virtual’ or ‘override’", .current().span())
+                        .error("Nested types cannot be ‘virtual’ or ‘override’", .current().span)
                         last_virtual = false
                         last_override = false
                     }
                     if last_visibility.has_value() {
-                        .error("Nested types cannot have visibility modifiers", .current().span())
+                        .error("Nested types cannot have visibility modifiers", .current().span)
                         last_visibility = None
                     }
 
@@ -3633,7 +3633,7 @@ struct Parser {
                     // TODO: Find a better way of only reporting the first error.
                     //       Also, should we report every error when running as the "language server"?
                     if not error {
-                        .error(format("Invalid member, did not expect a {} here", token), token.span())
+                        .error(format("Invalid member, did not expect a {} here", token), token.span)
                         error = true
                     }
                     .index++
@@ -3641,9 +3641,9 @@ struct Parser {
             }
         }
         if is_class {
-            .error("Incomplete class body, expected ‘}’", .current().span())
+            .error("Incomplete class body, expected ‘}’", .current().span)
         } else {
-            .error("Incomplete struct body, expected ‘}’", .current().span())
+            .error("Incomplete struct body, expected ‘}’", .current().span)
         }
         return (fields, methods, records)
     }
@@ -3658,25 +3658,25 @@ struct Parser {
         if .current() is Struct {
             .index++
         } else {
-            .error("Expected `struct` keyword", .current().span())
+            .error("Expected `struct` keyword", .current().span)
             return parsed_struct
         }
         // Struct name
         if .eof() {
-            .error("Incomplete struct definition, expected name", .current().span())
+            .error("Incomplete struct definition, expected name", .current().span)
             return parsed_struct
         }
 
-        if .current() is Identifier(name, span) {
+        if .current() is Identifier(span, name) {
             .index++
             parsed_struct.name = name
             parsed_struct.name_span = span
         } else {
-            .error("Incomplete struct definition, expected name", .current().span())
+            .error("Incomplete struct definition, expected name", .current().span)
         }
 
         if .eof() {
-            .error("Incomplete struct definition, expected generic parameters or body", .current().span())
+            .error("Incomplete struct definition, expected generic parameters or body", .current().span)
             return parsed_struct
         }
 
@@ -3699,7 +3699,7 @@ struct Parser {
         .skip_newlines()
 
         if .eof() {
-            .error("Incomplete struct definition, expected body", .current().span())
+            .error("Incomplete struct definition, expected body", .current().span)
             return parsed_struct
         }
 
@@ -3723,12 +3723,12 @@ struct Parser {
         if .current() is Class {
             .index++
         } else {
-            .error("Expected `class` keyword", .current().span())
+            .error("Expected `class` keyword", .current().span)
             return parsed_class
         }
         // Class name
         if .eof() {
-            .error("Incomplete class definition, expected name", .current().span())
+            .error("Incomplete class definition, expected name", .current().span)
             return parsed_class
         }
 
@@ -3737,11 +3737,11 @@ struct Parser {
             parsed_class.name = name
             parsed_class.name_span = span
         } else {
-            .error("Incomplete class definition, expected name", .current().span())
+            .error("Incomplete class definition, expected name", .current().span)
         }
 
         if .eof() {
-            .error("Incomplete class definition, expected generic parameters or super class or body", .current().span())
+            .error("Incomplete class definition, expected generic parameters or super class or body", .current().span)
             return parsed_class
         }
 
@@ -3755,7 +3755,7 @@ struct Parser {
 
 
         if .eof() {
-            .error("Incomplete class definition, expected super class or body", .current().span())
+            .error("Incomplete class definition, expected super class or body", .current().span)
             return parsed_class
         }
 
@@ -3768,7 +3768,7 @@ struct Parser {
         .skip_newlines()
 
         if .eof() {
-            .error("Incomplete class definition, expected body", .current().span())
+            .error("Incomplete class definition, expected body", .current().span)
             return parsed_class
         }
 
@@ -3789,7 +3789,7 @@ struct Parser {
         } else {
             .error(
                 format("Expected '{:c}'", match for_trailing_closure { true => '|', false => ')' })
-                .current().span()
+                .current().span
             )
         }
 
@@ -3811,7 +3811,7 @@ struct Parser {
                         break
                     }
                     if not error {
-                        .error("Expected parameter", .current().span())
+                        .error("Expected parameter", .current().span)
                         error = true
                     }
                     .index++
@@ -3822,14 +3822,14 @@ struct Parser {
                         break
                     }
                     if not error {
-                        .error("Expected parameter", .current().span())
+                        .error("Expected parameter", .current().span)
                         error = true
                     }
                     .index++
                 }
                 Comma | Eol => {
                     if not parameter_complete and not error {
-                        .error("Expected parameter", .current().span())
+                        .error("Expected parameter", .current().span)
                         error = true
                     }
                     .index++
@@ -3839,15 +3839,15 @@ struct Parser {
                 }
                 DotDot => {
                     if result.has_varargs {
-                        .error("Multiple varargs cannot be present in one parameter list", .current().span())
+                        .error("Multiple varargs cannot be present in one parameter list", .current().span)
                         error = true
                     }
                     if current_param_is_mutable {
-                        .error("A variadic argument cannot be mutable", .current().span())
+                        .error("A variadic argument cannot be mutable", .current().span)
                         error = true
                     }
                     if not current_param_requires_label {
-                        .error("A variadic argument cannot be anonymous", .current().span())
+                        .error("A variadic argument cannot be anonymous", .current().span)
                         error = true
                     }
                     result.has_varargs = true
@@ -3859,19 +3859,19 @@ struct Parser {
                 }
                 Anon => {
                     if result.has_varargs {
-                        .error("A variadic argument may only appear at the end of a parameter list", .current().span())
+                        .error("A variadic argument may only appear at the end of a parameter list", .current().span)
                         error = true
                     }
                     if parameter_complete and not error  {
-                        .error("‘anon’ must appear at start of parameter declaration, not the end", .current().span())
+                        .error("‘anon’ must appear at start of parameter declaration, not the end", .current().span)
                         error = true
                     }
                     if current_param_is_mutable and not error  {
-                        .error("‘anon’ must appear before ‘mut’", .current().span())
+                        .error("‘anon’ must appear before ‘mut’", .current().span)
                         error = true
                     }
                     if not current_param_requires_label and not error  {
-                        .error("‘anon’ cannot appear multiple times in one parameter declaration", .current().span())
+                        .error("‘anon’ cannot appear multiple times in one parameter declaration", .current().span)
                         error = true
                     }
                     .index++
@@ -3879,15 +3879,15 @@ struct Parser {
                 }
                 Mut => {
                     if result.has_varargs {
-                        .error("A variadic argument may only appear at the end of a parameter list", .current().span())
+                        .error("A variadic argument may only appear at the end of a parameter list", .current().span)
                         error = true
                     }
                     if parameter_complete and not error  {
-                        .error("‘mut’ must appear at start of parameter declaration, not the end", .current().span())
+                        .error("‘mut’ must appear at start of parameter declaration, not the end", .current().span)
                         error = true
                     }
                     if current_param_is_mutable and not error  {
-                        .error("‘mut’ cannot appear multiple times in one parameter declaration", .current().span())
+                        .error("‘mut’ cannot appear multiple times in one parameter declaration", .current().span)
                         error = true
                     }
                     .index++
@@ -3895,7 +3895,7 @@ struct Parser {
                 }
                 This => {
                     if result.has_varargs {
-                        .error("A variadic argument may only appear at the end of a parameter list", .current().span())
+                        .error("A variadic argument may only appear at the end of a parameter list", .current().span)
                         error = true
                     }
                     result.parameters.push(ParsedParameter(
@@ -3904,17 +3904,17 @@ struct Parser {
                             name: "this",
                             parsed_type: ParsedType::Empty,
                             is_mutable: current_param_is_mutable,
-                            span: .current().span(),
+                            span: .current().span,
                         ),
                         default_argument: None,
-                        span: .current().span(),
+                        span: .current().span,
                     ))
                     .index++
                     parameter_complete = true
                 }
                 Identifier(name, span) => {
                     if result.has_varargs {
-                        .error("A variadic argument may only appear at the end of a parameter list", .current().span())
+                        .error("A variadic argument may only appear at the end of a parameter list", .current().span)
                         error = true
                     }
                     let var_decl = .parse_variable_declaration(is_mutable: current_param_is_mutable)
@@ -3932,10 +3932,10 @@ struct Parser {
                             name: var_decl.name,
                             parsed_type: var_decl.parsed_type,
                             is_mutable: var_decl.is_mutable,
-                            span: .previous().span(),
+                            span: .previous().span,
                         ),
                         default_argument,
-                        span: .previous().span(),
+                        span: .previous().span,
                     ))
                     parameter_complete = true
                 }
@@ -3943,7 +3943,7 @@ struct Parser {
                     // TODO: Find a better way of only reporting the first error.
                     //       Also, should we report every error when running as the "language server"?
                     if not error {
-                        .error("Expected parameter", .current().span())
+                        .error("Expected parameter", .current().span)
                         error = true
                     }
                     .index++
@@ -3987,10 +3987,10 @@ struct Parser {
                     name: "this",
                     parsed_type: ParsedType::Empty
                     is_mutable: true
-                    span: .current().span()
+                    span: .current().span
                 )
                 default_argument: None
-                span: .current().span()
+                span: .current().span
             ))
         }
 
@@ -3999,20 +3999,20 @@ struct Parser {
         }
 
         if .eof() {
-            .error("Incomplete function definition", .current().span())
+            .error("Incomplete function definition", .current().span)
             return parsed_function
         }
 
         if is_destructor {
             parsed_function.name = "~"
-            parsed_function.name_span = .previous().span()
+            parsed_function.name_span = .previous().span
         } else {
             guard .current() is Identifier(name) else {
-                .error("Incomplete function definition", .current().span())
+                .error("Incomplete function definition", .current().span)
                 return parsed_function
             }
             parsed_function.name = name
-            parsed_function.name_span = .current().span()
+            parsed_function.name_span = .current().span
         }
 
         .index++
@@ -4022,7 +4022,7 @@ struct Parser {
         }
 
         if .eof() {
-            .error("Incomplete function", .current().span())
+            .error("Incomplete function", .current().span)
         }
 
         if not is_destructor {
@@ -4037,7 +4037,7 @@ struct Parser {
         mut can_throw = parsed_function.is_jakt_main
         if .current() is Throws {
             if is_destructor {
-                .error("Destructor cannot throw", .current().span())
+                .error("Destructor cannot throw", .current().span)
             } else {
                 can_throw = true
             }
@@ -4047,14 +4047,14 @@ struct Parser {
 
         if .current() is Arrow {
             .index++
-            let start = .current().span()
+            let start = .current().span
             parsed_function.return_type = .parse_typename()
-            parsed_function.return_type_span = merge_spans(start, .previous().span())
+            parsed_function.return_type_span = merge_spans(start, .previous().span)
         } else {
             if parsed_function.is_jakt_main {
-                parsed_function.return_type = ParsedType::Name(name: "c_int", span: .previous().span())
+                parsed_function.return_type = ParsedType::Name(name: "c_int", span: .previous().span)
             }
-            parsed_function.return_type_span = .previous().span()
+            parsed_function.return_type_span = .previous().span
         }
 
         if linkage is External {
@@ -4078,9 +4078,9 @@ struct Parser {
 
     fn parse_fat_arrow(mut this) -> ParsedBlock {
         .index++
-        let start = .current().span()
+        let start = .current().span
         let expr = .parse_expression(allow_assignments: false, allow_newlines: false)
-        let return_statement = ParsedStatement::Return(expr, span: merge_spans(start, .current().span()))
+        let return_statement = ParsedStatement::Return(expr, span: merge_spans(start, .current().span))
         return ParsedBlock(stmts: [return_statement])
     }
 
@@ -4133,7 +4133,7 @@ struct Parser {
                         break
                     }
                     RightShift => {
-                        .inject_token(token: Token::GreaterThan(.current().span()))
+                        .inject_token(token: Token::GreaterThan(span: .current().span))
                         .index++
                         saw_ending_bracket = true
                         break
@@ -4142,7 +4142,7 @@ struct Parser {
                         mut index_before = .index
                         params.push(.parse_typename())
                         if .index == index_before {
-                            .error("Expected type parameter", .current().span())
+                            .error("Expected type parameter", .current().span)
                             break
                         }
                         if .current() is Comma {
@@ -4153,7 +4153,7 @@ struct Parser {
             }
 
             if not saw_ending_bracket {
-                .error("Expected `>` after type parameters", .current().span())
+                .error("Expected `>` after type parameters", .current().span)
             }
         }
 
@@ -4174,10 +4174,10 @@ struct Parser {
                         result = ParsedType::DependentType(
                             base: result
                             name
-                            span: merge_spans(base.span(), .current().span())
+                            span: merge_spans(base.span(), .current().span)
                         )
                     } else {
-                        .error("Expected identifier after `::`", .current().span())
+                        .error("Expected identifier after `::`", .current().span)
                         done = true
                     }
                 }
@@ -4190,7 +4190,7 @@ struct Parser {
     }
 
     fn parse_typename_base(mut this) -> ParsedType {
-        let start = .current().span()
+        let start = .current().span
 
         if .current() is Comptime {
             .index++
@@ -4227,12 +4227,12 @@ struct Parser {
 
         if .current() is QuestionMark {
             .index++
-            let span = merge_spans(start, .current().span())
+            let span = merge_spans(start, .current().span)
             parsed_type = ParsedType::Optional(inner: parsed_type, span)
         }
 
         if is_reference {
-            let span = merge_spans(start, .current().span())
+            let span = merge_spans(start, .current().span)
             if is_mutable_reference {
                 parsed_type = ParsedType::MutableReference(inner: parsed_type, span)
             } else {
@@ -4245,10 +4245,10 @@ struct Parser {
 
     fn parse_type_longhand(mut this, qualifiers: ParsedTypeQualifiers) -> ParsedType => match .current() {
         Raw => {
-            let start = .current().span()
+            let start = .current().span
             .index++
             let inner = .parse_typename()
-            let span = merge_spans(start, .current().span())
+            let span = merge_spans(start, .current().span)
             // NOTE: We rewrite `raw T?` from `RawPtr<Optional<T>>` to `Optional<RawPtr<T>>`
             yield match inner {
                 Optional(inner) => ParsedType::Optional(qualifiers, inner: ParsedType::RawPtr(inner, span), span)
@@ -4256,14 +4256,14 @@ struct Parser {
             }
         }
         Weak => {
-            let start = .current().span()
+            let start = .current().span
             .index++
             let inner = .parse_typename()
-            let span = merge_spans(start, .current().span())
+            let span = merge_spans(start, .current().span)
             yield ParsedType::WeakPtr(qualifiers, inner, span)
         }
         Identifier(name) => {
-            let span = .current().span()
+            let span = .current().span
             .index++
             mut parsed_type = ParsedType::Name(qualifiers, name, span)
             if .current() is LessThan {
@@ -4303,18 +4303,18 @@ struct Parser {
                 let type_name = namespaces.pop()!
 
                 mut params = .parse_type_parameter_list()
-                parsed_type = ParsedType::NamespacedName(name: type_name, namespaces, params, span: .previous().span())
+                parsed_type = ParsedType::NamespacedName(name: type_name, namespaces, params, span: .previous().span)
             }
 
             yield parsed_type
         }
         Fn => {
-            let start = .current().span()
+            let start = .current().span
             .index++
 
             let fn_parameters = .parse_function_parameters()
             if fn_parameters.has_varargs {
-                .error("Function type cannot have variadic arguments", .current().span())
+                .error("Function type cannot have variadic arguments", .current().span)
             }
 
             let can_throw = .current() is Throws
@@ -4327,7 +4327,7 @@ struct Parser {
                 .index++
                 return_type = .parse_typename()
             } else {
-                .error("Expected '->'", .current().span())
+                .error("Expected '->'", .current().span)
             }
 
             yield ParsedType::Function(
@@ -4339,13 +4339,13 @@ struct Parser {
             )
         }
         else => {
-            .error("Expected type name", .current().span())
+            .error("Expected type name", .current().span)
             yield ParsedType::Empty(qualifiers)
         }
     }
 
     fn parse_destructuring_assignment(mut this, is_mutable: bool) -> ParsedVarDeclTuple {
-        let start = .current().span()
+        let start = .current().span
         .index++
 
         mut var_declarations: [ParsedVarDecl] = []
@@ -4363,7 +4363,7 @@ struct Parser {
                     break
                 }
                 else => {
-                    .error("Expected close of destructuring assignment block", .current().span())
+                    .error("Expected close of destructuring assignment block", .current().span)
                     var_declarations = []
                     break
                 }
@@ -4372,12 +4372,12 @@ struct Parser {
 
         return ParsedVarDeclTuple(
             var_decls: var_declarations,
-            span: merge_spans(start, .previous().span())
+            span: merge_spans(start, .previous().span)
         )
     }
 
     fn parse_variable_declaration(mut this, is_mutable: bool) -> ParsedVarDecl {
-        let span = .current().span()
+        let span = .current().span
 
         guard .current() is Identifier(name) else {
             return ParsedVarDecl(
@@ -4426,12 +4426,12 @@ struct Parser {
     fn parse_type_shorthand_array_or_dictionary(mut this, qualifiers: ParsedTypeQualifiers) -> ParsedType {
         // [T] is shorthand for Array<T>
         // [K:V] is shorthand for Dictionary<K, V>
-        let start = .current().span()
+        let start = .current().span
         .index++
         let inner = .parse_typename()
         if .current() is RSquare {
             .index++
-            return ParsedType::JaktArray(qualifiers, inner, span: merge_spans(start, .previous().span()))
+            return ParsedType::JaktArray(qualifiers, inner, span: merge_spans(start, .previous().span))
         }
         if .current() is Colon {
             .index++
@@ -4439,38 +4439,38 @@ struct Parser {
             if .current() is RSquare {
                 .index++
             } else {
-                .error("Expected ']'", .current().span())
+                .error("Expected ']'", .current().span)
             }
-            return ParsedType::Dictionary(qualifiers, key: inner, value, span: merge_spans(start, .current().span()))
+            return ParsedType::Dictionary(qualifiers, key: inner, value, span: merge_spans(start, .current().span))
         }
-        .error("Expected shorthand type", .current().span())
+        .error("Expected shorthand type", .current().span)
         return ParsedType::Empty(qualifiers)
     }
 
     fn parse_type_shorthand_set(mut this, qualifiers: ParsedTypeQualifiers) -> ParsedType {
         // {T} is shorthand for Set<T>
-        let start = .current().span()
+        let start = .current().span
         if .current() is LCurly {
             .index++
         }
         let inner = .parse_typename()
         if .current() is RCurly {
             .index++
-            return ParsedType::Set(qualifiers, inner, span: merge_spans(start, .current().span()))
+            return ParsedType::Set(qualifiers, inner, span: merge_spans(start, .current().span))
         }
-        .error("Expected '}'", .current().span())
+        .error("Expected '}'", .current().span)
         return ParsedType::Empty(qualifiers)
     }
 
     fn parse_type_shorthand_tuple(mut this, qualifiers: ParsedTypeQualifiers) -> ParsedType {
         // (A, B, C) is shorthand for Tuple<A, B, C>
-        let start = .current().span()
+        let start = .current().span
         .index++
         mut types: [ParsedType] = []
         while not .eof() {
             if .current() is RParen {
                 .index++
-                return ParsedType::JaktTuple(qualifiers, types, span: merge_spans(start, .previous().span()))
+                return ParsedType::JaktTuple(qualifiers, types, span: merge_spans(start, .previous().span))
             }
             if .current() is Comma {
                 .index++
@@ -4483,12 +4483,12 @@ struct Parser {
             }
             types.push(type)
         }
-        .error("Expected ‘)’", .current().span())
+        .error("Expected ‘)’", .current().span)
         return ParsedType::Empty(qualifiers)
     }
 
     fn parse_block(mut this) -> ParsedBlock {
-        let start = .current().span()
+        let start = .current().span
         mut block = ParsedBlock()
 
         if .eof() {
@@ -4519,32 +4519,32 @@ struct Parser {
             }
         }
 
-        .error("Expected complete block", .current().span())
+        .error("Expected complete block", .current().span)
         return block
     }
 
     fn parse_statement(mut this, inside_block: bool) -> ParsedStatement {
-        let start = .current().span()
+        let start = .current().span
 
         return match .current() {
             Cpp => {
                 .index++
-                yield ParsedStatement::InlineCpp(block: .parse_block(), span: merge_spans(start, .previous().span()))
+                yield ParsedStatement::InlineCpp(block: .parse_block(), span: merge_spans(start, .previous().span))
             }
             Defer => {
                 .index++
                 let statement = .parse_statement(inside_block: false)
-                yield ParsedStatement::Defer(statement, span: merge_spans(start, .previous().span()))
+                yield ParsedStatement::Defer(statement, span: merge_spans(start, .previous().span))
             }
             Unsafe => match .peek(1) {
                 LCurly => {
                     .index++
                     let block = .parse_block()
-                    yield ParsedStatement::UnsafeBlock(block, span: merge_spans(start, .previous().span()))
+                    yield ParsedStatement::UnsafeBlock(block, span: merge_spans(start, .previous().span))
                 }
                 else => {
                     let expr = .parse_expression(allow_assignments: true, allow_newlines: false)
-                    yield ParsedStatement::Expression(expr, span: merge_spans(start, .previous().span()))
+                    yield ParsedStatement::Expression(expr, span: merge_spans(start, .previous().span))
                 }
             }
             Break => {
@@ -4558,12 +4558,12 @@ struct Parser {
             Loop => {
                 .index++
                 let block = .parse_block()
-                yield ParsedStatement::Loop(block, span: merge_spans(start, .previous().span()))
+                yield ParsedStatement::Loop(block, span: merge_spans(start, .previous().span))
             }
             Throw => {
                 .index++
                 let expr = .parse_expression(allow_assignments: false, allow_newlines: false)
-                yield ParsedStatement::Throw(expr, span: merge_spans(start, .previous().span()))
+                yield ParsedStatement::Throw(expr, span: merge_spans(start, .previous().span))
             }
             While => {
                 .index++
@@ -4574,7 +4574,7 @@ struct Parser {
                 .can_have_trailing_closure = previous_can_have_trailing_closure
 
                 let block = .parse_block()
-                yield ParsedStatement::While(condition, block, span: merge_spans(start, .previous().span()))
+                yield ParsedStatement::While(condition, block, span: merge_spans(start, .previous().span))
             }
             Yield => {
                 .index++
@@ -4582,13 +4582,13 @@ struct Parser {
                 if not inside_block {
                     .error("‘yield’ can only be used inside a block", span: merge_spans(start, end: expr.span()))
                 }
-                yield ParsedStatement::Yield(expr, span: merge_spans(start, .previous().span()))
+                yield ParsedStatement::Yield(expr, span: merge_spans(start, .previous().span))
             }
             Return => {
                 .index++
                 yield match .current() {
                     Eol | Eof | RCurly => ParsedStatement::Return(expr: None, span: start)
-                    else => ParsedStatement::Return(expr: .parse_expression(allow_assignments: false, allow_newlines: false), span: merge_spans(start, .previous().span()))
+                    else => ParsedStatement::Return(expr: .parse_expression(allow_assignments: false, allow_newlines: false), span: merge_spans(start, .previous().span))
                 }
             }
             Let | Mut => {
@@ -4603,7 +4603,7 @@ struct Parser {
                     parsed_type: ParsedType::Empty,
                     is_mutable: is_mutable,
                     inlay_span: None,
-                    span: .current().span(),
+                    span: .current().span,
                 )
 
                 if .current() is LParen {
@@ -4624,16 +4624,16 @@ struct Parser {
                         yield .parse_expression(allow_assignments: false, allow_newlines: false)
                     }
                     else => {
-                        .error("Expected initializer", .current().span())
-                        yield ParsedExpression::Garbage(.current().span())
+                        .error("Expected initializer", .current().span)
+                        yield ParsedExpression::Garbage(.current().span)
                     }
                 }
 
-                mut return_statement = ParsedStatement::VarDecl(var: tuple_var_decl, init, span: merge_spans(start, .previous().span()))
+                mut return_statement = ParsedStatement::VarDecl(var: tuple_var_decl, init, span: merge_spans(start, .previous().span))
 
                 if is_destructuring_assingment {
                     let old_return_statement = return_statement
-                    return_statement = ParsedStatement::DestructuringAssignment(vars, var_decl: old_return_statement, span: merge_spans(start, .previous().span()))
+                    return_statement = ParsedStatement::DestructuringAssignment(vars, var_decl: old_return_statement, span: merge_spans(start, .previous().span))
                 }
                 yield return_statement
             }
@@ -4641,18 +4641,18 @@ struct Parser {
             For => .parse_for_statement()
             LCurly => {
                 let block = .parse_block()
-                yield ParsedStatement::Block(block, span: merge_spans(start, .previous().span()))
+                yield ParsedStatement::Block(block, span: merge_spans(start, .previous().span))
             }
             Guard => .parse_guard_statement()
             else => {
                 let expr = .parse_expression(allow_assignments: true, allow_newlines: false)
-                yield ParsedStatement::Expression(expr, span: merge_spans(start, .previous().span()))
+                yield ParsedStatement::Expression(expr, span: merge_spans(start, .previous().span))
             }
         }
     }
 
     fn parse_guard_statement(mut this) -> ParsedStatement {
-        let span = .current().span()
+        let span = .current().span
         .index++
         let previous_can_have_trailing_closure = .can_have_trailing_closure
         .can_have_trailing_closure = false
@@ -4661,7 +4661,7 @@ struct Parser {
         if .current() is Else {
             .index++
         } else {
-            .error("Expected `else` keyword", .current().span())
+            .error("Expected `else` keyword", .current().span)
         }
         let else_block = .parse_block()
 
@@ -4685,35 +4685,35 @@ struct Parser {
     }
 
     fn parse_try_block(mut this) -> ParsedExpression {
-        let start_span = .current().span()
+        let start_span = .current().span
         let stmt = .parse_statement(inside_block: false)
 
         mut error_name = ""
-        mut error_span = .current().span()
+        mut error_span = .current().span
 
         if .current() is Catch {
             .index++
             if .current() is Identifier(name) {
-                error_span = .current().span()
+                error_span = .current().span
                 error_name = name
                 .index++
             }
         } else {
-            .error("Expected ‘catch’", .current().span())
+            .error("Expected ‘catch’", .current().span)
         }
 
         let catch_block = .parse_block()
-        return ParsedExpression::TryBlock(stmt, error_name, error_span, catch_block, span: merge_spans(start_span, .previous().span()))
+        return ParsedExpression::TryBlock(stmt, error_name, error_span, catch_block, span: merge_spans(start_span, .previous().span))
     }
 
     fn parse_for_statement(mut this) -> ParsedStatement {
-        let start_span = .current().span()
+        let start_span = .current().span
         .index++
 
         mut iterator_name = ""
         mut destructured_var_decls: [ParsedVarDecl] = []
 
-        mut name_span = .current().span()
+        mut name_span = .current().span
 
         match .current() {
             Identifier(name) => {
@@ -4732,16 +4732,16 @@ struct Parser {
                 iterator_name = tuple_var_name
             }
             else => {
-                .error("Expected iterator name or destructuring pattern", .current().span())
-                return ParsedStatement::Garbage(merge_spans(start_span, .current().span()))
+                .error("Expected iterator name or destructuring pattern", .current().span)
+                return ParsedStatement::Garbage(merge_spans(start_span, .current().span))
             }
         }
 
         if .current() is In {
             .index++
         } else {
-            .error("Expected ‘in’", .current().span())
-            return ParsedStatement::Garbage(merge_spans(start_span, .current().span()))
+            .error("Expected ‘in’", .current().span)
+            return ParsedStatement::Garbage(merge_spans(start_span, .current().span))
         }
 
         let previous_can_have_trailing_closure = .can_have_trailing_closure
@@ -4761,27 +4761,27 @@ struct Parser {
                 parsed_type: ParsedType::Empty,
                 is_mutable: false,
                 inlay_span: None,
-                span: .current().span(),
+                span: .current().span,
             )
-            let init = ParsedExpression::Var(name: iterator_name, span: merge_spans(start_span, .previous().span()))
-            let var_decl = ParsedStatement::VarDecl(var: tuple_var_decl, init, span: merge_spans(start_span, .previous().span()))
-            let destructured_vars_stmt = ParsedStatement::DestructuringAssignment(vars: destructured_var_decls, var_decl, span: merge_spans(start_span, .previous().span()))
+            let init = ParsedExpression::Var(name: iterator_name, span: merge_spans(start_span, .previous().span))
+            let var_decl = ParsedStatement::VarDecl(var: tuple_var_decl, init, span: merge_spans(start_span, .previous().span))
+            let destructured_vars_stmt = ParsedStatement::DestructuringAssignment(vars: destructured_var_decls, var_decl, span: merge_spans(start_span, .previous().span))
             mut block_stmts: [ParsedStatement] = []
             block_stmts.push(destructured_vars_stmt)
             block_stmts.push_values(&block.stmts)
             block.stmts = block_stmts
         }
 
-        return ParsedStatement::For(iterator_name, name_span, is_destructuring, range, block, span: merge_spans(start_span, .previous().span()))
+        return ParsedStatement::For(iterator_name, name_span, is_destructuring, range, block, span: merge_spans(start_span, .previous().span))
     }
 
     fn parse_if_statement(mut this) -> ParsedStatement {
         if not .current() is If {
-            .error("Expected ‘if’ statement", .current().span())
-            return ParsedStatement::Garbage(.current().span())
+            .error("Expected ‘if’ statement", .current().span)
+            return ParsedStatement::Garbage(.current().span)
         }
 
-        let start_span = .current().span()
+        let start_span = .current().span
         .index++
 
         let previous_can_have_trailing_closure = .can_have_trailing_closure
@@ -4806,17 +4806,17 @@ struct Parser {
                 LCurly => {
                     let block = .parse_block()
                     if then_block.equals(block) {
-                        .error("if and else have identical blocks", .current().span())
+                        .error("if and else have identical blocks", .current().span)
                     }
-                    else_statement = ParsedStatement::Block(block, span: merge_spans(start_span, .previous().span()))
+                    else_statement = ParsedStatement::Block(block, span: merge_spans(start_span, .previous().span))
                 }
                 else => {
-                    .error("‘else’ missing ‘if’ or block", .previous().span())
+                    .error("‘else’ missing ‘if’ or block", .previous().span)
                 }
             }
         }
 
-        return ParsedStatement::If(condition, then_block, else_statement, span: merge_spans(start_span, .previous().span()))
+        return ParsedStatement::If(condition, then_block, else_statement, span: merge_spans(start_span, .previous().span))
     }
 
     fn parse_expression(mut this, allow_assignments: bool, allow_newlines: bool) -> ParsedExpression {
@@ -4902,17 +4902,17 @@ struct Parser {
     }
 
     fn parse_operand_base(mut this) -> ParsedExpression => match .current() {
-        Dot(span) => {
-            yield ParsedExpression::Var(name: "this", span)
+        Dot => {
+            yield ParsedExpression::Var(name: "this", span: .current().span)
         }
-        Must(span) => {
-            let start = .current().span()
+        Must => {
+            let start = .current().span
             .index++
             let expr = .parse_operand()
             let span = merge_spans(start, expr.span())
             yield ParsedExpression::Must(expr, span)
         }
-        Try(span) => {
+        Try => {
             .index++
             yield match .current() {
                 LCurly => .parse_try_block()
@@ -4922,7 +4922,7 @@ struct Parser {
                     mut catch_name: String? = None
                     mut catch_span: Span? = None
                     if .current() is Catch {
-                        catch_span = .current().span()
+                        catch_span = .current().span
                         .index++
                         if .current() is Identifier(name) {
                             catch_name = name
@@ -4930,7 +4930,7 @@ struct Parser {
                         }
                         catch_block = .parse_block()
                     }
-                    yield ParsedExpression::Try(expr: expression, catch_block, catch_span, catch_name, span)
+                    yield ParsedExpression::Try(expr: expression, catch_block, catch_span, catch_name, span: .current().span)
                 }
             }
         }
@@ -4943,34 +4943,34 @@ struct Parser {
             yield ParsedExpression::SingleQuotedString(val: quote, prefix, span)
         }
         Number(prefix, number, suffix, span) => .parse_number(prefix, number, suffix, span)
-        True(span) => {
+        True => {
             .index++
-            yield ParsedExpression::Boolean(val: true, span)
+            yield ParsedExpression::Boolean(val: true, span: .current().span)
         }
-        False(span) => {
+        False => {
             .index++
-            yield ParsedExpression::Boolean(val: false, span)
+            yield ParsedExpression::Boolean(val: false, span: .current().span)
         }
-        This(span) => {
+        This => {
             .index++
-            yield ParsedExpression::Var(name: "this", span)
+            yield ParsedExpression::Var(name: "this", span: .current().span)
         }
-        Not(span) => {
-            let start = .current().span()
+        Not => {
+            let start = .current().span
             .index++
             let expr = .parse_operand()
             let span = merge_spans(start, expr.span())
             yield ParsedExpression::UnaryOp(expr, op: UnaryOperator::LogicalNot, span)
         }
-        Tilde(span) => {
-            let start = .current().span()
+        Tilde => {
+            let start = .current().span
             .index++
             let expr = .parse_operand()
             let span = merge_spans(start, expr.span())
             yield ParsedExpression::UnaryOp(expr, op: UnaryOperator::BitwiseNot, span)
         }
-        Sizeof(span) => {
-            let start = .current().span()
+        Sizeof => {
+            let start = .current().span
             .index++
             let parsed_type = .parse_typename()
             let span = merge_spans(start, parsed_type.span())
@@ -4980,8 +4980,8 @@ struct Parser {
                 span
             )
         }
-        Reflect(span) => {
-            let start = .current().span()
+        Reflect => {
+            let start = .current().span
             .index++
             let type = .parse_typename()
             let span = merge_spans(start, type.span())
@@ -5016,8 +5016,8 @@ struct Parser {
             }
             yield ParsedExpression::Var(name, span)
         }
-        LParen(span) => {
-            let start_span = .current().span()
+        LParen => {
+            let start_span = .current().span
             .index++
 
             mut expr = .parse_expression(allow_assignments: false, allow_newlines: false)
@@ -5053,7 +5053,7 @@ struct Parser {
                     }
 
                     if .eof() {
-                        .error("Expected ')'", .current().span());
+                        .error("Expected ')'", .current().span);
                     }
 
                     expr = ParsedExpression::JaktTuple(
@@ -5062,15 +5062,15 @@ struct Parser {
                     )
                 }
                 else => {
-                    .error("Expected ')'", .current().span())
+                    .error("Expected ')'", .current().span)
                 }
             }
 
             yield expr
         }
-        PlusPlus(span)
-        | MinusMinus(span)
-        | Minus(span) => {
+        PlusPlus
+        | MinusMinus
+        | Minus => {
 
             let op = match .current() {
                 PlusPlus => UnaryOperator::PreIncrement
@@ -5081,7 +5081,7 @@ struct Parser {
                 }
             }
 
-            let start = .current().span()
+            let start = .current().span
             .index++
 
             let expr = .parse_operand()
@@ -5104,7 +5104,7 @@ struct Parser {
         DotDot => .parse_range()
         Unsafe => .parse_unsafe_expr()
         else => {
-            let span = .current().span()
+            let span = .current().span
             .index++
             .error("Unsupported expression", span)
             yield ParsedExpression::Garbage(span)
@@ -5365,19 +5365,19 @@ struct Parser {
                         Mut => {
                             .index++
                             if .current() is Identifier(name) {
-                                captures.push(ParsedCapture::ByMutableReference(name, span: .current().span()))
+                                captures.push(ParsedCapture::ByMutableReference(name, span: .current().span))
                                 .index++
                             } else {
-                                .error(format("Expected identifier, got '{}'", .current()), .current().span())
+                                .error(format("Expected identifier, got '{}'", .current()), .current().span)
                                 .index++
                             }
                         }
                         Identifier(name) => {
-                            captures.push(ParsedCapture::ByReference(name, span: .current().span()))
+                            captures.push(ParsedCapture::ByReference(name, span: .current().span))
                             .index++
                         }
                         else => {
-                            .error(format("Expected identifier or mut, got '{}'", .current()), .current().span())
+                            .error(format("Expected identifier or mut, got '{}'", .current()), .current().span)
                             .index++
                         }
                     }
@@ -5386,27 +5386,27 @@ struct Parser {
                     .index++
 
                     if .current() is Identifier(name) {
-                        captures.push(ParsedCapture::ByComptimeDependency(name, span: .current().span()))
+                        captures.push(ParsedCapture::ByComptimeDependency(name, span: .current().span))
                         .index++
                     } else {
-                        .error(format("Expected identifier, got '{}'", .current()), .current().span())
+                        .error(format("Expected identifier, got '{}'", .current()), .current().span)
                         .index++
                     }
                 }
                 Identifier(name) => {
-                    captures.push(ParsedCapture::ByValue(name, span: .current().span()))
+                    captures.push(ParsedCapture::ByValue(name, span: .current().span))
                     .index++
                 }
                 This => {
                     // NOTE: We capture `this` "by value" here, but `this` is actually a raw reference
-                    captures.push(ParsedCapture::ByValue(name: "this", span: .current().span()))
+                    captures.push(ParsedCapture::ByValue(name: "this", span: .current().span))
                     .index++
                 }
                 Comma | Eol => {
                     .index++
                 }
                 else => {
-                    .error(format("Unexpected token '{}' in captures list", .current()), .current().span())
+                    .error(format("Unexpected token '{}' in captures list", .current()), .current().span)
                     .index++
                 }
             }
@@ -5416,7 +5416,7 @@ struct Parser {
     }
 
     fn parse_lambda(mut this) -> ParsedExpression {
-        let start = .current().span()
+        let start = .current().span
         .index++
         let captures = .parse_captures()
         let fn_parameters = .parse_function_parameters()
@@ -5426,7 +5426,7 @@ struct Parser {
         }
 
         if fn_parameters.has_varargs {
-            .error("Anonymous functions cannot have varargs", .current().span())
+            .error("Anonymous functions cannot have varargs", .current().span)
         }
 
         mut return_type = match .current() {
@@ -5456,19 +5456,19 @@ struct Parser {
             is_fat_arrow
             return_type
             block
-            span: merge_spans(start, .current().span())
+            span: merge_spans(start, .current().span)
         )
     }
 
     fn parse_asterisk(mut this) -> ParsedExpression {
-        let start = .current().span()
+        let start = .current().span
         .index++
         let expr = .parse_operand()
-        return ParsedExpression::UnaryOp(expr, op: UnaryOperator::Dereference, span: merge_spans(start, .current().span()))
+        return ParsedExpression::UnaryOp(expr, op: UnaryOperator::Dereference, span: merge_spans(start, .current().span))
     }
 
     fn parse_ampersand(mut this) -> ParsedExpression {
-        let start = .current().span()
+        let start = .current().span
         .index++
         if .current() is Raw {
             .index++
@@ -5485,7 +5485,7 @@ struct Parser {
     }
 
     fn parse_range(mut this) -> ParsedExpression {
-        let start = .current().span()
+        let start = .current().span
 
         .index++
 
@@ -5497,11 +5497,11 @@ struct Parser {
             }
         }
 
-        return ParsedExpression::Range(from: None, to, span: merge_spans(start, .current().span()))
+        return ParsedExpression::Range(from: None, to, span: merge_spans(start, .current().span))
     }
 
     fn parse_unsafe_expr(mut this) -> ParsedExpression {
-        let start = .current().span()
+        let start = .current().span
 
         .index++
 
@@ -5511,11 +5511,11 @@ struct Parser {
     }
 
     fn parse_set_literal(mut this) -> ParsedExpression {
-        let start = .current().span()
+        let start = .current().span
 
         if not .current() is LCurly {
-            .error("Expected ‘{’", .current().span())
-            return ParsedExpression::Garbage(.current().span())
+            .error("Expected ‘{’", .current().span)
+            return ParsedExpression::Garbage(.current().span)
         }
         .index++
 
@@ -5542,15 +5542,15 @@ struct Parser {
 
         let end = .index - 1
         if end >= .tokens.size() or not .tokens[end] is RCurly {
-            .error("Expected ‘}’ to close the set", .tokens[end].span())
+            .error("Expected ‘}’ to close the set", .tokens[end].span)
         }
 
-        return ParsedExpression::Set(values: output, span: merge_spans(start, .tokens[end].span()))
+        return ParsedExpression::Set(values: output, span: merge_spans(start, .tokens[end].span))
     }
 
     fn parse_operand(mut this) -> ParsedExpression {
         .skip_newlines()
-        let start = .current().span()
+        let start = .current().span
         .skip_newlines()
         mut expr = .parse_operand_base()
         return .parse_operand_postfix_operator(start, expr)
@@ -5564,7 +5564,7 @@ struct Parser {
                     .index++
 
                     mut to: ParsedExpression? = None
-                    mut span_end = .current().span()
+                    mut span_end = .current().span
                     match .current() {
                         RSquare | Eol | Comma | RParen => {}
                         else => {
@@ -5577,14 +5577,14 @@ struct Parser {
                 }
                 ExclamationPoint => {
                     .index++
-                    yield ParsedExpression::ForcedUnwrap(expr: result, span: merge_spans(start, .previous().span()))
+                    yield ParsedExpression::ForcedUnwrap(expr: result, span: merge_spans(start, .previous().span))
                 }
                 PlusPlus => {
                     .index++
                     yield ParsedExpression::UnaryOp(
                         expr: result,
                         op: UnaryOperator::PostIncrement,
-                        span: merge_spans(start, .previous().span()),
+                        span: merge_spans(start, .previous().span),
                     )
                 }
                 MinusMinus => {
@@ -5592,12 +5592,12 @@ struct Parser {
                     yield ParsedExpression::UnaryOp(
                         expr: result,
                         op: UnaryOperator::PostDecrement,
-                        span: merge_spans(start, .previous().span()),
+                        span: merge_spans(start, .previous().span),
                     )
                 }
                 As => {
                     .index++
-                    let cast_span = merge_spans(.previous().span(), .current().span())
+                    let cast_span = merge_spans(.previous().span, .current().span)
                     let cast = match .current() {
                         ExclamationPoint => {
                             .index++
@@ -5608,11 +5608,11 @@ struct Parser {
                             yield TypeCast::Fallible(.parse_typename())
                         }
                         else => {
-                            .error_with_hint("Invalid cast syntax", cast_span, "Use `as!` for an infallible cast, or `as?` for a fallible cast", .previous().span())
+                            .error_with_hint("Invalid cast syntax", cast_span, "Use `as!` for an infallible cast, or `as?` for a fallible cast", .previous().span)
                             yield TypeCast::Fallible(.parse_typename())
                         }
                     }
-                    let span = merge_spans(start, merge_spans(cast_span, .current().span()))
+                    let span = merge_spans(start, merge_spans(cast_span, .current().span))
                     yield ParsedExpression::UnaryOp(
                         expr: result,
                         op: UnaryOperator::TypeCast(cast),
@@ -5622,7 +5622,7 @@ struct Parser {
                 Is => {
                     .index++
                     let parsed_type = .parse_typename()
-                    let span = merge_spans(start, .current().span())
+                    let span = merge_spans(start, .current().span)
                     mut bindings: [EnumVariantPatternArgument] = []
                     mut unary_operator_is: ParsedExpression? = None
                     if .current() is LParen and ((parsed_type is NamespacedName) or (parsed_type is Name)) {
@@ -5639,7 +5639,7 @@ struct Parser {
                     if is_optional {
                         .index++
                         if not .current() is Dot {
-                            .error("Expected ‘.’ after ‘?’ for optional chaining access", .current().span())
+                            .error("Expected ‘.’ after ‘?’ for optional chaining access", .current().span)
                         }
                     }
 
@@ -5658,7 +5658,7 @@ struct Parser {
                                 expr: result
                                 index: num
                                 is_optional
-                                span: merge_spans(start, end: .previous().span()))
+                                span: merge_spans(start, end: .previous().span))
                         }
                         Identifier(name) => {
                             // Struct field access or method call
@@ -5675,7 +5675,7 @@ struct Parser {
                                             expr: result
                                             call: call!
                                             is_optional
-                                            span: merge_spans(start, end: .previous().span()))
+                                            span: merge_spans(start, end: .previous().span))
                                         else => {
                                             .index = original_index
                                             .compiler.errors = existing_errors
@@ -5683,7 +5683,7 @@ struct Parser {
                                                 expr: result
                                                 field_name: name
                                                 is_optional
-                                                span: merge_spans(start, end: .current().span()))
+                                                span: merge_spans(start, end: .current().span))
                                         }
                                     }
                                 }
@@ -5695,13 +5695,13 @@ struct Parser {
                                         expr: result
                                         call: call!
                                         is_optional
-                                        span: merge_spans(start, end: .previous().span()))
+                                        span: merge_spans(start, end: .previous().span))
                                 }
                                 else => ParsedExpression::IndexedStruct(
                                     expr: result
                                     field_name: name
                                     is_optional
-                                    span: merge_spans(start, end: .current().span()))
+                                    span: merge_spans(start, end: .current().span))
                             }
                         }
                         LSquare => {
@@ -5709,7 +5709,7 @@ struct Parser {
                             .index++
                             let index = .parse_expression(allow_assignments: false, allow_newlines: false)
                             if not .current() is RSquare {
-                                .error("Expected ‘]’ to close the index", .current().span())
+                                .error("Expected ‘]’ to close the index", .current().span)
                             }
                             .index++
 
@@ -5717,10 +5717,10 @@ struct Parser {
                                 expr: result
                                 index
                                 is_optional
-                                span: merge_spans(start, end: .previous().span()))
+                                span: merge_spans(start, end: .previous().span))
                         }
                         else => {
-                            .error("Unsupported dot operation", .current().span())
+                            .error("Unsupported dot operation", .current().span)
                             .index++
                             yield result
                         }
@@ -5733,14 +5733,14 @@ struct Parser {
                     if .current() is RSquare {
                         .index++
                     } else {
-                        .error("Expected ']'", .current().span())
+                        .error("Expected ']'", .current().span)
                     }
 
                     let end = .index - 1
                     yield ParsedExpression::IndexedExpression(
                         base: result,
                         index: index_expr,
-                        span: merge_spans(start, .tokens[end].span()))
+                        span: merge_spans(start, .tokens[end].span))
                 }
                 else => {
                     break
@@ -5761,7 +5761,7 @@ struct Parser {
 
         while not .eof() {
             guard .current() is Identifier(name: current_name) else {
-                .error("Unsupported static method call", .current().span())
+                .error("Unsupported static method call", .current().span)
                 return expr
             }
 
@@ -5770,7 +5770,7 @@ struct Parser {
                 .index--
                 mut call = .parse_call()
                 call!.namespace_ = namespace_
-                return ParsedExpression::Call(call: call!, span: merge_spans(expr.span(), .current().span()))
+                return ParsedExpression::Call(call: call!, span: merge_spans(expr.span(), .current().span))
             }
 
             if .current() is LessThan {
@@ -5780,9 +5780,9 @@ struct Parser {
                 if maybe_call.has_value() {
                     mut call = maybe_call!
                     call.namespace_ = namespace_
-                    return ParsedExpression::Call(call, span: merge_spans(expr.span(), .current().span()))
+                    return ParsedExpression::Call(call, span: merge_spans(expr.span(), .current().span))
                 }
-                return ParsedExpression::Garbage(.current().span())
+                return ParsedExpression::Garbage(.current().span)
             }
 
             if .current() is ColonColon {
@@ -5796,17 +5796,17 @@ struct Parser {
                 return ParsedExpression::NamespacedVar(
                     name: current_name,
                     namespace_,
-                    span: merge_spans(start, .current().span())
+                    span: merge_spans(start, .current().span)
                 )
             }
         }
 
-        .error("Incomplete static method call", .current().span())
+        .error("Incomplete static method call", .current().span)
         return expr
     }
 
     fn parse_operator(mut this, allow_assignments: bool) -> ParsedExpression {
-        let span = .current().span()
+        let span = .current().span
 
         let op = match .current() {
             QuestionMarkQuestionMark => BinaryOperator::NoneCoalescing
@@ -5866,7 +5866,7 @@ struct Parser {
     }
 
     fn parse_match_expression(mut this) -> ParsedExpression {
-        mut start = .current().span()
+        mut start = .current().span
         .index++
 
         let previous_can_have_trailing_closure = .can_have_trailing_closure
@@ -5892,7 +5892,7 @@ struct Parser {
         return ParsedExpression::Match(
             expr
             cases
-            span: merge_spans(start, .previous().span())
+            span: merge_spans(start, .previous().span)
             marker_span: start
         )
     }
@@ -5903,7 +5903,7 @@ struct Parser {
         .skip_newlines()
 
         if not .current() is LCurly {
-            .error("Expected ‘{’", .current().span())
+            .error("Expected ‘{’", .current().span)
             return cases
         }
 
@@ -5911,7 +5911,7 @@ struct Parser {
         .skip_newlines()
 
         while not .eof() and not .current() is RCurly {
-            let marker_span = .current().span()
+            let marker_span = .current().span
             let pattern_start_index = .index
             let patterns = .parse_match_patterns()
 
@@ -5920,7 +5920,7 @@ struct Parser {
             if .current() is FatArrow {
                 .index++
             } else {
-                .error("Expected ‘=>’", .current().span())
+                .error("Expected ‘=>’", .current().span)
             }
 
             .skip_newlines()
@@ -5949,7 +5949,7 @@ struct Parser {
         .skip_newlines()
 
         if not .current() is RCurly {
-            .error("Expected ‘}’", .current().span())
+            .error("Expected ‘}’", .current().span)
         }
 
         .index++
@@ -5972,7 +5972,7 @@ struct Parser {
                 if not .current() is LParen {
                     .error(
                         message: "Expected '(' after 'default'",
-                        span: .current().span()
+                        span: .current().span
                     )
                     continue
                 }
@@ -5991,8 +5991,8 @@ struct Parser {
                             yield .parse_expression(allow_assignments: false, allow_newlines: false)
                         }
                         else => {
-                            .error("Expected initializer", .current().span())
-                            yield ParsedExpression::Garbage(.current().span())
+                            .error("Expected initializer", .current().span)
+                            yield ParsedExpression::Garbage(.current().span)
                         }
                     }
 
@@ -6008,7 +6008,7 @@ struct Parser {
                 if .current() is RParen {
                     .index += 1
                 } else {
-                    .error("Expected a ')' to end 'defaults' list", .current().span())
+                    .error("Expected a ')' to end 'defaults' list", .current().span)
                 }
             }
 
@@ -6034,8 +6034,8 @@ struct Parser {
             .index++
 
             mut variant_arguments = .parse_variant_arguments()
-            let arguments_start = .current().span()
-            let arguments_end = .previous().span()
+            let arguments_start = .current().span
+            let arguments_end = .previous().span
             let arguments_span = merge_spans(arguments_start, arguments_end)
 
             yield ParsedMatchPattern::CatchAll(
@@ -6060,7 +6060,7 @@ struct Parser {
                         just_saw_name = true
 
                         .index++
-                        variant_names.push((name, .current().span()))
+                        variant_names.push((name, .current().span))
                     }
                     ColonColon => {
                         .index++
@@ -6073,8 +6073,8 @@ struct Parser {
             }
 
             mut variant_arguments = .parse_variant_arguments()
-            let arguments_start = .current().span()
-            let arguments_end = .previous().span()
+            let arguments_start = .current().span
+            let arguments_end = .previous().span
             let arguments_span = merge_spans(arguments_start, arguments_end)
 
             yield ParsedMatchPattern::EnumVariant(
@@ -6086,7 +6086,7 @@ struct Parser {
         }
 
         else => {
-            .error("Expected pattern or ‘else’", .current().span())
+            .error("Expected pattern or ‘else’", .current().span)
             yield ParsedMatchPattern::Invalid(defaults: [:])
         }
     }
@@ -6113,11 +6113,11 @@ struct Parser {
                         .index++
                     }
                     Identifier(name: arg_name) => {
-                        let arg_name_span = .current().span()
+                        let arg_name_span = .current().span
                         if .peek(1) is Colon {
                             .index += 2
                             if .current() is Identifier(name: arg_binding) {
-                                let span = .current().span()
+                                let span = .current().span
                                 .index++
                                 variant_arguments.push(EnumVariantPatternArgument(
                                     name: Some(arg_name)
@@ -6128,14 +6128,14 @@ struct Parser {
                                     is_mutable
                                 ))
                             } else {
-                                .error("Expected binding after ‘:’", .current().span())
+                                .error("Expected binding after ‘:’", .current().span)
                             }
                         } else {
                             variant_arguments.push(EnumVariantPatternArgument(
                                 name: None
                                 name_span: None
                                 binding: arg_name
-                                span: .current().span()
+                                span: .current().span
                                 is_reference
                                 is_mutable
                             ))
@@ -6152,7 +6152,7 @@ struct Parser {
                         break
                     }
                     else => {
-                        .error("Expected pattern argument name", .current().span())
+                        .error("Expected pattern argument name", .current().span)
                         break
                     }
                 }
@@ -6166,7 +6166,7 @@ struct Parser {
         mut call = ParsedCall()
 
         guard .current() is Identifier(name) else {
-            .error("Expected function call", .current().span())
+            .error("Expected function call", .current().span)
             return call
         }
 
@@ -6189,7 +6189,7 @@ struct Parser {
                         break
                     }
                     RightShift => {
-                        .inject_token(token: Token::GreaterThan(.current().span()))
+                        .inject_token(token: Token::GreaterThan(span: .current().span))
                         .index++
                         break
                     }
@@ -6216,7 +6216,7 @@ struct Parser {
             .index++
         } else {
             .index = index_reset
-            .error("Expected '('", .current().span())
+            .error("Expected '('", .current().span)
             return None
         }
 
@@ -6230,7 +6230,7 @@ struct Parser {
                     .index++
                 }
                 else => {
-                    let label_span = .current().span()
+                    let label_span = .current().span
                     let label = .parse_argument_label()
 
                     let expr = .parse_expression(allow_assignments: false, allow_newlines: false)
@@ -6243,7 +6243,7 @@ struct Parser {
         // Look for a possible trailing closure. For now, this has to be a block with no parameters, which captures everything by reference.
         // FIXME: Support explicit captures, and maybe parameters.
         if .can_have_trailing_closure {
-            let start = .current().span()
+            let start = .current().span
             let start_index = .index
 
             mut block: ParsedBlock? = None
@@ -6270,11 +6270,11 @@ struct Parser {
             }
 
             if has_varargs {
-                .error("Function expressions cannot have varargs", .current().span())
+                .error("Function expressions cannot have varargs", .current().span)
             }
 
             block = .parse_block()
-            let span = merge_spans(start, .current().span())
+            let span = merge_spans(start, .current().span)
             let captures = [ParsedCapture::AllByReference(name: "", span: .empty_span())]
             let trailing_closure = ParsedExpression::Function(
                 captures
@@ -6300,7 +6300,7 @@ struct Parser {
 
     fn parse_trait_list(mut this) -> [ParsedNameWithGenericParameters]? {
         guard .current() is LParen else {
-            .error("Expected '(' to start the trait list", .current().span())
+            .error("Expected '(' to start the trait list", .current().span)
             return None
         }
         .index++
@@ -6313,8 +6313,8 @@ struct Parser {
                     .index++
                     continue
                 }
-                Eof(span) => {
-                    .error("Expected ')' to close the trait list", span)
+                Eof => {
+                    .error("Expected ')' to close the trait list", .current().span)
                     break
                 }
                 RParen => {
@@ -6331,15 +6331,15 @@ struct Parser {
                     parsed_name.generic_parameters = .parse_type_parameter_list()
                     result.push(parsed_name)
                 }
-                else(span) => {
-                    .error("Expected trait name", span)
+                else => {
+                    .error("Expected trait name", .current().span)
                     break
                 }
             }
         }
         if result.is_empty() {
             .error("Expected trait list to have at least one trait inside it",
-                .previous().span())
+                .previous().span)
             return None
         } else {
             return Some(result)
@@ -6386,24 +6386,24 @@ struct Parser {
                     break
                 }
                 RightShift => {
-                    .inject_token(token: Token::GreaterThan(.current().span()))
+                    .inject_token(token: Token::GreaterThan(span: .current().span))
                     .index += 1
                     saw_ending_bracket = true
                     break
                 }
                 Garbage => {
-                    .error("Expected `>` to end the generic parameters", .current().span())
+                    .error("Expected `>` to end the generic parameters", .current().span)
                     return generic_parameters
                 }
                 else => {
-                    .error("Expected generic parameter name", .current().span())
+                    .error("Expected generic parameter name", .current().span)
                     return generic_parameters
                 }
             }
         }
 
         if not saw_ending_bracket {
-            .error("Expected `>` to end the generic parameters", .current().span())
+            .error("Expected `>` to end the generic parameters", .current().span)
             return generic_parameters
         }
 
@@ -6419,14 +6419,14 @@ struct Parser {
     }
 
     fn parse_restricted_visibility_modifier(mut this) -> Visibility {
-        mut restricted_span = .current().span()
+        mut restricted_span = .current().span
 
         .index++
 
         if .current() is LParen {
             .index++
         } else {
-            .error("Expected ‘(’", .current().span())
+            .error("Expected ‘(’", .current().span)
             return Visibility::Restricted(whitelist: [], span: restricted_span)
         }
 
@@ -6438,17 +6438,17 @@ struct Parser {
                 RParen => {
                     break
                 }
-                Comma(span) => {
+                Comma => {
                     if expect_comma {
                         expect_comma = false
                     } else {
-                        .error("Unexpected comma", span)
+                        .error("Unexpected comma", .current().span)
                     }
                     .index++
                 }
                 else => {
                     if expect_comma {
-                        .error("Expected comma", .current().span())
+                        .error("Expected comma", .current().span)
                     }
 
                     .skip_newlines()
@@ -6468,7 +6468,7 @@ struct Parser {
                         }
                     }
                     if names.is_empty() {
-                        .error("Expected identifier", .current().span())
+                        .error("Expected identifier", .current().span)
                     } else {
                         let name = names.pop()!
                         whitelist.push(VisibilityRestriction(namespace_: names, name))
@@ -6478,7 +6478,7 @@ struct Parser {
             }
         }
 
-        restricted_span.end = .current().span().end
+        restricted_span.end = .current().span.end
 
         if whitelist.is_empty() {
             .error_with_hint(
@@ -6490,7 +6490,7 @@ struct Parser {
         if .current() is RParen {
             .index++
         } else {
-            .error("Expected ‘)’", .current().span())
+            .error("Expected ‘)’", .current().span)
         }
 
         return Visibility::Restricted(whitelist, span: restricted_span)
@@ -6498,11 +6498,11 @@ struct Parser {
 
     fn parse_array_or_dictionary_literal(mut this) -> ParsedExpression {
         mut is_dictionary = false
-        let start = .current().span()
+        let start = .current().span
 
         if not .current() is LSquare {
-            .error("Expected ‘[’", .current().span());
-            return ParsedExpression::Garbage(.current().span())
+            .error("Expected ‘[’", .current().span);
+            return ParsedExpression::Garbage(.current().span)
         }
         .index++
 
@@ -6524,7 +6524,7 @@ struct Parser {
                         .index++
                         fill_size_expr = .parse_expression(allow_assignments: false, allow_newlines: false)
                     } else {
-                        .error("Can't fill an Array with more than one expression", .current().span())
+                        .error("Can't fill an Array with more than one expression", .current().span)
                         .index++
                     }
                 }
@@ -6536,10 +6536,10 @@ struct Parser {
                             is_dictionary = true
                             break
                         } else {
-                            .error("Expected ‘]’", .current().span())
+                            .error("Expected ‘]’", .current().span)
                         }
                     } else {
-                        .error("Missing key in dictionary literal", .current().span())
+                        .error("Missing key in dictionary literal", .current().span)
                     }
                 }
                 else => {
@@ -6550,15 +6550,15 @@ struct Parser {
 
                     if .current() is Colon {
                         if not output.is_empty() {
-                            .error("Mixing dictionary and array values", .current().span())
+                            .error("Mixing dictionary and array values", .current().span)
                         }
 
                         is_dictionary = true
                         .index++
 
                         if .eof() {
-                            .error("Key missing value in dictionary", .current().span())
-                            return ParsedExpression::Garbage(.current().span())
+                            .error("Key missing value in dictionary", .current().span)
+                            return ParsedExpression::Garbage(.current().span)
                         }
                         let value = .parse_expression(allow_assignments: false, allow_newlines: false)
                         dict_output.push((expr, value))
@@ -6571,13 +6571,13 @@ struct Parser {
 
         let end = .index - 1
         if end >= .tokens.size() or not .tokens[end] is RSquare {
-            .error("Expected ‘]’ to close the array", .tokens[end].span())
+            .error("Expected ‘]’ to close the array", .tokens[end].span)
         }
 
         if is_dictionary {
-            return ParsedExpression::JaktDictionary(values: dict_output, span: merge_spans(start, .tokens[end].span()))
+            return ParsedExpression::JaktDictionary(values: dict_output, span: merge_spans(start, .tokens[end].span))
         } else {
-            return ParsedExpression::JaktArray(values: output, fill_size: fill_size_expr, span: merge_spans(start, .tokens[end].span()))
+            return ParsedExpression::JaktArray(values: output, fill_size: fill_size_expr, span: merge_spans(start, .tokens[end].span))
         }
     }
 }

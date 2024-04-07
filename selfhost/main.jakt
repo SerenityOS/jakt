@@ -1109,7 +1109,7 @@ fn format_output(file_path: Path, tokens: [Token], format_range: FormatRange?, f
     mut on_new_line = true
     for formatted_line in Formatter::for_tokens(tokens, debug: format_debug) {
         for formatted_token in formatted_line {
-            if not formatted_token.token.span().is_in_offset_range(start: format_range!.start, end: format_range!.end) {
+            if not formatted_token.token.span.is_in_offset_range(start: format_range!.start, end: format_range!.end) {
                 continue
             }
 

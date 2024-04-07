@@ -308,66 +308,66 @@ struct REPL {
 
             for token in try Lexer::lex(compiler: .compiler) catch { return } {
                 match token {
-                    SingleQuotedString(span)
-                    | QuotedString(span)
-                    => editor.highlight(span, Style(foreground: Color::XTerm(XTermColor::Green)))
-                    Number(span) => editor.highlight(span, Style(foreground: Color::XTerm(XTermColor::Blue)))
-                    And(span)
-                    | Anon(span)
-                    | As(span)
-                    | Boxed(span)
-                    | Break(span)
-                    | Catch(span)
-                    | Class(span)
-                    | Continue(span)
-                    | Cpp(span)
-                    | Defer(span)
-                    | Destructor(span)
-                    | Else(span)
-                    | Enum(span)
-                    | Extern(span)
-                    | False(span)
-                    | For(span)
-                    | Fn(span)
-                    | Comptime(span)
-                    | If(span)
-                    | Import(span)
-                    | In(span)
-                    | Is(span)
-                    | Let(span)
-                    | Loop(span)
-                    | Match(span)
-                    | Mut(span)
-                    | Namespace(span)
-                    | Not(span)
-                    | Or(span)
-                    | Override(span)
-                    | Private(span)
-                    | Public(span)
-                    | Raw(span)
-                    | Reflect(span)
-                    | Return(span)
-                    | Restricted(span)
-                    | Sizeof(span)
-                    | Struct(span)
-                    | This(span) | Dot(span)
-                    | Throw(span)
-                    | Throws(span)
-                    | True(span)
-                    | Try(span)
-                    | Unsafe(span)
-                    | Virtual(span)
-                    | Weak(span)
-                    | While(span)
-                    | Yield(span)
-                    | Guard(span)
-                    | Implements(span)
-                    | Requires(span)
-                    | Trait(span)
-                    => editor.highlight(span, Style(foreground: Color::XTerm(XTermColor::Yellow)))
-                    DotDot(span) => editor.highlight(span, Style(foreground: Color::XTerm(XTermColor::Cyan)))
+                    SingleQuotedString
+                    | QuotedString
+                    => editor.highlight(token.span, Style(foreground: Color::XTerm(XTermColor::Green)))
+                    Number => editor.highlight(token.span, Style(foreground: Color::XTerm(XTermColor::Blue)))
+                    And
+                    | Anon
+                    | As
+                    | Boxed
+                    | Break
+                    | Catch
+                    | Class
+                    | Continue
+                    | Cpp
+                    | Defer
+                    | Destructor
+                    | Else
+                    | Enum
+                    | Extern
+                    | False
+                    | For
+                    | Fn
+                    | Comptime
+                    | If
+                    | Import
+                    | In
+                    | Is
+                    | Let
+                    | Loop
+                    | Match
+                    | Mut
+                    | Namespace
+                    | Not
+                    | Or
+                    | Override
+                    | Private
+                    | Public
+                    | Raw
+                    | Reflect
+                    | Return
+                    | Restricted
+                    | Sizeof
+                    | Struct
+                    | This | Dot
+                    | Throw
+                    | Throws
+                    | True
+                    | Try
+                    | Unsafe
+                    | Virtual
+                    | Weak
+                    | While
+                    | Yield
+                    | Guard
+                    | Implements
+                    | Requires
+                    | Trait
+                    => editor.highlight(token.span, Style(foreground: Color::XTerm(XTermColor::Yellow)))
+                    DotDot => editor.highlight(token.span, Style(foreground: Color::XTerm(XTermColor::Cyan)))
                     Eol(span, comment) => {
-                        if comment.has_value() { editor.highlight(span, Style(foreground: Color::Components(red: 128, green: 128, blue: 128))) }
+                        if comment.has_value() { editor.highlight(token.span, Style(foreground: Color::Components(red: 128, green: 128, blue: 128))) }
                     }
                     else => {}
                 }

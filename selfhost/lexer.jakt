@@ -9,128 +9,125 @@ import utility { Span, is_ascii_digit, is_ascii_alpha, is_ascii_alphanumeric, is
 import compiler { Compiler }
 
 enum Token {
-    SingleQuotedString(quote: String, prefix: String?, span: Span)
-    QuotedString(quote: String, span: Span)
-    Number(prefix: LiteralPrefix, number: String, suffix: LiteralSuffix, span: Span)
-    Identifier(name: String, span: Span)
-    Semicolon(Span)
-    Colon(Span)
-    ColonColon(Span)
-    LParen(Span)
-    RParen(Span)
-    LCurly(Span)
-    RCurly(Span)
-    LSquare(Span)
-    RSquare(Span)
-    PercentSign(Span)
-    Plus(Span)
-    Minus(Span)
-    Equal(Span)
-    PlusEqual(Span)
-    PlusPlus(Span)
-    MinusEqual(Span)
-    MinusMinus(Span)
-    AsteriskEqual(Span)
-    ForwardSlashEqual(Span)
-    PercentSignEqual(Span)
-    NotEqual(Span)
-    DoubleEqual(Span)
-    GreaterThan(Span)
-    GreaterThanOrEqual(Span)
-    LessThan(Span)
-    LessThanOrEqual(Span)
-    LeftArithmeticShift(Span)
-    LeftShift(Span)
-    LeftShiftEqual(Span)
-    RightShift(Span)
-    RightArithmeticShift(Span)
-    RightShiftEqual(Span)
-    Asterisk(Span)
-    Ampersand(Span)
-    AmpersandEqual(Span)
-    AmpersandAmpersand(Span)
-    Pipe(Span)
-    PipeEqual(Span)
-    PipePipe(Span)
-    Caret(Span)
-    CaretEqual(Span)
-    Dollar(Span)
-    Tilde(Span)
-    ForwardSlash(Span)
-    ExclamationPoint(Span)
-    QuestionMark(Span)
-    QuestionMarkQuestionMark(Span)
-    QuestionMarkQuestionMarkEqual(Span)
-    Comma(Span)
-    Dot(Span)
-    DotDot(Span)
-    Eol(comment: String?, span: Span)
-    Eof(Span)
-    FatArrow(Span)
-    Arrow(Span)
+    span: Span
+    SingleQuotedString(quote: String, prefix: String?)
+    QuotedString(quote: String)
+    Number(prefix: LiteralPrefix, number: String, suffix: LiteralSuffix)
+    Identifier(name: String)
+    Semicolon
+    Colon
+    ColonColon
+    LParen
+    RParen
+    LCurly
+    RCurly
+    LSquare
+    RSquare
+    PercentSign
+    Plus
+    Minus
+    Equal
+    PlusEqual
+    PlusPlus
+    MinusEqual
+    MinusMinus
+    AsteriskEqual
+    ForwardSlashEqual
+    PercentSignEqual
+    NotEqual
+    DoubleEqual
+    GreaterThan
+    GreaterThanOrEqual
+    LessThan
+    LessThanOrEqual
+    LeftArithmeticShift
+    LeftShift
+    LeftShiftEqual
+    RightShift
+    RightArithmeticShift
+    RightShiftEqual
+    Asterisk
+    Ampersand
+    AmpersandEqual
+    AmpersandAmpersand
+    Pipe
+    PipeEqual
+    PipePipe
+    Caret
+    CaretEqual
+    Dollar
+    Tilde
+    ForwardSlash
+    ExclamationPoint
+    QuestionMark
+    QuestionMarkQuestionMark
+    QuestionMarkQuestionMarkEqual
+    Comma
+    Dot
+    DotDot
+    Eol(comment: String?)
+    Eof
+    FatArrow
+    Arrow
 
     // Keywords
-    And(Span)
-    Anon(Span)
-    As(Span)
-    Boxed(Span)
-    Break(Span)
-    Catch(Span)
-    Class(Span)
-    Continue(Span)
-    Cpp(Span)
-    Defer(Span)
-    Destructor(Span)
-    Else(Span)
-    Enum(Span)
-    Extern(Span)
-    False(Span)
-    For(Span)
-    Fn(Span)
-    Comptime(Span)
-    If(Span)
-    Import(Span)
-    Relative(Span)
-    In(Span)
-    Is(Span)
-    Let(Span)
-    Loop(Span)
-    Match(Span)
-    Must(Span)
-    Mut(Span)
-    Namespace(Span)
-    Not(Span)
-    Or(Span)
-    Override(Span)
-    Private(Span)
-    Public(Span)
-    Raw(Span)
-    Reflect(Span)
-    Return(Span)
-    Restricted(Span)
-    Sizeof(Span)
-    Struct(Span)
-    This(Span)
-    Throw(Span)
-    Throws(Span)
-    True(Span)
-    Try(Span)
-    Unsafe(Span)
-    Virtual(Span)
-    Weak(Span)
-    While(Span)
-    Yield(Span)
-    Guard(Span)
-    Implements(Span)
-    Requires(Span)
-    Trait(Span)
+    And
+    Anon
+    As
+    Boxed
+    Break
+    Catch
+    Class
+    Continue
+    Cpp
+    Defer
+    Destructor
+    Else
+    Enum
+    Extern
+    False
+    For
+    Fn
+    Comptime
+    If
+    Import
+    Relative
+    In
+    Is
+    Let
+    Loop
+    Match
+    Must
+    Mut
+    Namespace
+    Not
+    Or
+    Override
+    Private
+    Public
+    Raw
+    Reflect
+    Return
+    Restricted
+    Sizeof
+    Struct
+    This
+    Throw
+    Throws
+    True
+    Try
+    Unsafe
+    Virtual
+    Weak
+    While
+    Yield
+    Guard
+    Implements
+    Requires
+    Trait
 
     // Catch-all for failed parses
-    Garbage(consumed: String?, span: Span)
-
-    public fn span(this) -> Span => match this {
-        else(span) => span
-    }
+    Garbage(consumed: String?)
 
     fn from_keyword_or_identifier(string: String, span: Span) -> Token => match string {
         "and" => Token::And(span)
@@ -187,7 +184,7 @@ enum Token {
         "requires" => Token::Requires(span)
         "implements" => Token::Implements(span)
         "trait" => Token::Trait(span)
-        else => Token::Identifier(name: string, span)
+        else => Token::Identifier(span, name: string)
     }
 }
 
@@ -411,7 +408,7 @@ struct Lexer implements(Iterable<Token>) {
 
         let quote = builder.to_string()
         let end = .index
-        return Token::SingleQuotedString(quote, prefix, span: .span(start, end))
+        return Token::SingleQuotedString(span: .span(start, end), quote, prefix)
     }
 
     fn lex_number_or_name(mut this) -> Token {
@@ -419,7 +416,7 @@ struct Lexer implements(Iterable<Token>) {
 
         if .eof() {
             .error("unexpected eof", .span(start, end: start))
-            return Token::Garbage(consumed: None, span: .span(start, end: start))
+            return Token::Garbage(span: .span(start, end: start), consumed: None)
         }
 
         if is_ascii_digit(.peek()) {
@@ -450,7 +447,7 @@ struct Lexer implements(Iterable<Token>) {
         let unknown_char = .input[.index]
         let end = ++.index
         .error(format("unknown character: {:c}", unknown_char), .span(start, end))
-        return Token::Garbage(consumed: format("{:c}", unknown_char), span: .span(start, end))
+        return Token::Garbage(span: .span(start, end),consumed: format("{:c}", unknown_char))
     }
 
     fn valid_digit(mut this, prefix: LiteralPrefix, digit: u8, decimal_allowed: bool = true) -> bool => match prefix {
@@ -518,7 +515,7 @@ struct Lexer implements(Iterable<Token>) {
 
         let suffix = .consume_numeric_literal_suffix()
 
-        return Token::Number(prefix, number: number.to_string(), suffix, span: .span(start, end: .index))
+        return Token::Number(span: .span(start, end: .index), prefix, number: number.to_string(), suffix)
     }
 
     fn consume_numeric_literal_suffix(mut this) -> LiteralSuffix {
@@ -586,7 +583,7 @@ struct Lexer implements(Iterable<Token>) {
 
         if .eof() {
             .error("unexpected eof", .span(start, end: start))
-            return Token::Garbage(consumed: None, span: .span(start, end: start))
+            return Token::Garbage(span: .span(start, end: start), consumed: None)
         }
 
         mut escaped = false
@@ -612,53 +609,53 @@ struct Lexer implements(Iterable<Token>) {
         let end = .index
 
         if delimiter == b'\'' {
-            return Token::SingleQuotedString(quote: str, prefix: None, span: .span(start, end))
+            return Token::SingleQuotedString(span: .span(start, end), quote: str, prefix: None)
         }
 
-        return Token::QuotedString(quote: str, span: .span(start, end))
+        return Token::QuotedString(span: .span(start, end), quote: str)
     }
 
     fn lex_plus(mut this) -> Token {
         let start = .index++
         return match .peek() {
-            b'=' => Token::PlusEqual(.span(start, end: ++.index))
-            b'+' => Token::PlusPlus(.span(start, end: ++.index))
-            else => Token::Plus(.span(start: .index - 1, end: .index))
+            b'=' => Token::PlusEqual(span: .span(start, end: ++.index))
+            b'+' => Token::PlusPlus(span: .span(start, end: ++.index))
+            else => Token::Plus(span: .span(start: .index - 1, end: .index))
         }
     }
 
     fn lex_minus(mut this) -> Token {
         let start = .index++
         return match .peek() {
-            b'=' => Token::MinusEqual(.span(start, end: ++.index))
-            b'-' => Token::MinusMinus(.span(start, end: ++.index))
-            b'>' => Token::Arrow(.span(start, end: ++.index))
-            else => Token::Minus(.span(start: .index - 1, end: .index))
+            b'=' => Token::MinusEqual(span: .span(start, end: ++.index))
+            b'-' => Token::MinusMinus(span: .span(start, end: ++.index))
+            b'>' => Token::Arrow(span: .span(start, end: ++.index))
+            else => Token::Minus(span: .span(start: .index - 1, end: .index))
         }
     }
 
     fn lex_asterisk(mut this) -> Token {
         let start = .index++
         return match .peek() {
-            b'=' => Token::AsteriskEqual(.span(start, end: ++.index))
-            else => Token::Asterisk(.span(start: .index - 1, end: .index))
+            b'=' => Token::AsteriskEqual(span: .span(start, end: ++.index))
+            else => Token::Asterisk(span: .span(start: .index - 1, end: .index))
         }
     }
 
     fn lex_forward_slash(mut this) -> Token {
         let start = .index++
         if .peek() == b'=' {
-            return Token::ForwardSlashEqual(.span(start, end: ++.index))
+            return Token::ForwardSlashEqual(span: .span(start, end: ++.index))
         }
         if .peek() != b'/' {
-            return Token::ForwardSlash(.span(start, end: .index))
+            return Token::ForwardSlash(span: .span(start, end: .index))
         }
 
         if .comment_contents.has_value() {
             .index--
             return Token::Eol(
-                comment: .consume_comment_contents()
                 span: .span(start, end: .index)
+                comment: .consume_comment_contents()
             )
         }
 
@@ -674,96 +671,96 @@ struct Lexer implements(Iterable<Token>) {
             }
         }
         .comment_contents = .input[comment_start_index...index].to_array()
-        return .next() ?? Token::Eof(.span(start: .index, end: .index))
+        return .next() ?? Token::Eof(span: .span(start: .index, end: .index))
     }
 
     fn lex_caret(mut this) -> Token {
         let start = .index++
         return match .peek() {
-            b'=' => Token::CaretEqual(.span(start, end: ++.index))
-            else => Token::Caret(.span(start: .index - 1, end: .index))
+            b'=' => Token::CaretEqual(span: .span(start, end: ++.index))
+            else => Token::Caret(span: .span(start: .index - 1, end: .index))
         }
     }
 
     fn lex_pipe(mut this) -> Token {
         let start = .index++
         return match .peek() {
-            b'=' => Token::PipeEqual(.span(start, end: ++.index))
-            b'|' => Token::PipePipe(.span(start, end: ++.index))
-            else => Token::Pipe(.span(start: .index - 1, end: .index))
+            b'=' => Token::PipeEqual(span: .span(start, end: ++.index))
+            b'|' => Token::PipePipe(span: .span(start, end: ++.index))
+            else => Token::Pipe(span: .span(start: .index - 1, end: .index))
         }
     }
 
     fn lex_percent_sign(mut this) -> Token {
         let start = .index++
         return match .peek() {
-            b'=' => Token::PercentSignEqual(.span(start, end: ++.index))
-            else => Token::PercentSign(.span(start: .index - 1, end: .index))
+            b'=' => Token::PercentSignEqual(span: .span(start, end: ++.index))
+            else => Token::PercentSign(span: .span(start: .index - 1, end: .index))
         }
     }
 
     fn lex_exclamation_point(mut this) -> Token {
         let start = .index++
         return match .peek() {
-            b'=' => Token::NotEqual(.span(start, end: ++.index))
-            else => Token::ExclamationPoint(.span(start: .index - 1, end: .index))
+            b'=' => Token::NotEqual(span: .span(start, end: ++.index))
+            else => Token::ExclamationPoint(span: .span(start: .index - 1, end: .index))
         }
     }
 
     fn lex_ampersand(mut this) -> Token {
         let start = .index++
         return match .peek() {
-            b'=' => Token::AmpersandEqual(.span(start, end: ++.index))
-            b'&' => Token::AmpersandAmpersand(.span(start, end: ++.index))
-            else => Token::Ampersand(.span(start: .index - 1, end: .index))
+            b'=' => Token::AmpersandEqual(span: .span(start, end: ++.index))
+            b'&' => Token::AmpersandAmpersand(span: .span(start, end: ++.index))
+            else => Token::Ampersand(span: .span(start: .index - 1, end: .index))
         }
     }
 
     fn lex_less_than(mut this) -> Token {
         let start = .index++
         return match .peek() {
-            b'=' => Token::LessThanOrEqual(.span(start, end: ++.index))
+            b'=' => Token::LessThanOrEqual(span: .span(start, end: ++.index))
             b'<' => {
                 .index++
                 yield match .peek() {
-                    b'<' => Token::LeftArithmeticShift(.span(start, end: ++.index))
-                    b'=' => Token::LeftShiftEqual(.span(start, end: ++.index))
-                    else => Token::LeftShift(.span(start: .index - 1, end: .index))
+                    b'<' => Token::LeftArithmeticShift(span: .span(start, end: ++.index))
+                    b'=' => Token::LeftShiftEqual(span: .span(start, end: ++.index))
+                    else => Token::LeftShift(span: .span(start: .index - 1, end: .index))
                 }
             }
-            else => Token::LessThan(.span(start: .index - 1, end: .index))
+            else => Token::LessThan(span: .span(start: .index - 1, end: .index))
         }
     }
 
     fn lex_greater_than(mut this) -> Token {
         let start = .index++
         return match .peek() {
-            b'=' => Token::GreaterThanOrEqual(.span(start, end: ++.index))
+            b'=' => Token::GreaterThanOrEqual(span: .span(start, end: ++.index))
             b'>' => {
                 .index++
                 yield match .peek() {
-                    b'>' => Token::RightArithmeticShift(.span(start, end: ++.index))
-                    b'=' => Token::RightShiftEqual(.span(start, end: ++.index))
-                    else => Token::RightShift(.span(start: .index - 1, end: .index))
+                    b'>' => Token::RightArithmeticShift(span: .span(start, end: ++.index))
+                    b'=' => Token::RightShiftEqual(span: .span(start, end: ++.index))
+                    else => Token::RightShift(span: .span(start: .index - 1, end: .index))
                 }
             }
-            else => Token::GreaterThan(.span(start: .index - 1, end: .index))
+            else => Token::GreaterThan(span: .span(start: .index - 1, end: .index))
         }
     }
 
     fn lex_dot(mut this) -> Token {
         let start = .index++
         return match .peek() {
-            b'.' => Token::DotDot(.span(start, end: ++.index))
-            else => Token::Dot(.span(start: .index - 1, end: .index))
+            b'.' => Token::DotDot(span: .span(start, end: ++.index))
+            else => Token::Dot(span: .span(start: .index - 1, end: .index))
         }
     }
 
     fn lex_colon(mut this) -> Token {
         let start = .index++
         return match .peek() {
-            b':' => Token::ColonColon(.span(start, end: ++.index))
-            else => Token::Colon(.span(start: .index - 1, end: .index))
+            b':' => Token::ColonColon(span: .span(start, end: ++.index))
+            else => Token::Colon(span: .span(start: .index - 1, end: .index))
         }
     }
 
@@ -773,20 +770,20 @@ struct Lexer implements(Iterable<Token>) {
             b'?' => {
                 .index++
                 yield match .peek() {
-                    b'=' => Token::QuestionMarkQuestionMarkEqual(.span(start, end: ++.index))
-                    else => Token::QuestionMarkQuestionMark(.span(start, end: .index))
+                    b'=' => Token::QuestionMarkQuestionMarkEqual(span: .span(start, end: ++.index))
+                    else => Token::QuestionMarkQuestionMark(span: .span(start, end: .index))
                 }
             }
-            else => Token::QuestionMark(.span(start: .index - 1, end: .index))
+            else => Token::QuestionMark(span: .span(start: .index - 1, end: .index))
         }
     }
 
     fn lex_equals(mut this) -> Token {
         let start = .index++
         return match .peek() {
-            b'=' => Token::DoubleEqual(.span(start, end: ++.index))
-            b'>' => Token::FatArrow(.span(start, end: ++.index))
-            else => Token::Equal(.span(start: .index - 1, end: .index))
+            b'=' => Token::DoubleEqual(span: .span(start, end: ++.index))
+            b'>' => Token::FatArrow(span: .span(start, end: ++.index))
+            else => Token::Equal(span: .span(start: .index - 1, end: .index))
         }
     }
 
@@ -811,7 +808,7 @@ struct Lexer implements(Iterable<Token>) {
         loop {
             if .index == .input.size() {
                 ++.index
-                return Token::Eof(.span(start: .index - 1, end: .index - 1))
+                return Token::Eof(span: .span(start: .index - 1, end: .index - 1))
             }
             // FIXME: Once the handling of Token::Eof is fully implemented,
             //        remove the test of eof() and return of None. The purpose
@@ -831,18 +828,18 @@ struct Lexer implements(Iterable<Token>) {
         let start = .index
 
         return match .input[.index] {
-            b'(' => Token::LParen(.span(start, end: ++.index))
-            b')' => Token::RParen(.span(start, end: ++.index))
-            b'[' => Token::LSquare(.span(start, end: ++.index))
-            b']' => Token::RSquare(.span(start, end: ++.index))
-            b'{' => Token::LCurly(.span(start, end: ++.index))
-            b'}' => Token::RCurly(.span(start, end: ++.index))
+            b'(' => Token::LParen(span: .span(start, end: ++.index))
+            b')' => Token::RParen(span: .span(start, end: ++.index))
+            b'[' => Token::LSquare(span: .span(start, end: ++.index))
+            b']' => Token::RSquare(span: .span(start, end: ++.index))
+            b'{' => Token::LCurly(span: .span(start, end: ++.index))
+            b'}' => Token::RCurly(span: .span(start, end: ++.index))
             b'<' => .lex_less_than()
             b'>' => .lex_greater_than()
             b'.' => .lex_dot()
-            b',' => Token::Comma(.span(start, end: ++.index))
-            b'~' => Token::Tilde(.span(start, end: ++.index))
-            b';' => Token::Semicolon(.span(start, end: ++.index))
+            b',' => Token::Comma(span: .span(start, end: ++.index))
+            b'~' => Token::Tilde(span: .span(start, end: ++.index))
+            b';' => Token::Semicolon(span: .span(start, end: ++.index))
             b':' => .lex_colon()
             b'?' => .lex_question_mark()
             b'+' => .lex_plus()
@@ -854,9 +851,9 @@ struct Lexer implements(Iterable<Token>) {
             b'%' => .lex_percent_sign()
             b'!' => .lex_exclamation_point()
             b'&' => .lex_ampersand()
-            b'$' => Token::Dollar(.span(start, end: ++.index))
+            b'$' => Token::Dollar(span: .span(start, end: ++.index))
             b'=' => .lex_equals()
-            b'\n' => Token::Eol(comment: .consume_comment_contents(), span: .span(start, end: ++.index))
+            b'\n' => Token::Eol(span: .span(start, end: ++.index), comment: .consume_comment_contents())
             b'\'' => .lex_quoted_string(delimiter: b'\'')
             b'\"' => .lex_quoted_string(delimiter: b'"')
             b'b' => .lex_character_constant_or_name()

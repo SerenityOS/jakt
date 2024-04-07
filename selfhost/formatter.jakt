@@ -312,7 +312,7 @@ struct Stage0 {
             else => (.index as! i64 + offset - 1) as! usize
         }
         if effective_index >= .tokens.size() {
-            return Token::Eof(.tokens.last()!.span())
+            return Token::Eof(span: .tokens.last()!.span)
         }
 
         return .tokens[effective_index]
@@ -658,7 +658,7 @@ struct Stage0 {
         else => {
             mut collection: [String] = []
             mut output = ""
-            let span = token.span()
+            let span = token.span
             mut local_token = token
             while not local_token is RCurly {
                 if local_token is Identifier(name) {
@@ -702,7 +702,7 @@ struct Stage0 {
             .pop_state()
             .index--
 
-            yield .formatted_token(Token::Identifier(name: output, span))
+            yield .formatted_token(Token::Identifier(span, name: output))
         }
     }
 
@@ -1412,7 +1412,7 @@ struct Stage0 {
                     expression_mode: ExpressionMode::InExpression
                     dedents_on_open_curly
                 ))
-                return .formatted_token(token: Token::Comma(token.span()), trailing_trivia: [b' '])
+                return .formatted_token(token: Token::Comma(span: token.span), trailing_trivia: [b' '])
             }
             .replace_state(State::StatementContext(
                 open_parens
@@ -1489,7 +1489,7 @@ struct Stage0 {
             if open_squares == 0 {
                 return match .peek() {
                     Eol => .next()
-                    else => .formatted_token(Token::Eol(comment: None, span: token.span()))
+                    else => .formatted_token(Token::Eol(span: token.span, comment: None))
                 }
             }
 
@@ -2500,8 +2500,8 @@ struct Formatter implements(ThrowingIterable<[FormattedToken]>) {
                 }
                 else => {
                     let newline = Token::Eol(
+                        span: next_underlying_token.span
                         comment: None
-                        span: next_underlying_token.span()
                     )
 
                     match next_underlying_token {
