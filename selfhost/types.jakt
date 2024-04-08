@@ -1273,6 +1273,15 @@ struct CheckedEnum {
     underlying_type_id: TypeId
     type_id: TypeId
     is_boxed: bool
+
+    fn any_variant_has_data(this) -> bool {
+        for variant in .variants {
+            if not (variant is Untyped or variant is WithValue) {
+                return true
+            }
+        }
+        return false
+    }
 }
 
 struct CheckedGenericParameter {
