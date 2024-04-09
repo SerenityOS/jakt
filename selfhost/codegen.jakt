@@ -1842,15 +1842,7 @@ struct CodeGenerator {
 
         let max_index_value = enum_.variants.size()
 
-        let index_type = match max_index_value {
-            // 0..(1 << 8)
-            0uz..256uz => "u8"
-            // (1 << 8)..(1 << 16)
-            256uz..65536uz => "u16"
-            // (1 << 16)..(1 << 32)
-            65536uz..4294967296uz => "u32"
-            else => "size_t"
-        }
+        let index_type = cpp_type_for_enum_tag(&enum_)
 
         let (common_fields, variant_field_list) = .codegen_enum_field_lists(enum_)
 
@@ -1863,32 +1855,11 @@ struct CodeGenerator {
 
         let has_common_data = not common_fields.is_empty()
 
-        if has_common_data {
-            // Another maybe-uninitialized data member for the common fields.
-            // NOTE: Could have a record of which fields won't have a default constructor
-            // so this doesn't output a complex union if all the fields have default constructors.
-            output.append("union CommonData {\n")
-
-            // This one has to be the first since C++ will use the first field to zero-init
-            // a union. This way we guarantee that the union can be default initialized.
-            output.append("u8 __jakt_uninit_common;\n")
-
-            output.append("struct {\n")
-
-            // Make common fields available
-            for (field_name, type) in common_fields {
-                output.append(format("{} {};\n", type, field_name))
-            }
-
-            output.append("} init_common;\n")
-
-            // See comment below about the constructors of `VariantData`.
-            // Make sure everything's at zero value.
-            output.append("constexpr CommonData() {}\n")
-            output.append("~CommonData() {}\n")
-
-            output.append("} common;\n")
+        // Make common fields available
+        for (field_name, type) in common_fields {
+            output.append(format("{} {};\n", type, field_name))
         }
+
         let has_variant_data = enum_.any_variant_has_data()
 
 
@@ -1917,7 +1888,16 @@ struct CodeGenerator {
             // struct's destructor, which has access to the variant index.
             output.append("~VariantData() {}\n")
 
-            output.append("} as;\n")
+            // This move constructor is only used when initializing the enums
+            // in the constructor functions, and used to construct the enum
+            // with the initialized variant. It is only valid to use in this
+            // type of case: initializing the enum with an initialized variant
+            // and its corresponding tag so it can be safely destructed.
+            // This constructor can use memcpy() safely because the destructor
+            // for VariantData does nothing.
+            output.append("VariantData(VariantData&& other) { memcpy(&other, this, sizeof(VariantData));}")
+
+            output.append("} __jakt_variant_data;\n")
         }
 
 
@@ -1985,6 +1965,10 @@ struct CodeGenerator {
                 output.append("private: void __jakt_destroy_variant();\n")
                 output.append("public:\n")
             }
+
+            output.append("private:")
+            .codegen_enum_primary_constructor_decl(&enum_, &common_fields, has_variant_data, output)
+            output.append(";public:")
         }
 
 
@@ -2008,11 +1992,6 @@ struct CodeGenerator {
                 }
             }
         }
-
-        // The only private thing is the default constructor, which is
-        // overriden to allow the `static` functions to start with an undefined
-        // value and write to it.
-        output.append(format("private:\n{}() {{}};\n", enum_.name))
 
         output.append("};\n")
 
@@ -2085,14 +2064,14 @@ struct CodeGenerator {
                     panic("should have been handled by the guard above")
                 }
                 Typed => {
-                    builder.append(stmt_fmt(accessor: format("as.{}.value", variant_name)))
+                    builder.append(stmt_fmt(accessor: format("__jakt_variant_data.{}.value", variant_name)))
                 }
                 StructLike(fields) => {
                     for field in fields[common_field_count..] {
                         let variable = .program.get_variable(field)
                         let name = variable.name_for_codegen().as_name_for_use()
 
-                        builder.append(stmt_fmt(accessor: format("as.{}.{}", variant_name, name)))
+                        builder.append(stmt_fmt(accessor: format("__jakt_variant_data.{}.{}", variant_name, name)))
                     }
                 }
             }
@@ -2117,38 +2096,45 @@ struct CodeGenerator {
         use_move: bool // whether to use the "move()" function from AK lib.
     ) -> String {
         mut builder = StringBuilder::create()
-        builder.append("{")
 
-        let assign = fn[use_move](accessor: String) -> String {
-            let rhs = match use_move {
+        let get_rhs = fn[use_move](accessor: String) -> String {
+            return match use_move {
                 true => format("move(rhs.{})", accessor)
                 false => format("rhs.{}", accessor)
             }
+        }
+
+        let assign = fn[&get_rhs](accessor: String) -> String {
+            let rhs = get_rhs(accessor)
             return format("this->{} = {};\n", accessor, rhs)
         }
 
-        let placement_new = fn[use_move](accessor: String) -> String {
-            let rhs = match use_move {
-                true => format("move(rhs.{})", accessor)
-                false => format("rhs.{}", accessor)
-            }
+        let placement_new = fn[&get_rhs](accessor: String) -> String {
+            let rhs = get_rhs(accessor)
             return format("new (&this->{0}) (decltype(this->{0}))({1});\n",
                 accessor, rhs)
         }
 
         if is_constructor {
+            builder.append(": __jakt_variant_index(rhs.__jakt_variant_index)")
             for common in enum_.fields {
                 let variable = .program.get_variable(common.variable_id)
                 let name = variable.name_for_codegen().as_name_for_use()
 
-                builder.append(placement_new(accessor: format("common.init_common.{}", name)))
+                builder.append(", ")
+                builder.append(name)
+                builder.append('(')
+                builder.append(get_rhs(accessor: name))
+                builder.append(')')
             }
+            builder.append("{")
         } else {
+            builder.append("{")
             for common in enum_.fields {
                 let variable = .program.get_variable(common.variable_id)
                 let name = variable.name_for_codegen().as_name_for_use()
 
-                builder.append(assign(accessor: format("common.init_common.{}", name)))
+                builder.append(assign(accessor: name))
             }
         }
 
@@ -2181,11 +2167,40 @@ struct CodeGenerator {
 
             }
         }
+        if not is_constructor {
+            builder.append("this->__jakt_variant_index = rhs.__jakt_variant_index;\n")
+            builder.append("return *this;")
+        }
 
-        builder.append("this->__jakt_variant_index = rhs.__jakt_variant_index;\n")
 
         builder.append("}\n")
         return builder.to_string()
+    }
+
+    // forward declare constructor that accepts tag, common data & variant data
+    // NOTE: ideally this constructor should be declared constexpr when we can,
+    // but codegen lacks this information.
+    fn codegen_enum_primary_constructor_decl(this
+        enum_: &CheckedEnum
+        common_fields: &[(String, String)]
+        has_variant_data: bool
+        output: &mut StringBuilder
+    ) {
+        let index_type = cpp_type_for_enum_tag(enum_)
+        output.append(enum_.name)
+        output.append('(')
+        output.append(index_type)
+        output.append(" __jakt_variant_index")
+        for (field_name, field_type) in common_fields {
+            output.append(", ")
+            output.append(field_type)
+            output.append(" ")
+            output.append(field_name)
+        }
+        if has_variant_data {
+            output.append(", VariantData __jakt_variant_data")
+        }
+        output.append(")")
     }
 
     fn codegen_enum_constructors(
@@ -2206,18 +2221,6 @@ struct CodeGenerator {
             false => enum_.name
         }
 
-            // NOTE: these statements should compile because a default constructor is provided privately.
-        let (declare_uninit, deref_uninit) = match enum_.is_boxed {
-            true => (
-                format("NonnullRefPtr<{0}> __jakt_uninit_enum = adopt_ref(*new {0});\n", ctor_type),
-                "__jakt_uninit_enum->"
-            )
-            false => (
-                format("{} __jakt_uninit_enum;\n", enum_.name),
-                "__jakt_uninit_enum."
-            )
-        }
-
         guard (is_inside_struct or not is_generic) else {
             panic("Out of line constructor cannot be generated for generic enum")
         }
@@ -2226,6 +2229,7 @@ struct CodeGenerator {
             return format("new (&{0}) (decltype({1}))(move({1}));\n", target, name)
         }
 
+        let has_variant_data = enum_.any_variant_has_data()
 
         // Variant constructors
         for variant_index in 0..variant_field_list.size() {
@@ -2244,34 +2248,79 @@ struct CodeGenerator {
             // Generate the body
             output .append("{\n")
 
-            output .append(declare_uninit)
+            if has_variant_data {
+                output.append("VariantData __jakt_uninit_variant;")
+                for field in variant_fields {
+                    let name = field.0
+                    output.append(placement_new(
+                        target: format("__jakt_uninit_variant.{}.{}", variant_name, name)
+                        name
+                    ))
+                }
+            }
 
-            output .append(format("{}__jakt_variant_index = {};\n", deref_uninit, variant_index))
+            output.append("return ")
+            if enum_.is_boxed {
+                output.append("adopt_ref(*new ")
+            }
+            output.append(enum_.name)
+            output.append("(")
+            output.append(format("{}", variant_index))
 
             for field in common_fields {
                 let name = field.0
-                output .append(placement_new(
-                    target: format("{}common.init_common.{}", deref_uninit, name)
-                    name
-                ))
+                output.append(", move(")
+                output.append(name)
+                output.append(")")
             }
 
-            for field in variant_fields {
-                let name = field.0
-                output.append(placement_new(
-                    target: format("{}as.{}.{}", deref_uninit, variant_name, name)
-                    name
-                ))
+            if has_variant_data {
+                output.append(", move(__jakt_uninit_variant)")
             }
 
-            output.append("return __jakt_uninit_enum;\n")
+            output.append(')')
+            if enum_.is_boxed {
+                output.append(')')
+            }
+            output.append(';')
 
             output.append("}\n")
         }
 
-        let has_variant_data = enum_.any_variant_has_data()
         let has_common_data = not enum_.fields.is_empty()
         let requires_custom_constructors = has_variant_data or has_common_data
+
+        {
+            // enum constructor that accepts tag, common data & variant data
+            if is_inside_struct {
+                output.append("private:")
+            } else {
+                output.append(enum_.name)
+                output.append("::")
+            }
+            .codegen_enum_primary_constructor_decl(&enum_, &common_fields, has_variant_data, output)
+
+            output.append(": __jakt_variant_index(__jakt_variant_index)")
+
+            for field in common_fields {
+                let name = field.0
+                output.append(",")
+                output.append(name)
+                output.append("(move(")
+                output.append(name)
+                output.append("))")
+            }
+
+            if has_variant_data {
+                output.append(",__jakt_variant_data(move(__jakt_variant_data))")
+            }
+            output.append("{}")
+
+            if is_inside_struct {
+                output.append("public:")
+            }
+        }
+
 
         if requires_custom_constructors {
             // Copy assignment operator
@@ -2280,10 +2329,7 @@ struct CodeGenerator {
             } else {
                 output.append(format("{0}& {0}::operator=({0} const &rhs)", enum_.name))
             }
-            output.append("{\n")
             output.append(.codegen_enum_assignment_body(enum_,is_constructor: false use_move: false))
-            output.append("return *this;\n")
-            output.append("}\n")
 
             // Copy constructor
             if is_inside_struct {
@@ -2299,10 +2345,7 @@ struct CodeGenerator {
             } else {
                 output.append(format("{0}& {0}::operator=({0} &&rhs)", enum_.name))
             }
-            output.append("{\n")
             output.append(.codegen_enum_assignment_body(enum_, is_constructor: false, use_move: true))
-            output.append("return *this;\n")
-            output.append("}\n")
 
             // Move constructor
             if is_inside_struct {
@@ -2310,9 +2353,7 @@ struct CodeGenerator {
             } else {
                 output.append(format("{0}::{0}({0} &&rhs)", enum_.name))
             }
-            output.append("{\n")
             output.append(.codegen_enum_assignment_body(enum_, is_constructor: true, use_move: true))
-            output.append("}\n")
         }
     }
 
@@ -2420,7 +2461,7 @@ struct CodeGenerator {
                 Typed(type_id) => {
                     let ds_name = .destructor_name(type_id)
                     if ds_name is Some(name) {
-                        output.append(format("this->as.{}.value.~{}();\n", variant_name, name))
+                        output.append(format("this->__jakt_variant_data.{}.value.~{}();\n", variant_name, name))
                     }
                 }
                 StructLike(fields) => {
@@ -2430,7 +2471,7 @@ struct CodeGenerator {
                         let ds: String? = .destructor_name(variable.type_id)
 
                         if ds is Some(name) {
-                            output.append(format("this->as.{}.{}.~{}();\n",
+                            output.append(format("this->__jakt_variant_data.{}.{}.~{}();\n",
                                 variant_name
                                 variable.name_for_codegen().as_name_for_use()
                                 name
@@ -2465,7 +2506,7 @@ struct CodeGenerator {
             let variable = .program.get_variable(common_field.variable_id)
             let ds: String? = .destructor_name(variable.type_id)
             if ds is Some(name) {
-                output.append(format("this->common.init_common.{}.~{}();\n", variable.name_for_codegen().as_name_for_use(), name))
+                output.append(format("this->{}.~{}();\n", variable.name_for_codegen().as_name_for_use(), name))
             }
         }
 
@@ -2561,7 +2602,7 @@ struct CodeGenerator {
             match variant {
                 StructLike(fields) => {
                     output.append(format("builder.append(\"{}::{}\"sv);\n", enum_.name, name))
-                    output.append(format("[[maybe_unused]] auto const& that = this->as.{};\n", name))
+                    output.append(format("[[maybe_unused]] auto const& that = this->__jakt_variant_data.{};\n", name))
                     output.append("builder.append(\"(\"sv);\n")
                     output.append("{\n");
                     output.append("JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};\n")
@@ -2578,7 +2619,7 @@ struct CodeGenerator {
                             output.append(", ")
                         }
                         if i < common_field_count {
-                            output.append(format("\", this->common.init_common.{});\n", var.name_for_codegen().as_name_for_use()))
+                            output.append(format("\", this->{});\n", var.name_for_codegen().as_name_for_use()))
                         } else {
                             output.append(format("\", that.{});\n", var.name_for_codegen().as_name_for_use()))
                         }
@@ -2589,7 +2630,7 @@ struct CodeGenerator {
                 }
                 Typed(type_id) => {
                     output.append(format("builder.append(\"{}::{}\"sv);\n", enum_.name, name))
-                    output.append(format("[[maybe_unused]] auto const& that = this->as.{};\n", name))
+                    output.append(format("[[maybe_unused]] auto const& that = this->__jakt_variant_data.{};\n", name))
                     if .program.is_string(type_id){
                         output.append("builder.appendff(\"(\\\"{}\\\")\", that.value);\n")
                     } else {
@@ -2706,7 +2747,7 @@ struct CodeGenerator {
                 output.append(">(")
                 .codegen_expression(expr, &mut output)
                 output.append(")")
-            } 
+            }
             ForcedUnwrap(expr, type_id) => {
                 output.append("(")
                 .codegen_expression(expr, &mut output)
@@ -2850,9 +2891,9 @@ struct CodeGenerator {
                     Enum(id) | GenericEnumInstance(id) => {
                         let structure = .program.get_enum(id)
                         if structure.record_type is SumEnum(is_boxed) and is_boxed and object != "*this" {
-                            output.append("->common.init_common.")
+                            output.append("->")
                         } else {
-                            output.append(".common.init_common.")
+                            output.append(".")
                         }
                     }
                     else => {
@@ -3095,14 +3136,14 @@ struct CodeGenerator {
                 }
 
                 // use the common section if the binding uses a common field
-                mut section = format("as.{}", variant_name)
+                mut section = format("__jakt_variant_data.{}.", variant_name)
 
                 mut is_common_field = false
                 mut field_name = arg.name ?? arg.binding
                 for field in enum_.fields {
                     let var_name = .program.get_variable(field.variable_id).name_for_codegen().as_name_for_use()
                     if var_name == field_name {
-                        section = "common.init_common"
+                        section = "" // common field is indexed directly
                         is_common_field = true
                         break
                     }
@@ -3117,7 +3158,6 @@ struct CodeGenerator {
                 output.append(")")
                 output.append(cpp_deref_operator)
                 output.append(section)
-                output.append(".")
                 output.append(field_name)
             }
             JaktArray(vals, repeat, span, type_id, inner_type_id) => {
@@ -3508,7 +3548,7 @@ struct CodeGenerator {
                         variant_type_name += name
 
                         if not args.is_empty() {
-                            output.append("auto& __jakt_match_value = __jakt_enum_value.as.")
+                            output.append("auto& __jakt_match_value = __jakt_enum_value.__jakt_variant_data.")
                             output.append(enum_.variants[variant_index].name())
                             output.append(";\n")
 
@@ -3528,7 +3568,7 @@ struct CodeGenerator {
                                 }
 
                                 if is_common_member {
-                                    output.append(" = __jakt_enum_value.common.init_common.")
+                                    output.append(" = __jakt_enum_value.")
                                     output.append(arg.name!)
                                 } else {
                                     output.append(" = __jakt_match_value.")
@@ -3686,7 +3726,7 @@ struct CodeGenerator {
                             Typed(name, type_id) => {
                                 if not args.is_empty() {
                                     output.append(format(
-                                        "auto&& __jakt_match_value = __jakt_match_variant.as.{};",
+                                        "auto&& __jakt_match_value = __jakt_match_variant.__jakt_variant_data.{};",
                                         name
                                     ))
 
@@ -3704,7 +3744,7 @@ struct CodeGenerator {
                             StructLike(name, fields) => {
                                 if not args.is_empty() {
                                     output.append(format(
-                                        "auto&& __jakt_match_value = __jakt_match_variant.as.{};",
+                                        "auto&& __jakt_match_value = __jakt_match_variant.__jakt_variant_data.{};",
                                         name))
 
                                     for arg in args {
@@ -3728,7 +3768,7 @@ struct CodeGenerator {
                                         }
 
                                         if is_common_member {
-                                            output.append(" = __jakt_match_variant.common.init_common.")
+                                            output.append(" = __jakt_match_variant.")
                                             output.append(accessor)
                                         } else {
                                             output.append(" = __jakt_match_value.")
@@ -5541,5 +5581,18 @@ struct CodeGenerator {
 
         output.append("}\n")
     }
+}
+
+fn cpp_type_for_enum_tag(enum_: &CheckedEnum) -> StringView => smallest_fitting_cpp_int(overflow_value: enum_.variants.size())
+
+fn smallest_fitting_cpp_int(overflow_value: usize) -> StringView => match overflow_value {
+    // 0..(1 << 8)
+    0uz..256uz => "u8"
+    // (1 << 8)..(1 << 16)
+    256uz..65536uz => "u16"
+    // (1 << 16)..(1 << 32)
+    65536uz..4294967296uz => "u32"
+    // hope it fits!
+    else => "size_t"
 }
 
