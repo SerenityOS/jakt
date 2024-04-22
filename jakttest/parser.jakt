@@ -6,9 +6,9 @@ import error { JaktError }
 import utility { panic, todo, Span }
 
 enum ParsedTest {
-    SuccessTest(output: String, cppincludes: String)
-    CompileErrorTest(output: String, cppincludes: String)
-    RuntimeErrorTest(output: String, cppincludes: String)
+    SuccessTest(related_cpp_files: [String], output: String, cppincludes: String)
+    CompileErrorTest(related_cpp_files: [String], output: String, cppincludes: String)
+    RuntimeErrorTest(related_cpp_files: [String], output: String, cppincludes: String)
     SkipTest
     NoExpectOrSkip
 }
@@ -17,6 +17,7 @@ fn is_whitespace(anon cp: u32) -> bool => cp == ' ' or cp == '\t' or cp == '\r'
 
 struct Parser {
     iterator: CodePointIterator
+    test_base_dir: String
 
     fn is_eof(this) -> bool => .iterator.peek().has_value() == false
 
@@ -97,6 +98,7 @@ struct Parser {
         mut has_cppincludes = false
         mut output = ""
         mut cppincludes = ""
+        mut related_cpp_files: [String] = []
 
         while not .is_eof() {
             if not .lex_literal("///") {
@@ -108,6 +110,8 @@ struct Parser {
             }
             .iterator.next()
             .skip_whitespace()
+
+            let is_related_cpp_file = .lex_literal("link")
 
             if not success_test {
                 success_test = .lex_literal("output")
@@ -154,26 +158,31 @@ struct Parser {
             if output.is_empty() and expect_output {
                 output = parsed_string
                 continue
-            }
-            else if not has_cppincludes {
+            } else if is_related_cpp_file {
+                if parsed_string.starts_with("/") {
+                    related_cpp_files.push(parsed_string)
+                } else {
+                    related_cpp_files.push(.test_base_dir + "/" + parsed_string)
+                }
+            } else if not has_cppincludes {
                 panic("Unexpected token state in parse_test_information")
             }
             cppincludes = parsed_string
         }
         if success_test {
-            return ParsedTest::SuccessTest(output, cppincludes)
+            return ParsedTest::SuccessTest(related_cpp_files, output, cppincludes)
         }
         if compile_error {
-            return ParsedTest::CompileErrorTest(output, cppincludes)
+            return ParsedTest::CompileErrorTest(related_cpp_files, output, cppincludes)
         }
         if runtime_error {
-            return ParsedTest::RuntimeErrorTest(output, cppincludes)
+            return ParsedTest::RuntimeErrorTest(related_cpp_files, output, cppincludes)
         }
         return ParsedTest::NoExpectOrSkip
     }
 
-    fn parse(input: String) throws -> ParsedTest {
-        mut parser = Parser(iterator: input.code_points())
+    fn parse(input: String, test_base_dir: String) throws -> ParsedTest {
+        mut parser = Parser(iterator: input.code_points(), test_base_dir)
         return parser.parse_test()
     }
 }

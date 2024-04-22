@@ -48,6 +48,11 @@ def main():
         help="Path to the C++ compiler to use (defaults to clang++ on $PATH)",
         default="clang++"
     )
+    parser.add_argument(
+        "--cpp-link",
+        help="Extra C++ files to compile and link (separated by :)",
+        default=":"
+    )
     args = parser.parse_args()
 
     # Since we're running the output binary from a different
@@ -59,6 +64,8 @@ def main():
     target_triple = args.target_triple
     cpp_include = ""
     cpp_compiler = args.cpp_compiler
+    relevant_cpp_files = list(filter(lambda x: len(x) > 0, args.cpp_link.split(":")))
+
     if args.cpp_include and not args.cpp_include == "none":
         cpp_include = f"-I{Path(test_file.parent, args.cpp_include)}"
 
@@ -101,7 +108,7 @@ def main():
                     "-o",
                     temp_dir / "output",
                     *WINDOWS_SPECIFIC_COMPILER_ARGUMENTS,
-                    *list(temp_dir.glob("*.cpp")),
+                    *(list(temp_dir.glob("*.cpp")) + relevant_cpp_files),
                     jakt_lib_dir / target_triple / MAIN_LIBRARY_NAME.format(target_triple),
                     jakt_lib_dir / target_triple / RUNTIME_LIBRARY_NAME.format(target_triple),
                 ],
