@@ -3078,6 +3078,7 @@ struct Typechecker {
             type_id: struct_type_id
             super_struct_id
             external_name: parsed_record.external_name
+            create_function_name: parsed_record.create_function_name
         )
 
         mut generic_parameters: [CheckedGenericParameter] = module.structures[struct_id.id].generic_parameters
@@ -3226,6 +3227,7 @@ struct Typechecker {
             record_type: parsed_record.record_type
             type_id: struct_type_id
             external_name: parsed_record.external_name
+            create_function_name: parsed_record.create_function_name
         ))
 
         match parsed_record.record_type {
@@ -4850,7 +4852,53 @@ struct Typechecker {
 
         checked_function.block = block
         checked_function.return_type_id = return_type_id
-        .current_function_id = None
+
+        defer .current_function_id = None
+
+        if parsed_function.is_raw_constructor {
+            // raw_constructor() only applies to functions with the signature `fn(this: mut Self, ..) -> void`
+            // and specifically allowed only in classes.
+            if .self_type_id is None {
+                .error("Invalid use of raw_constructor outside of a class", parsed_function.name_span)
+                return
+            }
+
+            let self_type_id = .self_type_id!
+            let self_type = .get_type(self_type_id)
+            let struct_ = match self_type {
+                Struct(id) => .get_struct(id)
+                else => {
+                    .error("Invalid use of raw_constructor outside of a class", parsed_function.name_span)
+                    return
+                }
+            }
+
+            guard struct_.record_type is Class else {
+                .error("Invalid use of raw_constructor on a non-class type", parsed_function.name_span)
+                return
+            }
+
+            // Check the return type
+            if not return_type_id.equals(void_type_id()) {
+                .error("raw_constructor class must return void", parsed_function.return_type_span)
+            }
+
+            // Check the parameters
+            if parsed_function.params.size() < 1 {
+                .error("raw_constructor class must take at least `this'", parsed_function.name_span)
+                return
+            }
+
+            let this_param = parsed_function.params[0]
+            if this_param.variable.name != "this" {
+                .error("raw_constructor class must take `this' as its first parameter", this_param.variable.span)
+                return
+            }
+
+            // Done, set the external name and the ctor flag.
+            checked_function.external_name = ExternalName::Plain(struct_.name_for_codegen().as_name_for_definition())
+            checked_function.type = FunctionType::Constructor
+        }
     }
 
     fn statement_control_flow(this, anon statement: CheckedStatement) -> BlockControlFlow => match statement {

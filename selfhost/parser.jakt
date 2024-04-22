@@ -379,10 +379,12 @@ struct ParsedRecord {
     nested_records: [ParsedRecord] = []
 
     external_name: ExternalName? = None
+    create_function_name: String? = None
 }
 
 enum FunctionType {
     Normal
+    Constructor
     Destructor
     ImplicitConstructor
     ImplicitEnumConstructor
@@ -426,12 +428,14 @@ struct ParsedFunction {
     deprecated_message: String? = None // if not None, the function is deprecated
     stores_arguments: [(usize, ArgumentStoreLevel)]? = None // if not None, the function stores the given arguments, extending their lifetime requirements.
     force_inline: InlineState = InlineState::Default
+    is_raw_constructor: bool = false
 
     fn equals(this, anon other: ParsedFunction, ignore_block: bool = false) -> bool {
         if this.name != other.name or
         this.can_throw != other.can_throw or
         this.is_comptime != other.is_comptime or
-        this.is_fat_arrow != other.is_fat_arrow {
+        this.is_fat_arrow != other.is_fat_arrow or
+        this.is_raw_constructor != other.is_raw_constructor {
             return false
         }
 
@@ -2140,6 +2144,14 @@ struct Parser {
                         continue
                     }
 
+                    guard not parsed_function.is_raw_constructor else {
+                        .error(
+                            "A raw constructor cannot have an external name"
+                            attribute.span
+                        )
+                        continue
+                    }
+
                     if attribute.assigned_value!.starts_with("operator(") and attribute.assigned_value!.ends_with(")") {
                         let operator_name = attribute.assigned_value!.substring(start: 9, length: attribute.assigned_value!.length() - 10)
                         parsed_function.external_name = ExternalName::Operator(name: operator_name)
@@ -2232,6 +2244,25 @@ struct Parser {
                         parsed_function.stores_arguments = stores_arguments
                     }
                 }
+                "raw_constructor" => {
+                    if parsed_function.is_raw_constructor {
+                        .error(
+                            format("The attribute '{}' cannot be applied more than once", attribute.name)
+                            attribute.span
+                        )
+                        continue
+                    }
+
+                    if parsed_function.external_name.has_value() {
+                        .error(
+                            "A raw constructor cannot have an external name"
+                            attribute.span
+                        )
+                        continue
+                    }
+
+                    parsed_function.is_raw_constructor = true
+                }
                 else => {
                     .error(
                         format("The attribute '{}' does not apply to functions", attribute.name)
@@ -2275,6 +2306,25 @@ struct Parser {
                     }
 
                     parsed_record.external_name = ExternalName::Plain(attribute.assigned_value!)
+                }
+                "create_function" => {
+                    guard attribute.assigned_value.has_value() else {
+                        .error(
+                            format("The attribute '{}' requires a value", attribute.name)
+                            attribute.span
+                        )
+                        continue
+                    }
+
+                    if parsed_record.create_function_name.has_value() {
+                        .error(
+                            format("The attribute '{}' cannot be applied more than once", attribute.name)
+                            attribute.span
+                        )
+                        continue
+                    }
+
+                    parsed_record.create_function_name = attribute.assigned_value!
                 }
                 else => {
                     .error(
