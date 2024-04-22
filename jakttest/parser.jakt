@@ -159,11 +159,7 @@ struct Parser {
                 output = parsed_string
                 continue
             } else if is_related_cpp_file {
-                if parsed_string.starts_with("/") {
-                    related_cpp_files.push(parsed_string)
-                } else {
-                    related_cpp_files.push(.test_base_dir + "/" + parsed_string)
-                }
+                related_cpp_files.push(parsed_string)
             } else if not has_cppincludes {
                 panic("Unexpected token state in parse_test_information")
             }
