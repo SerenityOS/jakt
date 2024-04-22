@@ -1256,6 +1256,7 @@ struct CheckedStruct {
 
     external_name: ExternalName? = None
     implements_type: TypeId? = None
+    create_function_name: String? = None
 
     fn name_for_codegen(this) -> ExternalName => .external_name ?? ExternalName::Plain(.name)
 }

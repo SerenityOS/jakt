@@ -1508,12 +1508,14 @@ struct CodeGenerator {
                 output.append("virtual ")
             }
 
-            let naked_return_type = .codegen_type(function.return_type_id)
-            let return_type = match function.can_throw {
-                true => format("ErrorOr<{}>", naked_return_type)
-                false => naked_return_type
+            if not function.type is Destructor and not function.type is Constructor {
+                let naked_return_type = .codegen_type(function.return_type_id)
+                let return_type = match function.can_throw {
+                    true => format("ErrorOr<{}>", naked_return_type)
+                    false => naked_return_type
+                }
+                output.append(return_type)
             }
-            output.append(return_type)
         }
 
         output.append(" ")
@@ -4243,7 +4245,8 @@ struct CodeGenerator {
                                 let struct_ = .program.get_struct(struct_id)
                                 if struct_.record_type is Class {
                                     output.append(call.name_for_codegen().as_name_for_use())
-                                    output.append("::__jakt_create")
+                                    output.append("::")
+                                    output.append(struct_.create_function_name ?? "__jakt_create")
                                 } else {
                                     output.append(call.name_for_codegen().as_name_for_use())
                                 }
@@ -4262,7 +4265,8 @@ struct CodeGenerator {
                                         }
                                         output.append(.codegen_type(arg))
                                     }
-                                    output.append(">::__jakt_create")
+                                    output.append(">::")
+                                    output.append(struct_.create_function_name ?? "__jakt_create")
                                 } else {
                                     output.append(call.name_for_codegen().as_name_for_use())
                                     output.append("<")
@@ -5039,7 +5043,7 @@ struct CodeGenerator {
             }
 
             output.append("public:\n")
-            output.append(format("static NonnullRefPtr<{}> __jakt_create", class_name_with_generics))
+            output.append(format("static NonnullRefPtr<{}> {}", class_name_with_generics, structure.create_function_name ?? "__jakt_create"))
             output.append("(")
 
             first = true
@@ -5181,7 +5185,7 @@ struct CodeGenerator {
                     true => ""
                     false => qualified_name + "::"
                 }
-                output.append(format("NonnullRefPtr<{}> {}__jakt_create", class_name_with_generics, qualified_namespace))
+                output.append(format("NonnullRefPtr<{}> {}{}", class_name_with_generics, qualified_namespace, structure.create_function_name ?? "__jakt_create"))
                 output.append("(")
 
                 first = true
@@ -5297,7 +5301,7 @@ struct CodeGenerator {
             if as_method and function.is_static() {
                 output.append("static ")
             }
-            if not function.type is Destructor {
+            if not function.type is Destructor and not function.type is Constructor {
                 output.append(match function.can_throw {
                     true => format("ErrorOr<{}>", .codegen_type(function.return_type_id))
                     false => .codegen_type(function.return_type_id)

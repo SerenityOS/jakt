@@ -2036,6 +2036,10 @@ class CppImportProcessor {
             type_id: struct_type_id
             // FIXME: Multiple inheritance?
             super_struct_id: super_struct_ids.first()
+            create_function_name: match is_class {
+                true => Some("try_create") // FIXME: This is sometimes 'create'...?
+                false => None
+            }
         )
         module.structures[struct_id.id] = the_struct
 
