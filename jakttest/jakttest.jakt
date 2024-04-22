@@ -7,7 +7,7 @@
 
 import error { JaktError, print_error }
 import parser { Parser }
-import utility { panic }
+import utility { join, panic }
 
 // needed for sigaction() stuff
 // FIXME: See #1015, needs to be OS-specific
@@ -415,6 +415,7 @@ struct Test {
     file_name: String
     directory_index: usize
     cppincludes: String
+    related_cpp_files: String
 }
 
 struct TestsRunResult {
@@ -641,6 +642,8 @@ struct TestScheduler {
             cpp_compiler_path ?? default_compiler_path
             "--cpp-include"
             "None" // A sentinel value is passed here because Windows shell does not allow empty arguments
+            "--cpp-link"
+            ":"
             ""
             ""
         ]
@@ -650,7 +653,12 @@ struct TestScheduler {
             test.directory_index = dir_index
             let directory = scheduler.directories[test.directory_index]
             if test.cppincludes.length() > 0 {
-                command_buffer[command_buffer.size() - 3] = test.cppincludes
+                command_buffer[command_buffer.size() - 5] = test.cppincludes
+            }
+            if test.related_cpp_files.is_empty() {
+                command_buffer[command_buffer.size() - 3] = ":"
+            } else {
+                command_buffer[command_buffer.size() - 3] = test.related_cpp_files
             }
             command_buffer[command_buffer.size() - 2] = directory
             command_buffer[command_buffer.size() - 1] = test.file_name
@@ -675,6 +683,21 @@ struct TestScheduler {
                               failed_count: scheduler.failed_count
                               failed_reasons: scheduler.failed_reasons)
     }
+}
+
+fn basedir(anon path: String) -> String {
+    let code_points = path.code_points()
+    mut last_slash: usize? = None
+    for i in 0..path.length() {
+        if path.byte_at(i) == b'/' {
+            last_slash = i
+        }
+    }
+    if last_slash.has_value() {
+        return path.substring(start: 0, length: last_slash!)
+    }
+
+    return path
 }
 
 fn main(args: [String]) -> c_int {
@@ -711,25 +734,28 @@ fn main(args: [String]) -> c_int {
     for file_name in parsed_options.files {
         mut file = File::open_for_reading(file_name)
         let input = String::from_utf8(file.read_all())
-        let result = Parser::parse(input)
+        let result = Parser::parse(input, test_base_dir: basedir(file_name))
         match result {
-            SuccessTest(output, cppincludes) => {
+            SuccessTest(related_cpp_files, output, cppincludes) => {
                 tests.push(Test(result: ExpectedResult(kind: ResultKind::Okay, output)
                                 file_name
                                 directory_index: 0
-                                cppincludes))
+                                cppincludes
+                                related_cpp_files: join(related_cpp_files, separator: ":")))
             }
-            CompileErrorTest(output, cppincludes) => {
+            CompileErrorTest(related_cpp_files, output, cppincludes) => {
                 tests.push(Test(result: ExpectedResult(kind: ResultKind::CompileError, output)
                                 file_name
                                 directory_index: 0
-                                cppincludes))
+                                cppincludes
+                                related_cpp_files: join(related_cpp_files, separator: ":")))
             }
-            RuntimeErrorTest(output, cppincludes) => {
+            RuntimeErrorTest(related_cpp_files, output, cppincludes) => {
                 tests.push(Test(result: ExpectedResult(kind: ResultKind::RuntimeError, output)
                                 file_name
                                 directory_index: 0
-                                cppincludes))
+                                cppincludes
+                                related_cpp_files: join(related_cpp_files, separator: ":")))
             }
             SkipTest => {
                 eprintln("[ \x1b[33;1mSKIP\x1b[m ] {}", file_name)
