@@ -1487,7 +1487,7 @@ struct CodeGenerator {
             return
         }
 
-        if function.linkage is External {
+        if function.linkage is External and not as_method {
             output.append("extern ")
         }
 
@@ -5269,11 +5269,9 @@ struct CodeGenerator {
         explicit_generic_instantiation: [TypeId]? = None
         output: &mut StringBuilder
     ) throws {
-        // Extern generics need to be in the header anyways, so we can't codegen for them.
-        if not function.generics.params.is_empty() {
-            if function.linkage is External {
-                return
-            }
+        // No need to generate code for external functions
+        if function.linkage is External {
+            return
         }
 
         if function.force_inline is ForceInline {

@@ -1,0 +1,11 @@
+/// Expect:
+/// - output: "hello\n"
+/// - link: "extern_struct_member.cpp"
+
+struct Test {
+    extern fn say_hi() -> void
+}
+
+fn main() {
+    Test::say_hi()
+}

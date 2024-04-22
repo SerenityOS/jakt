@@ -64,7 +64,7 @@ def main():
     target_triple = args.target_triple
     cpp_include = ""
     cpp_compiler = args.cpp_compiler
-    relevant_cpp_files = list(filter(lambda x: len(x) > 0, args.cpp_link.split(":")))
+    relevant_cpp_files = [Path(test_file.parent, x).resolve() for x in args.cpp_link.split(":") if len(x) > 0]
 
     if args.cpp_include and not args.cpp_include == "none":
         cpp_include = f"-I{Path(test_file.parent, args.cpp_include)}"
