@@ -717,7 +717,7 @@ fn zero_out(foo: &mut Foo) {
 
 ### Closures TODO:
 
-- [] Return function from function
+- [ ] Return function from function
 
 ## Compiletime Execution
 
