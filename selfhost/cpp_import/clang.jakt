@@ -2168,10 +2168,7 @@ class CppImportProcessor {
             for_block: false
         )
 
-        let dir = clang_runtime_include_dir()
-        if dir.has_value() {
-            program.compiler.include_paths.push(dir!)
-        }
+        let clang_runtime_dir = clang_runtime_include_dir()
 
         let found_path = program.compiler.find_in_search_paths(import_path)
         if not found_path.has_value() {
@@ -2206,6 +2203,9 @@ class CppImportProcessor {
 
         if tu == CXTranslationUnit() {
             mut includes = program.compiler.include_paths[..].to_array()
+            if clang_runtime_dir.has_value() {
+                includes.push(clang_runtime_dir!)
+            }
 
             mut args_storage = [""; 3 + includes.size() + defines.size()]
             if is_c {
