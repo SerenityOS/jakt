@@ -87,7 +87,8 @@ public:
         auto const candidate = TRY(find_and_populate_until_any_of(candidates, buffer.size()));
 
         if (stream().is_eof()) {
-            if (buffer.size() < m_buffer.used_space()) {
+            if ((candidate.has_value() && candidate->offset + candidate->size > buffer.size())
+                || (!candidate.has_value() && buffer.size() < m_buffer.used_space())) {
                 // Normally, reading from an EOFed stream and receiving bytes
                 // would mean that the stream is no longer EOF. However, it's
                 // possible with a buffered stream that the user is able to read
@@ -112,6 +113,52 @@ public:
         // that the delimiter ends beyond the length of the caller-passed
         // buffer. Let's just fill the caller's buffer up.
         return m_buffer.read(buffer);
+    }
+
+    ErrorOr<StringView> read_line_with_resize(ByteBuffer& buffer)
+    {
+        return StringView { TRY(read_until_with_resize(buffer, "\n"sv)) };
+    }
+
+    ErrorOr<Bytes> read_until_with_resize(ByteBuffer& buffer, StringView candidate)
+    {
+        return read_until_any_of_with_resize(buffer, Array { candidate });
+    }
+
+    template<size_t N>
+    ErrorOr<Bytes> read_until_any_of_with_resize(ByteBuffer& buffer, Array<StringView, N> candidates)
+    {
+        if (!stream().is_open())
+            return Error::from_errno(ENOTCONN);
+
+        auto candidate = TRY(find_and_populate_until_any_of(candidates));
+
+        size_t bytes_read_to_user_buffer = 0;
+        while (!candidate.has_value()) {
+            if (m_buffer.used_space() == 0 && stream().is_eof()) {
+                // If we read to the very end of the buffered and unbuffered data,
+                // then treat the remainder as a full line (the last one), even if it
+                // doesn't end in the delimiter.
+                return buffer.span().trim(bytes_read_to_user_buffer);
+            }
+
+            if (buffer.size() - bytes_read_to_user_buffer < m_buffer.used_space()) {
+                // Resize the user supplied buffer because it cannot fit
+                // the contents of m_buffer.
+                TRY(buffer.try_resize(buffer.size() + m_buffer.used_space()));
+            }
+
+            // Read bytes into the buffer starting from the offset of how many bytes have previously been read.
+            bytes_read_to_user_buffer += m_buffer.read(buffer.span().slice(bytes_read_to_user_buffer)).size();
+            candidate = TRY(find_and_populate_until_any_of(candidates));
+        }
+
+        // Once the candidate has been found, read the contents of m_buffer into the buffer,
+        // offset by how many bytes have already been read in.
+        TRY(buffer.try_resize(bytes_read_to_user_buffer + candidate->offset));
+        m_buffer.read(buffer.span().slice(bytes_read_to_user_buffer));
+        TRY(m_buffer.discard(candidate->size));
+        return buffer.span();
     }
 
     struct Match {
@@ -175,15 +222,21 @@ public:
         return Optional<Match> {};
     }
 
-    // Returns whether a line can be read, populating the buffer in the process.
-    ErrorOr<bool> can_read_line()
+    // Populates the buffer, and returns whether it is possible to read up to the given delimiter.
+    ErrorOr<bool> can_read_up_to_delimiter(ReadonlyBytes delimiter)
     {
         if (stream().is_eof())
-            return m_buffer.used_space() > 0;
+            return m_buffer.offset_of(delimiter).has_value();
 
-        auto maybe_match = TRY(find_and_populate_until_any_of(Array { "\n"sv }));
+        auto maybe_match = TRY(find_and_populate_until_any_of(Array { StringView { delimiter } }));
         if (maybe_match.has_value())
             return true;
+
+        return stream().is_eof() && m_buffer.offset_of(delimiter).has_value();
+    }
+
+    bool is_eof_with_data_left_over() const
+    {
         return stream().is_eof() && m_buffer.used_space() > 0;
     }
 
@@ -264,7 +317,7 @@ public:
     InputBufferedSeekable(InputBufferedSeekable&& other) = default;
     InputBufferedSeekable& operator=(InputBufferedSeekable&& other) = default;
 
-    virtual ErrorOr<Bytes> read_some(Bytes buffer) override { return m_helper.read(move(buffer)); }
+    virtual ErrorOr<Bytes> read_some(Bytes buffer) override { return m_helper.read(buffer); }
     virtual ErrorOr<size_t> write_some(ReadonlyBytes buffer) override { return m_helper.stream().write_some(buffer); }
     virtual bool is_eof() const override { return m_helper.is_eof(); }
     virtual bool is_open() const override { return m_helper.stream().is_open(); }
@@ -291,11 +344,21 @@ public:
         return m_helper.stream().truncate(length);
     }
 
-    ErrorOr<StringView> read_line(Bytes buffer) { return m_helper.read_line(move(buffer)); }
-    ErrorOr<Bytes> read_until(Bytes buffer, StringView candidate) { return m_helper.read_until(move(buffer), move(candidate)); }
+    ErrorOr<StringView> read_line(Bytes buffer) { return m_helper.read_line(buffer); }
+    ErrorOr<bool> can_read_line()
+    {
+        return TRY(m_helper.can_read_up_to_delimiter("\n"sv.bytes())) || m_helper.is_eof_with_data_left_over();
+    }
+    ErrorOr<Bytes> read_until(Bytes buffer, StringView candidate) { return m_helper.read_until(buffer, candidate); }
     template<size_t N>
-    ErrorOr<Bytes> read_until_any_of(Bytes buffer, Array<StringView, N> candidates) { return m_helper.read_until_any_of(move(buffer), move(candidates)); }
-    ErrorOr<bool> can_read_line() { return m_helper.can_read_line(); }
+    ErrorOr<Bytes> read_until_any_of(Bytes buffer, Array<StringView, N> candidates) { return m_helper.read_until_any_of(buffer, move(candidates)); }
+    ErrorOr<bool> can_read_up_to_delimiter(ReadonlyBytes delimiter) { return m_helper.can_read_up_to_delimiter(delimiter); }
+
+    // Methods for reading stream into an auto-adjusting buffer
+    ErrorOr<StringView> read_line_with_resize(ByteBuffer& buffer) { return m_helper.read_line_with_resize(buffer); }
+    ErrorOr<Bytes> read_until_with_resize(ByteBuffer& buffer, StringView candidate) { return m_helper.read_until_with_resize(buffer, candidate); }
+    template<size_t N>
+    ErrorOr<Bytes> read_until_any_of_with_resize(ByteBuffer& buffer, Array<StringView, N> candidates) { return m_helper.read_until_any_of_with_resize(buffer, move(candidates)); }
 
     size_t buffer_size() const { return m_helper.buffer_size(); }
 

@@ -247,6 +247,7 @@ struct ScopeId;
 namespace types {
 struct GenericInferences;
 struct SpecializedType;
+struct ResolutionMixin;
 class Scope;
 struct ResolvedForallChunk;
 class Module;
@@ -375,6 +376,10 @@ struct Typechecker;
 struct AlreadyImplementedFor;
 struct TraitImplCheck;
 struct FunctionMatchResult;
+
+struct BreakContinueLegalityTracker;
+
+struct ReturnLegalityTracker;
 
 struct NumericOrStringValue;
 

@@ -125,10 +125,10 @@ StringView FormatParser::consume_literal()
     auto const begin = tell();
 
     while (!is_eof()) {
-        if (consume_specific("{{"))
+        if (consume_specific("{{"sv))
             continue;
 
-        if (consume_specific("}}"))
+        if (consume_specific("}}"sv))
             continue;
 
         if (next_is(is_any_of("{}"sv)))
@@ -752,7 +752,7 @@ ErrorOr<void> FormatBuilder::put_hexdump(ReadonlyBytes bytes, size_t width, char
 {
     auto put_char_view = [&](auto i) -> ErrorOr<void> {
         TRY(put_padding(fill, 4));
-        for (size_t j = i - width; j < i; ++j) {
+        for (size_t j = i - min(i, width); j < i; ++j) {
             auto ch = bytes[j];
             TRY(m_builder.try_append(ch >= 32 && ch <= 127 ? ch : '.')); // silly hack
         }
@@ -769,7 +769,7 @@ ErrorOr<void> FormatBuilder::put_hexdump(ReadonlyBytes bytes, size_t width, char
         TRY(put_u64(bytes[i], 16, false, false, true, false, Align::Right, 2));
     }
 
-    if (width > 0 && bytes.size() && bytes.size() % width == 0)
+    if (width > 0)
         TRY(put_char_view(bytes.size()));
 
     return {};
@@ -858,7 +858,7 @@ void StandardFormatter::parse(TypeErasedFormatParams& params, FormatParser& pars
         m_mode = Mode::Hexfloat;
     else if (parser.consume_specific('A'))
         m_mode = Mode::HexfloatUppercase;
-    else if (parser.consume_specific("hex-dump"))
+    else if (parser.consume_specific("hex-dump"sv))
         m_mode = Mode::HexDump;
 
     if (!parser.is_eof())
@@ -1215,15 +1215,15 @@ void vdbg(StringView fmtstr, TypeErasedFormatParams& params, bool newline)
             struct timespec ts = {};
             clock_gettime(CLOCK_MONOTONIC_COARSE, &ts);
             auto pid = getpid();
-#    ifndef AK_OS_MACOS
-            // Darwin doesn't handle thread IDs the same way other Unixes do
+#    if defined(AK_OS_SERENITY) || defined(AK_OS_LINUX)
+            // Linux and Serenity handle thread IDs as if they are related to process ids
             auto tid = gettid();
             if (pid == tid)
 #    endif
             {
                 builder.appendff("{}.{:03} \033[33;1m{}({})\033[0m: ", ts.tv_sec, ts.tv_nsec / 1000000, process_name, pid);
             }
-#    ifndef AK_OS_MACOS
+#    if defined(AK_OS_SERENITY) || defined(AK_OS_LINUX)
             else {
                 builder.appendff("{}.{:03} \033[33;1m{}({}:{})\033[0m: ", ts.tv_sec, ts.tv_nsec / 1000000, process_name, pid, tid);
             }

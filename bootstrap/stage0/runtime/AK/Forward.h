@@ -8,6 +8,7 @@
 
 #include <AK/DefaultDelete.h>
 #include <AK/SinglyLinkedListSizePolicy.h>
+#include <AK/StdLibExtras.h>
 #include <AK/Types.h>
 
 namespace AK {
@@ -48,7 +49,6 @@ class String;
 class StringBuilder;
 class StringImpl;
 class StringView;
-class URL;
 class UnixDateTime;
 class Utf16View;
 class Utf32CodePointIterator;
@@ -203,7 +203,6 @@ using AK::StringView;
 using AK::TrailingCodePointTransformation;
 using AK::Traits;
 using AK::UnixDateTime;
-using AK::URL;
 using AK::Utf16View;
 using AK::Utf32CodePointIterator;
 using AK::Utf32View;

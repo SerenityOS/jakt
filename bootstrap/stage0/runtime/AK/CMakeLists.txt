@@ -28,14 +28,13 @@ set(AK_SOURCES
     StackInfo.cpp
     Stream.cpp
     String.cpp
+    StringBase.cpp
     StringBuilder.cpp
     StringFloatingPointConversions.cpp
     StringImpl.cpp
     StringUtils.cpp
     StringView.cpp
     Time.cpp
-    URL.cpp
-    URLParser.cpp
     UUID.cpp
     Utf16View.cpp
     Utf32View.cpp

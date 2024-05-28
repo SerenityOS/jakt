@@ -234,12 +234,20 @@
 #    define ITEM_RECTS_DEBUG 0
 #endif
 
+#ifndef JBIG2_DEBUG
+#    define JBIG2_DEBUG 0
+#endif
+
 #ifndef JOB_DEBUG
 #    define JOB_DEBUG 0
 #endif
 
 #ifndef JPEG_DEBUG
 #    define JPEG_DEBUG 0
+#endif
+
+#ifndef JPEG2000_DEBUG
+#    define JPEG2000_DEBUG 0
 #endif
 
 #ifndef JS_BYTECODE_DEBUG
@@ -288,6 +296,10 @@
 
 #ifndef LZW_DEBUG
 #    define LZW_DEBUG 0
+#endif
+
+#ifndef MACH_PORT_DEBUG
+#    define MACH_PORT_DEBUG 0
 #endif
 
 #ifndef MALLOC_DEBUG
@@ -528,6 +540,10 @@
 
 #ifndef WEBDRIVER_DEBUG
 #    define WEBDRIVER_DEBUG 0
+#endif
+
+#ifndef WEBDRIVER_ROUTE_DEBUG
+#    define WEBDRIVER_ROUTE_DEBUG 0
 #endif
 
 #ifndef WEBGL_CONTEXT_DEBUG

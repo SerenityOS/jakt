@@ -8,6 +8,7 @@
 
 #include <AK/Assertions.h>
 #include <AK/Checked.h>
+#include <AK/Concepts.h>
 #include <AK/EnumBits.h>
 #include <AK/Forward.h>
 #include <AK/Optional.h>
@@ -83,7 +84,7 @@ public:
         return m_characters[index];
     }
 
-    using ConstIterator = SimpleIterator<const StringView, char const>;
+    using ConstIterator = SimpleIterator<StringView const, char const>;
 
     [[nodiscard]] constexpr ConstIterator begin() const { return ConstIterator::begin(*this); }
     [[nodiscard]] constexpr ConstIterator end() const { return ConstIterator::end(*this); }
@@ -176,8 +177,14 @@ public:
     {
         VERIFY(!separator.is_empty());
         // FIXME: This can't go in the template header since declval won't allow the incomplete StringView type.
-        using CallbackReturn = decltype(declval<Callback>()(StringView {}));
-        constexpr auto ReturnsErrorOr = IsSpecializationOf<CallbackReturn, ErrorOr>;
+        using CallbackReturn = InvokeResult<Callback, StringView>;
+        constexpr auto ReturnsErrorOr = FallibleFunction<Callback, StringView>;
+        // FIXME: We might need a concept for this...
+        constexpr auto ReturnsIterationDecision = []() -> bool {
+            if constexpr (ReturnsErrorOr)
+                return IsSame<typename CallbackReturn::ResultType, IterationDecision>;
+            return IsSame<CallbackReturn, IterationDecision>;
+        }();
         using ReturnType = Conditional<ReturnsErrorOr, ErrorOr<void>, void>;
         return [&]() -> ReturnType {
             if (is_empty())
@@ -194,10 +201,21 @@ public:
                     auto part = part_with_separator;
                     if (!keep_separator)
                         part = part_with_separator.substring_view(0, separator_index);
-                    if constexpr (ReturnsErrorOr)
-                        TRY(callback(part));
-                    else
-                        callback(part);
+                    if constexpr (ReturnsErrorOr) {
+                        if constexpr (ReturnsIterationDecision) {
+                            if (TRY(callback(part)) == IterationDecision::Break)
+                                return ReturnType();
+                        } else {
+                            TRY(callback(part));
+                        }
+                    } else {
+                        if constexpr (ReturnsIterationDecision) {
+                            if (callback(part) == IterationDecision::Break)
+                                return ReturnType();
+                        } else {
+                            callback(part);
+                        }
+                    }
                 }
                 view = view.substring_view_starting_after_substring(part_with_separator);
                 maybe_separator_index = view.find(separator);
@@ -217,7 +235,12 @@ public:
     // 0.29, the spec defines a line ending as "a newline (U+000A), a carriage
     // return (U+000D) not followed by a newline, or a carriage return and a
     // following newline.".
-    [[nodiscard]] Vector<StringView> lines(bool consider_cr = true) const;
+    enum class ConsiderCarriageReturn {
+        No,
+        Yes,
+    };
+    [[nodiscard]] Vector<StringView> lines(ConsiderCarriageReturn = ConsiderCarriageReturn::Yes) const;
+    [[nodiscard]] size_t count_lines(ConsiderCarriageReturn = ConsiderCarriageReturn::Yes) const;
 
     // Create a new substring view of this string view, starting either at the beginning of
     // the given substring view, or after its end, and continuing until the end of this string

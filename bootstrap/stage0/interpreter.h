@@ -49,7 +49,7 @@ Deferred() {};
 class InterpreterScope :public RefCounted<InterpreterScope>, public Weakable<InterpreterScope> {
   public:
 virtual ~InterpreterScope() = default;
-public: JaktInternal::Dictionary<ByteString,types::Value> bindings;public: JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> parent;public: JaktInternal::Dictionary<ids::TypeId,ids::TypeId> type_bindings;public: JaktInternal::DynamicArray<interpreter::Deferred> defers;public: static NonnullRefPtr<interpreter::InterpreterScope> create(JaktInternal::Dictionary<ByteString,types::Value> const bindings, JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> const parent, JaktInternal::Dictionary<ids::TypeId,ids::TypeId> const type_bindings);
+public: JaktInternal::Dictionary<ByteString,types::Value> bindings;public: JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> parent;public: JaktInternal::Dictionary<ids::TypeId,ids::TypeId> type_bindings;public: JaktInternal::DynamicArray<interpreter::Deferred> defers;private: NonnullRefPtr<compiler::Compiler> compiler;public: static NonnullRefPtr<interpreter::InterpreterScope> create(JaktInternal::Dictionary<ByteString,types::Value> const bindings, JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> const parent, JaktInternal::Dictionary<ids::TypeId,ids::TypeId> const type_bindings, NonnullRefPtr<compiler::Compiler> const compiler);
 public: static NonnullRefPtr<interpreter::InterpreterScope> from_runtime_scope(ids::ScopeId const scope_id, NonnullRefPtr<types::CheckedProgram> const program, JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> const parent);
 public: ErrorOr<types::Value> must_get(ByteString const name) const;
 public: ErrorOr<void> set(ByteString const name, types::Value const value);
@@ -61,9 +61,9 @@ public: ErrorOr<void> perform_defers(NonnullRefPtr<interpreter::Interpreter> int
 public: void defer_expression(NonnullRefPtr<typename types::CheckedExpression> const expr);
 public: void defer_statement(NonnullRefPtr<typename types::CheckedStatement> const statement);
 public: protected:
-explicit InterpreterScope(JaktInternal::Dictionary<ByteString,types::Value> a_bindings, JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> a_parent, JaktInternal::Dictionary<ids::TypeId,ids::TypeId> a_type_bindings, JaktInternal::DynamicArray<interpreter::Deferred> a_defers);
+explicit InterpreterScope(JaktInternal::Dictionary<ByteString,types::Value> a_bindings, JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> a_parent, JaktInternal::Dictionary<ids::TypeId,ids::TypeId> a_type_bindings, JaktInternal::DynamicArray<interpreter::Deferred> a_defers, NonnullRefPtr<compiler::Compiler> a_compiler);
 public:
-static NonnullRefPtr<InterpreterScope> __jakt_create(JaktInternal::Dictionary<ByteString,types::Value> bindings, JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> parent, JaktInternal::Dictionary<ids::TypeId,ids::TypeId> type_bindings, JaktInternal::DynamicArray<interpreter::Deferred> defers);
+static NonnullRefPtr<InterpreterScope> __jakt_create(JaktInternal::Dictionary<ByteString,types::Value> bindings, JaktInternal::Optional<NonnullRefPtr<interpreter::InterpreterScope>> parent, JaktInternal::Dictionary<ids::TypeId,ids::TypeId> type_bindings, JaktInternal::DynamicArray<interpreter::Deferred> defers, NonnullRefPtr<compiler::Compiler> compiler);
 
 public: ByteString debug_description() const;
 };struct ExecutionResult {

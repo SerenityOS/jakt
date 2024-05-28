@@ -174,16 +174,16 @@ if (__jakt_var_3.is_error()) {auto error = __jakt_var_3.release_error();{
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<bool>> {
 auto __jakt_enum_value = (((error).code()));
 if (__jakt_enum_value == ErrNOENT) {
-return (warnln((StringView::from_string_literal("\u001b[31;1mError\u001b[0m Could not access {}: File not found"sv)),((((*this).files))[((file_id).id)]))), JaktInternal::ExplicitValue<void>();
+return ({warnln((StringView::from_string_literal("\u001b[31;1mError\u001b[0m Could not access {}: File not found"sv)),((((*this).files))[((file_id).id)]));}), JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == ErrACCES) {
-return (warnln((StringView::from_string_literal("\u001b[31;1mError\u001b[0m Could not access {}: Permission denied"sv)),((((*this).files))[((file_id).id)]))), JaktInternal::ExplicitValue<void>();
+return ({warnln((StringView::from_string_literal("\u001b[31;1mError\u001b[0m Could not access {}: Permission denied"sv)),((((*this).files))[((file_id).id)]));}), JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == ErrFBIG) {
-return (warnln((StringView::from_string_literal("\u001b[31;1mError\u001b[0m Could not access {}: File too big"sv)),((((*this).files))[((file_id).id)]))), JaktInternal::ExplicitValue<void>();
+return ({warnln((StringView::from_string_literal("\u001b[31;1mError\u001b[0m Could not access {}: File too big"sv)),((((*this).files))[((file_id).id)]));}), JaktInternal::ExplicitValue<void>();
 }
 else if (__jakt_enum_value == ErrNAMETOOLONG) {
-return (warnln((StringView::from_string_literal("\u001b[31;1mError\u001b[0m Could not access {}: Name too long"sv)),((((*this).files))[((file_id).id)]))), JaktInternal::ExplicitValue<void>();
+return ({warnln((StringView::from_string_literal("\u001b[31;1mError\u001b[0m Could not access {}: Name too long"sv)),((((*this).files))[((file_id).id)]));}), JaktInternal::ExplicitValue<void>();
 }
 else {
 {

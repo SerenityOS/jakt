@@ -7,6 +7,10 @@
 
 #pragma once
 
+#if __has_include(<features.h>)
+#    include <features.h>
+#endif
+
 #ifndef USING_AK_GLOBALLY
 #    define USING_AK_GLOBALLY 1
 #endif
@@ -53,6 +57,10 @@
 #    define AK_COMPILER_GCC
 #endif
 
+#if defined(AK_COMPILER_CLANG) && defined(__apple_build_version__)
+#    define AK_COMPILER_APPLE_CLANG
+#endif
+
 #if defined(__GLIBC__)
 #    define AK_LIBC_GLIBC
 #    define AK_LIBC_GLIBC_PREREQ(maj, min) __GLIBC_PREREQ((maj), (min))
@@ -68,8 +76,13 @@
 #    define AK_OS_LINUX
 #endif
 
-#if defined(__APPLE__) && defined(__MACH__)
+#if defined(__APPLE__) && defined(__MACH__) && !defined(__IOS__)
 #    define AK_OS_MACOS
+#    define AK_OS_BSD_GENERIC
+#endif
+
+#if defined(__IOS__)
+#    define AK_OS_IOS
 #    define AK_OS_BSD_GENERIC
 #endif
 
@@ -104,6 +117,10 @@
 
 #if defined(__gnu_hurd__)
 #    define AK_OS_GNU_HURD
+#endif
+
+#if defined(__MACH__)
+#    define AK_OS_MACH
 #endif
 
 #if defined(_WIN32) || defined(_WIN64)
@@ -146,10 +163,6 @@
 #    define VALIDATE_IS_RISCV64() static_assert(false, "Trying to include riscv64 only header on non riscv64 platform");
 #endif
 
-#if !defined(AK_COMPILER_CLANG)
-#    define AK_HAS_CONDITIONALLY_TRIVIAL
-#endif
-
 // Apple Clang 14.0.3 (shipped in Xcode 14.3) has a bug that causes __builtin_subc{,l,ll}
 // to incorrectly return whether a borrow occurred on AArch64. See our writeup for the Qemu
 // issue also caused by it: https://gitlab.com/qemu-project/qemu/-/issues/1659#note_1408275831
@@ -177,10 +190,23 @@
 #endif
 #define RETURNS_NONNULL __attribute__((returns_nonnull))
 
+#ifdef NO_SANITIZE_COVERAGE
+#    undef NO_SANITIZE_COVERAGE
+#endif
+#if defined(AK_COMPILER_CLANG)
+#    define NO_SANITIZE_COVERAGE __attribute__((no_sanitize("coverage")))
+#else
+#    define NO_SANITIZE_COVERAGE __attribute__((no_sanitize_coverage))
+#endif
+
 #ifdef NO_SANITIZE_ADDRESS
 #    undef NO_SANITIZE_ADDRESS
 #endif
-#define NO_SANITIZE_ADDRESS __attribute__((no_sanitize_address))
+#if defined(AK_COMPILER_CLANG)
+#    define NO_SANITIZE_ADDRESS __attribute__((no_sanitize("address")))
+#else
+#    define NO_SANITIZE_ADDRESS __attribute__((no_sanitize_address))
+#endif
 
 #ifdef NAKED
 #    undef NAKED
@@ -213,9 +239,13 @@
 #    define HAS_ADDRESS_SANITIZER
 #    define ASAN_POISON_MEMORY_REGION(addr, size) __asan_poison_memory_region(addr, size)
 #    define ASAN_UNPOISON_MEMORY_REGION(addr, size) __asan_unpoison_memory_region(addr, size)
+#    define LSAN_REGISTER_ROOT_REGION(base, size) __lsan_register_root_region(base, size)
+#    define LSAN_UNREGISTER_ROOT_REGION(base, size) __lsan_unregister_root_region(base, size)
 #else
 #    define ASAN_POISON_MEMORY_REGION(addr, size)
 #    define ASAN_UNPOISON_MEMORY_REGION(addr, size)
+#    define LSAN_REGISTER_ROOT_REGION(base, size)
+#    define LSAN_UNREGISTER_ROOT_REGION(base, size)
 #endif
 
 #ifndef AK_OS_SERENITY
