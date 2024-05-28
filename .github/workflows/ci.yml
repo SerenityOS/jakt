@@ -124,6 +124,13 @@ jobs:
          path: 'llvm-install-${{ env.LLVM_VER }}/'
          key: 'libclang-${{ runner.os }}-${{ env.LLVM_VER }}'
 
+     - name: Build clang if cache miss
+       uses: ./.github/actions/clang-windows
+       if: steps.cache-clang.outputs.cache-hit != 'true'
+       with:
+         llvm_version: "${{ env.LLVM_VER }}"
+         llvm_branch: "llvmorg-${{ env.LLVM_VER }}"
+
      - name: Setup Ninja
        uses: ashutoshvarma/setup-ninja@master
        with:

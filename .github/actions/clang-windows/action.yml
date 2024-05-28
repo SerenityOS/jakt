@@ -1,0 +1,52 @@
+name: Build LibClang for Windows
+description: 'Builds LibClang for Windows and caches it'
+author: 'Ali Mohammad Pur <mpfard@serenityos.org>'
+
+inputs:
+  llvm_version:
+    description: 'Version of LLVM to build and cache'
+    required: false
+    default: 16.0.6
+  llvm_branch:
+    description: 'Specific LLVM branch to build'
+    required: false
+    default: "llvmorg-16.0.6"
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v3
+    - name: Setup Ninja
+      uses: ashutoshvarma/setup-ninja@master
+      with:
+        # ninja version to download. Default: 1.10.0
+        version: 1.10.0
+        dest: ${{ github.workspace }}/ninja_bin
+
+    - name: Clone LLVM
+      uses: actions/checkout@v3
+      with:
+        repository: 'llvm/llvm-project'
+        ref: ${{ inputs.llvm_branch }}
+        path: 'llvm-project-${{ inputs.llvm_version }}'
+        fetch-depth: 1
+
+
+    - name: Configure CMake
+      shell: cmd
+      run: |
+        "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64 &^
+        cmake -GNinja -S llvm-project-${{ inputs.llvm_version }}\llvm -B llvm-build -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_C_COMPILER=clang-cl -DLLVM_ENABLE_PROJECTS=clang -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXE_LINKER_FLAGS="/machine:x64" -DCMAKE_INSTALL_PREFIX="%GITHUB_WORKSPACE%/llvm-install-${{ inputs.llvm_version }}/"
+
+    - name: Build
+      shell: cmd
+      run: |
+        "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64 &^
+        ninja -C llvm-build clang install
+
+    - name: Cache LibClang
+      id: cache-clang
+      uses: actions/cache@v3
+      with:
+        path: 'llvm-install-${{ inputs.llvm_version }}/'
+        key: 'libclang-${{ runner.os }}-${{ inputs.llvm_version }}'
