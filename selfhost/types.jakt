@@ -600,6 +600,19 @@ struct SpecializedType {
     type_id: TypeId
 }
 
+struct ResolutionMixin {
+    scope_id: ScopeId
+    mixin_vars: bool = true
+    mixin_bindings: bool = true
+    mixin_structs: bool = true
+    mixin_functions: bool = true
+    mixin_enums: bool = true
+    mixin_types: bool = true
+    mixin_traits: bool = true
+    mixin_imports: bool = true
+    mixin_aliases: bool = true
+}
+
 class Scope {
     public parent: ScopeId?
     public can_throw: bool
@@ -626,7 +639,7 @@ class Scope {
     public alias_path: [ResolvedNamespace]? = None
     public after_extern_include: [IncludeAction] = []
     public before_extern_include: [IncludeAction] = []
-    public resolution_mixins: [ScopeId] = []
+    public resolution_mixins: [ResolutionMixin] = []
 
     // Set if this scope corresponds to a type, as opposed to a block or a namespace.
     public relevant_type_id: TypeId? = None
@@ -2022,8 +2035,12 @@ class CheckedProgram {
     ) throws -> CheckedVariable? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
-            &fn[var, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<CheckedVariable> {
-                let scope = .get_scope(scope_id)
+            &fn[var, this](mixin: ResolutionMixin, name_override: String?, is_alias: bool) throws -> IterationDecision<CheckedVariable> {
+                if not mixin.mixin_vars {
+                    return IterationDecision::Continue
+                }
+
+                let scope = .get_scope(mixin.scope_id)
                 let maybe_var = scope.vars.get(var)
                 if maybe_var.has_value() {
                     return IterationDecision::Break(value: .get_variable(maybe_var!))
@@ -2044,8 +2061,12 @@ class CheckedProgram {
     ) throws -> Value? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
-            &fn[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<Value> {
-                let scope = .get_scope(scope_id)
+            &fn[name, this](mixin: ResolutionMixin, name_override: String?, is_alias: bool) throws -> IterationDecision<Value> {
+                if not mixin.mixin_bindings {
+                    return IterationDecision::Continue
+                }
+
+                let scope = .get_scope(mixin.scope_id)
                 let maybe_binding = scope.comptime_bindings.get(name)
                 if maybe_binding.has_value() {
                     return IterationDecision::Break(value: maybe_binding!)
@@ -2066,10 +2087,14 @@ class CheckedProgram {
     ) throws -> (TypeId, ScopeId)? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
-            &fn[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<(TypeId, ScopeId)> {
-                let maybe_type = .get_scope(scope_id).types.get(name)
+            &fn[name, this](mixin: ResolutionMixin, name_override: String?, is_alias: bool) throws -> IterationDecision<(TypeId, ScopeId)> {
+                if not mixin.mixin_types {
+                    return IterationDecision::Continue
+                }
+
+                let maybe_type = .get_scope(mixin.scope_id).types.get(name)
                 if maybe_type.has_value() {
-                    return IterationDecision::Break(value: (maybe_type!, scope_id))
+                    return IterationDecision::Break(value: (maybe_type!, mixin.scope_id))
                 }
                 return IterationDecision::Continue
             }
@@ -2097,8 +2122,12 @@ class CheckedProgram {
     ) throws -> EnumId? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
-            &fn[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<EnumId> {
-                let scope = .get_scope(scope_id)
+            &fn[name, this](mixin: ResolutionMixin, name_override: String?, is_alias: bool) throws -> IterationDecision<EnumId> {
+                if not mixin.mixin_enums {
+                    return IterationDecision::Continue
+                }
+
+                let scope = .get_scope(mixin.scope_id)
                 let maybe_enum = scope.enums.get(name)
                 if maybe_enum.has_value() {
                     return IterationDecision::Break(value: maybe_enum!)
@@ -2119,8 +2148,12 @@ class CheckedProgram {
     ) throws -> TraitId? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
-            &fn[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<TraitId> {
-                let scope = .get_scope(scope_id)
+            &fn[name, this](mixin: ResolutionMixin, name_override: String?, is_alias: bool) throws -> IterationDecision<TraitId> {
+                if not mixin.mixin_traits {
+                    return IterationDecision::Continue
+                }
+
+                let scope = .get_scope(mixin.scope_id)
                 let maybe_trait = scope.traits.get(name)
                 if maybe_trait.has_value() {
                     return IterationDecision::Break(value: maybe_trait!)
@@ -2167,28 +2200,30 @@ class CheckedProgram {
     private fn for_each_scope_accessible_unqualified_from_scope_direct_chain(
         this
         scope_id: ScopeId
-        anon callback: &fn(scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<bool>
+        anon callback: &fn(mixin: ResolutionMixin, name_override: String?, is_alias: bool) throws -> IterationDecision<bool>
         root_scope: ScopeId?
     ) throws -> bool? {
         // Only scan the direct chain of scopes, not the entire tree
 
-        mut scopes_to_check = Queue<ScopeId>()
+        mut scopes_to_check = Queue<ResolutionMixin>()
         mut seen: {ScopeId} = {}
 
-        scopes_to_check.enqueue(scope_id)
+        scopes_to_check.enqueue(ResolutionMixin(scope_id))
         for child in .get_scope(scope_id).children {
-            scopes_to_check.enqueue(child)
+            scopes_to_check.enqueue(ResolutionMixin(scope_id: child))
         }
 
         while not scopes_to_check.is_empty() {
-            let scope_id = scopes_to_check.dequeue()
+            let mixin = scopes_to_check.dequeue()
+            let scope_id = mixin.scope_id
+
             if seen.contains(scope_id) {
                 continue
             }
 
             seen.add(scope_id)
 
-            let res = callback(scope_id, name_override: None, is_alias: false)
+            let res = callback(mixin, name_override: None, is_alias: false)
             match res {
                 Break(value) => {
                     return Some(value)
@@ -2199,7 +2234,7 @@ class CheckedProgram {
             let scope = .get_scope(scope_id)
 
             if not (root_scope.has_value() and scope_id == root_scope!) and scope.parent.has_value() {
-                scopes_to_check.enqueue(scope.parent!)
+                scopes_to_check.enqueue(ResolutionMixin(scope_id: scope.parent!))
             }
 
             if scope.namespace_name.has_value() {
@@ -2207,7 +2242,7 @@ class CheckedProgram {
             }
 
             for child in scope.children {
-                scopes_to_check.enqueue(child)
+                scopes_to_check.enqueue(ResolutionMixin(scope_id: child))
             }
         }
 
@@ -2217,7 +2252,7 @@ class CheckedProgram {
     private fn for_each_scope_accessible_unqualified_from_scope_impl(
         this
         scope_id: ScopeId
-        anon callback: &fn(scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<bool>
+        anon callback: &fn(mixin: ResolutionMixin, name_override: String?, is_alias: bool) throws -> IterationDecision<bool>
         ignore_mixin_scopes: bool = false
         root_scope: ScopeId? = None
     ) throws -> bool? {
@@ -2267,16 +2302,17 @@ class CheckedProgram {
         // - - Add the scope's mixins to the queue
         // - - Visit the scope's aliases
 
-        mut scopes_to_check = Queue<ScopeId>()
+        mut scopes_to_check = Queue<ResolutionMixin>()
         mut seen: {ScopeId} = {}
 
-        scopes_to_check.enqueue(scope_id)
+        scopes_to_check.enqueue(ResolutionMixin(scope_id))
         for child in .get_scope(scope_id).children {
-            scopes_to_check.enqueue(child)
+            scopes_to_check.enqueue(ResolutionMixin(scope_id: child))
         }
 
         while not scopes_to_check.is_empty() {
-            let scope_id = scopes_to_check.dequeue()
+            let mixin = scopes_to_check.dequeue()
+            let scope_id = mixin.scope_id
 
             if seen.contains(scope_id) {
                 continue
@@ -2284,7 +2320,7 @@ class CheckedProgram {
 
             seen.add(scope_id)
 
-            let res = callback(scope_id, name_override: None, is_alias: false)
+            let res = callback(mixin, name_override: None, is_alias: false)
             match res {
                 Break(value) => {
                     return Some(value)
@@ -2295,12 +2331,12 @@ class CheckedProgram {
             let scope = .get_scope(scope_id)
 
             if not (root_scope.has_value() and scope_id == root_scope!) and scope.parent.has_value() {
-                scopes_to_check.enqueue(scope.parent!)
+                scopes_to_check.enqueue(ResolutionMixin(scope_id: scope.parent!))
             }
 
             for child in scope.children {
                 if not .get_scope(child).namespace_name.has_value() {
-                    scopes_to_check.enqueue(child)
+                    scopes_to_check.enqueue(ResolutionMixin(scope_id: child))
                 }
             }
 
@@ -2309,7 +2345,7 @@ class CheckedProgram {
             }
 
             for (name, alias) in scope.aliases {
-                let res = callback(scope_id: alias, name_override: name, is_alias: true)
+                let res = callback(mixin: ResolutionMixin(scope_id: alias), name_override: name, is_alias: true)
                 match res {
                     Break(value) => {
                         return Some(value)
@@ -2326,7 +2362,7 @@ class CheckedProgram {
         let search_scope = .get_scope(search_scope_id)
         for (name, module) in search_scope.imports {
             let import_scope_id = ScopeId(module_id: module, id: 0)
-            let res = callback(scope_id: import_scope_id, name_override: name, is_alias: false)
+            let res = callback(mixin: ResolutionMixin(scope_id: import_scope_id), name_override: name, is_alias: false)
             match res {
                 Break(value) => {
                     return Some(value)
@@ -2342,15 +2378,15 @@ class CheckedProgram {
     public fn for_each_scope_accessible_unqualified_from_scope<T>(
         this
         scope_id: ScopeId
-        anon callback: &fn(scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<T>
+        anon callback: &fn(mixin: ResolutionMixin, name_override: String?, is_alias: bool) throws -> IterationDecision<T>
         ignore_mixin_scopes: bool = false
         root_scope: ScopeId? = None
     ) throws -> T? {
         mut result: T? = None
         .for_each_scope_accessible_unqualified_from_scope_impl(
             scope_id
-            &fn[&mut callback, &mut result](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<bool> {
-                match callback(scope_id, name_override, is_alias) {
+            &fn[&mut callback, &mut result](mixin: ResolutionMixin, name_override: String?, is_alias: bool) throws -> IterationDecision<bool> {
+                match callback(mixin, name_override, is_alias) {
                     Break(value) => {
                         result = value
                         return IterationDecision::Break(value: true)
@@ -2376,8 +2412,12 @@ class CheckedProgram {
     ) throws -> StructId? {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
-            &fn[name, this](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<StructId> {
-                let scope = .get_scope(scope_id)
+            &fn[name, this](mixin: ResolutionMixin, name_override: String?, is_alias: bool) throws -> IterationDecision<StructId> {
+                if not mixin.mixin_structs {
+                    return IterationDecision::Continue
+                }
+
+                let scope = .get_scope(mixin.scope_id)
                 let maybe_struct = scope.structs.get(name)
                 if maybe_struct.has_value() {
                     return IterationDecision::Break(value: maybe_struct!)
@@ -2404,8 +2444,8 @@ class CheckedProgram {
     public fn is_scope_directly_accessible_from(this, check_scope_id: ScopeId, scope_id: ScopeId, ignore_mixin_scopes: bool = false) throws -> bool {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
-            &fn[check_scope_id](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<bool> {
-                if check_scope_id.equals(scope_id) {
+            &fn[check_scope_id](mixin: ResolutionMixin, name_override: String?, is_alias: bool) throws -> IterationDecision<bool> {
+                if check_scope_id.equals(mixin.scope_id) {
                     return IterationDecision::Break(value: true)
                 }
 
@@ -2481,15 +2521,15 @@ class CheckedProgram {
         return .for_each_scope_accessible_unqualified_from_scope(
             scope_id
             &fn[name, treat_aliases_as_imports, this](
-                scope_id: ScopeId
+                mixin: ResolutionMixin
                 name_override: String?
                 is_alias: bool
             ) throws -> IterationDecision<(ScopeId, bool)> {
-                let scope = .get_scope(scope_id)
+                let scope = .get_scope(mixin.scope_id)
                 let effective_name = name_override ?? scope.namespace_name
                 let is_import = name_override.has_value() and not is_alias
                 if effective_name.has_value() and effective_name! == name {
-                    return IterationDecision::Break(value: (scope_id, is_import or (is_alias and treat_aliases_as_imports)))
+                    return IterationDecision::Break(value: (mixin.scope_id, is_import or (is_alias and treat_aliases_as_imports)))
                 }
 
                 for child in scope.children {
@@ -2569,16 +2609,20 @@ class CheckedProgram {
         .for_each_scope_accessible_unqualified_from_scope(
             scope_id: parent_scope_id
             &fn[function_name, &mut result_ids, &mut result_scope, this](
-                scope_id: ScopeId
+                mixin: ResolutionMixin
                 name_override: String?
                 is_alias: bool
             ) throws -> IterationDecision<([FunctionId], ScopeId)> {
-                let scope = .get_scope(scope_id)
+                if not mixin.mixin_functions {
+                    return IterationDecision::Continue
+                }
+
+                let scope = .get_scope(mixin.scope_id)
                 let maybe_functions = scope.functions.get(function_name)
                 if maybe_functions.has_value() {
                     result_ids.push_values(&maybe_functions!)
                     if not result_scope.has_value() {
-                        result_scope = scope_id
+                        result_scope = mixin.scope_id
                     }
                 }
 

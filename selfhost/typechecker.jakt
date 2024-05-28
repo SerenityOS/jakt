@@ -23,9 +23,9 @@ import types {
     CheckedQualifiers, CheckedStatement, CheckedStringLiteral, CheckedStruct, CheckedTrait, CheckedTypeCast
     CheckedUnaryOperator, CheckedVariable, CheckedVisibility, ClassInstanceRebind, EnumId, FieldRecord
     FunctionGenericParameter, FunctionGenerics, FunctionId, GenericInferences, IterationDecision, LoadedModule
-    MaybeResolvedScope, Module, ModuleId, NumberConstant, OperatorTraitImplementation, ResolvedNamespace, SafetyMode
-    Scope, ScopeId, SpecializedType, StringLiteral, StructId, StructLikeId, TraitId, Type, TypeId, Value, VarId
-    builtin, comptime_format_impl, never_type_id, unknown_type_id, void_type_id
+    MaybeResolvedScope, Module, ModuleId, NumberConstant, OperatorTraitImplementation, ResolutionMixin
+    ResolvedNamespace, SafetyMode, Scope, ScopeId, SpecializedType, StringLiteral, StructId, StructLikeId, TraitId
+    Type, TypeId, Value, VarId, builtin, comptime_format_impl, never_type_id, unknown_type_id, void_type_id
 }
 import types
 import utility { FileId, Span, add_arrays, escape_for_quotes, join, panic, todo, map, write_to_file }
@@ -1438,7 +1438,7 @@ struct Typechecker {
                 // Anonymous namespace to ensure imported symbols don't clash with prelude symbols.
                 // (unless the imported namespace is actually named)
                 mut scope = .get_scope(scope_id)
-                scope.resolution_mixins.push(import_scope_id)
+                scope.resolution_mixins.push(ResolutionMixin(scope_id: import_scope_id))
                 if extern_import.assigned_namespace.name.has_value() {
                     .get_scope(import_scope_id).namespace_name = extern_import.assigned_namespace.name!
                     .get_scope(import_scope_id).external_name = ExternalName::Plain("") // global ns
@@ -1462,7 +1462,7 @@ struct Typechecker {
                 // Anonymous namespace to ensure imported symbols don't clash with prelude symbols.
                 // (unless the imported namespace is actually named)
                 mut scope = .get_scope(scope_id)
-                scope.resolution_mixins.push(child_scope_id)
+                scope.resolution_mixins.push(ResolutionMixin(scope_id: child_scope_id))
             }
             .typecheck_auto_extern_imports(coalesced_imports, child_scope_id)
         }
@@ -1903,7 +1903,7 @@ struct Typechecker {
 
                 // Make sure the imported ns can see the "logical" parent ns.
                 if namespace_.import_path_if_extern.has_value() {
-                    child_scope.resolution_mixins.push(scope_id)
+                    child_scope.resolution_mixins.push(ResolutionMixin(scope_id))
                 }
 
                 namespace_scope_id = child_scope_id
@@ -2050,7 +2050,7 @@ struct Typechecker {
 
                 mut parent_scope = .get_scope(scope_id)
                 parent_scope.children.push(namespace_scope_id)
-                parent_scope.resolution_mixins.push(namespace_scope_id)
+                parent_scope.resolution_mixins.push(ResolutionMixin(scope_id: namespace_scope_id))
 
                 .typecheck_namespace_predecl(parsed_namespace: chunk_namespace, scope_id: namespace_scope_id)
                 resolved_chunk.generated_scopes.push(namespace_scope_id)
@@ -2303,7 +2303,7 @@ struct Typechecker {
                     parsed_function: method.parsed_function
                     parent_scope_id: entity_scope_id
                     this_arg_type_id
-                    scope_mixin: scope_id
+                    scope_mixin: ResolutionMixin(scope_id)
                 )
             }
         }
@@ -2938,7 +2938,7 @@ struct Typechecker {
                 for_block: false
             )
             mut scope = .get_scope(scope_id)
-            scope.resolution_mixins.push(aliased_scope_id)
+            scope.resolution_mixins.push(ResolutionMixin(scope_id: aliased_scope_id))
         }
 
         let trait_name_scope_id = trait_name_scope_id_override ?? scope_id
@@ -3357,7 +3357,10 @@ struct Typechecker {
                         parsed_function: method.parsed_function!
                         parent_scope_id: scope_id
                         this_arg_type_id: type_id
-                        scope_mixin: mixin_scope_id
+                        scope_mixin: match mixin_scope_id.has_value() {
+                            true => ResolutionMixin(scope_id: mixin_scope_id!)
+                            false => None
+                        }
                     )
                 }
             }
@@ -4197,7 +4200,7 @@ struct Typechecker {
         parent_scope_id: ScopeId
         this_arg_type_id: TypeId?
         mut generics: FunctionGenerics? = None
-        scope_mixin: ScopeId? = None
+        scope_mixin: ResolutionMixin? = None
     ) throws -> FunctionId {
         let function_scope_id = .create_scope(parent_scope_id, can_throw: parsed_function.can_throw, debug_name: format("fn({})", parsed_function.name))
         if scope_mixin.has_value() {
@@ -5946,8 +5949,12 @@ struct Typechecker {
                 &arguments
                 &span
                 this
-            ](scope_id: ScopeId, name_override: String?, is_alias: bool) throws -> IterationDecision<bool> {
-                let scope = .get_scope(scope_id)
+            ](mixin: ResolutionMixin, name_override: String?, is_alias: bool) throws -> IterationDecision<bool> {
+                if not mixin.mixin_types {
+                    return IterationDecision::Continue
+                }
+
+                let scope = .get_scope(mixin.scope_id)
                 if not scope.explicitly_specialized_types.contains(name) {
                     return IterationDecision::Continue
                 }
@@ -8930,13 +8937,13 @@ struct Typechecker {
             }
         }
 
-        // if we're not capturing everything, transfer over the types from the parent scopes
+        // if we're not capturing everything, transfer over the types from the parent scopes (everything except variables)
         if not is_capturing_everything {
             mut current_scope_id = scope_id
             mut lambda_scope = .get_scope(lambda_scope_id)
             while not current_scope_id.equals(effective_namespace_parent_scope_id) {
                 let current_scope = .get_scope(current_scope_id)
-                lambda_scope.resolution_mixins.push(current_scope_id)
+                lambda_scope.resolution_mixins.push(ResolutionMixin(scope_id: current_scope_id, mixin_vars: false))
                 current_scope_id = current_scope.parent!
             }
         }
@@ -11207,7 +11214,7 @@ struct Typechecker {
                         // Ensure the default value is typechecked with access to the scope it's declared in.
                         mut scope = .get_scope(scope_id)
                         let (expression, default_scope_id) = default_value
-                        scope.resolution_mixins.push(default_scope_id)
+                        scope.resolution_mixins.push(ResolutionMixin(scope_id: default_scope_id))
                         defer scope.resolution_mixins.pop()
                         maybe_checked_expr = .typecheck_expression(
                             expr: expression
@@ -11232,7 +11239,7 @@ struct Typechecker {
                 if param.default_value_expression is Some(default_value) {
                     mut scope = .get_scope(scope_id)
                     let (expression, default_scope_id) = default_value
-                    scope.resolution_mixins.push(default_scope_id)
+                    scope.resolution_mixins.push(ResolutionMixin(scope_id: default_scope_id))
                     defer scope.resolution_mixins.pop()
                     maybe_checked_expr = .typecheck_expression(
                         expr: expression
