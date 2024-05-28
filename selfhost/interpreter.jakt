@@ -803,7 +803,7 @@ class InterpreterScope {
                 bindings.set(pair.0, pair.1)
             }
             for mixin in scope.resolution_mixins {
-                let mixin_scope = program.get_scope(mixin)
+                let mixin_scope = program.get_scope(mixin.scope_id)
                 for pair in mixin_scope.comptime_bindings {
                     if bindings.contains(pair.0) {
                         continue

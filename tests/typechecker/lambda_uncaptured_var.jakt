@@ -1,0 +1,11 @@
+/// Expect:
+/// - error: "Variable 'bar' not found\n"
+
+fn main() {
+    let foo = 42
+    let bar = 420
+    let f = fn[foo]() {
+        eprintln("{}", foo)
+        eprintln("{}", bar)
+    }
+}
