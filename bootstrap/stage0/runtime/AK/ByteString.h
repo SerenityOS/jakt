@@ -93,6 +93,23 @@ public:
     static ByteString must_from_utf8(StringView string) { return MUST(from_utf8(string)); }
     static ByteString from_utf8_without_validation(StringView string) { return ByteString { string }; }
 
+    template<
+        typename F,
+        typename PossiblyErrorOr = decltype(declval<F>()(declval<Bytes>())),
+        bool is_error_or = IsSpecializationOf<PossiblyErrorOr, ErrorOr>,
+        typename ReturnType = Conditional<is_error_or, ErrorOr<ByteString>, ByteString>>
+    static ReturnType create_and_overwrite(size_t length, F&& fill_function)
+    {
+        char* buffer;
+        auto impl = StringImpl::create_uninitialized(length, buffer);
+
+        if constexpr (is_error_or)
+            TRY(fill_function(Bytes { buffer, length }));
+        else
+            fill_function(Bytes { buffer, length });
+        return impl;
+    }
+
     [[nodiscard]] static ByteString repeated(char, size_t count);
     [[nodiscard]] static ByteString repeated(StringView, size_t count);
 
@@ -149,8 +166,12 @@ public:
 
     [[nodiscard]] Vector<ByteString> split_limit(char separator, size_t limit, SplitBehavior = SplitBehavior::Nothing) const;
     [[nodiscard]] Vector<ByteString> split(char separator, SplitBehavior = SplitBehavior::Nothing) const;
-    [[nodiscard]] Vector<StringView> split_view(char separator, SplitBehavior = SplitBehavior::Nothing) const;
-    [[nodiscard]] Vector<StringView> split_view(Function<bool(char)> separator, SplitBehavior = SplitBehavior::Nothing) const;
+
+    [[nodiscard]] Vector<StringView> split_view(char separator, SplitBehavior = SplitBehavior::Nothing) const&;
+    [[nodiscard]] Vector<StringView> split_view(char separator, SplitBehavior = SplitBehavior::Nothing) const&& = delete;
+
+    [[nodiscard]] Vector<StringView> split_view(Function<bool(char)> separator, SplitBehavior = SplitBehavior::Nothing) const&;
+    [[nodiscard]] Vector<StringView> split_view(Function<bool(char)> separator, SplitBehavior = SplitBehavior::Nothing) const&& = delete;
 
     [[nodiscard]] Optional<size_t> find(char needle, size_t start = 0) const { return StringUtils::find(*this, needle, start); }
     [[nodiscard]] Optional<size_t> find(StringView needle, size_t start = 0) const { return StringUtils::find(*this, needle, start); }
@@ -160,12 +181,17 @@ public:
     using SearchDirection = StringUtils::SearchDirection;
     [[nodiscard]] Optional<size_t> find_any_of(StringView needles, SearchDirection direction) const { return StringUtils::find_any_of(*this, needles, direction); }
 
-    [[nodiscard]] StringView find_last_split_view(char separator) const { return view().find_last_split_view(separator); }
+    [[nodiscard]] StringView find_last_split_view(char separator) const& { return view().find_last_split_view(separator); }
+    [[nodiscard]] StringView find_last_split_view(char separator) const&& = delete;
 
     [[nodiscard]] ByteString substring(size_t start, size_t length) const;
     [[nodiscard]] ByteString substring(size_t start) const;
-    [[nodiscard]] StringView substring_view(size_t start, size_t length) const;
-    [[nodiscard]] StringView substring_view(size_t start) const;
+
+    [[nodiscard]] StringView substring_view(size_t start, size_t length) const&;
+    [[nodiscard]] StringView substring_view(size_t start, size_t length) const&& = delete;
+
+    [[nodiscard]] StringView substring_view(size_t start) const&;
+    [[nodiscard]] StringView substring_view(size_t start) const&& = delete;
 
     [[nodiscard]] ALWAYS_INLINE bool is_empty() const { return length() == 0; }
     [[nodiscard]] ALWAYS_INLINE size_t length() const { return m_impl->length(); }
@@ -174,10 +200,8 @@ public:
 
     [[nodiscard]] bool copy_characters_to_buffer(char* buffer, size_t buffer_size) const;
 
-    [[nodiscard]] ALWAYS_INLINE ReadonlyBytes bytes() const
-    {
-        return m_impl->bytes();
-    }
+    [[nodiscard]] ALWAYS_INLINE ReadonlyBytes bytes() const& { return m_impl->bytes(); }
+    [[nodiscard]] ALWAYS_INLINE ReadonlyBytes bytes() const&& = delete;
 
     [[nodiscard]] ALWAYS_INLINE char const& operator[](size_t i) const
     {
@@ -189,7 +213,7 @@ public:
         return bit_cast<u8>((*m_impl)[i]);
     }
 
-    using ConstIterator = SimpleIterator<const ByteString, char const>;
+    using ConstIterator = SimpleIterator<ByteString const, char const>;
 
     [[nodiscard]] constexpr ConstIterator begin() const { return ConstIterator::begin(*this); }
     [[nodiscard]] constexpr ConstIterator end() const { return ConstIterator::end(*this); }
@@ -222,7 +246,7 @@ public:
         return StringImpl::the_empty_stringimpl();
     }
 
-    [[nodiscard]] StringImpl const* impl() const { return m_impl.ptr(); }
+    [[nodiscard]] NonnullRefPtr<StringImpl const> impl() const { return m_impl; }
 
     ByteString& operator=(ByteString&& other)
     {
@@ -275,10 +299,8 @@ public:
         return formatted("{}", value);
     }
 
-    [[nodiscard]] StringView view() const
-    {
-        return { characters(), length() };
-    }
+    [[nodiscard]] StringView view() const& { return { characters(), length() }; }
+    [[nodiscard]] StringView view() const&& = delete;
 
     [[nodiscard]] ByteString replace(StringView needle, StringView replacement, ReplaceMode replace_mode = ReplaceMode::All) const { return StringUtils::replace(*this, needle, replacement, replace_mode); }
     [[nodiscard]] size_t count(StringView needle) const { return StringUtils::count(*this, needle); }
@@ -308,12 +330,12 @@ private:
 
 template<>
 struct Traits<ByteString> : public DefaultTraits<ByteString> {
-    static unsigned hash(ByteString const& s) { return s.impl() ? s.impl()->hash() : 0; }
+    static unsigned hash(ByteString const& s) { return s.impl()->hash(); }
 };
 
 // FIXME: Rename this to indicate that it's about ASCII-only case insensitivity.
 struct CaseInsensitiveStringTraits : public Traits<ByteString> {
-    static unsigned hash(ByteString const& s) { return s.impl() ? s.impl()->case_insensitive_hash() : 0; }
+    static unsigned hash(ByteString const& s) { return s.impl()->case_insensitive_hash(); }
     static bool equals(ByteString const& a, ByteString const& b) { return a.equals_ignoring_ascii_case(b); }
 };
 

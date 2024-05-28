@@ -92,6 +92,21 @@ public:
         return copy(bytes.data(), bytes.size());
     }
 
+    [[nodiscard]] static ErrorOr<ByteBuffer> xor_buffers(ReadonlyBytes first, ReadonlyBytes second)
+    {
+        if (first.size() != second.size())
+            return Error::from_errno(EINVAL);
+
+        auto buffer = TRY(create_uninitialized(first.size()));
+        auto buffer_data = buffer.data();
+        auto first_data = first.data();
+        auto second_data = second.data();
+        for (size_t i = 0; i < first.size(); ++i)
+            buffer_data[i] = first_data[i] ^ second_data[i];
+
+        return { move(buffer) };
+    }
+
     template<size_t other_inline_capacity>
     bool operator==(ByteBuffer<other_inline_capacity> const& other) const
     {
@@ -163,9 +178,14 @@ public:
         m_size = 0;
     }
 
-    ALWAYS_INLINE void resize(size_t new_size)
+    enum class ZeroFillNewElements {
+        No,
+        Yes,
+    };
+
+    ALWAYS_INLINE void resize(size_t new_size, ZeroFillNewElements zero_fill_new_elements = ZeroFillNewElements::No)
     {
-        MUST(try_resize(new_size));
+        MUST(try_resize(new_size, zero_fill_new_elements));
     }
 
     void trim(size_t size, bool may_discard_existing_data)
@@ -181,13 +201,18 @@ public:
         MUST(try_ensure_capacity(new_capacity));
     }
 
-    ErrorOr<void> try_resize(size_t new_size)
+    ErrorOr<void> try_resize(size_t new_size, ZeroFillNewElements zero_fill_new_elements = ZeroFillNewElements::No)
     {
         if (new_size <= m_size) {
             trim(new_size, false);
             return {};
         }
         TRY(try_ensure_capacity(new_size));
+
+        if (zero_fill_new_elements == ZeroFillNewElements::Yes) {
+            __builtin_memset(data() + m_size, 0, new_size - m_size);
+        }
+
         m_size = new_size;
         return {};
     }

@@ -6,7 +6,6 @@
 
 #include <AK/Assertions.h>
 #include <AK/Base64.h>
-#include <AK/CharacterTypes.h>
 #include <AK/Error.h>
 #include <AK/StringBuilder.h>
 #include <AK/Types.h>
@@ -16,7 +15,14 @@ namespace AK {
 
 size_t calculate_base64_decoded_length(StringView input)
 {
-    return input.length() * 3 / 4;
+    auto length = input.length() * 3 / 4;
+
+    if (input.ends_with("="sv))
+        --length;
+    if (input.ends_with("=="sv))
+        --length;
+
+    return length;
 }
 
 size_t calculate_base64_encoded_length(ReadonlyBytes input)
@@ -24,23 +30,25 @@ size_t calculate_base64_encoded_length(ReadonlyBytes input)
     return ((4 * input.size() / 3) + 3) & ~3;
 }
 
-ErrorOr<ByteBuffer> decode_base64(StringView input)
+static ErrorOr<ByteBuffer> decode_base64_impl(StringView input, ReadonlySpan<i16> alphabet_lookup_table)
 {
-    auto alphabet_lookup_table = base64_lookup_table();
+    input = input.trim_whitespace();
 
-    auto get = [&](size_t& offset, bool* is_padding, bool& parsed_something) -> ErrorOr<u8> {
-        while (offset < input.length() && is_ascii_space(input[offset]))
-            ++offset;
+    if (input.length() % 4 != 0)
+        return Error::from_string_literal("Invalid length of Base64 encoded string");
+
+    auto get = [&](size_t offset, bool* is_padding) -> ErrorOr<u8> {
         if (offset >= input.length())
             return 0;
-        auto ch = static_cast<unsigned char>(input[offset++]);
-        parsed_something = true;
+
+        auto ch = static_cast<unsigned char>(input[offset]);
         if (ch == '=') {
             if (!is_padding)
                 return Error::from_string_literal("Invalid '=' character outside of padding in base64 data");
             *is_padding = true;
             return 0;
         }
+
         i16 result = alphabet_lookup_table[ch];
         if (result < 0)
             return Error::from_string_literal("Invalid character in base64 data");
@@ -48,43 +56,39 @@ ErrorOr<ByteBuffer> decode_base64(StringView input)
         return { result };
     };
 
-    Vector<u8> output;
-    output.ensure_capacity(calculate_base64_decoded_length(input));
+    ByteBuffer output;
+    TRY(output.try_resize(calculate_base64_decoded_length(input)));
 
-    size_t offset = 0;
-    while (offset < input.length()) {
+    size_t input_offset = 0;
+    size_t output_offset = 0;
+
+    while (input_offset < input.length()) {
         bool in2_is_padding = false;
         bool in3_is_padding = false;
 
-        bool parsed_something = false;
+        u8 const in0 = TRY(get(input_offset++, nullptr));
+        u8 const in1 = TRY(get(input_offset++, nullptr));
+        u8 const in2 = TRY(get(input_offset++, &in2_is_padding));
+        u8 const in3 = TRY(get(input_offset++, &in3_is_padding));
 
-        const u8 in0 = TRY(get(offset, nullptr, parsed_something));
-        const u8 in1 = TRY(get(offset, nullptr, parsed_something));
-        const u8 in2 = TRY(get(offset, &in2_is_padding, parsed_something));
-        const u8 in3 = TRY(get(offset, &in3_is_padding, parsed_something));
+        output[output_offset++] = (in0 << 2) | ((in1 >> 4) & 3);
 
-        if (!parsed_something)
-            break;
-
-        const u8 out0 = (in0 << 2) | ((in1 >> 4) & 3);
-        const u8 out1 = ((in1 & 0xf) << 4) | ((in2 >> 2) & 0xf);
-        const u8 out2 = ((in2 & 0x3) << 6) | in3;
-
-        output.append(out0);
         if (!in2_is_padding)
-            output.append(out1);
+            output[output_offset++] = ((in1 & 0xf) << 4) | ((in2 >> 2) & 0xf);
+
         if (!in3_is_padding)
-            output.append(out2);
+            output[output_offset++] = ((in2 & 0x3) << 6) | in3;
     }
 
-    return ByteBuffer::copy(output);
+    return output;
 }
 
-ErrorOr<String> encode_base64(ReadonlyBytes input)
+static ErrorOr<String> encode_base64_impl(ReadonlyBytes input, ReadonlySpan<char> alphabet)
 {
-    StringBuilder output(calculate_base64_encoded_length(input));
+    Vector<u8> output;
+    TRY(output.try_ensure_capacity(calculate_base64_encoded_length(input)));
 
-    auto get = [&](const size_t offset, bool* need_padding = nullptr) -> u8 {
+    auto get = [&](size_t const offset, bool* need_padding = nullptr) -> u8 {
         if (offset >= input.size()) {
             if (need_padding)
                 *need_padding = true;
@@ -97,27 +101,43 @@ ErrorOr<String> encode_base64(ReadonlyBytes input)
         bool is_8bit = false;
         bool is_16bit = false;
 
-        const u8 in0 = get(i);
-        const u8 in1 = get(i + 1, &is_16bit);
-        const u8 in2 = get(i + 2, &is_8bit);
+        u8 const in0 = get(i);
+        u8 const in1 = get(i + 1, &is_16bit);
+        u8 const in2 = get(i + 2, &is_8bit);
 
-        const u8 index0 = (in0 >> 2) & 0x3f;
-        const u8 index1 = ((in0 << 4) | (in1 >> 4)) & 0x3f;
-        const u8 index2 = ((in1 << 2) | (in2 >> 6)) & 0x3f;
-        const u8 index3 = in2 & 0x3f;
+        u8 const index0 = (in0 >> 2) & 0x3f;
+        u8 const index1 = ((in0 << 4) | (in1 >> 4)) & 0x3f;
+        u8 const index2 = ((in1 << 2) | (in2 >> 6)) & 0x3f;
+        u8 const index3 = in2 & 0x3f;
 
-        char const out0 = base64_alphabet[index0];
-        char const out1 = base64_alphabet[index1];
-        char const out2 = is_16bit ? '=' : base64_alphabet[index2];
-        char const out3 = is_8bit ? '=' : base64_alphabet[index3];
-
-        TRY(output.try_append(out0));
-        TRY(output.try_append(out1));
-        TRY(output.try_append(out2));
-        TRY(output.try_append(out3));
+        output.unchecked_append(alphabet[index0]);
+        output.unchecked_append(alphabet[index1]);
+        output.unchecked_append(is_16bit ? '=' : alphabet[index2]);
+        output.unchecked_append(is_8bit ? '=' : alphabet[index3]);
     }
 
-    return output.to_string();
+    return String::from_utf8_without_validation(output);
+}
+
+ErrorOr<ByteBuffer> decode_base64(StringView input)
+{
+    static constexpr auto lookup_table = base64_lookup_table();
+    return decode_base64_impl(input, lookup_table);
+}
+
+ErrorOr<ByteBuffer> decode_base64url(StringView input)
+{
+    static constexpr auto lookup_table = base64url_lookup_table();
+    return decode_base64_impl(input, lookup_table);
+}
+
+ErrorOr<String> encode_base64(ReadonlyBytes input)
+{
+    return encode_base64_impl(input, base64_alphabet);
+}
+ErrorOr<String> encode_base64url(ReadonlyBytes input)
+{
+    return encode_base64_impl(input, base64url_alphabet);
 }
 
 }

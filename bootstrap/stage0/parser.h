@@ -313,7 +313,7 @@ RecordType() {};
 };
 struct ParsedRecord {
   public:
-public: ByteString name;public: utility::Span name_span;public: JaktInternal::DynamicArray<parser::ParsedGenericParameter> generic_parameters;public: parser::DefinitionLinkage definition_linkage;public: JaktInternal::Optional<JaktInternal::DynamicArray<parser::ParsedNameWithGenericParameters>> implements_list;public: JaktInternal::DynamicArray<parser::ParsedMethod> methods;public: parser::RecordType record_type;public: JaktInternal::DynamicArray<parser::ParsedRecord> nested_records;public: JaktInternal::Optional<parser::ExternalName> external_name;public: ParsedRecord(ByteString a_name, utility::Span a_name_span, JaktInternal::DynamicArray<parser::ParsedGenericParameter> a_generic_parameters, parser::DefinitionLinkage a_definition_linkage, JaktInternal::Optional<JaktInternal::DynamicArray<parser::ParsedNameWithGenericParameters>> a_implements_list, JaktInternal::DynamicArray<parser::ParsedMethod> a_methods, parser::RecordType a_record_type, JaktInternal::DynamicArray<parser::ParsedRecord> a_nested_records, JaktInternal::Optional<parser::ExternalName> a_external_name);
+public: ByteString name;public: utility::Span name_span;public: JaktInternal::DynamicArray<parser::ParsedGenericParameter> generic_parameters;public: parser::DefinitionLinkage definition_linkage;public: JaktInternal::Optional<JaktInternal::DynamicArray<parser::ParsedNameWithGenericParameters>> implements_list;public: JaktInternal::DynamicArray<parser::ParsedMethod> methods;public: parser::RecordType record_type;public: JaktInternal::DynamicArray<parser::ParsedRecord> nested_records;public: JaktInternal::Optional<parser::ExternalName> external_name;public: JaktInternal::Optional<ByteString> create_function_name;public: ParsedRecord(ByteString a_name, utility::Span a_name_span, JaktInternal::DynamicArray<parser::ParsedGenericParameter> a_generic_parameters, parser::DefinitionLinkage a_definition_linkage, JaktInternal::Optional<JaktInternal::DynamicArray<parser::ParsedNameWithGenericParameters>> a_implements_list, JaktInternal::DynamicArray<parser::ParsedMethod> a_methods, parser::RecordType a_record_type, JaktInternal::DynamicArray<parser::ParsedRecord> a_nested_records, JaktInternal::Optional<parser::ExternalName> a_external_name, JaktInternal::Optional<ByteString> a_create_function_name);
 
 public: ByteString debug_description() const;
 };struct FunctionType {
@@ -325,6 +325,7 @@ constexpr VariantData() {}
 } as;
 constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ByteString debug_description() const;
 [[nodiscard]] static FunctionType Normal();
+[[nodiscard]] static FunctionType Constructor();
 [[nodiscard]] static FunctionType Destructor();
 [[nodiscard]] static FunctionType ImplicitConstructor();
 [[nodiscard]] static FunctionType ImplicitEnumConstructor();
@@ -441,8 +442,8 @@ FunctionLinkage() {};
 };
 struct ParsedFunction {
   public:
-public: size_t id;public: ByteString name;public: utility::Span name_span;public: parser::Visibility visibility;public: JaktInternal::DynamicArray<parser::ParsedParameter> params;public: JaktInternal::DynamicArray<parser::ParsedGenericParameter> generic_parameters;public: parser::ParsedBlock block;public: NonnullRefPtr<typename parser::ParsedType> return_type;public: utility::Span return_type_span;public: bool can_throw;public: parser::FunctionType type;public: parser::FunctionLinkage linkage;public: bool must_instantiate;public: bool is_comptime;public: bool is_fat_arrow;public: bool is_unsafe;public: bool has_varargs;public: bool is_jakt_main;public: JaktInternal::Optional<parser::ExternalName> external_name;public: JaktInternal::Optional<ByteString> deprecated_message;public: JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,parser::ArgumentStoreLevel>>> stores_arguments;public: parser::InlineState force_inline;public: bool equals(parser::ParsedFunction const other, bool const ignore_block) const;
-public: ParsedFunction(size_t a_id, ByteString a_name, utility::Span a_name_span, parser::Visibility a_visibility, JaktInternal::DynamicArray<parser::ParsedParameter> a_params, JaktInternal::DynamicArray<parser::ParsedGenericParameter> a_generic_parameters, parser::ParsedBlock a_block, NonnullRefPtr<typename parser::ParsedType> a_return_type, utility::Span a_return_type_span, bool a_can_throw, parser::FunctionType a_type, parser::FunctionLinkage a_linkage, bool a_must_instantiate, bool a_is_comptime, bool a_is_fat_arrow, bool a_is_unsafe, bool a_has_varargs, bool a_is_jakt_main, JaktInternal::Optional<parser::ExternalName> a_external_name, JaktInternal::Optional<ByteString> a_deprecated_message, JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,parser::ArgumentStoreLevel>>> a_stores_arguments, parser::InlineState a_force_inline);
+public: size_t id;public: ByteString name;public: utility::Span name_span;public: parser::Visibility visibility;public: JaktInternal::DynamicArray<parser::ParsedParameter> params;public: JaktInternal::DynamicArray<parser::ParsedGenericParameter> generic_parameters;public: parser::ParsedBlock block;public: NonnullRefPtr<typename parser::ParsedType> return_type;public: utility::Span return_type_span;public: bool can_throw;public: parser::FunctionType type;public: parser::FunctionLinkage linkage;public: bool must_instantiate;public: bool is_comptime;public: bool is_fat_arrow;public: bool is_unsafe;public: bool has_varargs;public: bool is_jakt_main;public: JaktInternal::Optional<parser::ExternalName> external_name;public: JaktInternal::Optional<ByteString> deprecated_message;public: JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,parser::ArgumentStoreLevel>>> stores_arguments;public: parser::InlineState force_inline;public: bool is_raw_constructor;public: bool equals(parser::ParsedFunction const other, bool const ignore_block) const;
+public: ParsedFunction(size_t a_id, ByteString a_name, utility::Span a_name_span, parser::Visibility a_visibility, JaktInternal::DynamicArray<parser::ParsedParameter> a_params, JaktInternal::DynamicArray<parser::ParsedGenericParameter> a_generic_parameters, parser::ParsedBlock a_block, NonnullRefPtr<typename parser::ParsedType> a_return_type, utility::Span a_return_type_span, bool a_can_throw, parser::FunctionType a_type, parser::FunctionLinkage a_linkage, bool a_must_instantiate, bool a_is_comptime, bool a_is_fat_arrow, bool a_is_unsafe, bool a_has_varargs, bool a_is_jakt_main, JaktInternal::Optional<parser::ExternalName> a_external_name, JaktInternal::Optional<ByteString> a_deprecated_message, JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,parser::ArgumentStoreLevel>>> a_stores_arguments, parser::InlineState a_force_inline, bool a_is_raw_constructor);
 
 public: ByteString debug_description() const;
 };struct ParsedVariable {
@@ -578,7 +579,7 @@ NonnullRefPtr<typename parser::ParsedExpression> expr;
 utility::Span span;
 } Throw;
 struct {
-NonnullRefPtr<typename parser::ParsedExpression> expr;
+JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> expr;
 utility::Span span;
 } Yield;
 struct {
@@ -612,7 +613,7 @@ constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 
 [[nodiscard]] static NonnullRefPtr<ParsedStatement> Continue(utility::Span value);
 [[nodiscard]] static NonnullRefPtr<ParsedStatement> Return(JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> expr, utility::Span span);
 [[nodiscard]] static NonnullRefPtr<ParsedStatement> Throw(NonnullRefPtr<typename parser::ParsedExpression> expr, utility::Span span);
-[[nodiscard]] static NonnullRefPtr<ParsedStatement> Yield(NonnullRefPtr<typename parser::ParsedExpression> expr, utility::Span span);
+[[nodiscard]] static NonnullRefPtr<ParsedStatement> Yield(JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> expr, utility::Span span);
 [[nodiscard]] static NonnullRefPtr<ParsedStatement> InlineCpp(parser::ParsedBlock block, utility::Span span);
 [[nodiscard]] static NonnullRefPtr<ParsedStatement> Guard(NonnullRefPtr<typename parser::ParsedExpression> expr, parser::ParsedBlock else_block, parser::ParsedBlock remaining_code, utility::Span span);
 [[nodiscard]] static NonnullRefPtr<ParsedStatement> Garbage(utility::Span value);

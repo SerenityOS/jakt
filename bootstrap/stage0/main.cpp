@@ -397,15 +397,15 @@ if (__jakt_enum_value == static_cast<size_t>(1ULL)) {
 return JaktInternal::ExplicitValue(input_file_length);
 }
 else if (__jakt_enum_value == static_cast<size_t>(2ULL)) {
-return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_935; {
+return JaktInternal::ExplicitValue(({ Optional<size_t> __jakt_var_947; {
 JaktInternal::Optional<u32> const end_input = ((((parts)[static_cast<i64>(1LL)])).template to_number<u32>());
 if ((!(((end_input).has_value())))){
 return JaktInternal::OptionalNone();
 }
-__jakt_var_935 = (infallible_integer_cast<size_t>(((end_input.value())))); goto __jakt_label_805;
+__jakt_var_947 = (infallible_integer_cast<size_t>(((end_input.value())))); goto __jakt_label_811;
 
 }
-__jakt_label_805:; __jakt_var_935.release_value(); }));
+__jakt_label_811:; __jakt_var_947.release_value(); }));
 }
 else {
 {
@@ -475,12 +475,12 @@ bool const is_directory = ((jakt__entry__is_directory__).template get<1>());
 jakt__path::Path const path = ((directory).join(entry));
 jakt__path::Path const path_relative_to_target = ((relative_dir).join(entry));
 if (is_directory){
-auto __jakt_var_937 = [&]() -> ErrorOr<void> { return TRY((jakt__platform__unknown_fs::make_directory(((((to).join(((path_relative_to_target).to_string())))).to_string())))), ErrorOr<void>{}; }();
+auto __jakt_var_949 = [&]() -> ErrorOr<void> { return TRY((jakt__platform__unknown_fs::make_directory(((((to).join(((path_relative_to_target).to_string())))).to_string())))), ErrorOr<void>{}; }();
 ;
 ((directories_to_copy).enqueue((Tuple{path, path_relative_to_target})));
 continue;
 }
-auto __jakt_var_939 = [&]() -> ErrorOr<void> { return TRY((mkdir_p(((((to).join(((path_relative_to_target).to_string())))).parent())))), ErrorOr<void>{}; }();
+auto __jakt_var_951 = [&]() -> ErrorOr<void> { return TRY((mkdir_p(((((to).join(((path_relative_to_target).to_string())))).parent())))), ErrorOr<void>{}; }();
 ;
 jakt__path::Path const target_path = ((to).join(((path_relative_to_target).to_string())));
 NonnullRefPtr<File> input_file = TRY((File::open_for_reading(((path).to_string()))));
@@ -1011,15 +1011,15 @@ bool const format_debug = TRY((((args_parser).flag(DynamicArray<ByteString>::cre
 ByteString const input_format_range = TRY((((args_parser).option(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("-fr"sv)), (ByteString::from_utf8_without_validation("--format-range"sv))}))))).value_or_lazy_evaluated([&] { return (ByteString::from_utf8_without_validation(""sv)); });
 bool const ak_stdlib = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("--ak-is-my-only-stdlib"sv))})))));
 bool const discover_only = TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("--discover"sv))})))));
-size_t const max_concurrent = (infallible_integer_cast<size_t>((({ Optional<u32> __jakt_var_940;
-auto __jakt_var_941 = [&]() -> ErrorOr<u32> { return TRY((value_or_throw<u32>(((compiler_job_count).template to_number<u32>())))); }();
-if (__jakt_var_941.is_error()) {{
+size_t const max_concurrent = (infallible_integer_cast<size_t>((({ Optional<u32> __jakt_var_952;
+auto __jakt_var_953 = [&]() -> ErrorOr<u32> { return TRY((value_or_throw<u32>(((compiler_job_count).template to_number<u32>())))); }();
+if (__jakt_var_953.is_error()) {{
 warnln((StringView::from_string_literal("error: invalid value for --jobs: {}"sv)),compiler_job_count);
 return static_cast<int>(1);
 }
-} else {__jakt_var_940 = __jakt_var_941.release_value();
+} else {__jakt_var_952 = __jakt_var_953.release_value();
 }
-__jakt_var_940.release_value(); }))));
+__jakt_var_952.release_value(); }))));
 if (TRY((((args_parser).flag(DynamicArray<ByteString>::create_with({(ByteString::from_utf8_without_validation("--repl"sv))})))))){
 repl::REPL repl = TRY((repl::REPL::create(jakt__path::Path::from_parts(DynamicArray<ByteString>::create_with({runtime_path, (ByteString::from_utf8_without_validation("jaktlib"sv))})),target_triple,user_configuration)));
 TRY((((repl).run())));
@@ -1032,7 +1032,7 @@ TRY((((project).populate())));
 return static_cast<int>(0);
 }
 Function<ErrorOr<bool>(ByteString)> const compiler_is = [cxx_compiler_path](ByteString name) -> ErrorOr<bool> {{
-return ((((jakt__path::Path::from_string(cxx_compiler_path)).basename(false))) == (name));
+return ((((jakt__path::Path::from_string(cxx_compiler_path)).basename(false))).contains(name));
 }
 }
 ;
@@ -1246,7 +1246,7 @@ JaktInternal::DynamicArray<types::Value> const arguments = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::DynamicArray<types::Value>,ErrorOr<int>> {
 auto __jakt_enum_value = (((first_main_param).has_value()));
 if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue(({ Optional<JaktInternal::DynamicArray<types::Value>> __jakt_var_942; {
+return JaktInternal::ExplicitValue(({ Optional<JaktInternal::DynamicArray<types::Value>> __jakt_var_954; {
 JaktInternal::DynamicArray<types::Value> passed_arguments = DynamicArray<types::Value>::create_with({types::Value(types::ValueImpl::JaktString((file_name.value())),call_span)});
 {
 JaktInternal::ArrayIterator<ByteString> _magic = ((interpreted_main_arguments).iterator());
@@ -1263,10 +1263,10 @@ ByteString argument = (_magic_value.value());
 }
 }
 
-__jakt_var_942 = DynamicArray<types::Value>::create_with({types::Value(types::ValueImpl::JaktArray(passed_arguments,(((((first_main_param.value())).variable))->type_id)),call_span)}); goto __jakt_label_806;
+__jakt_var_954 = DynamicArray<types::Value>::create_with({types::Value(types::ValueImpl::JaktArray(passed_arguments,(((((first_main_param.value())).variable))->type_id)),call_span)}); goto __jakt_label_812;
 
 }
-__jakt_label_806:; __jakt_var_942.release_value(); }));
+__jakt_label_812:; __jakt_var_954.release_value(); }));
 }
 else if (__jakt_enum_value == false) {
 return JaktInternal::ExplicitValue(DynamicArray<types::Value>::create_with({}));
@@ -1284,7 +1284,7 @@ auto&& __jakt_match_variant = main_result;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Return */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Return;types::Value const& x = __jakt_match_value.value;
-return (({
+return ({({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<int>>{
 auto&& __jakt_match_variant = *((x).impl);
 switch(__jakt_match_variant.__jakt_init_index()) {
@@ -1321,7 +1321,7 @@ return JaktInternal::ExplicitValue<void>();
     if (_jakt_value.is_return())
         return _jakt_value.release_return();
     _jakt_value.release_value();
-})), JaktInternal::ExplicitValue<void>();
+});}), JaktInternal::ExplicitValue<void>();
 };/*case end*/
 case 1 /* Throw */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Throw;types::Value const& x = __jakt_match_value.value;
@@ -1535,8 +1535,8 @@ ByteString const contents = ((contents_module_file_path_).template get<0>());
 ByteString const module_file_path = ((contents_module_file_path_).template get<1>());
 
 jakt__path::Path const path = ((binary_dir).join(file));
-auto __jakt_var_944 = [&]() -> ErrorOr<void> { return TRY((write_only_if_updated(contents,((path).to_string())))), ErrorOr<void>{}; }();
-if (__jakt_var_944.is_error()) {auto error = __jakt_var_944.release_error();
+auto __jakt_var_956 = [&]() -> ErrorOr<void> { return TRY((write_only_if_updated(contents,((path).to_string())))), ErrorOr<void>{}; }();
+if (__jakt_var_956.is_error()) {auto error = __jakt_var_956.release_error();
 {
 warnln((StringView::from_string_literal("Error: Could not write to file: {} ({})"sv)),file,error);
 return static_cast<int>(1);
@@ -1549,12 +1549,12 @@ return static_cast<int>(1);
 }
 
 if (((generate_depfile).has_value())){
-auto __jakt_var_945 = [&]() -> ErrorOr<void> {{
+auto __jakt_var_957 = [&]() -> ErrorOr<void> {{
 TRY((write_only_if_updated(((depfile_builder).to_string()),(generate_depfile.value()))));
 }
 
 ;return {};}();
-if (__jakt_var_945.is_error()) {auto error = __jakt_var_945.release_error();{
+if (__jakt_var_957.is_error()) {auto error = __jakt_var_957.release_error();{
 warnln((StringView::from_string_literal("Error: Could not write to file list ({})"sv)),error);
 return static_cast<int>(1);
 }
@@ -1642,7 +1642,7 @@ return (!(((self) == (rhs))));
 }
 ((target_triple.value()),TRY((((TRY((jakt__platform::Target::active()))).name(false))))))){
 ((extra_compiler_flags).push((ByteString::from_utf8_without_validation("-target"sv))));
-((extra_compiler_flags).push((target_triple.value())));
+((extra_compiler_flags).push(TRY((((TRY((jakt__platform::Target::from_triple((target_triple.value()))))).name(true))))));
 }
 }
 {
@@ -1660,12 +1660,12 @@ ByteString flag = (_magic_value.value());
 }
 }
 
-auto __jakt_var_947 = [&]() -> ErrorOr<void> { return TRY((((builder).build_all(binary_dir,(([use_ccache, cxx_compiler_path, runtime_path, extra_include_paths, optimize, extra_compiler_flags](ByteString input_filename, ByteString output_filename) -> ErrorOr<JaktInternal::DynamicArray<ByteString>> {{
+auto __jakt_var_959 = [&]() -> ErrorOr<void> { return TRY((((builder).build_all(binary_dir,(([use_ccache, cxx_compiler_path, runtime_path, extra_include_paths, optimize, extra_compiler_flags](ByteString input_filename, ByteString output_filename) -> ErrorOr<JaktInternal::DynamicArray<ByteString>> {{
 return TRY((platform__unknown_compiler::run_compiler(cxx_compiler_path,input_filename,output_filename,runtime_path,extra_include_paths,DynamicArray<ByteString>::create_with({}),DynamicArray<ByteString>::create_with({}),optimize,extra_compiler_flags,use_ccache)));
 }
 }
 )))))), ErrorOr<void>{}; }();
-if (__jakt_var_947.is_error()) {{
+if (__jakt_var_959.is_error()) {{
 return static_cast<int>(1);
 }
 }
@@ -1692,8 +1692,8 @@ if (archive_link_support_libs){
 ((extra_arguments).push(((((runtime_lib_path).join(TRY((platform::library_name_for_target((ByteString::from_utf8_without_validation("main"sv)),target)))))).to_string())));
 ((extra_arguments).push(((((runtime_lib_path).join(TRY((platform::library_name_for_target((ByteString::from_utf8_without_validation("runtime"sv)),target)))))).to_string())));
 }
-auto __jakt_var_949 = [&]() -> ErrorOr<void> { return TRY((((builder).link_into_archive(archiver_path.value_or_lazy_evaluated([&] { return (ByteString::from_utf8_without_validation("ar"sv)); }),((((binary_dir).join((link_archive.value())))).to_string()),extra_arguments)))), ErrorOr<void>{}; }();
-if (__jakt_var_949.is_error()) {{
+auto __jakt_var_961 = [&]() -> ErrorOr<void> { return TRY((((builder).link_into_archive(archiver_path.value_or_lazy_evaluated([&] { return (ByteString::from_utf8_without_validation("ar"sv)); }),((((binary_dir).join((link_archive.value())))).to_string()),extra_arguments)))), ErrorOr<void>{}; }();
+if (__jakt_var_961.is_error()) {{
 return static_cast<int>(1);
 }
 }
@@ -1779,8 +1779,8 @@ ByteString arg = (_magic_value.value());
 }
 }
 
-auto __jakt_var_951 = [&]() -> ErrorOr<void> { return TRY((((builder).link_into_executable(cxx_compiler_path,output_filename,extra_arguments)))), ErrorOr<void>{}; }();
-if (__jakt_var_951.is_error()) {{
+auto __jakt_var_963 = [&]() -> ErrorOr<void> { return TRY((((builder).link_into_executable(cxx_compiler_path,output_filename,extra_arguments)))), ErrorOr<void>{}; }();
+if (__jakt_var_963.is_error()) {{
 return static_cast<int>(1);
 }
 }
@@ -1975,15 +1975,15 @@ return {};
 
 bool file_needs_updating(ByteString const path,ByteString const new_contents) {
 {
-JaktInternal::Optional<NonnullRefPtr<File>> maybe_file = ({ Optional<NonnullRefPtr<File>> __jakt_var_952;
-auto __jakt_var_953 = [&]() -> ErrorOr<NonnullRefPtr<File>> { return TRY((File::open_for_reading(path))); }();
-if (!__jakt_var_953.is_error()) __jakt_var_952 = __jakt_var_953.release_value();
-__jakt_var_952; });
+JaktInternal::Optional<NonnullRefPtr<File>> maybe_file = ({ Optional<NonnullRefPtr<File>> __jakt_var_964;
+auto __jakt_var_965 = [&]() -> ErrorOr<NonnullRefPtr<File>> { return TRY((File::open_for_reading(path))); }();
+if (!__jakt_var_965.is_error()) __jakt_var_964 = __jakt_var_965.release_value();
+__jakt_var_964; });
 if (((maybe_file).has_value())){
-JaktInternal::Optional<JaktInternal::DynamicArray<u8>> const contents = ({ Optional<JaktInternal::DynamicArray<u8>> __jakt_var_954;
-auto __jakt_var_955 = [&]() -> ErrorOr<JaktInternal::DynamicArray<u8>> { return TRY(((((maybe_file.value()))->read_all()))); }();
-if (!__jakt_var_955.is_error()) __jakt_var_954 = __jakt_var_955.release_value();
-__jakt_var_954; });
+JaktInternal::Optional<JaktInternal::DynamicArray<u8>> const contents = ({ Optional<JaktInternal::DynamicArray<u8>> __jakt_var_966;
+auto __jakt_var_967 = [&]() -> ErrorOr<JaktInternal::DynamicArray<u8>> { return TRY(((((maybe_file.value()))->read_all()))); }();
+if (!__jakt_var_967.is_error()) __jakt_var_966 = __jakt_var_967.release_value();
+__jakt_var_966; });
 if (((contents).has_value())){
 return [](ByteString const& self, ByteString rhs) -> bool {{
 return (!(((self) == (rhs))));

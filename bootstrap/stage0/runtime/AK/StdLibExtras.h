@@ -16,8 +16,6 @@
 
 #include <AK/Assertions.h>
 
-#define OFFSET_OF(class, member) __builtin_offsetof(class, member)
-
 namespace AK {
 
 template<typename T, typename U>
@@ -126,7 +124,7 @@ constexpr T ceil_div(T a, U b)
 {
     static_assert(sizeof(T) == sizeof(U));
     T result = a / b;
-    if ((a % b) != 0)
+    if ((a % b) != 0 && (a > 0) == (b > 0))
         ++result;
     return result;
 }

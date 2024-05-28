@@ -16,23 +16,20 @@
 namespace AK {
 
 class FlyString {
+    AK_MAKE_DEFAULT_MOVABLE(FlyString);
+    AK_MAKE_DEFAULT_COPYABLE(FlyString);
+
 public:
-    FlyString();
-    ~FlyString();
+    FlyString() = default;
 
     static ErrorOr<FlyString> from_utf8(StringView);
+    static FlyString from_utf8_without_validation(ReadonlyBytes);
     template<typename T>
     requires(IsOneOf<RemoveCVReference<T>, ByteString, DeprecatedFlyString, FlyString, String>)
     static ErrorOr<String> from_utf8(T&&) = delete;
 
     FlyString(String const&);
     FlyString& operator=(String const&);
-
-    FlyString(FlyString const&);
-    FlyString& operator=(FlyString const&);
-
-    FlyString(FlyString&&);
-    FlyString& operator=(FlyString&&);
 
     [[nodiscard]] bool is_empty() const;
     [[nodiscard]] unsigned hash() const;
@@ -45,15 +42,15 @@ public:
     [[nodiscard]] ReadonlyBytes bytes() const;
     [[nodiscard]] StringView bytes_as_string_view() const;
 
-    [[nodiscard]] bool operator==(FlyString const& other) const;
+    [[nodiscard]] ALWAYS_INLINE bool operator==(FlyString const& other) const { return m_data.raw({}) == other.m_data.raw({}); }
     [[nodiscard]] bool operator==(String const&) const;
     [[nodiscard]] bool operator==(StringView) const;
     [[nodiscard]] bool operator==(char const*) const;
 
     [[nodiscard]] int operator<=>(FlyString const& other) const;
 
-    static void did_destroy_fly_string_data(Badge<Detail::StringData>, StringView);
-    [[nodiscard]] uintptr_t data(Badge<String>) const;
+    static void did_destroy_fly_string_data(Badge<Detail::StringData>, Detail::StringData const&);
+    [[nodiscard]] Detail::StringBase data(Badge<String>) const;
 
     // This is primarily interesting to unit tests.
     [[nodiscard]] static size_t number_of_fly_strings();
@@ -80,9 +77,12 @@ public:
     }
 
 private:
-    // This will hold either the pointer to the Detail::StringData it represents or the raw bytes of
-    // an inlined short string.
-    uintptr_t m_data { 0 };
+    explicit FlyString(Detail::StringBase data)
+        : m_data(move(data))
+    {
+    }
+
+    Detail::StringBase m_data;
 };
 
 template<>
@@ -97,7 +97,7 @@ struct Formatter<FlyString> : Formatter<StringView> {
 
 struct ASCIICaseInsensitiveFlyStringTraits : public Traits<String> {
     static unsigned hash(FlyString const& s) { return s.ascii_case_insensitive_hash(); }
-    static bool equals(FlyString const& a, FlyString const& b) { return a.bytes().data() == b.bytes().data() || a.bytes_as_string_view().equals_ignoring_ascii_case(b.bytes_as_string_view()); }
+    static bool equals(FlyString const& a, FlyString const& b) { return a.equals_ignoring_ascii_case(b); }
 };
 
 }

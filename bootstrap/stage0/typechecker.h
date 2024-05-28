@@ -57,7 +57,49 @@ public: bool functions;public: bool structs;public: bool enums;public: bool type
 public: ImportRestrictions(bool a_functions, bool a_structs, bool a_enums, bool a_types, bool a_traits, bool a_namespaces);
 
 public: ByteString debug_description() const;
-};struct NumericOrStringValue {
+};struct BreakContinueLegalityTracker {
+u8 __jakt_variant_index = 0;
+union VariantData {
+u8 __jakt_uninit_value;
+constexpr VariantData() {}
+~VariantData() {}
+} as;
+constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ByteString debug_description() const;
+[[nodiscard]] static BreakContinueLegalityTracker None();
+[[nodiscard]] static BreakContinueLegalityTracker AnyLoop();
+[[nodiscard]] static BreakContinueLegalityTracker Defer();
+~BreakContinueLegalityTracker();
+BreakContinueLegalityTracker& operator=(BreakContinueLegalityTracker const &);
+BreakContinueLegalityTracker& operator=(BreakContinueLegalityTracker &&);
+BreakContinueLegalityTracker(BreakContinueLegalityTracker const&);
+BreakContinueLegalityTracker(BreakContinueLegalityTracker &&);
+private: void __jakt_destroy_variant();
+public:
+private:
+BreakContinueLegalityTracker() {};
+};
+struct ReturnLegalityTracker {
+u8 __jakt_variant_index = 0;
+union VariantData {
+u8 __jakt_uninit_value;
+constexpr VariantData() {}
+~VariantData() {}
+} as;
+constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ByteString debug_description() const;
+[[nodiscard]] static ReturnLegalityTracker None();
+[[nodiscard]] static ReturnLegalityTracker Lambda();
+[[nodiscard]] static ReturnLegalityTracker Defer();
+~ReturnLegalityTracker();
+ReturnLegalityTracker& operator=(ReturnLegalityTracker const &);
+ReturnLegalityTracker& operator=(ReturnLegalityTracker &&);
+ReturnLegalityTracker(ReturnLegalityTracker const&);
+ReturnLegalityTracker(ReturnLegalityTracker &&);
+private: void __jakt_destroy_variant();
+public:
+private:
+ReturnLegalityTracker() {};
+};
+struct NumericOrStringValue {
 u8 __jakt_variant_index = 0;
 union VariantData {
 u8 __jakt_uninit_value;
@@ -164,7 +206,7 @@ builder.appendff("done: {}", done);
 builder.append(")"sv);return builder.to_string(); }
 };struct Typechecker {
   public:
-public: NonnullRefPtr<compiler::Compiler> compiler;public: NonnullRefPtr<types::CheckedProgram> program;public: ids::ModuleId current_module_id;public: JaktInternal::Optional<ids::TypeId> current_struct_type_id;public: JaktInternal::Optional<ids::FunctionId> current_function_id;public: bool inside_defer;public: bool ignore_errors;public: bool dump_type_hints;public: bool dump_try_hints;public: u64 lambda_count;public: types::GenericInferences generic_inferences;public: JaktInternal::Optional<ids::TypeId> self_type_id;public: ByteString root_module_name;public: bool in_comptime_function_call;public: bool had_an_error;public: JaktInternal::Dictionary<ByteString,ids::ScopeId> cpp_import_cache;public: JaktInternal::Optional<cpp_import__none::CppImportProcessor> cpp_import_processor;private: public: void set_self_type_id(ids::TypeId const type_id);
+public: NonnullRefPtr<compiler::Compiler> compiler;public: NonnullRefPtr<types::CheckedProgram> program;public: ids::ModuleId current_module_id;public: JaktInternal::Optional<ids::TypeId> current_struct_type_id;public: JaktInternal::Optional<ids::FunctionId> current_function_id;public: typechecker::BreakContinueLegalityTracker break_continue_tracker;public: typechecker::ReturnLegalityTracker return_tracker;public: bool ignore_errors;public: bool dump_type_hints;public: bool dump_try_hints;public: u64 lambda_count;public: types::GenericInferences generic_inferences;public: JaktInternal::Optional<ids::TypeId> self_type_id;public: ByteString root_module_name;public: bool in_comptime_function_call;public: bool had_an_error;public: JaktInternal::Dictionary<ByteString,ids::ScopeId> cpp_import_cache;public: JaktInternal::Optional<cpp_import__none::CppImportProcessor> cpp_import_processor;private: public: void set_self_type_id(ids::TypeId const type_id);
 public: ErrorOr<ByteString> type_name(ids::TypeId const type_id, bool const debug_mode) const;
 public: ErrorOr<void> dump_type_hint(ids::TypeId const type_id, utility::Span const span) const;
 public: void dump_try_hint(utility::Span const span) const;
@@ -266,7 +308,7 @@ public: ErrorOr<void> typecheck_override(parser::ParsedMethod const method, ids:
 public: ErrorOr<JaktInternal::Optional<ids::FunctionId>> typecheck_method(parser::ParsedFunction const func, types::StructLikeId const parent_id);
 public: ErrorOr<types::CheckedParameter> typecheck_parameter(parser::ParsedParameter const parameter, ids::ScopeId const scope_id, bool const first, JaktInternal::Optional<ids::TypeId> const this_arg_type_id, JaktInternal::Optional<ids::ScopeId> const check_scope);
 public: ErrorOr<void> fill_trait_requirements(JaktInternal::DynamicArray<parser::ParsedNameWithGenericParameters> const names, JaktInternal::DynamicArray<ids::TraitId>& trait_requirements, JaktInternal::DynamicArray<ids::TypeId>& trait_implementations, ids::ScopeId const scope_id);
-public: ErrorOr<ids::FunctionId> typecheck_function_predecl(parser::ParsedFunction const parsed_function, ids::ScopeId const parent_scope_id, JaktInternal::Optional<ids::TypeId> const this_arg_type_id, JaktInternal::Optional<NonnullRefPtr<types::FunctionGenerics>> generics, JaktInternal::Optional<ids::ScopeId> scope_mixin);
+public: ErrorOr<ids::FunctionId> typecheck_function_predecl(parser::ParsedFunction const parsed_function, ids::ScopeId const parent_scope_id, JaktInternal::Optional<ids::TypeId> const this_arg_type_id, JaktInternal::Optional<NonnullRefPtr<types::FunctionGenerics>> generics, JaktInternal::Optional<types::ResolutionMixin> scope_mixin);
 public: ErrorOr<void> check_that_type_doesnt_contain_reference(ids::TypeId const type_id, utility::Span const span);
 public: bool type_contains_reference(ids::TypeId const type_id);
 public: ErrorOr<void> check_type_argument_requirements(ids::TypeId const generic_argument, JaktInternal::DynamicArray<ids::TraitId> const constraints, utility::Span const arg_span);
@@ -291,6 +333,9 @@ public: ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> typecheck_unar
 public: ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> typecheck_unary_negate(NonnullRefPtr<typename types::CheckedExpression> const expr, utility::Span const span, ids::TypeId const type_id);
 public: ErrorOr<JaktInternal::Tuple<types::CheckedBinaryOperator,ids::TypeId>> typecheck_binary_operation(NonnullRefPtr<typename types::CheckedExpression> const checked_lhs, parser::BinaryOperator const op, NonnullRefPtr<typename types::CheckedExpression> const checked_rhs, ids::ScopeId const scope_id, utility::Span const span);
 public: ErrorOr<NonnullRefPtr<typename types::CheckedStatement>> typecheck_statement(NonnullRefPtr<typename parser::ParsedStatement> const statement, ids::ScopeId const scope_id, types::SafetyMode const safety_mode, JaktInternal::Optional<ids::TypeId> const type_hint);
+public: ErrorOr<NonnullRefPtr<typename types::CheckedStatement>> typecheck_yield(JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> const expr, utility::Span const span, ids::ScopeId const scope_id, types::SafetyMode const safety_mode, JaktInternal::Optional<ids::TypeId> const type_hint);
+public: NonnullRefPtr<typename types::CheckedStatement> typecheck_continue(utility::Span const span);
+public: NonnullRefPtr<typename types::CheckedStatement> typecheck_break(utility::Span const span);
 public: ErrorOr<NonnullRefPtr<typename types::CheckedStatement>> typecheck_guard(NonnullRefPtr<typename parser::ParsedExpression> const expr, parser::ParsedBlock const else_block, parser::ParsedBlock const remaining_code, ids::ScopeId const scope_id, types::SafetyMode const safety_mode, utility::Span const span);
 public: ErrorOr<NonnullRefPtr<typename types::CheckedStatement>> typecheck_for(ByteString const iterator_name, utility::Span const name_span, bool const is_destructuring, NonnullRefPtr<typename parser::ParsedExpression> const range, parser::ParsedBlock const block, ids::ScopeId const scope_id, types::SafetyMode const safety_mode, utility::Span const span);
 public: ErrorOr<JaktInternal::Tuple<NonnullRefPtr<typename parser::ParsedExpression>,JaktInternal::Optional<parser::ParsedBlock>,JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>>>> expand_context_for_bindings(NonnullRefPtr<typename parser::ParsedExpression> const condition, JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedExpression>> const acc, JaktInternal::Optional<parser::ParsedBlock> const then_block, JaktInternal::Optional<NonnullRefPtr<typename parser::ParsedStatement>> const else_statement, ids::ScopeId const scope_id, utility::Span const span);
@@ -352,7 +397,7 @@ public: ErrorOr<JaktInternal::DynamicArray<JaktInternal::DynamicArray<ids::TypeI
 public: ErrorOr<bool> implements_trait(ids::TypeId const type_id, ids::TraitId const trait_id, JaktInternal::Optional<JaktInternal::DynamicArray<ids::TypeId>> const generic_arguments);
 public: ErrorOr<JaktInternal::Tuple<bool,JaktInternal::DynamicArray<error::JaktError>>> signatures_match(ids::TypeId const self_type_id, NonnullRefPtr<types::CheckedFunction> const first, NonnullRefPtr<types::CheckedFunction> const second);
 private: ErrorOr<bool> signatures_match_impl(ids::TypeId const self_type_id, NonnullRefPtr<types::CheckedFunction> const first, NonnullRefPtr<types::CheckedFunction> const second, Function<ErrorOr<bool>(typechecker::Typechecker&, ids::TypeId, ids::TypeId)> const& types_match);
-public: Typechecker(NonnullRefPtr<compiler::Compiler> a_compiler, NonnullRefPtr<types::CheckedProgram> a_program, ids::ModuleId a_current_module_id, JaktInternal::Optional<ids::TypeId> a_current_struct_type_id, JaktInternal::Optional<ids::FunctionId> a_current_function_id, bool a_inside_defer, bool a_ignore_errors, bool a_dump_type_hints, bool a_dump_try_hints, u64 a_lambda_count, types::GenericInferences a_generic_inferences, JaktInternal::Optional<ids::TypeId> a_self_type_id, ByteString a_root_module_name, bool a_in_comptime_function_call, bool a_had_an_error, JaktInternal::Dictionary<ByteString,ids::ScopeId> a_cpp_import_cache, JaktInternal::Optional<cpp_import__none::CppImportProcessor> a_cpp_import_processor);
+public: Typechecker(NonnullRefPtr<compiler::Compiler> a_compiler, NonnullRefPtr<types::CheckedProgram> a_program, ids::ModuleId a_current_module_id, JaktInternal::Optional<ids::TypeId> a_current_struct_type_id, JaktInternal::Optional<ids::FunctionId> a_current_function_id, typechecker::BreakContinueLegalityTracker a_break_continue_tracker, typechecker::ReturnLegalityTracker a_return_tracker, bool a_ignore_errors, bool a_dump_type_hints, bool a_dump_try_hints, u64 a_lambda_count, types::GenericInferences a_generic_inferences, JaktInternal::Optional<ids::TypeId> a_self_type_id, ByteString a_root_module_name, bool a_in_comptime_function_call, bool a_had_an_error, JaktInternal::Dictionary<ByteString,ids::ScopeId> a_cpp_import_cache, JaktInternal::Optional<cpp_import__none::CppImportProcessor> a_cpp_import_processor);
 
 public: ByteString debug_description() const;
 };struct AlreadyImplementedFor {
@@ -388,6 +433,18 @@ namespace Jakt {
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::typechecker::ImportRestrictions> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::typechecker::ImportRestrictions const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, value.debug_description());return format_error;}
+};
+namespace Jakt {
+} // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::typechecker::BreakContinueLegalityTracker> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::typechecker::BreakContinueLegalityTracker const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, value.debug_description());return format_error;}
+};
+namespace Jakt {
+} // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::typechecker::ReturnLegalityTracker> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::typechecker::ReturnLegalityTracker const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, value.debug_description());return format_error;}
 };
 namespace Jakt {

@@ -51,9 +51,6 @@ public:
     [[nodiscard]] bool has_number(StringView key) const;
     [[nodiscard]] bool has_array(StringView key) const;
     [[nodiscard]] bool has_object(StringView key) const;
-#ifndef KERNEL
-    [[nodiscard]] bool has_double(StringView key) const;
-#endif
 
     Optional<JsonValue const&> get(StringView key) const;
 
@@ -141,44 +138,18 @@ inline typename Builder::OutputType JsonObject::serialized() const
 template<typename Builder>
 inline void JsonValue::serialize(Builder& builder) const
 {
-    switch (m_type) {
-    case Type::String: {
-        builder.append('\"');
-        builder.append_escaped_for_json({ m_value.as_string->characters(), m_value.as_string->length() });
-        builder.append('\"');
-    } break;
-    case Type::Array:
-        m_value.as_array->serialize(builder);
-        break;
-    case Type::Object:
-        m_value.as_object->serialize(builder);
-        break;
-    case Type::Bool:
-        builder.append(m_value.as_bool ? "true"sv : "false"sv);
-        break;
-#if !defined(KERNEL)
-    case Type::Double:
-        builder.appendff("{}", m_value.as_double);
-        break;
-#endif
-    case Type::Int32:
-        builder.appendff("{}", as_i32());
-        break;
-    case Type::Int64:
-        builder.appendff("{}", as_i64());
-        break;
-    case Type::UnsignedInt32:
-        builder.appendff("{}", as_u32());
-        break;
-    case Type::UnsignedInt64:
-        builder.appendff("{}", as_u64());
-        break;
-    case Type::Null:
-        builder.append("null"sv);
-        break;
-    default:
-        VERIFY_NOT_REACHED();
-    }
+    m_value.visit(
+        [&](Empty const&) { builder.append("null"sv); },
+        [&](bool const& value) { builder.append(value ? "true"sv : "false"sv); },
+        [&](Arithmetic auto const& value) { builder.appendff("{}", value); },
+        [&](ByteString const& value) {
+            builder.append('\"');
+            builder.append_escaped_for_json(value.bytes());
+            builder.append('\"');
+        },
+        [&](auto const& array_or_object) {
+            array_or_object->serialize(builder);
+        });
 }
 
 template<typename Builder>
