@@ -316,41 +316,49 @@ fn find_typename_in_program(program: CheckedProgram, span: Span) throws -> Strin
 }
 
 fn completions_for_type_id(program: CheckedProgram, type_id: TypeId) throws -> [String] {
-    mut output: [String] = []
+    mut output: {String} = {}
     let ty = program.get_type(type_id)
 
     match ty {
         Enum(enum_id) => {
             let enum_ = program.get_enum(enum_id)
             let scope = program.get_scope(enum_.scope_id)
-            output.push_values(&find_function_completions_in_scope(scope, program))
+            for entry in find_function_completions_in_scope(scope, program) {
+                output.add(entry)
+            }
         }
-        Struct(struct_id) => {
-            let structure = program.get_struct(struct_id)
-
-            for field in structure.fields {
-                let field_var = program.get_variable(field.variable_id)
-                output.push(field_var.name)
+        GenericInstance(id: struct_id) | Struct(struct_id) => {
+            mut structs: [CheckedStruct] = [program.get_struct(struct_id)]
+            loop {
+                if structs.last()!.super_struct_id is Some(x) {
+                    structs.push(program.get_struct(x))
+                } else {
+                    break
+                }
             }
 
-            let scope = program.get_scope(structure.scope_id)
-            output.push_values(&find_function_completions_in_scope(scope, program))
-        }
-        GenericInstance(id: struct_id) => {
-            let structure = program.get_struct(struct_id)
+            for structure in structs {
+                let scope = program.get_scope(structure.scope_id)
 
-            for field in structure.fields {
-                let field_var = program.get_variable(field.variable_id)
-                output.push(field_var.name)
+                for field in structure.fields {
+                    let field_var = program.get_variable(field.variable_id)
+                    output.add(field_var.name)
+                }
+                for entry in find_function_completions_in_scope(scope, program) {
+                    output.add(entry)
+                }
             }
 
-            let scope = program.get_scope(structure.scope_id)
-            output.push_values(&find_function_completions_in_scope(scope, program))
         }
         else => {}
     }
 
-    return output
+    mut result: [String] = []
+    for entry in output {
+        result.push(entry)
+    }
+
+    return result
 }
 
 fn find_function_completions_in_scope(anon scope: Scope, program: CheckedProgram) throws -> [String] {
