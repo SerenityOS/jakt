@@ -1,0 +1,24 @@
+name: Manually populate clang cache for windows
+on:
+  workflow_dispatch:
+
+env:
+  LLVM_VER: 16.0.6
+  
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Cache Clang
+        uses: actions/cache@v3
+        id: cache-clang
+        with:
+          path: 'llvm-install-${{ env.LLVM_VER }}/'
+          key: 'libclang-${{ runner.os }}-${{ env.LLVM_VER }}'
+      - name: Build clang if cache miss
+        uses: ./.github/actions/clang-windows
+        if: steps.cache-clang.outputs.cache-hit != 'true'
+        with:
+          llvm_version: "${{ env.LLVM_VER }}"
+          llvm_branch: "llvmorg-${{ env.LLVM_VER }}"
