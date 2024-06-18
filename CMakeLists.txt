@@ -45,24 +45,11 @@ if (Clang_FOUND)
 endif()
 
 include(GNUInstallDirs)
-
-set(NO_SYMLINKS_DEFAULT OFF)
-if (CMAKE_HOST_WIN32)
-  set(NO_SYMLINKS_DEFAULT ON)
-endif()
+include("cmake/symlink.cmake")
 
 set(FINAL_STAGE "1" CACHE STRING "Compiler stage to stop at, either 1 (default) or 2)")
-option(NO_SYMLINKS "Use hard links instead of symlinks. Useful for unprivileged Windows users" "${NO_SYMLINKS_DEFAULT}")
 option(SERENITY_SOURCE_DIR PATH "Path of an existing SerenityOS checkout to pull AK files from")
 set(CPP_AUTO_IMPORT_PROCESSOR "${JAKT_CPP_AUTO_IMPORT_PROCESSOR_DEFAULT}" CACHE STRING "'import extern' processor to use (default=none/clang/libcpp/none)")
-
-if (NO_SYMLINKS)
-  set(LINK_COMMAND create_hardlink)
-  set(LINK_GENEX TARGET_FILE)
-else()
-  set(LINK_COMMAND create_symlink)
-  set(LINK_GENEX TARGET_FILE_NAME)
-endif()
 
 set(JAKT_USING_CLANG OFF)
 set(JAKT_CPP_AUTO_IMPORT_PROCESSOR "${CPP_AUTO_IMPORT_PROCESSOR}")
@@ -148,7 +135,7 @@ else()
       $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/runtime>
   )
   apply_output_rules(jakt_stage0)
-  if (MSVC)
+  if (WIN32)
       target_link_options(jakt_stage0 PRIVATE LINKER:/STACK:0x800000)
   endif()
   set(BOOSTRAP_COMPILER jakt_stage0)
@@ -287,17 +274,18 @@ endif()
 if (CMAKE_CONFIGURATION_TYPES)
   foreach (build_type IN LISTS CMAKE_CONFIGURATION_TYPES)
     execute_process(COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/${build_type}/include")
-    execute_process(COMMAND "${CMAKE_COMMAND}" -E ${LINK_COMMAND} "${CMAKE_CURRENT_SOURCE_DIR}/runtime" "${CMAKE_CURRENT_BINARY_DIR}/${build_type}/include/runtime")
+    create_symlink("${CMAKE_CURRENT_SOURCE_DIR}/runtime" "${CMAKE_CURRENT_BINARY_DIR}/${build_type}/include/runtime" DIRECTORY)
   endforeach()
 else()
   execute_process(COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/include")
-  execute_process(COMMAND "${CMAKE_COMMAND}" -E ${LINK_COMMAND}  "${CMAKE_CURRENT_SOURCE_DIR}/runtime" "${CMAKE_CURRENT_BINARY_DIR}/include/runtime")
+  create_symlink("${CMAKE_CURRENT_SOURCE_DIR}/runtime" "${CMAKE_CURRENT_BINARY_DIR}/include/runtime" DIRECTORY)
 endif()
 
-add_custom_command(
+add_symlink_command(
+  "$<SHELL_PATH:$<TARGET_FILE:jakt_stage${FINAL_STAGE}>>"
+  "$<SHELL_PATH:$<PATH:REPLACE_FILENAME,$<TARGET_FILE:jakt_stage${FINAL_STAGE}>,jakt${CMAKE_EXECUTABLE_SUFFIX}>>"
   TARGET "jakt_stage${FINAL_STAGE}"
   POST_BUILD
-  COMMAND "${CMAKE_COMMAND}" -E ${LINK_COMMAND}  "$<${LINK_GENEX}:jakt_stage${FINAL_STAGE}>" "$<TARGET_FILE_DIR:jakt_stage${FINAL_STAGE}>/jakt${CMAKE_EXECUTABLE_SUFFIX}"
   VERBATIM
 )
 add_executable(Jakt::jakt ALIAS jakt_stage${FINAL_STAGE})
