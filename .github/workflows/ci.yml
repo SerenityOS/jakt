@@ -117,19 +117,6 @@ jobs:
     steps:
      - run: git config --global core.autocrlf false
      - uses: actions/checkout@v3
-     - name: Cache Clang
-       uses: actions/cache@v3
-       id: cache-clang
-       with:
-         path: 'llvm-install-${{ env.LLVM_VER }}/'
-         key: 'libclang-${{ runner.os }}-${{ env.LLVM_VER }}'
-
-     - name: Build clang if cache miss
-       uses: ./.github/actions/clang-windows
-       if: steps.cache-clang.outputs.cache-hit != 'true'
-       with:
-         llvm_version: "${{ env.LLVM_VER }}"
-         llvm_branch: "llvmorg-${{ env.LLVM_VER }}"
 
      - name: Setup Ninja
        uses: ashutoshvarma/setup-ninja@master
@@ -138,21 +125,16 @@ jobs:
          version: 1.10.0
          dest: ${{ github.workspace }}/ninja_bin
 
-     - name: Add prebuilt llvm install dir to PATH
-       run: |
-         "${{ github.workspace }}/llvm-install-${{ env.LLVM_VER }}/bin\n" + (Get-Content $env:GITHUB_PATH -Raw) | Set-Content $env:GITHUB_PATH
-         Add-Content $env:GITHUB_ENV "CXX_COMPILER_BIN=${{ github.workspace }}/llvm-install-${{ env.LLVM_VER }}/bin"
-
      - name: Configure CMake
        env:
          CMAKE_PREFIX_PATH: ${{ github.workspace }}/llvm-install-${{ env.LLVM_VER }}
-       run: cmake -B build -G Ninja -DFINAL_STAGE=1 -DCMAKE_CXX_COMPILER=clang -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=jakt-install
+       run: cmake -B build -G Ninja -DFINAL_STAGE=1 -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=jakt-install
 
      - name: Build Jakt Stage 1 Selfhost
        run: cmake --build build
 
      - name: Test Jakt Stage 1
-       run: .\build\bin\jakttest.exe --cpp-compiler "$env:CXX_COMPILER_BIN/clang++.exe"
+       run: .\build\bin\jakttest.exe --cpp-compiler "clang++.exe"
 
      # FIXME: Share this better with unix job?
      - name: Install jakt
@@ -164,7 +146,7 @@ jobs:
        run: |
          ./jakt-install/bin/jakt.exe --create TestProjectJakt
          cd TestProjectJakt
-         ../jakt-install/bin/jakt.exe -O src/main.jakt -o TestProjectJakt -C "$CXX_COMPILER_BIN/clang-cl"
+         ../jakt-install/bin/jakt.exe -O src/main.jakt -o TestProjectJakt -C "clang-cl"
          if ! ./build/TestProjectJakt.exe | grep -q "Hello, World!";
          then
            echo "::error :^( failed, failing job"
@@ -174,7 +156,6 @@ jobs:
        working-directory: ${{ github.workspace }}
        shell: bash
        run: |
-         export PATH="$CXX_COMPILER_BIN:$PATH"
          ./jakt-install/bin/jakt.exe --create TestProjectCMake
          cd TestProjectCMake
          cmake -GNinja -B build \
