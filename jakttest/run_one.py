@@ -11,7 +11,9 @@ from pathlib import Path
 
 # .lib on windows, .a otherwise
 MAIN_LIBRARY_NAME = "libjakt_main_{}.a" if os.name != "nt" else "jakt_main_{}.lib"
-RUNTIME_LIBRARY_NAME = "libjakt_runtime_{}.a" if os.name != "nt" else "jakt_runtime_{}.lib"
+RUNTIME_LIBRARY_NAME = (
+    "libjakt_runtime_{}.a" if os.name != "nt" else "jakt_runtime_{}.lib"
+)
 WINDOWS_SPECIFIC_COMPILER_ARGUMENTS = (
     []
     if os.name != "nt"
@@ -28,7 +30,9 @@ def main():
     parser.add_argument("temp_dir", help="Temporary directory to use")
     parser.add_argument("test_file", help="The test file to run")
     parser.add_argument(
-        "--jakt-binary", help="The path to the jakt binary", default="build/bin/jakt"
+        "--jakt-binary-dir",
+        help="The directory to find the jakt binary in",
+        default="build/bin",
     )
     parser.add_argument(
         "--jakt-lib-dir",
@@ -46,12 +50,12 @@ def main():
     parser.add_argument(
         "--cpp-compiler",
         help="Path to the C++ compiler to use (defaults to clang++ on $PATH)",
-        default="clang++"
+        default="clang++",
     )
     parser.add_argument(
         "--cpp-link",
         help="Extra C++ files to compile and link (separated by :)",
-        default=":"
+        default=":",
     )
     args = parser.parse_args()
 
@@ -59,7 +63,9 @@ def main():
     # working directory, we need the full path of the binary.
     temp_dir = Path(args.temp_dir).resolve()
     test_file = Path(args.test_file).resolve()
-    jakt_binary = Path(args.jakt_binary).resolve()
+    jakt_binary = Path(args.jakt_binary_dir).resolve() / (
+        "jakt.exe" if os.name == "nt" else "jakt"
+    )
     jakt_lib_dir = Path(args.jakt_lib_dir).resolve()
     target_triple = args.target_triple
     cpp_include = ""
@@ -79,7 +85,15 @@ def main():
     with open(temp_dir / "compile_jakt.err", "w") as stderr:
         try:
             subprocess.run(
-                [jakt_binary, test_file, "-B", temp_dir, "-S", "-R", runtime_path_for_stdlib],
+                [
+                    jakt_binary,
+                    test_file,
+                    "-B",
+                    temp_dir,
+                    "-S",
+                    "-R",
+                    runtime_path_for_stdlib,
+                ],
                 check=True,
                 stderr=stderr,
                 cwd=test_file.parent,
@@ -90,8 +104,7 @@ def main():
     # Compile C++ code, exit with status == 2 on failure
     with open(temp_dir / "compile_cpp.err", "w") as stderr:
         try:
-            subprocess.run(
-                [
+            command = [
                     cpp_compiler,
                     f"--target={target_triple}",
                     "-fdiagnostics-color=always",
@@ -108,10 +121,18 @@ def main():
                     "-o",
                     temp_dir / "output",
                     *WINDOWS_SPECIFIC_COMPILER_ARGUMENTS,
-                    *(list(temp_dir.glob("*.cpp")) + relevant_cpp_files),
-                    jakt_lib_dir / target_triple / MAIN_LIBRARY_NAME.format(target_triple),
-                    jakt_lib_dir / target_triple / RUNTIME_LIBRARY_NAME.format(target_triple),
-                ],
+                    *(relevant_cpp_files + list(temp_dir.glob("*.cpp"))),
+                    jakt_lib_dir
+                    / target_triple
+                    / MAIN_LIBRARY_NAME.format(target_triple),
+                    jakt_lib_dir
+                    / target_triple
+                    / RUNTIME_LIBRARY_NAME.format(target_triple),
+                ]
+            command_string = ' '.join(f'"{x}"' for x in command)
+            stderr.write(f"[Running command: {command_string} ]\n\n")
+            subprocess.run(
+                command,
                 check=True,
                 stderr=stderr,
             )
