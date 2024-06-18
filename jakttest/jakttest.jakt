@@ -632,8 +632,8 @@ struct TestScheduler {
         mut command_buffer: [String] = [
             run_once_script
             "jakttest/run_one.py"
-            "--jakt-binary"
-            format("{}/bin/jakt", build_dir)
+            "--jakt-binary-dir"
+            format("{}/bin", build_dir)
             "--jakt-lib-dir"
             format("{}/lib", build_dir)
             "--target-triple"

@@ -125,7 +125,8 @@ else()
   add_executable(jakt_stage0 "${JAKT_STAGE0_ALL_SOURCES}")
   add_executable(Jakt::jakt_stage0 ALIAS jakt_stage0)
   add_jakt_compiler_flags(jakt_stage0)
-  target_link_libraries(jakt_stage0 PRIVATE Threads::Threads)
+  message(STATUS "If this is windows, '${LIBCLANG_RT_PATH_${JAKT_TARGET_TRIPLE}}' should be nonempty")
+  target_link_libraries(jakt_stage0 PRIVATE Threads::Threads ${LIBCLANG_RT_PATH_${JAKT_TARGET_TRIPLE}})
   target_include_directories(jakt_stage0
     PRIVATE
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/bootstrap/stage0/runtime>
