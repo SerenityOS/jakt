@@ -8,6 +8,7 @@
 import error { JaktError, print_error }
 import parser { Parser }
 import utility { join, panic }
+import jakt::compiler { target_triple_string }
 
 // needed for sigaction() stuff
 // FIXME: See #1015, needs to be OS-specific

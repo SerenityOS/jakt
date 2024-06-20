@@ -1,3 +1,5 @@
+import jakt::compiler { target_triple_string }
+
 struct Target {
     arch: String
     platform: String
