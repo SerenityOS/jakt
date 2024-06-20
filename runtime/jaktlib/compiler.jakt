@@ -1,1 +1,2 @@
 extern fn target_triple_string() throws -> String
+extern fn user_configuration_value(name: StringView) -> StringView?

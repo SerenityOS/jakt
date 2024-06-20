@@ -638,7 +638,7 @@ struct TestScheduler {
             "--jakt-lib-dir"
             format("{}/lib", build_dir)
             "--target-triple"
-            ___jakt_get_target_triple_string()
+            target_triple_string()
             "--cpp-compiler"
             cpp_compiler_path ?? default_compiler_path
             "--cpp-include"
