@@ -11096,9 +11096,13 @@ struct Typechecker {
                     continue
                 }
 
-                if value is Throw {
+                if value is Throw(err) {
                     .error(
-                        format("Compiletime call failed: {}", value)
+                        comptime_format_impl(
+                            format_string: "Compiletime call failed: {}"
+                            arguments: [err][..]
+                            program: &.program
+                        )
                         argument.1.span()
                     )
                     break
@@ -11149,7 +11153,10 @@ struct Typechecker {
                     invocation_scope
                 )
             } catch error {
-                .error(format("Compiletime call failed: {}", error), span)
+                .error(
+                    format("Compiletime call failed: {}", error)
+                    span
+                )
                 return checked_call
             }
 
@@ -11157,7 +11164,11 @@ struct Typechecker {
                 Return(x) => value_to_checked_expression(x, interpreter)
                 Throw(x) => {
                     .error(
-                        format("Compiletime call failed: {}", x)
+                        comptime_format_impl(
+                            format_string: "Compiletime call failed: {}"
+                            arguments: [x][..]
+                            program: &.program
+                        )
                         x.span
                     )
                     yield checked_call
