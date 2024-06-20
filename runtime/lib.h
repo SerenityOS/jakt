@@ -435,6 +435,9 @@ using UnderlyingClassTypeOf = typename Detail::UnderlyingClassTypeOf<RemoveCVRef
 
 namespace Jakt {
 using JaktInternal::___jakt_get_target_triple_string;
+namespace jakt__compiler {
+inline ErrorOr<ByteString> target_triple_string() { return JaktInternal::___jakt_get_target_triple_string(); }
+}
 using JaktInternal::abort;
 using JaktInternal::as_saturated;
 using JaktInternal::as_truncated;

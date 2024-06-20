@@ -3320,6 +3320,41 @@ class Interpreter {
         }
     }
 
+    fn call_compiler_interface_function(
+        mut this
+        anon function: CheckedFunction
+        arguments: [Value]
+        call_span: Span
+    ) throws -> StatementResult {
+        if function.params.size() != arguments.size() {
+            .error(
+                format("Compiler interface function '{}' called with wrong number of arguments, expected {} but got {}", function.name, function.params.size(), arguments.size()),
+                call_span
+            )
+            .compiler.panic("Mismatching arguments")
+        }
+
+        return match function.name {
+            "target_triple_string" => StatementResult::JustValue(Value(
+                impl: ValueImpl::JaktString(.compiler.target_triple ?? ___jakt_get_target_triple_string())
+                span: call_span
+            ))
+            "user_configuration_value" => {
+                mut impl = ValueImpl::OptionalNone
+                let value = .compiler.user_configuration.get(.string_from_value(arguments[0]))
+                if value.has_value() {
+                    impl = ValueImpl::OptionalSome(value: .string_value(value!, span: call_span))
+                }
+
+                yield StatementResult::JustValue(Value(impl, span: call_span))
+            }
+            else => {
+                eprintln("Compiler interface function '{}' is not implemented", function.name)
+                .compiler.panic("Not yet implemented")
+            }
+        }
+    }
+
     public fn execute(
         mut this
         anon function_to_run_id: FunctionId
@@ -3342,8 +3377,26 @@ class Interpreter {
         mut is_prelude_function = false
 
         if function_to_run.linkage is External {
-            // If this is a prelude function, run it manually
+            // If this is a compiler interface function, or a prelude function, we can run it directly
             let function_scope = .program.get_scope(function_to_run.function_scope_id)
+            // HACK: We shouldn't do this...
+            let parent_scope_name = match function_scope.parent.has_value() {
+                true => .program.get_scope(function_scope.parent!).debug_name
+                false => ""
+            }
+            if parent_scope_name == "module(jakt__compiler)" {
+                return match .call_compiler_interface_function(
+                    function_to_run,
+                    arguments,
+                    call_span
+                ) {
+                    JustValue(value) | Return(value) => ExecutionResult::Return(value)
+                    Throw(value) => ExecutionResult::Throw(value)
+                    Continue | Break | Yield => {
+                        panic("Invalid control flow")
+                    }
+                }
+            }
 
             if not .get_prelude_function(function_to_run.function_scope_id) {
                 .error(
