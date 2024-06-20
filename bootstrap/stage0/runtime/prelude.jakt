@@ -175,8 +175,6 @@ extern class File {
     public fn current_executable_path() throws -> String
 }
 
-extern fn ___jakt_get_target_triple_string() throws -> String
-
 extern fn abort() -> never
 extern fn as_saturated<U, T>(anon input: T) -> U
 extern fn as_truncated<U, T>(anon input: T) -> U

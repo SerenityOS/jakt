@@ -22,7 +22,7 @@ struct Target {
     }
 
     fn active() throws -> Target {
-        let triple = ___jakt_get_target_triple_string()
+        let triple = target_triple_string()
         return Target::from_triple(triple)
     }
 

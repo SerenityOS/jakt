@@ -343,48 +343,6 @@ ALWAYS_INLINE constexpr OutputType as_truncated(InputType input)
     }
 }
 
-inline ErrorOr<ByteString> ___jakt_get_target_triple_string()
-{
-#ifdef __JAKT_BUILD_TARGET
-    return ByteString(__JAKT_BUILD_TARGET sv);
-#else
-// Pure guesswork.
-#    if defined(_WIN64) // X86_64 or ARM64
-#        if defined(_M_ARM64)
-    return ByteString("arm64-unknown-windows-unknown"sv);
-#        else
-    return ByteString("amd64-unknown-windows-unknown"sv);
-#        endif
-#    elif defined(_WIN32)
-    return ByteString("i686-unknown-windows-unknown"sv);
-#    elif defined(__linux__)
-    return ByteString("x86_64-unknown-linux-unknown"sv);
-#    elif defined(__OpenBSD__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
-    return ByteString("x86_64-unknown-bsd-unknown"sv);
-#    elif defined(__APPLE__)
-#        if defined(__arm64__)
-    return ByteString("arm64-unknown-darwin-unknown"sv);
-#        else
-    return ByteString("x86_64-unknown-darwin-unknown"sv);
-#        endif
-#    elif defined(__serenity__)
-#        if defined(__i686__)
-    return ByteString("i686-unknown-serenityos-unknown"sv);
-#        elif defined(__x86_64__)
-    return ByteString("x86_64-unknown-serenityos-unknown"sv);
-#        elif defined(__aarch64__)
-    return ByteString("aarch64-unknown-serenityos-unknown"sv);
-#        else
-    return ByteString("unknown-unknown-serenityos-unknown"sv);
-#        endif
-#    elif defined(__unix__)
-    return ByteString("x86_64-unknown-unix-unknown"sv);
-#    else
-    return ByteString("unknown-unknown-unknown-unknown"sv);
-#    endif
-#endif
-}
-
 template<typename T>
 struct _RemoveRefPtr {
     using Type = T;
@@ -434,10 +392,6 @@ using UnderlyingClassTypeOf = typename Detail::UnderlyingClassTypeOf<RemoveCVRef
 }
 
 namespace Jakt {
-using JaktInternal::___jakt_get_target_triple_string;
-namespace jakt__compiler {
-inline ErrorOr<ByteString> target_triple_string() { return JaktInternal::___jakt_get_target_triple_string(); }
-}
 using JaktInternal::abort;
 using JaktInternal::as_saturated;
 using JaktInternal::as_truncated;
@@ -455,6 +409,50 @@ using JaktInternal::unchecked_div;
 using JaktInternal::unchecked_mul;
 using JaktInternal::unchecked_sub;
 using JaktInternal::UnderlyingClassTypeOf;
+
+namespace jakt__compiler {
+inline ErrorOr<ByteString> target_triple_string()
+{
+#ifdef __JAKT_BUILD_TARGET
+    return ByteString(__JAKT_BUILD_TARGET sv);
+#else
+// Pure guesswork.
+#    if defined(_WIN64) // X86_64 or ARM64
+#        if defined(_M_ARM64)
+    return ByteString("arm64-unknown-windows-unknown"sv);
+#        else
+    return ByteString("amd64-unknown-windows-unknown"sv);
+#        endif
+#    elif defined(_WIN32)
+    return ByteString("i686-unknown-windows-unknown"sv);
+#    elif defined(__linux__)
+    return ByteString("x86_64-unknown-linux-unknown"sv);
+#    elif defined(__OpenBSD__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
+    return ByteString("x86_64-unknown-bsd-unknown"sv);
+#    elif defined(__APPLE__)
+#        if defined(__arm64__)
+    return ByteString("arm64-unknown-darwin-unknown"sv);
+#        else
+    return ByteString("x86_64-unknown-darwin-unknown"sv);
+#        endif
+#    elif defined(__serenity__)
+#        if defined(__i686__)
+    return ByteString("i686-unknown-serenityos-unknown"sv);
+#        elif defined(__x86_64__)
+    return ByteString("x86_64-unknown-serenityos-unknown"sv);
+#        elif defined(__aarch64__)
+    return ByteString("aarch64-unknown-serenityos-unknown"sv);
+#        else
+    return ByteString("unknown-unknown-serenityos-unknown"sv);
+#        endif
+#    elif defined(__unix__)
+    return ByteString("x86_64-unknown-unix-unknown"sv);
+#    else
+    return ByteString("unknown-unknown-unknown-unknown"sv);
+#    endif
+#endif
+}
+}
 }
 
 // We place main in a separate namespace to ensure it has access to the same identifiers as other functions
