@@ -236,7 +236,7 @@ struct REPL {
             scope_id: root_scope_id
         )
 
-        let root_interpreter_scope = InterpreterScope::create(compiler)
+        let root_interpreter_scope = InterpreterScope::create(compiler, runtime_scope_id: root_scope_id)
 
         return REPL(
             compiler

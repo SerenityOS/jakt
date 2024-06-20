@@ -2108,6 +2108,7 @@ struct Typechecker {
                     generic_argument: type_id
                     constraints: traits
                     arg_span: span
+                    scope_id
                 )
                 let matches = not .had_an_error
                 .had_an_error = false
@@ -4449,7 +4450,13 @@ struct Typechecker {
         }
     }
 
-    fn check_type_argument_requirements(mut this, generic_argument: TypeId, constraints: [TraitId], arg_span: Span) throws {
+    fn check_type_argument_requirements(
+        mut this
+        generic_argument: TypeId
+        constraints: [TraitId]
+        arg_span: Span
+        scope_id: ScopeId
+    ) throws {
         // if the parameter has no trait requirements, then it's OK
         guard not constraints.is_empty() else {
             return
@@ -4510,6 +4517,7 @@ struct Typechecker {
                             .find_or_add_type_id(Type::Self): generic_argument
                         ]
                         compiler: .compiler
+                        runtime_scope_id: scope_id
                     )
                     let result = try interpreter.execute_expression(expr, scope)
                     mut meets_requirement = false
@@ -4626,7 +4634,9 @@ struct Typechecker {
                 .check_type_argument_requirements(
                     generic_argument: generic_arguments[i],
                     constraints: checked_function.generics.params[i].checked_parameter.constraints,
-                    arg_span)
+                    arg_span,
+                    scope_id
+                )
             }
         }
 
@@ -11123,7 +11133,12 @@ struct Typechecker {
             }
 
             mut result: ExecutionResult? = None
-            mut invocation_scope = InterpreterScope::create(parent: eval_scope, type_bindings, compiler: .compiler)
+            mut invocation_scope = InterpreterScope::create(
+                parent: eval_scope
+                type_bindings
+                compiler: .compiler
+                runtime_scope_id: caller_scope_id
+            )
             try {
                 result = interpreter.execute(
                     function_to_run_id: resolved_function_id!
