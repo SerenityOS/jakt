@@ -1,0 +1,1 @@
+extern fn target_triple_string() throws -> String
