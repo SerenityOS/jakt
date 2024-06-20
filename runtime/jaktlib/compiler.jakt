@@ -1,2 +1,7 @@
 extern fn target_triple_string() throws -> String
 extern fn user_configuration_value(name: StringView) -> StringView?
+extern fn debug_this_scope(breakpoint: bool = false) -> i32
+
+namespace debug {
+    comptime this_scope(breakpoint: bool = false) -> i32 => debug_this_scope(breakpoint)
+}
