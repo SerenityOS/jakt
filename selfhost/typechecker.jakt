@@ -1865,13 +1865,25 @@ struct Typechecker {
             }
             debug_name += ")"
 
-            mut existing_scope_id = match namespace_.name.has_value() {
-                true => .find_namespace_in_scope(scope_id: scope_id, name: namespace_.name!)?.0
-                false => None
+            mut (existing_scope_id, existing_scope_is_imported) = match namespace_.name.has_value() {
+                true => {
+                    let result = .find_namespace_in_scope(scope_id: scope_id, name: namespace_.name!)
+                    yield (result?.0, result?.1 ?? false)
+                }
+                false => (None, false)
             }
 
             mut namespace_scope_id = existing_scope_id
-            if not existing_scope_id.has_value() {
+            if existing_scope_id.has_value() {
+                // if the namespace is actually pointing to an imported module, this whole thing is in a seriously bad state
+                // Just throw an error and continue - imports will also error out later.
+                if existing_scope_is_imported {
+                    .error(
+                        format("Invalid extension of imported namespace '{}'", namespace_.name!)
+                        namespace_.name_span ?? namespace_.keyword_span
+                    )
+                }
+            } else {
                 if namespace_.import_path_if_extern.has_value() {
                     debug_name += " (extern "
                     debug_name += namespace_.import_path_if_extern!

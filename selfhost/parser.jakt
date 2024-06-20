@@ -241,7 +241,7 @@ enum IncludeAction {
 
 struct ParsedExternImport {
     is_c: bool = false
-    assigned_namespace: ParsedNamespace = ParsedNamespace()
+    assigned_namespace: ParsedNamespace = ParsedNamespace(keyword_span: Span(file_id: FileId(id: 0), start: 0, end: 0))
     before_include: [IncludeAction] = []
     after_include: [IncludeAction] = []
     should_auto_import: bool = false
@@ -277,6 +277,7 @@ struct ParsedNamespace {
     forall_chunks: [([ParsedGenericParameter], ParsedNamespace)] = []
     is_generated_code: bool = false
     is_auto_extern_imported: bool = false
+    keyword_span: Span
 
     fn is_equivalent_to(this, anon other: ParsedNamespace) -> bool =>
         .name == other.name and .import_path_if_extern == other.import_path_if_extern
@@ -1778,7 +1779,7 @@ struct Parser {
     }
 
     public fn parse_namespace(mut this, process_only_one_entity: bool = false) -> ParsedNamespace {
-        mut parsed_namespace = ParsedNamespace()
+        mut parsed_namespace = ParsedNamespace(keyword_span: .current().span())
 
         mut active_attributes: [ParsedAttribute] = []
         mut saw_an_entity = false
