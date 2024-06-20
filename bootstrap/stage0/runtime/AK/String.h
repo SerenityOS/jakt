@@ -28,8 +28,7 @@ namespace AK {
 
 // FIXME: Remove this when OpenBSD Clang fully supports consteval.
 //        And once oss-fuzz updates to clang >15.
-//        And once Android ships an NDK with clang >14
-#if defined(AK_OS_OPENBSD) || defined(OSS_FUZZ) || defined(AK_OS_ANDROID)
+#if defined(AK_OS_OPENBSD) || defined(OSS_FUZZ)
 #    define AK_SHORT_STRING_CONSTEVAL constexpr
 #else
 #    define AK_SHORT_STRING_CONSTEVAL consteval
@@ -131,6 +130,9 @@ public:
 
     Optional<size_t> find_byte_offset(u32 code_point, size_t from_byte_offset = 0) const;
     Optional<size_t> find_byte_offset(StringView substring, size_t from_byte_offset = 0) const;
+
+    // Using this method requires linking LibUnicode into your application.
+    Optional<size_t> find_byte_offset_ignoring_case(StringView, size_t from_byte_offset = 0) const;
 
     [[nodiscard]] bool operator==(String const&) const = default;
     [[nodiscard]] bool operator==(FlyString const&) const;

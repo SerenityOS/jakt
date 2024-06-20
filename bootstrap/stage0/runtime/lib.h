@@ -3,6 +3,7 @@
 #include <Jakt/AKIntegration.h>
 
 #include <AK/AllOf.h>
+#include <AK/Array.h>
 #include <AK/Assertions.h>
 #include <AK/Atomic.h>
 #include <AK/BitCast.h>
@@ -19,15 +20,12 @@
 #include <AK/HashFunctions.h>
 #include <AK/HashTable.h>
 #include <AK/Iterator.h>
-#include <AK/Array.h>
 #include <AK/Memory.h>
 #include <AK/Noncopyable.h>
 #include <AK/NonnullRefPtr.h>
 #include <AK/NumericLimits.h>
-#include <Jakt/ControlFlow.h>
 #include <AK/Optional.h>
 #include <AK/Platform.h>
-#include <Jakt/PrettyPrint.h>
 #include <AK/RefCounted.h>
 #include <AK/RefPtr.h>
 #include <AK/ScopeGuard.h>
@@ -52,17 +50,19 @@
 #include <AK/Weakable.h>
 #include <AK/kmalloc.h>
 #include <AK/kstdio.h>
+#include <Jakt/ControlFlow.h>
+#include <Jakt/PrettyPrint.h>
 
 namespace JaktInternal {
 template<typename T>
 class Set;
 }
 
-#include <Builtins/DynamicArray.h>
 #include <Builtins/Dictionary.h>
+#include <Builtins/DynamicArray.h>
 #include <Builtins/Set.h>
-#include <Jakt/ByteStringBuilder.h>
 #include <Jakt/ByteString.h>
+#include <Jakt/ByteStringBuilder.h>
 
 #include <IO/File.h>
 
@@ -349,35 +349,39 @@ inline ErrorOr<ByteString> ___jakt_get_target_triple_string()
     return ByteString(__JAKT_BUILD_TARGET sv);
 #else
 // Pure guesswork.
-#   if defined(_WIN64)
+#    if defined(_WIN64) // X86_64 or ARM64
+#        if defined(_M_ARM64)
+    return ByteString("arm64-unknown-windows-unknown"sv);
+#        else
     return ByteString("amd64-unknown-windows-unknown"sv);
-#   elif defined(_WIN32)
+#        endif
+#    elif defined(_WIN32)
     return ByteString("i686-unknown-windows-unknown"sv);
-#   elif defined(__linux__)
+#    elif defined(__linux__)
     return ByteString("x86_64-unknown-linux-unknown"sv);
-#   elif defined(__OpenBSD__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
+#    elif defined(__OpenBSD__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
     return ByteString("x86_64-unknown-bsd-unknown"sv);
-#   elif defined(__APPLE__)
-#       if defined (__arm64__)
-            return ByteString("arm64-unknown-darwin-unknown"sv);
-#       else
-            return ByteString("x86_64-unknown-darwin-unknown"sv);
-#       endif
-#   elif defined(__serenity__)
-    #if defined(__i686__)
-        return ByteString("i686-unknown-serenityos-unknown"sv);
-    #elif defined(__x86_64__)
-        return ByteString("x86_64-unknown-serenityos-unknown"sv);
-    #elif defined(__aarch64__)
-        return ByteString("aarch64-unknown-serenityos-unknown"sv);
-    #else
-        return ByteString("unknown-unknown-serenityos-unknown"sv);
-    #endif
-#   elif defined(__unix__)
+#    elif defined(__APPLE__)
+#        if defined(__arm64__)
+    return ByteString("arm64-unknown-darwin-unknown"sv);
+#        else
+    return ByteString("x86_64-unknown-darwin-unknown"sv);
+#        endif
+#    elif defined(__serenity__)
+#        if defined(__i686__)
+    return ByteString("i686-unknown-serenityos-unknown"sv);
+#        elif defined(__x86_64__)
+    return ByteString("x86_64-unknown-serenityos-unknown"sv);
+#        elif defined(__aarch64__)
+    return ByteString("aarch64-unknown-serenityos-unknown"sv);
+#        else
+    return ByteString("unknown-unknown-serenityos-unknown"sv);
+#        endif
+#    elif defined(__unix__)
     return ByteString("x86_64-unknown-unix-unknown"sv);
-#   else
+#    else
     return ByteString("unknown-unknown-unknown-unknown"sv);
-#   endif
+#    endif
 #endif
 }
 
@@ -405,7 +409,7 @@ ALWAYS_INLINE decltype(auto) deref_if_ref_pointer(T&& value)
 
 namespace Detail {
 template<auto... Xs>
-struct DependentValue {};
+struct DependentValue { };
 
 template<typename T>
 struct UnderlyingClassTypeOf {
@@ -431,6 +435,9 @@ using UnderlyingClassTypeOf = typename Detail::UnderlyingClassTypeOf<RemoveCVRef
 
 namespace Jakt {
 using JaktInternal::___jakt_get_target_triple_string;
+namespace jakt__compiler {
+inline ErrorOr<ByteString> target_triple_string() { return JaktInternal::___jakt_get_target_triple_string(); }
+}
 using JaktInternal::abort;
 using JaktInternal::as_saturated;
 using JaktInternal::as_truncated;

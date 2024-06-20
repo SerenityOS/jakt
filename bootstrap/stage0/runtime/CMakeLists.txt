@@ -39,9 +39,7 @@ endfunction()
 
 add_subdirectory(${JAKT_AK_SOURCE_DIR}/AK)
 
-if(CMAKE_HOST_WIN32)
-  list(FILTER AK_SOURCES EXCLUDE REGEX ".*Time.cpp") # None of these build on windows, but they're not necessary for the runtime anyway.
-endif()
+list(FILTER AK_SOURCES EXCLUDE REGEX ".*Time.cpp") # None of these build on windows, but they're not necessary for the runtime anyway.
 set(IMPORTED_AK_SOURCES ${AK_SOURCES})
 
 set(RUNTIME_SOURCES
@@ -59,9 +57,31 @@ function(make_jakt_runtime_available JAKT_RUNTIME_TARGET)
 
   cmake_parse_arguments(PARSE_ARGV 1 JAKT_RUNTIME "" "" "VAR_NAME")
   message(STATUS "Making the jakt runtime available for ${JAKT_RUNTIME_TARGET}")
-
   set(library_name jakt_runtime_${JAKT_RUNTIME_TARGET})
   add_library(${library_name} STATIC ${RUNTIME_SOURCES})
+
+  if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND WIN32)
+      # Need to also link in libclang_rt.
+      execute_process(
+        COMMAND ${CMAKE_CXX_COMPILER} -target ${JAKT_RUNTIME_TARGET} -print-resource-dir
+        OUTPUT_VARIABLE CLANG_RESOURCE_DIR
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+      )
+      string(REGEX MATCH "^[^-]*" arch ${JAKT_RUNTIME_TARGET})
+      if (arch STREQUAL "amd64")
+        set(arch "x86_64")
+      elseif(arch STREQUAL "x86")
+        set(arch "i686")
+      elseif(arch STREQUAL "arm64")
+        set(arch "aarch64")
+      endif()
+      set(libclang_rt_path "${CLANG_RESOURCE_DIR}/lib/windows/clang_rt.builtins-${arch}.lib")
+      message(STATUS "Linking in libclang_rt: ${libclang_rt_path}")
+      target_link_libraries(${library_name} PUBLIC "${libclang_rt_path}")
+
+      set("LIBCLANG_RT_PATH_${JAKT_RUNTIME_TARGET}" ${libclang_rt_path} CACHE FILEPATH "Path to libclang_rt for ${JAKT_RUNTIME_TARGET}" FORCE)
+  endif()
+
   add_jakt_compiler_flags(${library_name})
   target_include_directories(${library_name}
   PRIVATE

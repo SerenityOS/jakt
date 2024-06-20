@@ -3,7 +3,7 @@ namespace Jakt {
 namespace git {
 ErrorOr<ByteString> commit_hash() {
 {
-ByteString const hash = (ByteString::from_utf8_without_validation("8b402050b0eb11ffed025d6c81c9b3799bb88b32"sv));
+ByteString const hash = (ByteString::from_utf8_without_validation("aff4c58094ce54e441eb0a9f1aae3f5e29f360ce"sv));
 return hash;
 }
 }

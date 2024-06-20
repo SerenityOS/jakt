@@ -27,6 +27,10 @@ namespace jakt__prelude__prelude {
 namespace jakt__arguments {
 struct ArgsParser;
 }
+namespace jakt__compiler {
+extern ErrorOr<ByteString> target_triple_string();
+
+}
 namespace jakt__platform {
 struct Target;
 
