@@ -220,6 +220,10 @@ struct Typechecker {
 
         let PRELUDE_SCOPE_ID: ScopeId = typechecker.prelude_scope_id()
         let root_scope_id = typechecker.create_scope(parent_scope_id: PRELUDE_SCOPE_ID, can_throw: false, debug_name: "root", for_block: false)
+        let main_scope_id = typechecker.create_scope(parent_scope_id: root_scope_id, can_throw: false, debug_name: "anon(main-file)", for_block: false)
+        mut root_scope = typechecker.get_scope(root_scope_id)
+        root_scope.children.push(main_scope_id)
+
         typechecker.typecheck_module_import(
             import_: ParsedModuleImport(
                 module_name: ImportName::Literal(
@@ -256,7 +260,7 @@ struct Typechecker {
             )
         }
 
-        typechecker.typecheck_module(parsed_namespace, scope_id: root_scope_id)
+        typechecker.typecheck_module(parsed_namespace, scope_id: main_scope_id)
 
         return typechecker
     }

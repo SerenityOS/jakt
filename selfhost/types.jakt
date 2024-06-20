@@ -2356,19 +2356,20 @@ class CheckedProgram {
         }
 
         // if we do not find it then check imports
-        let module_id = scope_id.module_id
-
-        let search_scope_id = ScopeId(module_id: module_id, id: 0)
-        let search_scope = .get_scope(search_scope_id)
-        for (name, module) in search_scope.imports {
-            let import_scope_id = ScopeId(module_id: module, id: 0)
-            let res = callback(mixin: ResolutionMixin(scope_id: import_scope_id), name_override: name, is_alias: false)
-            match res {
-                Break(value) => {
-                    return Some(value)
+        mut search_scope_id: ScopeId? = scope_id
+        while search_scope_id.has_value() {
+            let search_scope = .get_scope(search_scope_id!)
+            for (name, module) in search_scope.imports {
+                let import_scope_id = ScopeId(module_id: module, id: 0)
+                let res = callback(mixin: ResolutionMixin(scope_id: import_scope_id), name_override: name, is_alias: false)
+                match res {
+                    Break(value) => {
+                        return Some(value)
+                    }
+                    else => {}
                 }
-                else => {}
             }
+            search_scope_id = search_scope.parent
         }
 
         return None

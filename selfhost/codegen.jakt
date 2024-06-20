@@ -370,7 +370,11 @@ struct CodeGenerator {
             }
             let module = generator.program.modules[i]
             generator.compiler.dbg_println(format("generate: module idx: {}, module.name {}", i, module.name))
-            let scope_id = ScopeId(module_id: module.id, id: 0)
+            let main_id = match module.id.id {
+                1 => 1uz
+                else => 0uz
+            }
+            let scope_id = ScopeId(module_id: module.id, id: main_id)
             let scope = generator.program.get_scope(scope_id)
             generator.codegen_namespace_predecl(scope, current_module: module, &mut output)
         }
@@ -402,7 +406,11 @@ struct CodeGenerator {
             output.append("#pragma once\n")
             output.append("#include \"__unified_forward.h\"\n")
 
-            let scope_id = ScopeId(module_id: module.id, id: 0)
+            let main_id = match module.id.id {
+                1 => 1uz
+                else => 0uz
+            }
+            let scope_id = ScopeId(module_id: module.id, id: main_id)
             let scope = generator.program.get_scope(scope_id)
 
             for child_scope_id in scope.children {
@@ -501,7 +509,11 @@ struct CodeGenerator {
             output.clear()
             output.append(format("#include \"{}\"\n", header_name))
 
-            let scope_id = ScopeId(module_id: module.id, id: 0)
+            let main_id = match module.id.id {
+                1 => 1uz
+                else => 0uz
+            }
+            let scope_id = ScopeId(module_id: module.id, id: main_id)
             let scope = generator.program.get_scope(scope_id)
 
 
@@ -545,7 +557,11 @@ struct CodeGenerator {
             let header_name = format("{}.h", module.name)
             let impl_name = format("{}_specializations.cpp", module.name)
 
-            let scope_id = ScopeId(module_id: module.id, id: 0)
+            let main_id = match module.id.id {
+                1 => 1uz
+                else => 0uz
+            }
+            let scope_id = ScopeId(module_id: module.id, id: main_id)
             let scope = generator.program.get_scope(scope_id)
 
             // We want to know which headers we want to include before we
