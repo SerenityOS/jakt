@@ -30,6 +30,8 @@ struct ArgsParser;
 namespace jakt__compiler {
 extern ErrorOr<ByteString> target_triple_string();
 
+extern JaktInternal::Optional<StringView> user_configuration_value(StringView const name);
+
 }
 namespace jakt__platform {
 struct Target;
@@ -360,8 +362,6 @@ ErrorOr<NonnullRefPtr<typename types::CheckedExpression>> value_to_checked_expre
 }
 namespace jakt__prelude__configuration {
 struct UserConfiguration;
-extern JaktInternal::Optional<StringView> ___jakt_get_user_configuration_value(StringView const name);
-
 }
 namespace cpp_import__common {
 struct CppImportErrors;

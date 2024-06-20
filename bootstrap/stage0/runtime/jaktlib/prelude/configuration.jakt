@@ -1,5 +1,5 @@
-extern fn ___jakt_get_user_configuration_value(anon name: StringView) -> StringView?
+import jakt::compiler { user_configuration_value }
 
 struct UserConfiguration {
-    comptime value_of(anon name: StringView) -> StringView? => ___jakt_get_user_configuration_value(name)
+    comptime value_of(anon name: StringView) -> StringView? => user_configuration_value(name)
 }

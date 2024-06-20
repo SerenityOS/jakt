@@ -120,7 +120,7 @@ return jakt__platform::Target(((parts)[static_cast<i64>(0LL)]),((parts)[static_c
 
 ErrorOr<jakt__platform::Target> jakt__platform::Target::active() {
 {
-ByteString const triple = TRY((___jakt_get_target_triple_string()));
+ByteString const triple = TRY((jakt__compiler::target_triple_string()));
 return TRY((jakt__platform::Target::from_triple(triple)));
 }
 }
