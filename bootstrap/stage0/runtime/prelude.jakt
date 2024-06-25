@@ -80,6 +80,7 @@ extern struct StringBuilder {
     fn append(mut this, string: raw c_char, size: usize)
     [[name=append_code_point]]
     fn append(mut this, anon code_point: u32)
+    fn appendff(mut this, anon format: String, ..)
     fn append_escaped_for_json(mut this, anon s: String)
     fn to_string(this) -> String
 

@@ -2698,9 +2698,9 @@ return JaktInternal::ExplicitValue<void>();
 }
 
 }
-ids::ModuleId const module_id = ((scope_id).module_id);
-ids::ScopeId const search_scope_id = ids::ScopeId(module_id,static_cast<size_t>(0ULL));
-NonnullRefPtr<types::Scope> const search_scope = ((*this).get_scope(search_scope_id));
+JaktInternal::Optional<ids::ScopeId> search_scope_id = scope_id;
+while (((search_scope_id).has_value())){
+NonnullRefPtr<types::Scope> const search_scope = ((*this).get_scope((search_scope_id.value())));
 {
 JaktInternal::DictionaryIterator<ByteString,ids::ModuleId> _magic = ((((search_scope)->imports)).iterator());
 for (;;){
@@ -2747,6 +2747,8 @@ return JaktInternal::ExplicitValue<void>();
 }
 }
 
+(search_scope_id = ((search_scope)->parent));
+}
 return JaktInternal::OptionalNone();
 }
 }
