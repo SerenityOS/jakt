@@ -89,8 +89,7 @@ private:
 
 class JsonPath : public Vector<JsonPathElement> {
 public:
-    JsonValue resolve(JsonValue const& root) const { return MUST(try_resolve(root)); }
-    ErrorOr<JsonValue> try_resolve(JsonValue const&) const;
+    JsonValue resolve(JsonValue const&) const;
     ByteString to_byte_string() const;
 };
 
