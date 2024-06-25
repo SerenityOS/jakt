@@ -951,15 +951,15 @@ fn compiler_main(anon args: [String]) throws -> c_int {
 
     if prettify_cpp_source {
         mut command = StringBuilder::create()
-        command.append(format("{} -i", clang_format_path))
+        command.appendff("{} -i", clang_format_path)
 
         if dot_clang_format_path.has_value() {
-            command.append(format(" --style=file:{}", dot_clang_format_path))
+            command.appendff(" --style=file:{}", dot_clang_format_path)
         }
 
         for (file, _) in codegen_result {
             let path = binary_dir.join(file)
-            command.append(format(" {}", path.to_string()))
+            command.appendff(" {}", path.to_string())
         }
 
         system(command.to_string().c_string())
@@ -1135,26 +1135,26 @@ fn format_output(file_path: Path, tokens: [Token], format_range: FormatRange?, f
                             else => " "
                         }
 
-                        formatted_file.append(format("{}//{}{}", lhs_space, space, comment!))
+                        formatted_file.appendff("{}//{}{}", lhs_space, space, comment!)
                     }
                     on_new_line = true
                 }
                 Garbage(consumed) => {
                     if consumed.has_value() {
-                        formatted_file.append(format("{}", consumed!))
+                        formatted_file.appendff("{}", consumed!)
                     }
                 }
                 else => {
                     if on_new_line {
-                        formatted_file.append(format("{}", indent(formatted_token.indent)))
+                        formatted_file.appendff("{}", indent(formatted_token.indent))
                     }
-                    formatted_file.append(format("{}", formatted_token.token_text()))
+                    formatted_file.appendff("{}", formatted_token.token_text())
                     on_new_line = false
                 }
             }
 
             for byte in formatted_token.trailing_trivia {
-                formatted_file.append(format("{:c}", byte))
+                formatted_file.appendff("{:c}", byte)
             }
 
             if formatted_token.token is Eol {
