@@ -3874,7 +3874,7 @@ struct Parser {
                         .index++
                         break
                     }
-                    if not error {
+                    if not error and not result.has_varargs {
                         .error("Expected parameter", .current().span())
                         error = true
                     }
