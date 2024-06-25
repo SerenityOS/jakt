@@ -1493,21 +1493,21 @@ struct Typechecker {
 
             for action in import_.before_include {
                 match action {
-                    Define(name, value) => builder.append(format("#define {} {}\n", name, value))
-                    Undefine(name) => builder.append(format("#undef {}\n", name))
+                    Define(name, value) => builder.appendff("#define {} {}\n", name, value)
+                    Undefine(name) => builder.appendff("#undef {}\n", name)
                 }
             }
             if import_.is_c {
                 builder.append("extern \"C\" {\n")
             }
-            builder.append(format("#include <{}>\n", import_.get_path()))
+            builder.appendff("#include <{}>\n", import_.get_path())
             if import_.is_c {
                 builder.append("}\n")
             }
             for action in import_.after_include {
                 match action {
-                    Define(name, value) => builder.append(format("#define {} {}\n", name, value))
-                    Undefine(name) => builder.append(format("#undef {}\n", name))
+                    Define(name, value) => builder.appendff("#define {} {}\n", name, value)
+                    Undefine(name) => builder.appendff("#undef {}\n", name)
                 }
             }
         }
@@ -10636,7 +10636,7 @@ struct Typechecker {
         builder.append(.type_name(function.return_type_id))
 
         if function.specialization_index is Some(index) {
-            builder.append(format(" [specialization {}: <", index))
+            builder.appendff(" [specialization {}: <", index)
             let type_ids = function.generics.specializations[index]
             for i in 0..type_ids.size() {
                 if i != 0 {
