@@ -2213,7 +2213,7 @@ class CppImportProcessor {
                 args_storage[1] = "-std=c11"
             } else {
                 args_storage[0] = "-xc++-header"
-                args_storage[1] = "-std=c++20"
+                args_storage[1] = "-std=c++23"
             }
             args_storage[2] = format("--target={}", program.compiler.target_triple ?? Target::active().name())
 

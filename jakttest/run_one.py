@@ -122,7 +122,7 @@ def main():
                     cpp_compiler,
                     f"--target={target_triple}",
                     "-fdiagnostics-color=always",
-                    "-std=c++20",
+                    "-std=c++23",
                     "-Wno-unknown-warning-option",
                     "-Wno-trigraphs",
                     "-Wno-parentheses-equality",
