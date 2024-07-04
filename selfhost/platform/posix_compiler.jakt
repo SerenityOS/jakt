@@ -28,7 +28,7 @@ fn run_compiler(
     mut compile_args = [
         cxx_compiler_path
         "-fdiagnostics-color=always"
-        "-std=c++20"
+        "-std=c++23"
         "-fno-exceptions"
         "-Wno-unknown-warning-option"
         "-Wno-trigraphs"
