@@ -4929,7 +4929,7 @@ struct Typechecker {
 
         if parsed_function.is_raw_constructor {
             // raw_constructor() only applies to functions with the signature `fn(this: mut Self, ..) -> void`
-            // and specifically allowed only in classes.
+            // and is specifically allowed only in classes with fields that are all default-initialized.
             if .self_type_id is None {
                 .error("Invalid use of raw_constructor outside of a class", parsed_function.name_span)
                 return
@@ -4937,7 +4937,7 @@ struct Typechecker {
 
             let self_type_id = .self_type_id!
             let self_type = .get_type(self_type_id)
-            let struct_ = match self_type {
+            mut struct_ = match self_type {
                 Struct(id) => .get_struct(id)
                 else => {
                     .error("Invalid use of raw_constructor outside of a class", parsed_function.name_span)
@@ -4967,9 +4967,29 @@ struct Typechecker {
                 return
             }
 
+            // Check the fields' default values
+            for field in struct_.fields {
+                let var = .get_variable(field.variable_id)
+                guard field.default_value_expression.has_value() else {
+                    .error_with_hint(
+                        format("Field '{}' in class '{}' must have a default value", var.name, struct_.name), var.definition_span
+                        "Class is declared to have a raw constructor here", parsed_function.name_span
+                    )
+                    return
+                }
+
+                field.default_value_in_definition_scope = .typecheck_expression(
+                    field.default_value_expression!.0
+                    scope_id: field.default_value_expression!.1
+                    safety_mode: SafetyMode::Safe
+                    type_hint: var.type_id
+                )
+            }
+
             // Done, set the external name and the ctor flag.
             checked_function.external_name = ExternalName::Plain(struct_.name_for_codegen().as_name_for_definition())
             checked_function.type = FunctionType::Constructor
+            checked_function.is_raw_constructor = true
         }
     }
 

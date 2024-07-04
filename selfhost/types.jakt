@@ -825,6 +825,7 @@ class CheckedFunction {
     public deprecated_message: String? = None
     public stores_arguments: [(usize, ArgumentStoreLevel)]? = None
     public force_inline: InlineState = InlineState::Default
+    public is_raw_constructor: bool = false
 
     public fn name_for_codegen(this) -> ExternalName => .external_name ?? ExternalName::Plain(.name)
 
@@ -1249,9 +1250,11 @@ struct FieldRecord {
     field_id: VarId
 }
 
-struct CheckedField {
-    variable_id: VarId
-    default_value_expression: (ParsedExpression, ScopeId)?
+class CheckedField {
+    public variable_id: VarId
+    public default_value_expression: (ParsedExpression, ScopeId)?
+    // Only populated if the default value is supposed to be used in a raw constructor.
+    public default_value_in_definition_scope: CheckedExpression? = None
 }
 
 struct CheckedStruct {

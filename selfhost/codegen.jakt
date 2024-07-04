@@ -5519,6 +5519,39 @@ struct CodeGenerator {
             output.append(" const")
         }
 
+        if function.is_raw_constructor {
+            // Raw ctor, generate member initializer list before the function body
+            output.append(" : ")
+            mut first = true
+            // if this flag is set, `containing_struct` is guaranteed to be available.
+            let struct_ = match .program.get_type(containing_struct!) {
+                Struct(id) => .program.get_struct(id)
+                else => {
+                    .compiler.panic("Expected a struct")
+                }
+            }
+
+            if struct_.super_struct_id.has_value() {
+                let super_struct = .program.get_struct(struct_.super_struct_id!)
+                output.append(super_struct.name_for_codegen().as_name_for_use())
+                output.append("()")
+                first = false
+            }
+
+            for field in struct_.fields {
+                if not first {
+                    output.append(",\n")
+                } else {
+                    first = false
+                }
+                let var = .program.get_variable(field.variable_id)
+                output.append(var.name_for_codegen().as_name_for_use())
+                output.append("(")
+                .codegen_expression(field.default_value_in_definition_scope!, &mut output, forward_error_with_try: false)
+                output.append(")")
+            }
+        }
+
         output.append(" {\n")
         if is_main {
             output.append("\n
