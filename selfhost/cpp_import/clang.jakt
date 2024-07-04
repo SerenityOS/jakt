@@ -229,6 +229,20 @@ struct HashableCursor implements(Equal<HashableCursor>, Hashable) {
     }
 }
 
+// FIXME: Set<T> (and other types implemented in C++) do not have access to [[inline(always)]]'d types
+//        declared in jakt, which means the following interaction is not possible:
+//            extern struct Foo { ... }
+//            type Foo implements(Hashable) {
+//               [[inline(always)]] fn hash(this) -> u32 => 42
+//            }
+//            CppUseHashable<Foo>(...) // This cannot see anything related to the jakt impl of Hashable
+struct Cursor implements(Equal<Cursor>, Hashable) {
+    cursor: CXCursor
+
+    fn hash(this) -> u32 => clang_hashCursor(.cursor)
+    fn equals(this, anon other: Cursor) -> bool => clang_equalCursors(.cursor, other.cursor)
+}
+
 class CppImportProcessor {
     index: CXIndex
     cpp_struct_cache: [String:StructId]
@@ -1737,7 +1751,7 @@ class CppImportProcessor {
         return .inherits_from_any_of(cursor, {"c:@N@AK@S@RefCountedBase", "c:@N@Core@S@Object"})
     }
 
-    fn inherits_from_any_of(mut this, anon cursor: CXCursor, anon usrs: {String}) throws -> bool {
+    fn inherits_from_any_of(mut this, anon cursor: CXCursor, anon usrs: {String}, mut bases_seen: {Cursor} = {}) throws -> bool {
         mut definition = clang_getCursorDefinition(cursor)
         let maybe_template = clang_getSpecializedCursorTemplate(cursor: definition)
         if not clang_Cursor_isNull(cursor: maybe_template) {
@@ -1766,7 +1780,12 @@ class CppImportProcessor {
             cursor: definition
             kinds: {CXCursorKind::CXCursor_CXXBaseSpecifier}
         ) {
-            if .inherits_from_any_of(base, usrs) {
+            if bases_seen.contains(Cursor(cursor: base)) {
+                continue
+            }
+            bases_seen.add(Cursor(cursor: base))
+
+            if .inherits_from_any_of(base, usrs, bases_seen) {
                 return true
             }
         }
