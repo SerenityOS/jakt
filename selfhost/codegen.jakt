@@ -323,93 +323,16 @@ struct CodeGenerator {
         output.append("const unsigned int CP_UTF8 = 65001;\n")
         output.append("#endif\n")
 
-        let sorted_modules = generator.topologically_sort_modules()
-        mut imported_paths: [String:(String, String)] = [:] // path -> (before, after)
-        for idx in sorted_modules.size()..0 {
-            let i = sorted_modules[idx - 1]
-            mut q = Queue<ScopeId>()
-            q.enqueue(ScopeId(module_id: i, id: 0))
-            while not q.is_empty() {
-                let scope_id = q.dequeue()
-                let scope = generator.program.get_scope(scope_id)
-                for child in scope.children {
-                    q.enqueue(child)
-                }
-                if scope.import_path_if_extern is Some(path) {
-                    mut before = StringBuilder::create()
-                    mut after = StringBuilder::create()
-
-                    for action in scope.before_extern_include {
-                        match action {
-                            Define(name, value) => {
-                                before.appendff("#ifdef {}\n", name)
-                                before.appendff("#undef {}\n", name)
-                                before.append("#endif\n")
-                                before.appendff("#define {} {}\n", name, value)
-                            }
-                            Undefine(name) => {
-                                before.appendff("#ifdef {}\n", name)
-                                before.appendff("#undef {}\n", name)
-                                before.append("#endif\n")
-                            }
-                        }
-                    }
-
-                    for action in scope.after_extern_include {
-                        match action {
-                            Define(name, value) => {
-                                after.appendff("#ifdef {}\n", name)
-                                after.appendff("#undef {}\n", name)
-                                after.append("#endif\n")
-                                after.appendff("#define {} {}\n", name, value)
-                            }
-                            Undefine(name) => {
-                                after.appendff("#ifdef {}\n", name)
-                                after.appendff("#undef {}\n", name)
-                                after.append("#endif\n")
-                            }
-                        }
-                    }
-
-                    imported_paths.set(path, (before.to_string(), after.to_string()))
-                }
-            }
-        }
-
-        for (path, actions) in imported_paths {
-            output.append(actions.0)
-            output.appendff("#include <{}>\n", path)
-            output.append(actions.1)
-        }
-
-        output.append("namespace Jakt {\n")
-
-        for idx in sorted_modules.size()..0 {
-            let i = sorted_modules[idx - 1].id
-            if i == 0 {
-                // Skip 0 because it's the prelude
-                continue
-            }
-            let module = generator.program.modules[i]
-            generator.compiler.dbg_println(format("generate: module idx: {}, module.name {}", i, module.name))
-            let main_id = match module.id.id {
-                1 => 1uz
-                else => 0uz
-            }
-            let scope_id = ScopeId(module_id: module.id, id: main_id)
-            let scope = generator.program.get_scope(scope_id)
-            generator.codegen_namespace_predecl(scope, current_module: module, &mut output)
-        }
-
-        output.append("} // namespace Jakt\n")
-
-
-        // FIXME: Try and get rid of this header if possible.
+        // FIXME: This header is misnamed, it is just #include <lib.h> with the codepage
+        // function definition
         result.set(
             "__unified_forward.h",
             (output.to_string(), compiler.current_file_path()!.to_string()),
         )
 
+        let sorted_modules = generator.topologically_sort_modules()
+
+        mut modules_in_header: [usize:{ModuleId}] = [:]
 
         for idx in sorted_modules.size()..0 {
             // Module forward declarations header
@@ -434,6 +357,8 @@ struct CodeGenerator {
             }
             let scope_id = ScopeId(module_id: module.id, id: main_id)
             let scope = generator.program.get_scope(scope_id)
+
+
 
             for child_scope_id in scope.children {
                 let scope = generator.program.get_scope(child_scope_id)
@@ -481,6 +406,7 @@ struct CodeGenerator {
                 }
             }
 
+
             // We must reserve `output` so that we can add the imported headers later.
             mut after_headers = StringBuilder::create()
             after_headers.append("namespace Jakt {\n")
@@ -490,9 +416,15 @@ struct CodeGenerator {
             }
 
 
-            let ordered_imports = generator.capturing_modules(all_sorted_modules: &sorted_modules, module, &fn[scope](anon generator: &mut CodeGenerator, module: Module, output: &mut StringBuilder) throws {
+            let required_imports = generator.capturing_modules(module, &fn[scope](anon generator: &mut CodeGenerator, module: Module, output: &mut StringBuilder) throws {
+                generator.codegen_namespace_predecl(scope, current_module: module, &mut output)
                 generator.codegen_namespace_forward(scope, current_module: module, &mut output)
             }, output: &mut after_headers)
+
+
+            let ordered_imports = CodeGenerator::get_topologically_sorted_modules(all_sorted_modules: &sorted_modules, dependencies: &required_imports)
+
+            modules_in_header.set(i, required_imports)
 
             if not module.is_root {
                 // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
@@ -511,11 +443,19 @@ struct CodeGenerator {
             output.append(after_headers.to_string())
             output.append("} // namespace Jakt\n")
 
+
             result.set(header_name, (output.to_string(), module.resolved_import_path))
         }
 
+
+
         for idx in sorted_modules.size()..0 {
             // Module implementation
+            // NOTE: this and the next loop are pretty much identical; only the
+            // inner part of `capturing modules` differs since we have to
+            // output specializations instead. As such, it is probable that any
+            // changes to generation in this loop could apply to the
+            // specialization loop as well.
             let i = sorted_modules[idx - 1].id
             if i == 0 {
                 // Skip 0 because it's the prelude
@@ -529,7 +469,6 @@ struct CodeGenerator {
             let impl_name = format("{}.cpp", module.name)
 
             output.clear()
-            output.appendff("#include \"{}\"\n", header_name)
 
             let main_id = match module.id.id {
                 1 => 1uz
@@ -544,9 +483,21 @@ struct CodeGenerator {
             }
 
             mut inside_namespace = StringBuilder::create()
-            generator.codegen_namespace(scope, current_module: module, output: &mut inside_namespace)
-            inside_namespace.append(generator.deferred_output.to_string())
-            generator.deferred_output.clear()
+            mut required_imports = generator.capturing_modules(module,
+                &fn[scope](anon gen: &mut CodeGenerator, module: Module, output: &mut StringBuilder) throws {
+                gen.codegen_namespace(scope, current_module: module, output)
+            }, output: &mut inside_namespace)
+
+            // Do not include things that were included already by the module header.
+            // Issue #1450 still applies here; this code relies on Dictionary::get being
+            // idempotent.
+            if modules_in_header.get(i) is Some(already_included) {
+                for imported_by_header in already_included {
+                    required_imports.remove(imported_by_header)
+                }
+            }
+
+            let ordered_imports = CodeGenerator::get_topologically_sorted_modules(all_sorted_modules: &sorted_modules, dependencies: &required_imports)
 
             if not module.is_root {
                 // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
@@ -554,6 +505,17 @@ struct CodeGenerator {
             }
 
             if not inside_namespace.is_empty() {
+                if i != 0 {
+                    output.appendff("#include \"{}\"\n", header_name)
+                }
+
+                for id in ordered_imports {
+                    // prelude, already imported by lib as well
+                    if id.id == 0 { continue }
+                    let module = generator.program.modules[id.id]
+                    output.appendff("#include \"{}.h\"\n", module.name)
+                }
+
                 output.append("namespace Jakt {\n")
                 output.append(inside_namespace.to_string())
                 output.append("} // namespace Jakt\n")
@@ -595,10 +557,20 @@ struct CodeGenerator {
             }
 
 
-
-            let ordered_imports = generator.capturing_modules(all_sorted_modules: &sorted_modules, module, &fn[scope](anon gen: &mut CodeGenerator, module: Module, output: &mut StringBuilder) throws {
+            mut required_imports = generator.capturing_modules(module, &fn[scope](anon gen: &mut CodeGenerator, module: Module, output: &mut StringBuilder) throws {
                 gen.codegen_namespace_specializations(scope, current_module: module, &mut output)
             }, output: &mut code_output)
+
+            // Do not include things that were included already by the module header.
+            // Issue #1450 still applies here; this code relies on Dictionary::get being
+            // idempotent.
+            if modules_in_header.get(i) is Some(already_included) {
+                for imported_by_header in already_included {
+                    required_imports.remove(imported_by_header)
+                }
+            }
+
+            let ordered_imports = CodeGenerator::get_topologically_sorted_modules(all_sorted_modules: &sorted_modules, dependencies: &required_imports)
 
             if not module.is_root {
                 // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
@@ -649,10 +621,10 @@ struct CodeGenerator {
         return deps
     }
 
-    // Captures required modules only from the types `gen` generates, and gives
-    // back a topologically sorted array of the dependencies, with the deferred
-    // output appended to `gen`'s output.
-    fn capturing_modules(mut this, all_sorted_modules: &[ModuleId], module: Module, anon gen: &fn(anon cg: &mut CodeGenerator, module: Module, output: &mut StringBuilder) throws -> void, output: &mut StringBuilder) throws -> [ModuleId] {
+    // Captures required modules only from the types `gen` generates,
+    // and gives back the set of modules that were used, with the
+    // deferred output appended to `gen`'s output.
+    fn capturing_modules(mut this, module: Module, anon gen: &fn(anon cg: &mut CodeGenerator, module: Module, output: &mut StringBuilder) throws -> void, output: &mut StringBuilder) throws -> {ModuleId} {
         .used_modules = {}
         .used_modules.ensure_capacity(module.imports.size())
         for id in module.imports {
@@ -662,8 +634,7 @@ struct CodeGenerator {
         gen(&mut this, module, &mut output)
         output.append(.deferred_output.to_string())
         .deferred_output.clear()
-        let modules = CodeGenerator::get_topologically_sorted_modules(all_sorted_modules, dependencies: &.used_modules)
-        return modules
+        return .used_modules
     }
 
     fn postorder_traversal(this, type_id: TypeId, mut visited: {TypeId}, dependency_graph: [TypeId: [TypeId]], mut output: [TypeId]) throws {
