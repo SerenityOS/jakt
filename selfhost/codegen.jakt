@@ -314,21 +314,9 @@ struct CodeGenerator {
 
         mut result: [String:(String, String)] = [:]
 
-        // Unified forwarding header
+        // Share the output builder between stages so that any module
+        // generation that gets cleared maintains the reserved memory.
         mut output = StringBuilder::create()
-        output.append("#pragma once\n")
-        output.append("#include <lib.h>\n")
-        output.append("#ifdef _WIN32\n")
-        output.append("extern \"C\" __cdecl int SetConsoleOutputCP(unsigned int code_page);\n")
-        output.append("const unsigned int CP_UTF8 = 65001;\n")
-        output.append("#endif\n")
-
-        // FIXME: This header is misnamed, it is just #include <lib.h> with the codepage
-        // function definition
-        result.set(
-            "__unified_forward.h",
-            (output.to_string(), compiler.current_file_path()!.to_string()),
-        )
 
         let sorted_modules = generator.topologically_sort_modules()
 
@@ -349,7 +337,7 @@ struct CodeGenerator {
 
             output.clear()
             output.append("#pragma once\n")
-            output.append("#include \"__unified_forward.h\"\n")
+            output.append("#include <lib.h>\n")
 
             let main_id = match module.id.id {
                 1 => 1uz
@@ -357,8 +345,6 @@ struct CodeGenerator {
             }
             let scope_id = ScopeId(module_id: module.id, id: main_id)
             let scope = generator.program.get_scope(scope_id)
-
-
 
             for child_scope_id in scope.children {
                 let scope = generator.program.get_scope(child_scope_id)
@@ -469,6 +455,12 @@ struct CodeGenerator {
             let impl_name = format("{}.cpp", module.name)
 
             output.clear()
+            // Make sure we have `SetConsoleOutputCP` defined. Note that there
+            // may be multiple `main` functions from separate modules, and currently
+            // all of them are generated as if they were the entrypoint.
+            output.append("#ifdef _WIN32\n")
+            output.append("extern \"C\" __cdecl int SetConsoleOutputCP(unsigned int code_page);\n")
+            output.append("#endif\n")
 
             let main_id = match module.id.id {
                 1 => 1uz
@@ -5473,6 +5465,9 @@ struct CodeGenerator {
         if is_main {
             output.append("\n
             #ifdef _WIN32
+            #ifndef CP_UTF8
+            static constexpr unsigned int CP_UTF8 = 65001;
+            #endif
             SetConsoleOutputCP(CP_UTF8);
             // Enable buffering to prevent VS from chopping up UTF-8 byte sequences
             setvbuf(stdout, nullptr, _IOFBF, 1000);
