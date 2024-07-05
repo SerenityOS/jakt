@@ -1,0 +1,8 @@
+/// Expect:
+/// - output: "OK\n"
+
+import import_function_only_helper { imported }
+
+fn main() {
+    imported()
+}

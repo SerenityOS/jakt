@@ -1,0 +1,5 @@
+/// Expect: Skip
+
+fn imported() {
+    println("OK")
+}
