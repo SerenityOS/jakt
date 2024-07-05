@@ -4339,6 +4339,7 @@ struct CodeGenerator {
                     let function_id = call.function_id!
                     let function = .program.get_function(function_id)
                     let type_module = .program.get_module(function_id.module)
+                    .used_modules.add(function_id.module)
 
                     if function.type is ImplicitConstructor or function.type is ExternalClassConstructor {
                         let type_id = call.return_type
@@ -4943,6 +4944,7 @@ struct CodeGenerator {
                 let args = match scope.relevant_type_id.has_value() {
                     false => ""
                     true => {
+                        .used_modules.add(scope.relevant_type_id!.module)
                         let parameters = .program.get_type(scope.relevant_type_id!).generic_parameters(program: .program)
                         mut builder = StringBuilder::create()
 
