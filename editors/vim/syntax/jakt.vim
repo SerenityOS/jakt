@@ -30,6 +30,7 @@ let s:jakt_syntax_keywords = {
     \ ,                ]
     \ , 'jaktKeyword' :["fn"
     \ ,                 "extern"
+    \ ,                 "export"
     \ ,                 "import"
     \ ,                 "comptime"
     \ ,                ]

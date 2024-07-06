@@ -43,7 +43,7 @@
              (jakt-repeat '("while" "for" "loop"))
              (jakt-execution '("return" "break" "continue" "throw" "yield"))
              (jakt-boolean '("true" "false"))
-             (jakt-keyword '("fn" "extern" "comptime"))
+             (jakt-keyword '("fn" "extern" "comptime" "import" "export"))
              (jakt-exception '("throws"))
              (jakt-macro '("defer" "unsafe" "throw" "try" "must" "catch" "cpp"))
              (jakt-var-decls '("mut" "let" "anon" "raw"))

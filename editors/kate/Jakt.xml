@@ -37,6 +37,7 @@
             <item>extern</item>
             <item>import</item>
             <item>comptime</item>
+            <item>export</item>
             <item>fn</item>
             <item>boxed</item>
             <item>virtual</item>

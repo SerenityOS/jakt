@@ -1275,5 +1275,5 @@ contexts:
     - match: \b(and|or|is|not)\b
       scope: keyword.operator.logical.jakt
 
-    - match: \b(import|super|self|Self)\b
+    - match: \b(export|import|super|self|Self)\b
       scope: keyword.other.jakt
