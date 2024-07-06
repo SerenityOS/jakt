@@ -855,6 +855,49 @@ struct Typechecker {
         .typecheck_namespace_declarations(parsed_namespace, scope_id, comptime_pass: true, generic_pass: true)
         .typecheck_namespace_declarations(parsed_namespace, scope_id, comptime_pass: false, generic_pass: false)
         .typecheck_namespace_declarations(parsed_namespace, scope_id, comptime_pass: false, generic_pass: true)
+        .collect_exports(parsed_namespace, scope_id)
+    }
+
+    fn collect_exports(mut this, parsed_namespace: ParsedNamespace, scope_id: ScopeId) {
+        let parent_scope = MaybeResolvedScope::Resolved(scope_id)
+        for exp in parsed_namespace.exports {
+            mut exported_types: [TypeId:[ParsedName]] = [:]
+            if .program.exports.get(exp.file.name) is Some(exported) {
+                exported_types = exported
+            }
+            for name_list in exp.names {
+                mut parent_scope: ScopeId? = scope_id
+                for i in 0..(name_list.size() - 1) {
+                    let found_scope = .program.find_namespace_in_immediate_children_of_scope(scope_id: parent_scope!, name_list[i].name)
+
+                    guard found_scope is Some(scope_id) else {
+                        .error(format("Cannot find scope for ‘{}‘", name_list[i].name), name_list[i].span)
+                        parent_scope = None
+                        break
+                    }
+                    parent_scope = scope_id
+                }
+
+                guard parent_scope is Some(search_scope) else {
+                    continue
+                }
+
+                let type_name = name_list.last()!
+
+                let found_type = must .program.find_type_in_scope(
+                    scope_id: search_scope
+                    name: type_name.name
+                )
+
+                guard found_type is Some(exported_type) else {
+                    .error(format("Cannot find exported type ‘{}‘", type_name.name), type_name.span)
+                    continue
+                }
+
+                exported_types.set(exported_type, name_list)
+            }
+            .program.exports.set(exp.file.name, exported_types)
+        }
     }
 
     fn typecheck_visibility(mut this, visibility: Visibility, scope_id: ScopeId) throws -> CheckedVisibility {

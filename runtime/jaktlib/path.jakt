@@ -162,6 +162,27 @@ struct Path {
         return parts
     }
 
+    fn relative_to(this, anon base: &Path) -> Path {
+        let base_parts = base.components()
+        let this_parts = .components()
+
+        mut common = 0uz
+        while common < base_parts.size() and common < this_parts.size() and base_parts[common] == this_parts[common] {
+            common += 1
+        }
+
+        mut relative_parts: [String] = []
+        for _ in 0..(base_parts.size() - common) {
+            relative_parts.push("..")
+        }
+
+        for i in common..this_parts.size() {
+            relative_parts.push(this_parts[i])
+        }
+
+        return Path::from_parts(relative_parts)
+    }
+
     private fn split_at_last_slash(this) -> (String, String) {
         let len = .path.length()
         let last_slash = Path::last_slash(.path)

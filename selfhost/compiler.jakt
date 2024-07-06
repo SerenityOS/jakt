@@ -24,6 +24,7 @@ class Compiler {
     public target_triple: String?
     public user_configuration: [String:String]
     public binary_dir: Path
+    public exports_dir: Path
     public assume_main_file_path: Path?
 
     public fn panic(this, anon message: String) -> never {

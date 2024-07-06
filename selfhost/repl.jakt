@@ -189,6 +189,7 @@ struct REPL {
             target_triple
             user_configuration
             binary_dir: Path::from_string("build")
+            exports_dir: Path::from_string("build/exports")
             assume_main_file_path: Path::from_string("repl.jakt")
         )
 

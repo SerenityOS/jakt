@@ -2,7 +2,7 @@ import parser {
     ArgumentStoreLevel, BinaryOperator, DefinitionLinkage, EnumVariantPatternArgument, ExternalName, FunctionLinkage
     FunctionType, IncludeAction, InlineState, ParsedBlock, ParsedCall, ParsedCapture, ParsedExpression
     ParsedExternImport, ParsedField, ParsedFunction, ParsedMatchBody, ParsedMatchCase, ParsedModuleImport
-    ParsedNamespace, ParsedParameter, ParsedRecord, ParsedStatement, ParsedType, ParsedVarDecl, Parser, RecordType
+    ParsedNamespace, ParsedParameter, ParsedRecord, ParsedStatement, ParsedType, ParsedVarDecl, ParsedName, Parser, RecordType
     TypeCast, UnaryOperator, CheckedQualifiers
 }
 import utility { FileId, IterationDecision, Queue, Span, join, panic, todo }
@@ -1815,6 +1815,14 @@ fn builtin(anon builtin: BuiltinType) -> TypeId {
 class CheckedProgram {
     public compiler: Compiler
     public modules: [Module] = []
+    // exports by filename: each type saves how the type is resolved in terms of namespace names, which will be how it is seen from the C++:
+    // ```
+    // namespace [ParsedName] {
+    //   using {type_name} = {qualifier for type name}
+    // }
+    // ```
+    // This makes the code generator export each type in the namespace dictated by the list of parsed names.
+    public exports: [String:[TypeId:[ParsedName]]] = [:]
     public loaded_modules: [String: LoadedModule] = [:]
 
     public fn create_module(mut this, name: String, is_root: bool, path: String? = None) -> ModuleId {

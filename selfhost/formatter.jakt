@@ -196,6 +196,7 @@ struct FormattedToken {
         Else => "else"
         Enum => "enum"
         Extern => "extern"
+        Export => "export"
         False => "false"
         For => "for"
         Fn => "fn"

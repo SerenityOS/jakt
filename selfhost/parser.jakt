@@ -154,6 +154,15 @@ enum ImportName {
     }
 }
 
+// Export in the module. This will be aggregated by
+// the typechecker.
+struct ParsedExport {
+    // the filename is extracted from a quoted string
+    file: ParsedName
+    // each export is a namespaced name.
+    names: [[ParsedName]]
+}
+
 enum ImportList {
     List([ImportName])
     All
@@ -271,6 +280,7 @@ struct ParsedNamespace {
     aliases: [ParsedAlias] = []
     module_imports: [ParsedModuleImport] = []
     extern_imports: [ParsedExternImport] = []
+    exports: [ParsedExport] = []
     import_path_if_extern: String? = None
     generating_import_extern_before_include: [IncludeAction] = []
     generating_import_extern_after_include: [IncludeAction] = []
@@ -1831,6 +1841,16 @@ struct Parser {
                         break
                     }
                 }
+                Export => {
+                    // mirrored from 'Import' case.
+                    if not active_attributes.is_empty() {
+                        .error("Cannot apply attributes to exports", active_attributes[0].span)
+                        active_attributes = []
+                    }
+                    .index++
+                    .parse_export(parent: &mut parsed_namespace)
+                    saw_an_entity = true
+                }
                 Import => {
                     if not active_attributes.is_empty() {
                         .error("Cannot apply attributes to imports", active_attributes[0].span)
@@ -2707,6 +2727,112 @@ struct Parser {
                 record_type: RecordType::Garbage
             )
         }
+    }
+
+    // skip tokens until we find an EOF marker or a toplevel
+    // starter.
+    fn escape_toplevel(mut this) {
+        loop {
+            match .current() {
+                Eof | Extern | Export | Import | Namespace | Struct | Enum | Trait | Fn | Comptime => {
+                    break
+                }
+                else => {
+                    .index++
+                    continue
+                }
+            }
+        }
+    }
+
+    fn parse_export(mut this, parent: &mut ParsedNamespace) {
+        // export "filename" { <name> (, <name>)* }
+        guard .current() is QuotedString(quote: filename, span: filename_span) else {
+            .error("Expected filename", .current().span())
+            .escape_toplevel()
+            return
+        }
+
+        .index++
+
+        mut result = ParsedExport(
+            file: ParsedName(name:  filename, span: filename_span),
+            names: []
+        )
+
+
+        guard .current() is LCurly else {
+            .error("Expected '{'", .current().span())
+            parent.exports.push(result)
+            .escape_toplevel()
+            return
+        }
+
+        .index++
+
+        mut has_doublecolon = false
+
+        mut current_ns: [ParsedName] = []
+        loop {
+            match .current() {
+                Eol => {
+                    .index++
+                    continue
+                }
+                RCurly => {
+                    .index++
+                    break
+                }
+                Identifier(name, span) => {
+                    if not current_ns.is_empty() and not has_doublecolon {
+                        // Push the name anyway, since we can recover from
+                        // here easily
+                        .error("Expected ',' between exported names", span)
+                        result.names.push(current_ns)
+                        current_ns = []
+                    }
+
+                    current_ns.push(ParsedName(name, span))
+                    has_doublecolon = false
+
+                    .index++
+                    continue
+                }
+                ColonColon(span) => {
+                    if current_ns.is_empty() {
+                        // We can also recover easily from here by ignoring
+                        // the double colon
+                        .error("Expected name before '::'", span)
+                    }
+                    has_doublecolon = true
+
+                    .index++
+                    continue
+                }
+                Comma(span) => {
+                    if current_ns.is_empty() or has_doublecolon {
+                        .error("Expected name before ','", span)
+                    } else {
+                        result.names.push(current_ns)
+                        current_ns = []
+                    }
+
+                    .index++
+                    continue
+                }
+                else(span) => {
+                    .error("Expected exported name, ',' or '}'", span)
+                    .escape_toplevel()
+                    break
+                }
+            }
+        }
+
+        if not current_ns.is_empty() {
+            result.names.push(current_ns)
+        }
+
+        parent.exports.push(result)
     }
 
     fn parse_import(mut this, parent: &mut ParsedNamespace)  {

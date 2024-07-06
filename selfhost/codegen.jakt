@@ -15,7 +15,10 @@ import typechecker {
 import types { CheckedGenericParameter, CheckedParameter, FunctionGenericParameter, SafetyMode, StructLikeId }
 import utility { Queue, Span, escape_for_quotes, interpret_escapes, join, panic, prepend_to_each, todo }
 import compiler { Compiler }
+import jakt::path { Path }
 import interpreter { Interpreter, TypecheckFunctions, value_to_checked_expression }
+import jakt::platform { platform_fs }
+import platform_fs() { make_directory }
 
 enum AllowedControlExits {
     /// No control exit statements allowed
@@ -293,7 +296,7 @@ struct CodeGenerator {
         panic("Cyclic module imports")
     }
 
-    fn generate(compiler: Compiler, anon program: CheckedProgram, debug_info: bool) throws -> [String:(String, String)] {
+    fn generate(compiler: Compiler, anon program: CheckedProgram, debug_info: bool, exported_files: &mut [String:String]) throws -> [String:(String, String)] {
         mut generator = CodeGenerator(
             compiler
             program
@@ -594,6 +597,59 @@ struct CodeGenerator {
                 output.clear()
             }
             result.set(impl_name, (output.to_string(), module.resolved_import_path))
+        }
+
+        let export_dir = must compiler.exports_dir.absolute()
+        let binary_dir = must compiler.binary_dir.absolute()
+
+        for (file, exported_types) in generator.program.exports {
+            // Generate all the type aliases while making sure to import the correct
+            // module headers.
+            // I need to reserve output to find the headers
+            mut used_modules: {ModuleId} = {}
+            mut cpp_code = StringBuilder::create()
+
+            // TODO: it could be nicer if the exported types were grouped
+            // by the namespace they are imported in.
+            for (type_id, unprefixed_name) in exported_types {
+                used_modules.add(type_id.module)
+
+                let should_be_namespaced = unprefixed_name.size() > 1
+                if should_be_namespaced {
+                    cpp_code.appendff("namespace {}", unprefixed_name[0].name)
+                    if unprefixed_name.size() > 2 {
+                        for i in 1..(unprefixed_name.size() - 1) {
+                            cpp_code.append(format("::{}", unprefixed_name[i].name))
+                        }
+                    }
+                    cpp_code.append('{')
+                }
+
+                let name = unprefixed_name.last()!.name
+
+                let qualifier = generator.codegen_namespace_qualifier(scope_id: generator.program.find_type_scope_id(type_id))
+                cpp_code.appendff("using {} = Jakt::{}{};", name, qualifier, name)
+
+                if should_be_namespaced {
+                    cpp_code.append('}')
+                }
+            }
+
+            output.clear()
+            output.append("#pragma once\n")
+
+            let ordered_imports = get_topologically_sorted_modules(all_sorted_modules: &sorted_modules, dependencies: &used_modules)
+
+            for id in ordered_imports {
+                let module = generator.program.modules[id.id]
+                let module_path = binary_dir.join(format("{}.h", module.name))
+                let module_path_relative = module_path.relative_to(&export_dir)
+                output.appendff("#include \"{}\"\n", module_path_relative.to_string())
+            }
+
+            output.append(cpp_code.to_string())
+
+            exported_files.set(file, output.to_string())
         }
 
         return result
