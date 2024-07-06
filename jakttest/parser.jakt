@@ -6,6 +6,8 @@ import error { JaktError }
 import utility { panic, todo, Span }
 
 enum ParsedTest {
+    cppexports: String = ""
+
     SuccessTest(related_cpp_files: [String], output: String, cppincludes: String)
     CompileErrorTest(related_cpp_files: [String], output: String, cppincludes: String)
     RuntimeErrorTest(related_cpp_files: [String], output: String, cppincludes: String)
@@ -96,8 +98,10 @@ struct Parser {
         mut runtime_error = false
         mut compile_error = false
         mut has_cppincludes = false
+        mut has_cppexports = false
         mut output = ""
         mut cppincludes = ""
+        mut cppexports = ""
         mut related_cpp_files: [String] = []
 
         while not .is_eof() {
@@ -133,7 +137,11 @@ struct Parser {
                 has_cppincludes =  .lex_literal("cppincludes")
             }
 
-            guard success_test or compile_error or runtime_error or has_cppincludes else {
+            if not has_cppexports {
+                has_cppexports = .lex_literal("cppexports")
+            }
+
+            guard success_test or compile_error or runtime_error or has_cppincludes or has_cppexports else {
                 return ParsedTest::NoExpectOrSkip
             }
 
@@ -160,19 +168,23 @@ struct Parser {
                 continue
             } else if is_related_cpp_file {
                 related_cpp_files.push(parsed_string)
-            } else if not has_cppincludes {
-                panic("Unexpected token state in parse_test_information")
+            } else if has_cppincludes {
+                cppincludes = parsed_string
+            } else {
+                guard has_cppexports else {
+                    panic("Unexpected token state in parse_test_information")
+                }
+                cppexports = parsed_string
             }
-            cppincludes = parsed_string
         }
         if success_test {
-            return ParsedTest::SuccessTest(related_cpp_files, output, cppincludes)
+            return ParsedTest::SuccessTest(cppexports, related_cpp_files, output, cppincludes)
         }
         if compile_error {
-            return ParsedTest::CompileErrorTest(related_cpp_files, output, cppincludes)
+            return ParsedTest::CompileErrorTest(cppexports, related_cpp_files, output, cppincludes)
         }
         if runtime_error {
-            return ParsedTest::RuntimeErrorTest(related_cpp_files, output, cppincludes)
+            return ParsedTest::RuntimeErrorTest(cppexports, related_cpp_files, output, cppincludes)
         }
         return ParsedTest::NoExpectOrSkip
     }

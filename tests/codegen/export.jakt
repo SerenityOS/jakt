@@ -1,0 +1,21 @@
+/// Expect:
+/// - output: "3\n"
+/// - link: "export_helper/use_import.cpp"
+/// - cppexports: "export_helper"
+
+export "Exported.h" { Exported }
+
+struct Exported {
+    value: i32
+
+    fn print_value(this) {
+        println("{}", .value)
+    }
+}
+
+extern fn use_exported(anon e: &Exported)
+
+fn main() {
+    let e = Exported(value: 3)
+    use_exported(&e)
+}

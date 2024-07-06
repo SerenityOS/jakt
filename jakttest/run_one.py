@@ -57,6 +57,11 @@ def main():
         help="Extra C++ files to compile and link (separated by :)",
         default=":",
     )
+    parser.add_argument(
+        "--cpp-export-dir",
+        help="Directory where exports should be generated, relative to the temp build directory",
+        default="",
+    )
     args = parser.parse_args()
 
     # Since we're running the output binary from a different
@@ -69,15 +74,23 @@ def main():
     jakt_lib_dir = Path(args.jakt_lib_dir).resolve()
     target_triple = args.target_triple
     cpp_include = ""
+    cpp_export_gen = ""
+    cpp_export_include = ""
     cpp_compiler = args.cpp_compiler
     relevant_cpp_files = [Path(test_file.parent, x).resolve() for x in args.cpp_link.split(":") if len(x) > 0]
 
-    if args.cpp_include and not args.cpp_include == "none":
+    if args.cpp_include:
         cpp_include = f"-I{Path(test_file.parent, args.cpp_include)}"
 
-    # clear the temp directory
-    for f in os.listdir(temp_dir):
-        os.remove(temp_dir / f)
+    if args.cpp_export_dir:
+        path = temp_dir / args.cpp_export_dir
+        cpp_export_gen = f"-E{path}"
+        cpp_export_include = f"-I{path}"
+
+    # clear the temp directory: go bottom up and remove files
+    for root, _, files in os.walk(temp_dir, False):
+        for file in files:
+            os.remove(Path(root)  / file)
 
     runtime_path_for_stdlib = str(Path("./runtime").resolve())
 
@@ -93,6 +106,7 @@ def main():
                     "-S",
                     "-R",
                     runtime_path_for_stdlib,
+                    cpp_export_gen,
                 ],
                 check=True,
                 stderr=stderr,
@@ -117,6 +131,7 @@ def main():
                     "-Wno-deprecated-declarations",
                     "-Iruntime",
                     cpp_include,
+                    cpp_export_include,
                     "-DJAKT_CONTINUE_ON_PANIC",
                     "-o",
                     temp_dir / "output",

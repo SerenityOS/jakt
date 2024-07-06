@@ -416,6 +416,7 @@ struct Test {
     file_name: String
     directory_index: usize
     cppincludes: String
+    cppexports: String
     related_cpp_files: String
 }
 
@@ -641,8 +642,10 @@ struct TestScheduler {
             target_triple_string()
             "--cpp-compiler"
             cpp_compiler_path ?? default_compiler_path
+            "--cpp-export"
+            "none" // A sentinel value is passed here bceause Windows shell does not allow empty arguments
             "--cpp-include"
-            "None" // A sentinel value is passed here because Windows shell does not allow empty arguments
+            "none" // A sentinel value is passed here because Windows shell does not allow empty arguments
             "--cpp-link"
             ":"
             ""
@@ -655,6 +658,9 @@ struct TestScheduler {
             let directory = scheduler.directories[test.directory_index]
             if test.cppincludes.length() > 0 {
                 command_buffer[command_buffer.size() - 5] = test.cppincludes
+            }
+            if test.cppexports.length() > 0 {
+                command_buffer[command_buffer.size() - 7] = test.cppexports
             }
             if test.related_cpp_files.is_empty() {
                 command_buffer[command_buffer.size() - 3] = ":"
@@ -737,25 +743,28 @@ fn main(args: [String]) -> c_int {
         let input = String::from_utf8(file.read_all())
         let result = Parser::parse(input, test_base_dir: basedir(file_name))
         match result {
-            SuccessTest(related_cpp_files, output, cppincludes) => {
+            SuccessTest(related_cpp_files, output, cppincludes, cppexports) => {
                 tests.push(Test(result: ExpectedResult(kind: ResultKind::Okay, output)
                                 file_name
                                 directory_index: 0
                                 cppincludes
+                                cppexports
                                 related_cpp_files: join(related_cpp_files, separator: ":")))
             }
-            CompileErrorTest(related_cpp_files, output, cppincludes) => {
+            CompileErrorTest(related_cpp_files, output, cppincludes, cppexports) => {
                 tests.push(Test(result: ExpectedResult(kind: ResultKind::CompileError, output)
                                 file_name
                                 directory_index: 0
                                 cppincludes
+                                cppexports
                                 related_cpp_files: join(related_cpp_files, separator: ":")))
             }
-            RuntimeErrorTest(related_cpp_files, output, cppincludes) => {
+            RuntimeErrorTest(related_cpp_files, output, cppincludes, cppexports) => {
                 tests.push(Test(result: ExpectedResult(kind: ResultKind::RuntimeError, output)
                                 file_name
                                 directory_index: 0
                                 cppincludes
+                                cppexports
                                 related_cpp_files: join(related_cpp_files, separator: ":")))
             }
             SkipTest => {
@@ -789,16 +798,30 @@ fn main(args: [String]) -> c_int {
     )
 
     // delete directories
-    for dir in directories {
-        for file in fs::list_directory(path: dir) {
-            if file == "." or file == ".." {
-                continue
+    {
+        mut stack: [String] = []
+        stack.push(parsed_options.temp_dir)
+
+        while not stack.is_empty() {
+            let dir = stack.pop()!
+            mut is_empty = true
+            for file in fs::list_directory(path: dir) {
+                if file == "." or file == ".." {
+                    continue
+                }
+                let path = dir + "/" + file
+                if fs::is_directory(path) {
+                    stack.push(path)
+                    is_empty = false
+                } else {
+                    fs::unlink(path)
+                }
             }
-            fs::unlink(path: dir + "/" + file)
+            if is_empty {
+                fs::rmdir(path: dir)
+            }
         }
-        fs::rmdir(path: dir)
     }
-    fs::rmdir(path: parsed_options.temp_dir)
 
     println("==============================")
     println("{} passed" , run_result.passed_count)
