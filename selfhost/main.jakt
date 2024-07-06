@@ -62,6 +62,7 @@ fn help() -> String {
     output += "  --use-ccache\t\t\t\tUse ccache when compiling.\n"
     output += "  -o,--output-filename FILE\t\tName of the output binary.\n\t\t\t\t\tDefaults to the input-filename without the extension.\n"
     output += "  -B,--binary-dir PATH\t\t\tOutput directory for compiled files.\n\t\t\t\t\tDefaults to $PWD/build.\n"
+    output += "  -E,--exports-dir PATH\t\t\tOutput directory for exported files, relative to $PWD.\n\t\t\t\t\tDefaults to '$PWD/exports'.\n"
     output += "  -I PATH\t\t\t\tAdd PATH to compiler's include list. Can be specified multiple times.\n"
     output += "  -J,--jobs NUMBER\t\t\tSpecify the number of jobs to run in parallel, defaults to 2 (1 on windows).\n"
     output += "  -L PATH\t\t\t\tAdd PATH to linker's search list. Can be specified multiple times.\n"
@@ -507,6 +508,7 @@ fn compiler_main(anon args: [String]) throws -> c_int {
     let runtime_path = args_parser.option(["-R", "--runtime-path"]) ?? default_runtime_path.to_string()
     let assume_main_file_path = args_parser.option(["--assume-main-file-path"])
     let binary_dir = Path::from_string(args_parser.option(["-B", "--binary-dir"]) ?? "build")
+    let exports_dir = Path::from_string(args_parser.option(["-E", "--exports-dir"]) ?? "exports")
     let dot_clang_format_path = args_parser.option(["-D", "--dot-clang-format-path"])
     let cxx_compiler_path = args_parser.option(["-C", "--cxx-compiler-path"]) ?? default_compiler_path
     let archiver_path = args_parser.option(["-A", "--archiver"])
@@ -644,6 +646,7 @@ fn compiler_main(anon args: [String]) throws -> c_int {
         target_triple
         user_configuration
         binary_dir
+        exports_dir
         assume_main_file_path: match assume_main_file_path.has_value() {
             true => Some(Path::from_string(assume_main_file_path!))
             false => None
@@ -864,7 +867,17 @@ fn compiler_main(anon args: [String]) throws -> c_int {
         return 0
     }
 
-    let codegen_result = CodeGenerator::generate(compiler, checked_program, debug_info: codegen_debug)
+
+    if not binary_dir.exists() {
+        make_directory(path: binary_dir.to_string())
+    }
+
+    if not exports_dir.exists() {
+        make_directory(path: exports_dir.to_string())
+    }
+
+    mut exported_files: [String:String] = [:]
+    let codegen_result = CodeGenerator::generate(compiler, checked_program, debug_info: codegen_debug, &mut exported_files)
 
     if discover_only {
         for (file, contents_and_path) in codegen_result {
@@ -922,14 +935,19 @@ fn compiler_main(anon args: [String]) throws -> c_int {
         depfile_builder.append("\n")
     }
 
-    if not binary_dir.exists() {
-        make_directory(path: binary_dir.to_string())
-    }
-
     for (file, contents_and_path) in codegen_result {
         let (contents, module_file_path) = contents_and_path
 
         let path = binary_dir.join(file)
+
+        try write_only_if_updated(data: contents, output_filename: path.to_string()) catch error {
+            eprintln("Error: Could not write to file: {} ({})", file, error)
+            return 1
+        }
+    }
+
+    for (file, contents) in exported_files {
+        let path = exports_dir.join(file)
 
         try write_only_if_updated(data: contents, output_filename: path.to_string()) catch error {
             eprintln("Error: Could not write to file: {} ({})", file, error)

@@ -84,6 +84,7 @@ enum Token {
     Else(Span)
     Enum(Span)
     Extern(Span)
+    Export(Span)
     False(Span)
     For(Span)
     Fn(Span)
@@ -147,6 +148,7 @@ enum Token {
         "else" => Token::Else(span)
         "enum" => Token::Enum(span)
         "extern" => Token::Extern(span)
+        "export" => Token::Export(span)
         "false" => Token::False(span)
         "for" => Token::For(span)
         "fn" => Token::Fn(span)
@@ -272,7 +274,6 @@ struct Lexer implements(Iterable<Token>) {
             "double",
             "dynamic_cast",
             "explicit",
-            "export",
             "float",
             "friend",
             "goto",
