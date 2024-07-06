@@ -15,10 +15,10 @@ All the stages are compiled with the provided CMAKE_CXX_COMPILER.
 
 ## Building the bootstrapped compilers
 
-Provide a suitable CMake invocation. Note that a clang version >= 15 is required.
+Provide a suitable CMake invocation. Note that a clang version >= 18 is required.
 
 ```sh
-cmake -B build -GNinja -DCMAKE_CXX_COMPILER=clang++-15
+cmake -B build -GNinja -DCMAKE_CXX_COMPILER=clang++-18
 ```
 
 Invoke the specified generator
@@ -32,7 +32,7 @@ ninja -C build
 If you want to install the compilers to a location of your choice, provide an install prefix at your favorite location.
 
 ```sh
-cmake -B build -GNinja -DCMAKE_CXX_COMPILER=clang++-15 -DCMAKE_INSTALL_PREFIX=jakt-install
+cmake -B build -GNinja -DCMAKE_CXX_COMPILER=clang++-18 -DCMAKE_INSTALL_PREFIX=jakt-install
 ninja -C build install
 ```
 
@@ -52,7 +52,7 @@ docker run -it jakt:latest
 
 ## Supported Platforms
 
-Jakt is known to compile with clang >=15 on Linux, macOS and Windows. g++ also works, provided the version is >=10.2.
+Jakt is known to compile with clang >=18 on Linux, macOS and Windows. g++ also works, provided the version is >=10.2.
 
 MSVC is not supported, however clang-cl.exe and clang.exe do work and clang-cl is used in CI.
 

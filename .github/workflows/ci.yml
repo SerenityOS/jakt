@@ -27,10 +27,10 @@ jobs:
       fail-fast: true
       matrix:
         platform: [ubuntu-22.04]
-        cxx_compiler: [clang++-15]
+        cxx_compiler: [clang++-18]
         include:
           - platform: macos-latest
-            cxx_compiler: "$(brew --prefix llvm@15)/bin/clang++"
+            cxx_compiler: "$(brew --prefix llvm@18)/bin/clang++"
 
     runs-on: ${{ matrix.platform }}
 
@@ -49,17 +49,17 @@ jobs:
           . /etc/lsb-release
           wget -O /usr/share/keyrings/llvm-snapshot.gpg.key https://apt.llvm.org/llvm-snapshot.gpg.key
           sudo echo "deb [signed-by=/usr/share/keyrings/llvm-snapshot.gpg.key] http://apt.llvm.org/${DISTRIB_CODENAME}/ llvm-toolchain-${DISTRIB_CODENAME} main" | sudo tee -a /etc/apt/sources.list.d/llvm.list
-          sudo echo "deb [signed-by=/usr/share/keyrings/llvm-snapshot.gpg.key] http://apt.llvm.org/${DISTRIB_CODENAME}/ llvm-toolchain-${DISTRIB_CODENAME}-15 main" | sudo tee -a /etc/apt/sources.list.d/llvm.list
+          sudo echo "deb [signed-by=/usr/share/keyrings/llvm-snapshot.gpg.key] http://apt.llvm.org/${DISTRIB_CODENAME}/ llvm-toolchain-${DISTRIB_CODENAME}-18 main" | sudo tee -a /etc/apt/sources.list.d/llvm.list
           sudo apt-get update
-          sudo apt-get install -y clang-15 libclang-15-dev
+          sudo apt-get install -y clang-18 libclang-18-dev
 
       - name: Install macOS dependencies
         if: ${{ matrix.platform == 'macos-latest' }}
-        run: brew install coreutils llvm@15
+        run: brew install coreutils llvm@18
 
       - name: Build Jakt Stage 1
         run: |
-          export "CMAKE_PREFIX_PATH=$(brew --prefix llvm@15)"
+          export "CMAKE_PREFIX_PATH=$(brew --prefix llvm@18)"
           cmake -GNinja -B build -DCMAKE_CXX_COMPILER=${{ matrix.cxx_compiler }} -DCMAKE_BUILD_TYPE=Release -DFINAL_STAGE=1 -DCMAKE_INSTALL_PREFIX=jakt-install
           cmake --build build
 
@@ -107,7 +107,7 @@ jobs:
 
   selfhost-windows:
     env:
-      LLVM_VER: 16.0.6
+      LLVM_VER: 18.1.6
 
     strategy:
       fail-fast: true
