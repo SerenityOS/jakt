@@ -925,6 +925,15 @@
                     }
                 },
                 {
+                    "name": "keyword.control.export.jakt",
+                    "match": "\\b(export)\\b",
+                    "captures": {
+                        "1": {
+                            "name": "keyword.control.export.jakt"
+                        }
+                    }
+                },
+                {
                     "name": "meta.control.match.jakt",
                     "begin": "(?<=match.*?)(\\{)",
                     "beginCaptures": {
