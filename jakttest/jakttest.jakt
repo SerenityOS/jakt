@@ -145,6 +145,7 @@ fn print_usage()  {
     eprintln("\t-b,--build-dir <BUILD_DIR>\t\tUse BUILD_DIR as the prefix for the jakt binary. Defaults to 'build'.")
     eprintln("\t--temp-dir <DIR>\t\tUse DIR as the temporary directory.")
     eprintln("\t\t\tWill try to use $TMP_DIR or /tmp in UNIX-based systems, or %TEMP% in Windows")
+    eprintln("\t--keep-temp-dir\t\tDo not remove directory after tests run. Useful for debugging failed tests.")
     eprintln("\t-C,--cpp-compiler <PATH>\t\tUse the C++ compiler at PATH to compile objects. Defaults to clang++.")
 }
 
@@ -243,6 +244,7 @@ struct Options {
     job_count: usize
     help_wanted: bool
     build_dir: String
+    keep_temp_dir: bool
     cpp_compiler_path: String?
 
     fn from_args(args: [String]) throws -> Options {
@@ -256,6 +258,7 @@ struct Options {
             job_count: 0
             help_wanted: false
             build_dir: "build"
+            keep_temp_dir: false
             cpp_compiler_path: None
         )
 
@@ -307,6 +310,12 @@ struct Options {
             if args[index] == "--hide-reasons" {
                 index++
                 options.show_reasons = false
+                continue
+            }
+
+            if args[index] == "--keep-temp-dir" {
+                index++
+                options.keep_temp_dir = true
                 continue
             }
 
@@ -798,7 +807,7 @@ fn main(args: [String]) -> c_int {
     )
 
     // delete directories
-    {
+    if not parsed_options.keep_temp_dir {
         mut stack: [String] = []
         stack.push(parsed_options.temp_dir)
 
