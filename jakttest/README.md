@@ -53,10 +53,15 @@ Most tests you'll se have a little comment at the top, with **three slashes**:
 /// - <tag>: "<escaped output>"
 ```
 
-There are currently three available tags:
+These are the currently available tags:
 - `output`: Expects the test to compile, succeed execution and output to
   standard output.
 - `stderr`: Expects the test to compile, but execution fails and output is
   written to standard error.
 - `error`: Expects the test to be rejected by the Jakt compiler, where the given
   output must appear somewhere in its error output.
+- `cppincludes`: Adds the directories relative to the test file (separated by `:`) to the include path.
+- `link`: Adds C++ files to be compiled alongside the test file (separated by
+`:`). The paths are relative to the test file's location.
+- `cppexports`: Sets an explicit directory for the exported headers. This directory is relative to the test file's location,
+  and will be available in the include path for any other C++ file that is either imported or linked against.
