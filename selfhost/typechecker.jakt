@@ -10337,28 +10337,6 @@ struct Typechecker {
 
         for namespace_index in 0..call.namespace_.size() {
             let scope_name = call.namespace_[namespace_index]
-            let maybe_ns_scope = .find_namespace_in_scope(
-                scope_id: current_scope_id
-                name: scope_name
-            )
-            if maybe_ns_scope.has_value() {
-                let (scope_id, is_import) = maybe_ns_scope!
-                if is_import {
-                    namespaces[namespace_index].name = .program.modules[scope_id.module_id.id].name
-                }
-                namespaces[namespace_index].external_name = .get_scope(scope_id).external_name
-
-                is_base_ns_alias_or_import[
-                    namespace_index
-                ] = .find_namespace_in_scope(
-                    scope_id: current_scope_id
-                    name: scope_name
-                    treat_aliases_as_imports: true
-                )!.1
-
-                current_scope_id = scope_id
-                continue
-            }
             let maybe_struct_scope = .find_struct_in_scope(scope_id: current_scope_id, name: scope_name)
             if maybe_struct_scope.has_value() {
                 let structure = .get_struct(maybe_struct_scope!)
@@ -10385,6 +10363,31 @@ struct Typechecker {
                     }
                     else => {}
                 }
+            }
+
+            let maybe_ns_scope = .find_namespace_in_scope(
+                scope_id: current_scope_id
+                name: scope_name
+            )
+
+            if maybe_ns_scope.has_value() {
+                let (scope_id, is_import) = maybe_ns_scope!
+                if is_import {
+                    namespaces[namespace_index].name = .program.modules[scope_id.module_id.id].name
+                }
+                namespaces[namespace_index].external_name = .get_scope(scope_id).external_name
+
+
+                is_base_ns_alias_or_import[
+                    namespace_index
+                ] = .find_namespace_in_scope(
+                    scope_id: current_scope_id
+                    name: scope_name
+                    treat_aliases_as_imports: true
+                )!.1
+
+                current_scope_id = scope_id
+                continue
             }
 
             .error(format("Not a namespace, enum, class, or struct: ‘{}’", join(call.namespace_, separator: "::")), span)
