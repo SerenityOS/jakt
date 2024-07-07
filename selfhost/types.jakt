@@ -621,6 +621,7 @@ class Scope {
     public is_from_generated_code: bool
 
     public namespace_name: String? = None
+    public module_namespace_name: String? = None
     public external_name: ExternalName? = None
 
     public vars: [String: VarId] = [:]
@@ -651,6 +652,9 @@ class Scope {
         if .external_name.has_value() { return .external_name }
         if .namespace_name.has_value() {
             return ExternalName::Plain(.namespace_name!)
+        }
+        if .module_namespace_name.has_value() {
+            return ExternalName::Plain(.module_namespace_name!)
         }
         return None
     }

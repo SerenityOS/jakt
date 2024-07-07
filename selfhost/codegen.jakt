@@ -352,9 +352,9 @@ struct CodeGenerator {
             for child_scope_id in scope.children {
                 let scope = generator.program.get_scope(child_scope_id)
                 if scope.import_path_if_extern.has_value() {
-                    let has_name = scope.namespace_name.has_value()
-                    if has_name {
-                        output.appendff("namespace {} {{\n", scope.namespace_name!)
+                    let name = scope.namespace_name_for_codegen()?.as_name_for_definition()
+                    if name.has_value() {
+                        output.appendff("namespace {} {{\n", name!)
                     }
                     for action in scope.before_extern_include {
                         match action {
@@ -387,9 +387,9 @@ struct CodeGenerator {
                             }
                         }
                     }
-                    if has_name {
+                    if name.has_value() {
                         output.append(" } // namespace ")
-                        output.append(scope.namespace_name!)
+                        output.append(name!)
                         output.append("\n")
                     }
                 }
@@ -1065,20 +1065,20 @@ struct CodeGenerator {
 
         for child_scope_id in scope.children {
             let child_scope = .program.get_scope(child_scope_id)
-            if child_scope.namespace_name.has_value() {
-                let name = child_scope.namespace_name!
-                .namespace_stack.push(name)
+            let name = child_scope.namespace_name_for_codegen()?.as_name_for_definition()
+            if name.has_value() {
+                .namespace_stack.push(name!)
                 .codegen_namespace_specializations(scope: child_scope, current_module, &mut output)
                 // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
                 let dummy = .namespace_stack.pop()
             }
         }
 
-        if scope.namespace_name.has_value() and not output.is_empty() {
-
+        let name = scope.namespace_name_for_codegen()?.as_name_for_definition()
+        if name.has_value() and not output.is_empty() {
             let inside_namespace = output.to_string()
             output.clear()
-            output.appendff("namespace {} {{\n", scope.namespace_name!)
+            output.appendff("namespace {} {{\n", name!)
             output.append(inside_namespace)
             output.append("}\n")
         }
@@ -1193,9 +1193,9 @@ struct CodeGenerator {
 
         for child_scope_id in scope.children {
             let child_scope = .program.get_scope(child_scope_id)
-            if child_scope.namespace_name.has_value() {
-                let name = child_scope.namespace_name!
-                .namespace_stack.push(name)
+            let name = child_scope.namespace_name_for_codegen()?.as_name_for_definition()
+            if name.has_value() {
+                .namespace_stack.push(name!)
                 .codegen_namespace_forward(scope: child_scope, current_module, output: &mut inside_namespace)
                 // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
                 let dummy = .namespace_stack.pop()
@@ -1203,11 +1203,12 @@ struct CodeGenerator {
         }
 
         if inside_namespace.length() != 0 {
-            if scope.namespace_name.has_value() {
-                output.append("namespace " + scope.namespace_name! + " {\n")
+            let name = scope.namespace_name_for_codegen()?.as_name_for_definition()
+            if name.has_value() {
+                output.append("namespace " + name! + " {\n")
             }
             output.append(inside_namespace.to_string())
-            if scope.namespace_name.has_value() {
+            if name.has_value() {
                 output.append("}\n")
             }
         }
@@ -1358,9 +1359,9 @@ struct CodeGenerator {
 
         for child_scope_id in scope.children {
             let child_scope = .program.get_scope(child_scope_id)
-            if child_scope.namespace_name.has_value() {
-                let name = child_scope.namespace_name!
-                .namespace_stack.push(name)
+            let name = child_scope.namespace_name_for_codegen()?.as_name_for_definition()
+            if name.has_value() {
+                .namespace_stack.push(name!)
                 .codegen_namespace(scope: child_scope, current_module, output: &mut inside_namespace)
                 // FIXME: It's awkward that we need a temporary to avoid the C++ nodiscard warning
                 let dummy = .namespace_stack.pop()
@@ -1368,8 +1369,9 @@ struct CodeGenerator {
         }
 
         if not inside_namespace.is_empty() {
-            if scope.namespace_name.has_value() {
-                output.appendff("namespace {} {{\n", scope.namespace_name!)
+            let name = scope.namespace_name_for_codegen()?.as_name_for_definition()
+            if name.has_value() {
+                output.appendff("namespace {} {{\n", name!)
                 output.append(inside_namespace.to_string())
                 output.append("}\n")
             } else {
@@ -1387,9 +1389,10 @@ struct CodeGenerator {
         if scope.alias_path.has_value() or scope.import_path_if_extern.has_value() {
             return
         }
-        if scope.namespace_name.has_value() {
+        let name = scope.namespace_name_for_codegen()?.as_name_for_definition()
+        if name.has_value() {
             output.append("namespace ")
-            output.append(scope.namespace_name!)
+            output.append(name!)
             output.append(" {\n")
         }
         for (_, struct_id) in scope.structs {
@@ -1439,7 +1442,7 @@ struct CodeGenerator {
             }
         }
 
-        if scope.namespace_name.has_value() {
+        if name.has_value() {
             output.append("}\n")
         }
     }
