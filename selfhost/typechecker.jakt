@@ -1200,7 +1200,7 @@ struct Typechecker {
             )
 
             mut imported_scope = .get_scope(imported_scope_id)
-            imported_scope.namespace_name = sanitized_module_name
+            imported_scope.module_namespace_name = sanitized_module_name
             imported_scope.is_from_generated_code = parsed_namespace!.is_generated_code
 
             .typecheck_module(parsed_namespace: parsed_namespace!, scope_id: imported_scope_id)
