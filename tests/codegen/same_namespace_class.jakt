@@ -1,0 +1,14 @@
+/// Expect:
+/// - output: "A(value: 2)\n"
+
+namespace A {
+	class A {
+		value: i32
+		public fn create(anon value: i32) -> A => A(value: value + 1)
+	}
+}
+
+fn main() {
+	let a = A::A::create(1)
+	println("{}", a)
+}

@@ -627,8 +627,8 @@ struct CodeGenerator {
 
                 let name = unprefixed_name.last()!.name
 
-                let qualifier = generator.codegen_namespace_qualifier(scope_id: generator.program.find_type_scope_id(type_id))
-                cpp_code.appendff("using {} = Jakt::{}{};", name, qualifier, name)
+                let qualifier = generator.codegen_namespace_qualifier(scope_id: generator.program.find_type_scope_id(type_id), is_prelude: generator.program.get_module(type_id.module).is_prelude())
+                cpp_code.appendff("using {} = {}{};", name, qualifier, name)
 
                 if should_be_namespaced {
                     cpp_code.append('}')
@@ -2914,7 +2914,7 @@ struct CodeGenerator {
                         let is_type = match .program.get_type(type_id) {
                             Struct(id) => {
                                 let struct_ = .program.get_struct(id)
-                                yield .codegen_namespace_qualifier(scope_id: struct_.scope_id) + struct_.name_for_codegen().as_name_for_use()
+                                yield .codegen_namespace_qualifier(scope_id: struct_.scope_id, is_prelude: .program.get_module(id.module).is_prelude()) + struct_.name_for_codegen().as_name_for_use()
                             }
                             else => .codegen_type(type_id)
                         }
@@ -2995,13 +2995,14 @@ struct CodeGenerator {
                     IsEnumVariant(enum_variant, type_id: enum_type_id) => {
                         let name = enum_variant.name()
                         output.append(")")
-                        let enum_ = .program.get_enum(match .program.get_type(enum_type_id) {
+                        let enum_id = match .program.get_type(enum_type_id) {
                             Enum(enum_id) => enum_id
                             GenericEnumInstance(id) => id
                             else => {
                                 panic(format("Unexpected type in IsEnumVariant: {}", .program.get_type(enum_type_id)))
                             }
-                        })
+                        }
+                        let enum_ = .program.get_enum(enum_id)
                         match enum_.record_type {
                             SumEnum => {
                                 let is_boxed = enum_.is_boxed
@@ -3022,7 +3023,7 @@ struct CodeGenerator {
                                 output.appendff("__jakt_init_index() == {} /* {} */", variant_index, name)
                             }
                             ValueEnum => {
-                                output.appendff("== {}{}::{}", .codegen_namespace_qualifier(scope_id: enum_.scope_id), enum_.name, name)
+                                output.appendff("== {}{}::{}", .codegen_namespace_qualifier(scope_id: enum_.scope_id, is_prelude: .program.get_module(enum_id.module).is_prelude()), enum_.name, name)
                             }
                             else => {
                                 panic(format("Unexpected enum record type in IsEnumVariant: {}", enum_.record_type))
@@ -3076,6 +3077,7 @@ struct CodeGenerator {
                     if var.owner_scope.has_value() {
                         output.append(.codegen_namespace_qualifier(
                             scope_id: var.owner_scope!
+                            is_prelude: false
                             skip_current: false
                         ))
                     } else {
@@ -4507,8 +4509,23 @@ struct CodeGenerator {
         if call.function_id.has_value() {
             let func = .program.get_function(call.function_id!)
             if func.owner_scope.has_value() {
+                mut is_prelude = false
+                let scope = .program.get_scope(func.owner_scope!)
+                if scope.relevant_type_id.has_value() {
+                    match .program.get_type(scope.relevant_type_id!) {
+                        Struct(id) | GenericInstance(id) => {
+                            is_prelude = .program.get_module(id.module).is_prelude()
+                        }
+                        Enum(id) | GenericEnumInstance(id) => {
+                            is_prelude = .program.get_module(id.module).is_prelude()
+                        }
+                        else => {}
+                    }
+                }
+
                 return .codegen_namespace_qualifier(
                     scope_id: func.owner_scope!
+                    is_prelude
                     skip_current: false
                     possible_constructor_name: call.name_for_codegen().as_name_for_use()
                     generic_mappings: func.owner_scope_generics
@@ -4888,7 +4905,7 @@ struct CodeGenerator {
 
             let inner_struct_id = inner_weak_ptr_struct_id.value()
             let struct_ = .program.get_struct(inner_struct_id)
-            output += .codegen_namespace_qualifier(scope_id: struct_.scope_id)
+            output += .codegen_namespace_qualifier(scope_id: struct_.scope_id, is_prelude: type_module.is_prelude())
             output += struct_.name_for_codegen().as_name_for_use()
 
             output += ">"
@@ -4900,7 +4917,7 @@ struct CodeGenerator {
                 output += "NonnullRefPtr<"
             }
             output += namespace_
-            output += .codegen_namespace_qualifier(scope_id: struct_.scope_id)
+            output += .codegen_namespace_qualifier(scope_id: struct_.scope_id, is_prelude: type_module.is_prelude())
             output += struct_.name_for_codegen().as_name_for_use()
             output += "<"
             mut first = true
@@ -4932,7 +4949,7 @@ struct CodeGenerator {
         let enum_ = .program.get_enum(id)
         if not as_namespace and enum_.is_boxed {
             output.append("NonnullRefPtr<")
-            let qualifier = .codegen_namespace_qualifier(scope_id: enum_.scope_id)
+            let qualifier = .codegen_namespace_qualifier(scope_id: enum_.scope_id, is_prelude: .program.get_module(id.module).is_prelude())
 
             if not qualifier.is_empty() {
                 output.append("typename ")
@@ -4941,7 +4958,7 @@ struct CodeGenerator {
             output.append(enum_.name)
             close_tag = true
         } else {
-            let qualifier = .codegen_namespace_qualifier(scope_id: enum_.scope_id)
+            let qualifier = .codegen_namespace_qualifier(scope_id: enum_.scope_id, is_prelude: .program.get_module(id.module).is_prelude())
 
             if not qualifier.is_empty() {
                 if not as_namespace {
@@ -4971,6 +4988,7 @@ struct CodeGenerator {
     fn codegen_namespace_qualifier(
         mut this
         scope_id: ScopeId
+        is_prelude: bool
         skip_current: bool = true
         possible_constructor_name: String? = None
         generic_mappings: [TypeId:TypeId]? = None
@@ -4981,11 +4999,14 @@ struct CodeGenerator {
             false => scope_id
         }
 
+        mut is_extern_import = false
+
         mut first = true
         while current_scope_id.has_value() {
             let scope = .program.get_scope(current_scope_id!)
             let name = scope.namespace_name_for_codegen()?.as_name_for_use()
             let is_constructor_call = first and possible_constructor_name == name
+            is_extern_import = is_extern_import or scope.import_path_if_extern.has_value()
 
             defer {
                 if name.has_value() {
@@ -5036,7 +5057,11 @@ struct CodeGenerator {
                 output = format("{}{}::{}", name!, args, output)
             }
         }
-        return output
+        if is_extern_import or is_prelude {
+            return output
+        } else {
+            return format("Jakt::{}", output)
+        }
     }
 
     fn map_type(this, anon type_id: TypeId) -> TypeId {
@@ -5066,11 +5091,11 @@ struct CodeGenerator {
 
         if not as_namespace and checked_struct.record_type is Class {
             output.append("NonnullRefPtr<")
-            output.append(.codegen_namespace_qualifier(scope_id: checked_struct.scope_id))
+            output.append(.codegen_namespace_qualifier(scope_id: checked_struct.scope_id, is_prelude: type_module.is_prelude()))
             output.append(checked_struct.name_for_codegen().as_name_for_use())
             output.append(">")
         } else {
-            output.append(.codegen_namespace_qualifier(scope_id: checked_struct.scope_id))
+            output.append(.codegen_namespace_qualifier(scope_id: checked_struct.scope_id, is_prelude: type_module.is_prelude()))
             output.append(checked_struct.name_for_codegen().as_name_for_use())
         }
 
@@ -5084,7 +5109,7 @@ struct CodeGenerator {
 
         if not as_namespace and checked_enum.is_boxed {
             output.append("NonnullRefPtr<")
-            let qualifier = .codegen_namespace_qualifier(scope_id: checked_enum.scope_id)
+            let qualifier = .codegen_namespace_qualifier(scope_id: checked_enum.scope_id, is_prelude: type_module.is_prelude())
             if not qualifier.is_empty() {
                 output.append("typename ")
                 output.append(qualifier)
@@ -5092,7 +5117,7 @@ struct CodeGenerator {
             output.append(checked_enum.name)
             output.append(">")
         } else {
-            let qualifier = .codegen_namespace_qualifier(scope_id: checked_enum.scope_id)
+            let qualifier = .codegen_namespace_qualifier(scope_id: checked_enum.scope_id, is_prelude: type_module.is_prelude())
             if not qualifier.is_empty() {
                 output.append(qualifier)
             }
