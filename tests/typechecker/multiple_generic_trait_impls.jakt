@@ -1,0 +1,17 @@
+/// Expect:
+/// - output: "vec3(values: (3, 4, 3)), vec3(values: (2, 4, 6))\n"
+
+class vec3 implements(Multiply<f64, vec3>, Multiply<vec3, vec3>) {
+  public values: (f64, f64, f64)
+  public fn create(thing: f64) -> vec3 => vec3(values: (thing, 0.0, 0.0))
+  public fn multiply(this, anon other: f64) -> vec3 => vec3(values: (.values.0 * other, .values.1 * other, .values.2 * other))
+  public fn multiply(this, anon other: vec3) -> vec3 => vec3(values: (.values.0 * other.values.0, .values.1 * other.values.1, .values.2 * other.values.2))
+}
+
+
+fn main() {
+    let v1 = vec3(values: (1.0, 2.0, 3.0))
+    let v2 = vec3(values: (3.0, 2.0, 1.0))
+
+    println("{}, {}", v1 * v2, v1 * 2.0)
+}
