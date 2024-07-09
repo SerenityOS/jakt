@@ -1,0 +1,3 @@
+/// Expect: Skip
+
+fn helloworld() -> String => "Hello World!"

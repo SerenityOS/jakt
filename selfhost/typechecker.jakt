@@ -1133,7 +1133,11 @@ struct Typechecker {
 
             mut maybe_loaded_module = .program.get_loaded_module(name_and_span.0)
             if not maybe_loaded_module.has_value() {
-                let maybe_file_name = .compiler.search_for_path(input_module_name: name_and_span.0, relative_import: import_is_relative, parent_path_count: parent_path_count)
+                let maybe_file_name = .compiler.search_for_path(
+                    input_module_name: name_and_span.0
+                    relative_import: import_is_relative
+                    parent_path_count: parent_path_count
+                )
                 let file_name = match maybe_file_name.has_value() {
                     true => maybe_file_name!
                     false => .get_root_path().parent().join(name_and_span.0).replace_extension("jakt")

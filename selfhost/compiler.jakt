@@ -181,24 +181,30 @@ class Compiler {
     }
 
     public fn find_in_search_paths(this, anon path: Path, relative_import: bool = false, parent_path_count: usize = 0) throws -> Path? {
-        for include_path in .include_paths {
-            let candidate_path = Path::from_string(include_path).join(path)
-            if candidate_path.exists() {
-                return candidate_path
-            }
+        let current_file_path = match relative_import {
+            true => .current_file_path()
+            false => .assume_main_file_path ?? .current_file_path()
         }
-        let current_file_path = .assume_main_file_path ?? .current_file_path()
         if current_file_path.has_value() {
-            mut candidate_path = current_file_path!.absolute().parent().join(path)
+            mut candidate_path = current_file_path!.absolute().parent()
             if relative_import and parent_path_count > 0 {
-                mut parent_count = parent_path_count
+                mut parent_count = parent_path_count - 1
                 mut parent = candidate_path.parent()
                 while (parent_count > 0) {
                     parent = parent.parent()
                     parent_count--
                 }
                 candidate_path = parent.join(path)
+            } else {
+                candidate_path = candidate_path.join(path)
             }
+            if candidate_path.exists() {
+                return candidate_path
+            }
+        }
+
+        for include_path in .include_paths {
+            let candidate_path = Path::from_string(include_path).join(path)
             if candidate_path.exists() {
                 return candidate_path
             }

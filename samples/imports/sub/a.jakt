@@ -1,0 +1,8 @@
+/// Expect: Skip
+
+import relative b { helloworld }
+import relative parent::sub::c { printit }
+
+fn test() {
+    printit(helloworld())
+}
