@@ -3032,10 +3032,17 @@ struct Typechecker {
                     if args.size() != generic_arguments.size() {
                         continue
                     }
+
+                    mut args_match = true
                     for i in 0..args.size() {
                         guard args[i].equals(generic_arguments[i]) else {
-                            continue
+                            args_match = false
+                            break
                         }
+                    }
+
+                    guard args_match else {
+                        continue
                     }
 
                     found = true
