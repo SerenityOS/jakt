@@ -1171,6 +1171,11 @@ struct Typechecker {
 
             let file_id = .compiler.get_file_id_or_register(file_name)
 
+            let old_file_state = .compiler.current_file_state()
+
+            .compiler.set_current_file(file_id)
+            defer .compiler.restore_file_state(old_file_state)
+
             let parsed_namespace = .lex_and_parse_file_contents(file_id)
 
             if not parsed_namespace.has_value() {
