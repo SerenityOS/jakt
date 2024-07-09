@@ -83,8 +83,8 @@ import relative parent(3)::foo::baz     // (6)
 1. Import only `use_cool_things()` from module `a`.
 1. Imports can be calculated at compile time. See [Comptime Imports](#comptime-imports)
 1. Import a module using the relative keyword when the module is a sub path of the directory containing the file.
-1. Import a module in a parent path one directory up from the file.
-1. Syntactic sugar for importing a module three parent paths up from the file.
+1. Import a module in a parent path one directory up from the directory containing the file.
+1. Syntactic sugar for importing a module three parent paths up from the directory containing the file.
 
 ### The Jakt Standard Library
 

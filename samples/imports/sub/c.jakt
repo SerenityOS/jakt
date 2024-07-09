@@ -1,0 +1,5 @@
+/// Expect: Skip
+
+fn printit(anon s: String) {
+    println("{}", s)
+}
