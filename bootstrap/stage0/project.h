@@ -1,9 +1,12 @@
 #pragma once
-#include "__unified_forward.h"
+#include <lib.h>
 #include "utility.h"
 #include "jakt__platform__unknown_fs.h"
 #include "jakt__platform.h"
 namespace Jakt {
+namespace project {
+struct Project;
+}
 namespace project {
 struct Project {
   public:

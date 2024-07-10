@@ -1,19 +1,22 @@
 #pragma once
-#include "__unified_forward.h"
+#include <lib.h>
 #include "jakt__platform__unknown_fs.h"
 #include "jakt__path.h"
 #include "jakt__platform.h"
 namespace Jakt {
 namespace jakt__file_iterator {
+class RecursiveFileIterator;
+}
+namespace jakt__file_iterator {
 class RecursiveFileIterator :public RefCounted<RecursiveFileIterator>, public Weakable<RecursiveFileIterator> {
   public:
 virtual ~RecursiveFileIterator() = default;
-private: ByteString extension;private: JaktInternal::DynamicArray<jakt__path::Path> directory_list;private: JaktInternal::Optional<NonnullRefPtr<jakt__platform__unknown_fs::DirectoryIterator>> current_directory;public: static ErrorOr<NonnullRefPtr<jakt__file_iterator::RecursiveFileIterator>> make(jakt__path::Path const directory, ByteString const extension);
-public: ErrorOr<JaktInternal::Optional<jakt__path::Path>> next();
+private: ByteString extension;private: JaktInternal::DynamicArray<Jakt::jakt__path::Path> directory_list;private: JaktInternal::Optional<NonnullRefPtr<Jakt::jakt__platform__unknown_fs::DirectoryIterator>> current_directory;public: static ErrorOr<NonnullRefPtr<Jakt::jakt__file_iterator::RecursiveFileIterator>> make(Jakt::jakt__path::Path const directory, ByteString const extension);
+public: ErrorOr<JaktInternal::Optional<Jakt::jakt__path::Path>> next();
 public: protected:
-explicit RecursiveFileIterator(ByteString a_extension, JaktInternal::DynamicArray<jakt__path::Path> a_directory_list, JaktInternal::Optional<NonnullRefPtr<jakt__platform__unknown_fs::DirectoryIterator>> a_current_directory);
+explicit RecursiveFileIterator(ByteString a_extension, JaktInternal::DynamicArray<Jakt::jakt__path::Path> a_directory_list, JaktInternal::Optional<NonnullRefPtr<Jakt::jakt__platform__unknown_fs::DirectoryIterator>> a_current_directory);
 public:
-static NonnullRefPtr<RecursiveFileIterator> __jakt_create(ByteString extension, JaktInternal::DynamicArray<jakt__path::Path> directory_list, JaktInternal::Optional<NonnullRefPtr<jakt__platform__unknown_fs::DirectoryIterator>> current_directory);
+static NonnullRefPtr<RecursiveFileIterator> __jakt_create(ByteString extension, JaktInternal::DynamicArray<Jakt::jakt__path::Path> directory_list, JaktInternal::Optional<NonnullRefPtr<Jakt::jakt__platform__unknown_fs::DirectoryIterator>> current_directory);
 
 public: ByteString debug_description() const;
 };}

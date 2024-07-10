@@ -1,5 +1,5 @@
 #pragma once
-#include "__unified_forward.h"
+#include <lib.h>
 #include "repl_backend__common.h"
 #include "jakt__libc__io.h"
 #include "utility.h"
@@ -7,12 +7,15 @@
 #include "jakt__arguments.h"
 namespace Jakt {
 namespace repl_backend__default {
+struct Editor;
+}
+namespace repl_backend__default {
 struct Editor {
   public:
-public: FILE* standard_input_file;public: char* line_pointer;public: ByteString prompt;public: static ErrorOr<repl_backend__default::Editor> create(ByteString const prompt, Function<ErrorOr<void>(repl_backend__default::Editor&)> const& syntax_highlight_handler);
-public: ErrorOr<repl_backend__common::LineResult> get_line(JaktInternal::Optional<ByteString> const prompt);
+public: FILE* standard_input_file;public: char* line_pointer;public: ByteString prompt;public: static ErrorOr<Jakt::repl_backend__default::Editor> create(ByteString const prompt, Function<ErrorOr<void>(Jakt::repl_backend__default::Editor&)> const& syntax_highlight_handler);
+public: ErrorOr<Jakt::repl_backend__common::LineResult> get_line(JaktInternal::Optional<ByteString> const prompt);
 public: ErrorOr<ByteString> get_active_buffer();
-public: ErrorOr<void> highlight(utility::Span const span, repl_backend__common::Style const style);
+public: ErrorOr<void> highlight(Jakt::utility::Span const span, Jakt::repl_backend__common::Style const style);
 public: void destroy();
 public: Editor(FILE* a_standard_input_file, char* a_line_pointer, ByteString a_prompt);
 

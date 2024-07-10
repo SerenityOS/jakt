@@ -1,4 +1,9 @@
+#ifdef _WIN32
+extern "C" __cdecl int SetConsoleOutputCP(unsigned int code_page);
+#endif
 #include "jakt__platform__utility.h"
+#include "jakt__arguments.h"
+#include "jakt__prelude__operators.h"
 namespace Jakt {
 namespace jakt__platform__utility {
 ErrorOr<ByteString> join(JaktInternal::DynamicArray<ByteString> const strings,ByteString const separator) {
@@ -20,8 +25,8 @@ ByteString s = (_magic_value.value());
 }
 (output,s);
 if ([](size_t const& self, size_t rhs) -> bool {{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
-return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> Jakt::jakt__prelude__operators::Ordering {{
+return (infallible_enum_cast<Jakt::jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
 (self,rhs))))) == (static_cast<u8>(0)));

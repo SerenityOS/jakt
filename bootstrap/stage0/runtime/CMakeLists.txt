@@ -25,7 +25,12 @@ if (NOT serenity_POPULATED)
 endif()
 
 file(REMOVE_RECURSE ${CMAKE_CURRENT_SOURCE_DIR}/AK)
-file(COPY ${serenity_SOURCE_DIR}/AK DESTINATION ${CMAKE_CURRENT_SOURCE_DIR} NO_SOURCE_PERMISSIONS)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/AK)
+file(GLOB serenity_AK_FILES "${serenity_SOURCE_DIR}/AK/*")
+foreach(file IN LISTS serenity_AK_FILES)
+    get_filename_component(name ${file} NAME)
+    create_symlink(${file} ${CMAKE_CURRENT_SOURCE_DIR}/AK/${name})
+endforeach()
 
 configure_file("AK/Debug.h.in" "${CMAKE_CURRENT_SOURCE_DIR}/AK/Debug.h")
 

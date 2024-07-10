@@ -1,22 +1,61 @@
 #pragma once
-#include "__unified_forward.h"
+#include <lib.h>
 #include <AK/Queue.h>
 #include "jakt__platform__utility.h"
 namespace Jakt {
 namespace utility {
+struct Span;
+struct FileId;
+template<typename T>
+struct IterationDecision;
+
+[[noreturn]] void panic(ByteString const message);
+
+[[noreturn]] void todo(ByteString const message);
+
+ByteString to_string(JaktInternal::DynamicArray<u8> const bytes);
+
+ByteString join(JaktInternal::DynamicArray<ByteString> const strings, ByteString const separator);
+
+JaktInternal::DynamicArray<ByteString> prepend_to_each(JaktInternal::DynamicArray<ByteString> const strings, ByteString const prefix);
+
+JaktInternal::DynamicArray<ByteString> append_to_each(JaktInternal::DynamicArray<ByteString> const strings, ByteString const suffix);
+
+ErrorOr<void> write_to_file(ByteString const data, ByteString const output_filename);
+
+ByteString escape_for_quotes(ByteString const s);
+
+ByteString interpret_escapes(ByteString const s);
+
+bool is_ascii_alpha(u8 const c);
+
+bool is_ascii_digit(u8 const c);
+
+bool is_ascii_hexdigit(u8 const c);
+
+bool is_ascii_octdigit(u8 const c);
+
+bool is_ascii_binary(u8 const c);
+
+bool is_ascii_alphanumeric(u8 const c);
+
+bool is_whitespace(u8 const byte);
+
+}
+namespace utility {
 struct FileId {
   public:
-public: size_t id;public: bool equals(utility::FileId const rhs) const;
+public: size_t id;public: bool equals(Jakt::utility::FileId const rhs) const;
 public: FileId(size_t a_id);
 
 public: ByteString debug_description() const;
 };struct Span {
   public:
-public: utility::FileId file_id;public: size_t start;public: size_t end;public: static utility::Span first(utility::Span const a, utility::Span const b);
-public: static utility::Span last(utility::Span const a, utility::Span const b);
-public: bool contains(utility::Span const span) const;
+public: Jakt::utility::FileId file_id;public: size_t start;public: size_t end;public: static Jakt::utility::Span first(Jakt::utility::Span const a, Jakt::utility::Span const b);
+public: static Jakt::utility::Span last(Jakt::utility::Span const a, Jakt::utility::Span const b);
+public: bool contains(Jakt::utility::Span const span) const;
 public: bool is_in_offset_range(size_t const start, size_t const end) const;
-public: Span(utility::FileId a_file_id, size_t a_start, size_t a_end);
+public: Span(Jakt::utility::FileId a_file_id, size_t a_start, size_t a_end);
 
 public: ByteString debug_description() const;
 };template<typename T>

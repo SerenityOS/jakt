@@ -1,7 +1,10 @@
 #pragma once
-#include "__unified_forward.h"
+#include <lib.h>
 #include "utility.h"
 namespace Jakt {
 namespace git {
+
+ErrorOr<ByteString> commit_hash();
+
 }
 } // namespace Jakt

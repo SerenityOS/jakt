@@ -1,7 +1,13 @@
+#ifdef _WIN32
+extern "C" __cdecl int SetConsoleOutputCP(unsigned int code_page);
+#endif
 #include "error.h"
+#include "jakt__arguments.h"
+#include "jakt__prelude__operators.h"
+#include "jakt__prelude__static_array.h"
 namespace Jakt {
 namespace error {
-void print_error_json(ByteString const file_name,error::JaktError const error) {
+void print_error_json(ByteString const file_name,Jakt::error::JaktError const error) {
 {
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, void>{
@@ -9,20 +15,20 @@ auto&& __jakt_match_variant = error;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Message */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Message;ByteString const& message = __jakt_match_value.message;
-utility::Span const& span = __jakt_match_value.span;
+Jakt::utility::Span const& span = __jakt_match_value.span;
 {
-error::display_message_with_span_json(error::MessageSeverity::Error(),file_name,message,span);
+Jakt::error::display_message_with_span_json(Jakt::error::MessageSeverity::Error(),file_name,message,span);
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 case 1 /* MessageWithHint */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.MessageWithHint;ByteString const& message = __jakt_match_value.message;
-utility::Span const& span = __jakt_match_value.span;
+Jakt::utility::Span const& span = __jakt_match_value.span;
 ByteString const& hint = __jakt_match_value.hint;
-utility::Span const& hint_span = __jakt_match_value.hint_span;
+Jakt::utility::Span const& hint_span = __jakt_match_value.hint_span;
 {
-error::display_message_with_span_json(error::MessageSeverity::Error(),file_name,message,span);
-error::display_message_with_span_json(error::MessageSeverity::Hint(),file_name,hint,hint_span);
+Jakt::error::display_message_with_span_json(Jakt::error::MessageSeverity::Error(),file_name,message,span);
+Jakt::error::display_message_with_span_json(Jakt::error::MessageSeverity::Hint(),file_name,hint,hint_span);
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -36,7 +42,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 }
 }
 
-ErrorOr<void> print_error(ByteString const file_name,JaktInternal::Optional<JaktInternal::DynamicArray<u8>> const file_contents,error::JaktError const error) {
+ErrorOr<void> print_error(ByteString const file_name,JaktInternal::Optional<JaktInternal::DynamicArray<u8>> const file_contents,Jakt::error::JaktError const error) {
 {
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<void>>{
@@ -44,20 +50,20 @@ auto&& __jakt_match_variant = error;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Message */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Message;ByteString const& message = __jakt_match_value.message;
-utility::Span const& span = __jakt_match_value.span;
+Jakt::utility::Span const& span = __jakt_match_value.span;
 {
-error::display_message_with_span(error::MessageSeverity::Error(),file_name,file_contents,message,span);
+Jakt::error::display_message_with_span(Jakt::error::MessageSeverity::Error(),file_name,file_contents,message,span);
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 case 1 /* MessageWithHint */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.MessageWithHint;ByteString const& message = __jakt_match_value.message;
-utility::Span const& span = __jakt_match_value.span;
+Jakt::utility::Span const& span = __jakt_match_value.span;
 ByteString const& hint = __jakt_match_value.hint;
-utility::Span const& hint_span = __jakt_match_value.hint_span;
+Jakt::utility::Span const& hint_span = __jakt_match_value.hint_span;
 {
-error::display_message_with_span(error::MessageSeverity::Error(),file_name,file_contents,message,span);
-error::display_message_with_span(error::MessageSeverity::Hint(),file_name,file_contents,hint,hint_span);
+Jakt::error::display_message_with_span(Jakt::error::MessageSeverity::Error(),file_name,file_contents,message,span);
+Jakt::error::display_message_with_span(Jakt::error::MessageSeverity::Hint(),file_name,file_contents,hint,hint_span);
 }
 return JaktInternal::ExplicitValue<void>();
 };/*case end*/
@@ -72,26 +78,26 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 return {};
 }
 
-void display_message_with_span_json(error::MessageSeverity const severity,ByteString const file_name,ByteString const message,utility::Span const span) {
+void display_message_with_span_json(Jakt::error::MessageSeverity const severity,ByteString const file_name,ByteString const message,Jakt::utility::Span const span) {
 {
 outln((StringView::from_string_literal("{{\"type\":\"diagnostic\",\"message\":\"{}\",\"severity\":\"{}\",\"file_id\":{},\"span\":{{\"start\":{},\"end\":{}}}}}"sv)),message,((severity).name()),((((span).file_id)).id),((span).start),((span).end));
 }
 }
 
-void display_message_with_span(error::MessageSeverity const severity,ByteString const file_name,JaktInternal::Optional<JaktInternal::DynamicArray<u8>> const contents,ByteString const message,utility::Span const span) {
+void display_message_with_span(Jakt::error::MessageSeverity const severity,ByteString const file_name,JaktInternal::Optional<JaktInternal::DynamicArray<u8>> const contents,ByteString const message,Jakt::utility::Span const span) {
 {
 warnln((StringView::from_string_literal("{}: {}"sv)),((severity).name()),message);
 if ((!(((contents).has_value())))){
 return;
 }
 JaktInternal::DynamicArray<u8> const file_contents = (contents.value());
-JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,size_t>> const line_spans = error::gather_line_spans(file_contents);
+JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,size_t>> const line_spans = Jakt::error::gather_line_spans(file_contents);
 size_t line_index = static_cast<size_t>(0ULL);
 size_t error_start_index = static_cast<size_t>(0ULL);
 size_t largest_line_number = static_cast<size_t>(0ULL);
 while ([](size_t const& self, size_t rhs) -> bool {{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
-return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> Jakt::jakt__prelude__operators::Ordering {{
+return (infallible_enum_cast<Jakt::jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
 (self,rhs))))) == (static_cast<u8>(0)));
@@ -99,16 +105,16 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 }
 (line_index,((line_spans).size()))){
 if (([](size_t const& self, size_t rhs) -> bool {{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
-return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> Jakt::jakt__prelude__operators::Ordering {{
+return (infallible_enum_cast<Jakt::jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
 (self,rhs))))) != (static_cast<u8>(0)));
 }
 }
 (((span).start),((((line_spans)[line_index])).template get<0>())) && [](size_t const& self, size_t rhs) -> bool {{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
-return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> Jakt::jakt__prelude__operators::Ordering {{
+return (infallible_enum_cast<Jakt::jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
 (self,rhs))))) != (static_cast<u8>(2)));
@@ -118,16 +124,16 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 (error_start_index = line_index);
 }
 if (([](size_t const& self, size_t rhs) -> bool {{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
-return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> Jakt::jakt__prelude__operators::Ordering {{
+return (infallible_enum_cast<Jakt::jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
 (self,rhs))))) != (static_cast<u8>(0)));
 }
 }
 (((span).end),((((line_spans)[line_index])).template get<0>())) && [](size_t const& self, size_t rhs) -> bool {{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
-return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> Jakt::jakt__prelude__operators::Ordering {{
+return (infallible_enum_cast<Jakt::jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
 (self,rhs))))) != (static_cast<u8>(2)));
@@ -158,44 +164,44 @@ warn((StringView::from_string_literal("─"sv)));
 
 warnln((StringView::from_string_literal("┬─ \u001b[33m{}:{}:{}\u001b[0m"sv)),file_name,JaktInternal::checked_add(line_index,static_cast<size_t>(1ULL)),JaktInternal::checked_add(column_index,static_cast<size_t>(1ULL)));
 if ([](size_t const& self, size_t rhs) -> bool {{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
-return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> Jakt::jakt__prelude__operators::Ordering {{
+return (infallible_enum_cast<Jakt::jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
 (self,rhs))))) == (static_cast<u8>(2)));
 }
 }
 (line_index,static_cast<size_t>(0ULL))){
-error::print_source_line(severity,file_contents,((line_spans)[JaktInternal::checked_sub(line_index,static_cast<size_t>(1ULL))]),span,line_index,largest_line_number);
+Jakt::error::print_source_line(severity,file_contents,((line_spans)[JaktInternal::checked_sub(line_index,static_cast<size_t>(1ULL))]),span,line_index,largest_line_number);
 }
 while (([](size_t const& self, size_t rhs) -> bool {{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
-return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> Jakt::jakt__prelude__operators::Ordering {{
+return (infallible_enum_cast<Jakt::jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
 (self,rhs))))) == (static_cast<u8>(0)));
 }
 }
 (line_index,((line_spans).size())) && [](size_t const& self, size_t rhs) -> bool {{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
-return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> Jakt::jakt__prelude__operators::Ordering {{
+return (infallible_enum_cast<Jakt::jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
 (self,rhs))))) == (static_cast<u8>(2)));
 }
 }
 (((span).end),((((line_spans)[line_index])).template get<0>())))){
-error::print_source_line(severity,file_contents,((line_spans)[line_index]),span,JaktInternal::checked_add(line_index,static_cast<size_t>(1ULL)),largest_line_number);
+Jakt::error::print_source_line(severity,file_contents,((line_spans)[line_index]),span,JaktInternal::checked_add(line_index,static_cast<size_t>(1ULL)),largest_line_number);
 if ([](size_t const& self, size_t rhs) -> bool {{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
-return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> Jakt::jakt__prelude__operators::Ordering {{
+return (infallible_enum_cast<Jakt::jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
 (self,rhs))))) != (static_cast<u8>(2)));
 }
 }
 (((span).end),((((line_spans)[line_index])).template get<1>()))){
-error::print_underline(severity,width,((line_spans)[line_index]),span,JaktInternal::checked_add(line_index,static_cast<size_t>(1ULL)),largest_line_number);
+Jakt::error::print_underline(severity,width,((line_spans)[line_index]),span,JaktInternal::checked_add(line_index,static_cast<size_t>(1ULL)),largest_line_number);
 break;
 }
 (++(line_index));
@@ -234,15 +240,15 @@ warn((StringView::from_string_literal(" "sv)));
 warnln((StringView::from_string_literal("\u001b[{}m╰─ {}\u001b[0m"sv)),((severity).ansi_color_code()),message);
 (++(line_index));
 if ([](size_t const& self, size_t rhs) -> bool {{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
-return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> Jakt::jakt__prelude__operators::Ordering {{
+return (infallible_enum_cast<Jakt::jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
 (self,rhs))))) == (static_cast<u8>(0)));
 }
 }
 (line_index,((line_spans).size()))){
-error::print_source_line(severity,file_contents,((line_spans)[line_index]),span,JaktInternal::checked_add(line_index,static_cast<size_t>(1ULL)),largest_line_number);
+Jakt::error::print_source_line(severity,file_contents,((line_spans)[line_index]),span,JaktInternal::checked_add(line_index,static_cast<size_t>(1ULL)),largest_line_number);
 }
 warn((StringView::from_string_literal("\u001b[0m"sv)));
 {
@@ -264,7 +270,7 @@ warnln((StringView::from_string_literal("┴─"sv)));
 }
 }
 
-void print_source_line(error::MessageSeverity const severity,JaktInternal::DynamicArray<u8> const file_contents,JaktInternal::Tuple<size_t,size_t> const file_span,utility::Span const error_span,size_t const line_number,size_t const largest_line_number) {
+void print_source_line(Jakt::error::MessageSeverity const severity,JaktInternal::DynamicArray<u8> const file_contents,JaktInternal::Tuple<size_t,size_t> const file_span,Jakt::utility::Span const error_span,size_t const line_number,size_t const largest_line_number) {
 {
 size_t index = ((file_span).template get<0>());
 size_t const largest_width = ((__jakt_format((StringView::from_string_literal("{}"sv)),largest_line_number)).length());
@@ -287,8 +293,8 @@ warn((StringView::from_string_literal(" "sv)));
 
 warn((StringView::from_string_literal(" │ "sv)));
 while ([](size_t const& self, size_t rhs) -> bool {{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
-return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> Jakt::jakt__prelude__operators::Ordering {{
+return (infallible_enum_cast<Jakt::jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
 (self,rhs))))) != (static_cast<u8>(2)));
@@ -297,8 +303,8 @@ return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::
 (index,((file_span).template get<1>()))){
 u8 c = static_cast<u8>(u8' ');
 if ([](size_t const& self, size_t rhs) -> bool {{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
-return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> Jakt::jakt__prelude__operators::Ordering {{
+return (infallible_enum_cast<Jakt::jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
 (self,rhs))))) == (static_cast<u8>(0)));
@@ -323,7 +329,7 @@ warnln((StringView::from_string_literal(""sv)));
 }
 }
 
-void print_underline(error::MessageSeverity const severity,size_t const width,JaktInternal::Tuple<size_t,size_t> const file_span,utility::Span const error_span,size_t const line_number,size_t const largest_line_number) {
+void print_underline(Jakt::error::MessageSeverity const severity,size_t const width,JaktInternal::Tuple<size_t,size_t> const file_span,Jakt::utility::Span const error_span,size_t const line_number,size_t const largest_line_number) {
 {
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(JaktInternal::checked_add(width,static_cast<size_t>(2ULL)))});
@@ -357,16 +363,16 @@ if (((index) == (JaktInternal::checked_sub(((error_span).end),static_cast<size_t
 warn((StringView::from_string_literal("┬\u001b[0m"sv)));
 }
 else if (([](size_t const& self, size_t rhs) -> bool {{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
-return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> Jakt::jakt__prelude__operators::Ordering {{
+return (infallible_enum_cast<Jakt::jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
 (self,rhs))))) != (static_cast<u8>(0)));
 }
 }
 (index,((error_span).start)) && [](size_t const& self, size_t rhs) -> bool {{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
-return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> Jakt::jakt__prelude__operators::Ordering {{
+return (infallible_enum_cast<Jakt::jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
 (self,rhs))))) == (static_cast<u8>(0)));
@@ -394,8 +400,8 @@ size_t idx = static_cast<size_t>(0ULL);
 JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,size_t>> output = DynamicArray<JaktInternal::Tuple<size_t,size_t>>::create_with({});
 size_t start = idx;
 while ([](size_t const& self, size_t rhs) -> bool {{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
-return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> Jakt::jakt__prelude__operators::Ordering {{
+return (infallible_enum_cast<Jakt::jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
 (self,rhs))))) == (static_cast<u8>(0)));
@@ -409,8 +415,8 @@ if (((((file_contents)[idx])) == (static_cast<u8>(u8'\n')))){
 ((idx) += (static_cast<size_t>(1ULL)));
 }
 if ([](size_t const& self, size_t rhs) -> bool {{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
-return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> Jakt::jakt__prelude__operators::Ordering {{
+return (infallible_enum_cast<Jakt::jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
 (self,rhs))))) != (static_cast<u8>(2)));
@@ -423,7 +429,7 @@ return output;
 }
 }
 
-ByteString error::JaktError::debug_description() const {
+ByteString Jakt::error::JaktError::debug_description() const {
 auto builder = ByteStringBuilder::create();
 switch (this->__jakt_init_index()) {case 0 /* Message */: {
 builder.append("JaktError::Message"sv);
@@ -458,14 +464,14 @@ break;}
 }
 return builder.to_string();
 }
-[[nodiscard]] JaktError JaktError::Message(ByteString message, utility::Span span){
+[[nodiscard]] JaktError JaktError::Message(ByteString message, Jakt::utility::Span span){
 JaktError __jakt_uninit_enum;
 __jakt_uninit_enum.__jakt_variant_index = 1;
 new (&__jakt_uninit_enum.as.Message.message) (decltype(message))(move(message));
 new (&__jakt_uninit_enum.as.Message.span) (decltype(span))(move(span));
 return __jakt_uninit_enum;
 }
-[[nodiscard]] JaktError JaktError::MessageWithHint(ByteString message, utility::Span span, ByteString hint, utility::Span hint_span){
+[[nodiscard]] JaktError JaktError::MessageWithHint(ByteString message, Jakt::utility::Span span, ByteString hint, Jakt::utility::Span hint_span){
 JaktError __jakt_uninit_enum;
 __jakt_uninit_enum.__jakt_variant_index = 2;
 new (&__jakt_uninit_enum.as.MessageWithHint.message) (decltype(message))(move(message));
@@ -588,18 +594,18 @@ this->as.MessageWithHint.hint_span.~Span();
 break;
 }
 }
-utility::Span error::JaktError::span() const {
+Jakt::utility::Span Jakt::error::JaktError::span() const {
 {
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<utility::Span, utility::Span>{
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<Jakt::utility::Span, Jakt::utility::Span>{
 auto&& __jakt_match_variant = *this;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Message */: {
-auto&& __jakt_match_value = __jakt_match_variant.as.Message;utility::Span const& span = __jakt_match_value.span;
+auto&& __jakt_match_value = __jakt_match_variant.as.Message;Jakt::utility::Span const& span = __jakt_match_value.span;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 case 1 /* MessageWithHint */: {
-auto&& __jakt_match_value = __jakt_match_variant.as.MessageWithHint;utility::Span const& span = __jakt_match_value.span;
+auto&& __jakt_match_value = __jakt_match_variant.as.MessageWithHint;Jakt::utility::Span const& span = __jakt_match_value.span;
 return JaktInternal::ExplicitValue(span);
 };/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
@@ -612,7 +618,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 }
 }
 
-ByteString error::MessageSeverity::debug_description() const {
+ByteString Jakt::error::MessageSeverity::debug_description() const {
 auto builder = ByteStringBuilder::create();
 switch (this->__jakt_init_index()) {case 0 /* Hint */: {
 return ByteString("MessageSeverity::Hint"sv);
@@ -705,7 +711,7 @@ case 0 /* Hint */:break;
 case 1 /* Error */:break;
 }
 }
-ByteString error::MessageSeverity::name() const {
+ByteString Jakt::error::MessageSeverity::name() const {
 {
 return ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString, ByteString>{
@@ -727,7 +733,7 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 }
 }
 
-ByteString error::MessageSeverity::ansi_color_code() const {
+ByteString Jakt::error::MessageSeverity::ansi_color_code() const {
 {
 return ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString, ByteString>{

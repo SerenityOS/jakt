@@ -1,7 +1,13 @@
 #pragma once
-#include "__unified_forward.h"
+#include <lib.h>
 #include "jakt__prelude__configuration.h"
 namespace Jakt {
+namespace cpp_import__common {
+struct CppImportErrors;
+
+ErrorOr<ByteString> read_all(ByteString const filename);
+
+}
 namespace cpp_import__common {
 struct CppImportErrors {
   public:

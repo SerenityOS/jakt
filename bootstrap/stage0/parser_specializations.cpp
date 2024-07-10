@@ -1,8 +1,4 @@
 #include "parser.h"
-#include "lexer.h"
-#include "compiler.h"
-#include "error.h"
-#include "utility.h"
 namespace Jakt {
 namespace parser {
 

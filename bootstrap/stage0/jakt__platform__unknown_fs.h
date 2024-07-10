@@ -1,14 +1,23 @@
 #pragma once
-#include "__unified_forward.h"
+#include <lib.h>
 #include "jakt__path.h"
 namespace Jakt {
+namespace jakt__platform__unknown_fs {
+class DirectoryIterator;
+ErrorOr<void> make_directory(ByteString const path);
+
+ErrorOr<ByteString> current_directory();
+
+ErrorOr<ByteString> real_path(ByteString const path);
+
+}
 namespace jakt__platform__unknown_fs {
 class DirectoryIterator :public RefCounted<DirectoryIterator>, public Weakable<DirectoryIterator> {
   public:
 virtual ~DirectoryIterator() = default;
-public: ErrorOr<JaktInternal::Optional<JaktInternal::Tuple<jakt__path::Path,bool>>> next();
-public: static ErrorOr<JaktInternal::Optional<NonnullRefPtr<jakt__platform__unknown_fs::DirectoryIterator>>> from_path(jakt__path::Path const path);
-public: ErrorOr<jakt__path::Path> get_path() const;
+public: ErrorOr<JaktInternal::Optional<JaktInternal::Tuple<Jakt::jakt__path::Path,bool>>> next();
+public: static ErrorOr<JaktInternal::Optional<NonnullRefPtr<Jakt::jakt__platform__unknown_fs::DirectoryIterator>>> from_path(Jakt::jakt__path::Path const path);
+public: ErrorOr<Jakt::jakt__path::Path> get_path() const;
 public: protected:
 explicit DirectoryIterator();
 public:

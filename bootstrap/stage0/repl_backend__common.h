@@ -1,6 +1,15 @@
 #pragma once
-#include "__unified_forward.h"
+#include <lib.h>
 namespace Jakt {
+namespace repl_backend__common {
+struct Style;
+struct LineResult;
+
+struct XTermColor;
+
+struct Color;
+
+}
 namespace repl_backend__common {
 struct LineResult {
 u8 __jakt_variant_index = 0;
@@ -63,14 +72,14 @@ u8 green;
 u8 blue;
 } Components;
 struct {
-repl_backend__common::XTermColor value;
+Jakt::repl_backend__common::XTermColor value;
 } XTerm;
 constexpr VariantData() {}
 ~VariantData() {}
 } as;
 constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ByteString debug_description() const;
 [[nodiscard]] static Color Components(u8 red, u8 green, u8 blue);
-[[nodiscard]] static Color XTerm(repl_backend__common::XTermColor value);
+[[nodiscard]] static Color XTerm(Jakt::repl_backend__common::XTermColor value);
 ~Color();
 Color& operator=(Color const &);
 Color& operator=(Color &&);
@@ -83,7 +92,7 @@ Color() {};
 };
 struct Style {
   public:
-public: JaktInternal::Optional<repl_backend__common::Color> foreground;public: JaktInternal::Optional<repl_backend__common::Color> background;public: Style(JaktInternal::Optional<repl_backend__common::Color> a_foreground, JaktInternal::Optional<repl_backend__common::Color> a_background);
+public: JaktInternal::Optional<Jakt::repl_backend__common::Color> foreground;public: JaktInternal::Optional<Jakt::repl_backend__common::Color> background;public: Style(JaktInternal::Optional<Jakt::repl_backend__common::Color> a_foreground, JaktInternal::Optional<Jakt::repl_backend__common::Color> a_background);
 
 public: ByteString debug_description() const;
 };}

@@ -1,5 +1,5 @@
 #pragma once
-#include "__unified_forward.h"
+#include <lib.h>
 #include "ids.h"
 #include "parser.h"
 #include "compiler.h"
@@ -8,22 +8,113 @@
 #include "jakt__prelude__static_array.h"
 namespace Jakt {
 namespace types {
+struct GenericInferences;
+struct SpecializedType;
+struct ResolutionMixin;
+class Scope;
+struct ResolvedForallChunk;
+class Module;
+class CheckedTrait;
+struct LoadedModule;
+struct CheckedNamespace;
+class CheckedFunction;
+class FunctionGenerics;
+struct CheckedParameter;
+struct FunctionGenericParameter;
+class CheckedVariable;
+struct CheckedVarDecl;
+struct CheckedBlock;
+struct FieldRecord;
+class CheckedField;
+struct CheckedStruct;
+struct CheckedEnum;
+struct CheckedGenericParameter;
+struct CheckedEnumVariantBinding;
+struct CheckedStringLiteral;
+struct ClassInstanceRebind;
+struct OperatorTraitImplementation;
+struct CheckedBinaryOperator;
+struct ResolvedNamespace;
+struct CheckedCall;
+class CheckedProgram;
+struct Value;
+class TypecheckFunctions;
+struct StructOrEnumId;
+
+struct StructLikeId;
+
+struct SafetyMode;
+
+struct BuiltinType;
+
+struct Type;
+
+struct CheckedTraitRequirements;
+
+struct MaybeResolvedScope;
+
+struct CheckedVisibility;
+
+struct CheckedCapture;
+
+struct FunctionGenericParameterKind;
+
+struct BlockControlFlow;
+
+struct CheckedEnumVariant;
+
+struct CheckedStatement;
+
+struct NumberConstant;
+
+struct CheckedNumericConstant;
+
+struct StringLiteral;
+
+struct CheckedTypeCast;
+
+struct CheckedUnaryOperator;
+
+struct CheckedMatchBody;
+
+struct CheckedMatchCase;
+
+struct CheckedExpression;
+
+struct ValueImpl;
+
+struct NumericOrStringValue;
+
+Jakt::ids::TypeId unknown_type_id();
+
+Jakt::ids::TypeId void_type_id();
+
+Jakt::ids::TypeId never_type_id();
+
+Jakt::ids::TypeId builtin(Jakt::types::BuiltinType const builtin);
+
+ErrorOr<ByteString> format_value_impl(ByteString const format_string, Jakt::types::Value const value, NonnullRefPtr<Jakt::types::CheckedProgram> const& program);
+
+ErrorOr<ByteString> comptime_format_impl(ByteString const format_string, JaktInternal::ArraySlice<Jakt::types::Value> const arguments, NonnullRefPtr<Jakt::types::CheckedProgram> const& program);
+
+}
+namespace types {
 struct StructOrEnumId {
 u8 __jakt_variant_index = 0;
 union VariantData {
 u8 __jakt_uninit_value;
 struct {
-ids::StructId value;
+Jakt::ids::StructId value;
 } Struct;
 struct {
-ids::EnumId value;
+Jakt::ids::EnumId value;
 } Enum;
 constexpr VariantData() {}
 ~VariantData() {}
 } as;
 constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ByteString debug_description() const;
-[[nodiscard]] static StructOrEnumId Struct(ids::StructId value);
-[[nodiscard]] static StructOrEnumId Enum(ids::EnumId value);
+[[nodiscard]] static StructOrEnumId Struct(Jakt::ids::StructId value);
+[[nodiscard]] static StructOrEnumId Enum(Jakt::ids::EnumId value);
 ~StructOrEnumId();
 StructOrEnumId& operator=(StructOrEnumId const &);
 StructOrEnumId& operator=(StructOrEnumId &&);
@@ -39,7 +130,7 @@ u8 __jakt_variant_index = 0;
 union CommonData {
 u8 __jakt_uninit_common;
 struct {
-JaktInternal::Optional<JaktInternal::DynamicArray<ids::TypeId>> generic_arguments;
+JaktInternal::Optional<JaktInternal::DynamicArray<Jakt::ids::TypeId>> generic_arguments;
 } init_common;
 constexpr CommonData() {}
 ~CommonData() {}
@@ -47,21 +138,21 @@ constexpr CommonData() {}
 union VariantData {
 u8 __jakt_uninit_value;
 struct {
-ids::StructId value;
+Jakt::ids::StructId value;
 } Struct;
 struct {
-ids::EnumId value;
+Jakt::ids::EnumId value;
 } Enum;
 struct {
-ids::TraitId value;
+Jakt::ids::TraitId value;
 } Trait;
 constexpr VariantData() {}
 ~VariantData() {}
 } as;
 constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ByteString debug_description() const;
-[[nodiscard]] static StructLikeId Struct(JaktInternal::Optional<JaktInternal::DynamicArray<ids::TypeId>> generic_arguments, ids::StructId value);
-[[nodiscard]] static StructLikeId Enum(JaktInternal::Optional<JaktInternal::DynamicArray<ids::TypeId>> generic_arguments, ids::EnumId value);
-[[nodiscard]] static StructLikeId Trait(JaktInternal::Optional<JaktInternal::DynamicArray<ids::TypeId>> generic_arguments, ids::TraitId value);
+[[nodiscard]] static StructLikeId Struct(JaktInternal::Optional<JaktInternal::DynamicArray<Jakt::ids::TypeId>> generic_arguments, Jakt::ids::StructId value);
+[[nodiscard]] static StructLikeId Enum(JaktInternal::Optional<JaktInternal::DynamicArray<Jakt::ids::TypeId>> generic_arguments, Jakt::ids::EnumId value);
+[[nodiscard]] static StructLikeId Trait(JaktInternal::Optional<JaktInternal::DynamicArray<Jakt::ids::TypeId>> generic_arguments, Jakt::ids::TraitId value);
 ~StructLikeId();
 StructLikeId& operator=(StructLikeId const &);
 StructLikeId& operator=(StructLikeId &&);
@@ -69,28 +160,28 @@ StructLikeId(StructLikeId const&);
 StructLikeId(StructLikeId &&);
 private: void __jakt_destroy_variant();
 public:
-JaktInternal::DynamicArray<ids::TypeId> generic_parameters(NonnullRefPtr<types::CheckedProgram> const& program) const;
-JaktInternal::DynamicArray<types::CheckedGenericParameter> generic_parameters_as_checked(NonnullRefPtr<types::CheckedProgram> const& program) const;
-ids::ScopeId scope_id(NonnullRefPtr<types::CheckedProgram> const& program) const;
-ids::TypeId specialized_by(JaktInternal::DynamicArray<ids::TypeId> const arguments, NonnullRefPtr<types::CheckedProgram>& program, ids::ModuleId const module_id, parser::CheckedQualifiers const qualifiers) const;
-static JaktInternal::Optional<types::StructLikeId> from_type_id(ids::TypeId const type_id, NonnullRefPtr<types::CheckedProgram> const& program);
-ids::ScopeId associated_scope_id(NonnullRefPtr<types::CheckedProgram> const& program) const;
+JaktInternal::DynamicArray<Jakt::ids::TypeId> generic_parameters(NonnullRefPtr<Jakt::types::CheckedProgram> const& program) const;
+JaktInternal::DynamicArray<Jakt::types::CheckedGenericParameter> generic_parameters_as_checked(NonnullRefPtr<Jakt::types::CheckedProgram> const& program) const;
+Jakt::ids::ScopeId scope_id(NonnullRefPtr<Jakt::types::CheckedProgram> const& program) const;
+Jakt::ids::TypeId specialized_by(JaktInternal::DynamicArray<Jakt::ids::TypeId> const arguments, NonnullRefPtr<Jakt::types::CheckedProgram>& program, Jakt::ids::ModuleId const module_id, Jakt::parser::CheckedQualifiers const qualifiers) const;
+static JaktInternal::Optional<Jakt::types::StructLikeId> from_type_id(Jakt::ids::TypeId const type_id, NonnullRefPtr<Jakt::types::CheckedProgram> const& program);
+Jakt::ids::ScopeId associated_scope_id(NonnullRefPtr<Jakt::types::CheckedProgram> const& program) const;
 private:
 StructLikeId() {};
 };
 struct GenericInferences {
   public:
-public: JaktInternal::Dictionary<ids::TypeId,ids::TypeId> values;public: void set(ids::TypeId const key, ids::TypeId const value);
-public: void set_all(JaktInternal::DynamicArray<types::CheckedGenericParameter> const keys, JaktInternal::DynamicArray<ids::TypeId> const values);
-public: JaktInternal::Optional<ids::TypeId> get(ids::TypeId const key) const;
-public: ids::TypeId map(ids::TypeId const type) const;
-public: JaktInternal::Optional<ids::TypeId> find_and_map(ByteString const name, NonnullRefPtr<types::CheckedProgram> const& program) const;
-public: JaktInternal::Dictionary<ids::TypeId,ids::TypeId> iterator() const;
-public: JaktInternal::Dictionary<ids::TypeId,ids::TypeId> perform_checkpoint(bool const reset);
-public: void restore(JaktInternal::Dictionary<ids::TypeId,ids::TypeId> const checkpoint);
-public: void set_from(JaktInternal::Dictionary<ids::TypeId,ids::TypeId> const checkpoint);
-public: ErrorOr<void> debug_description(NonnullRefPtr<types::CheckedProgram> const& program) const;
-public: GenericInferences(JaktInternal::Dictionary<ids::TypeId,ids::TypeId> a_values);
+public: JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId> values;public: void set(Jakt::ids::TypeId const key, Jakt::ids::TypeId const value);
+public: void set_all(JaktInternal::DynamicArray<Jakt::types::CheckedGenericParameter> const keys, JaktInternal::DynamicArray<Jakt::ids::TypeId> const values);
+public: JaktInternal::Optional<Jakt::ids::TypeId> get(Jakt::ids::TypeId const key) const;
+public: Jakt::ids::TypeId map(Jakt::ids::TypeId const type) const;
+public: JaktInternal::Optional<Jakt::ids::TypeId> find_and_map(ByteString const name, NonnullRefPtr<Jakt::types::CheckedProgram> const& program) const;
+public: JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId> iterator() const;
+public: JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId> perform_checkpoint(bool const reset);
+public: void restore(JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId> const checkpoint);
+public: void set_from(JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId> const checkpoint);
+public: ErrorOr<void> debug_description(NonnullRefPtr<Jakt::types::CheckedProgram> const& program) const;
+public: GenericInferences(JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId> a_values);
 
 public: ByteString debug_description() const;
 };struct SafetyMode {
@@ -153,10 +244,10 @@ BuiltinType() {};
 };
 struct Value {
   public:
-public: NonnullRefPtr<typename types::ValueImpl> impl;public: utility::Span span;public: types::Value copy() const;
+public: NonnullRefPtr<typename Jakt::types::ValueImpl> impl;public: Jakt::utility::Span span;public: Jakt::types::Value copy() const;
 public: ByteString type_name() const;
-public: types::Value cast(types::Value const expected, utility::Span const span) const;
-public: Value(NonnullRefPtr<typename types::ValueImpl> a_impl, utility::Span a_span);
+public: Jakt::types::Value cast(Jakt::types::Value const expected, Jakt::utility::Span const span) const;
+public: Value(NonnullRefPtr<typename Jakt::types::ValueImpl> a_impl, Jakt::utility::Span a_span);
 
 public: ByteString debug_description() const;
 };struct Type: public RefCounted<Type> {
@@ -164,7 +255,7 @@ u8 __jakt_variant_index = 0;
 union CommonData {
 u8 __jakt_uninit_common;
 struct {
-parser::CheckedQualifiers qualifiers;
+Jakt::parser::CheckedQualifiers qualifiers;
 } init_common;
 constexpr CommonData() {}
 ~CommonData() {}
@@ -173,93 +264,93 @@ union VariantData {
 u8 __jakt_uninit_value;
 struct {
 ByteString name;
-JaktInternal::DynamicArray<ids::TypeId> trait_implementations;
+JaktInternal::DynamicArray<Jakt::ids::TypeId> trait_implementations;
 bool is_value;
 } TypeVariable;
 struct {
-ids::TypeId namespace_type;
+Jakt::ids::TypeId namespace_type;
 ByteString name;
 } Dependent;
 struct {
-ids::StructId id;
-JaktInternal::DynamicArray<ids::TypeId> args;
+Jakt::ids::StructId id;
+JaktInternal::DynamicArray<Jakt::ids::TypeId> args;
 } GenericInstance;
 struct {
-ids::EnumId id;
-JaktInternal::DynamicArray<ids::TypeId> args;
+Jakt::ids::EnumId id;
+JaktInternal::DynamicArray<Jakt::ids::TypeId> args;
 } GenericEnumInstance;
 struct {
-ids::TraitId id;
-JaktInternal::DynamicArray<ids::TypeId> args;
+Jakt::ids::TraitId id;
+JaktInternal::DynamicArray<Jakt::ids::TypeId> args;
 } GenericTraitInstance;
 struct {
-ids::StructId id;
-JaktInternal::DynamicArray<ids::TypeId> args;
+Jakt::ids::StructId id;
+JaktInternal::DynamicArray<Jakt::ids::TypeId> args;
 } GenericResolvedType;
 struct {
-ids::StructId value;
+Jakt::ids::StructId value;
 } Struct;
 struct {
-ids::EnumId value;
+Jakt::ids::EnumId value;
 } Enum;
 struct {
-ids::TypeId value;
+Jakt::ids::TypeId value;
 } RawPtr;
 struct {
-ids::TraitId value;
+Jakt::ids::TraitId value;
 } Trait;
 struct {
-ids::TypeId value;
+Jakt::ids::TypeId value;
 } Reference;
 struct {
-ids::TypeId value;
+Jakt::ids::TypeId value;
 } MutableReference;
 struct {
-JaktInternal::DynamicArray<ids::TypeId> params;
+JaktInternal::DynamicArray<Jakt::ids::TypeId> params;
 bool can_throw;
-ids::TypeId return_type_id;
-ids::FunctionId pseudo_function_id;
+Jakt::ids::TypeId return_type_id;
+Jakt::ids::FunctionId pseudo_function_id;
 } Function;
 struct {
-types::Value value;
+Jakt::types::Value value;
 } Const;
 constexpr VariantData() {}
 ~VariantData() {}
 } as;
 constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ByteString debug_description() const;
-[[nodiscard]] static NonnullRefPtr<Type> Void(parser::CheckedQualifiers qualifiers);
-[[nodiscard]] static NonnullRefPtr<Type> Bool(parser::CheckedQualifiers qualifiers);
-[[nodiscard]] static NonnullRefPtr<Type> U8(parser::CheckedQualifiers qualifiers);
-[[nodiscard]] static NonnullRefPtr<Type> U16(parser::CheckedQualifiers qualifiers);
-[[nodiscard]] static NonnullRefPtr<Type> U32(parser::CheckedQualifiers qualifiers);
-[[nodiscard]] static NonnullRefPtr<Type> U64(parser::CheckedQualifiers qualifiers);
-[[nodiscard]] static NonnullRefPtr<Type> I8(parser::CheckedQualifiers qualifiers);
-[[nodiscard]] static NonnullRefPtr<Type> I16(parser::CheckedQualifiers qualifiers);
-[[nodiscard]] static NonnullRefPtr<Type> I32(parser::CheckedQualifiers qualifiers);
-[[nodiscard]] static NonnullRefPtr<Type> I64(parser::CheckedQualifiers qualifiers);
-[[nodiscard]] static NonnullRefPtr<Type> F32(parser::CheckedQualifiers qualifiers);
-[[nodiscard]] static NonnullRefPtr<Type> F64(parser::CheckedQualifiers qualifiers);
-[[nodiscard]] static NonnullRefPtr<Type> Usize(parser::CheckedQualifiers qualifiers);
-[[nodiscard]] static NonnullRefPtr<Type> JaktString(parser::CheckedQualifiers qualifiers);
-[[nodiscard]] static NonnullRefPtr<Type> CChar(parser::CheckedQualifiers qualifiers);
-[[nodiscard]] static NonnullRefPtr<Type> CInt(parser::CheckedQualifiers qualifiers);
-[[nodiscard]] static NonnullRefPtr<Type> Unknown(parser::CheckedQualifiers qualifiers);
-[[nodiscard]] static NonnullRefPtr<Type> Never(parser::CheckedQualifiers qualifiers);
-[[nodiscard]] static NonnullRefPtr<Type> TypeVariable(parser::CheckedQualifiers qualifiers, ByteString name, JaktInternal::DynamicArray<ids::TypeId> trait_implementations, bool is_value);
-[[nodiscard]] static NonnullRefPtr<Type> Dependent(parser::CheckedQualifiers qualifiers, ids::TypeId namespace_type, ByteString name);
-[[nodiscard]] static NonnullRefPtr<Type> GenericInstance(parser::CheckedQualifiers qualifiers, ids::StructId id, JaktInternal::DynamicArray<ids::TypeId> args);
-[[nodiscard]] static NonnullRefPtr<Type> GenericEnumInstance(parser::CheckedQualifiers qualifiers, ids::EnumId id, JaktInternal::DynamicArray<ids::TypeId> args);
-[[nodiscard]] static NonnullRefPtr<Type> GenericTraitInstance(parser::CheckedQualifiers qualifiers, ids::TraitId id, JaktInternal::DynamicArray<ids::TypeId> args);
-[[nodiscard]] static NonnullRefPtr<Type> GenericResolvedType(parser::CheckedQualifiers qualifiers, ids::StructId id, JaktInternal::DynamicArray<ids::TypeId> args);
-[[nodiscard]] static NonnullRefPtr<Type> Struct(parser::CheckedQualifiers qualifiers, ids::StructId value);
-[[nodiscard]] static NonnullRefPtr<Type> Enum(parser::CheckedQualifiers qualifiers, ids::EnumId value);
-[[nodiscard]] static NonnullRefPtr<Type> RawPtr(parser::CheckedQualifiers qualifiers, ids::TypeId value);
-[[nodiscard]] static NonnullRefPtr<Type> Trait(parser::CheckedQualifiers qualifiers, ids::TraitId value);
-[[nodiscard]] static NonnullRefPtr<Type> Reference(parser::CheckedQualifiers qualifiers, ids::TypeId value);
-[[nodiscard]] static NonnullRefPtr<Type> MutableReference(parser::CheckedQualifiers qualifiers, ids::TypeId value);
-[[nodiscard]] static NonnullRefPtr<Type> Function(parser::CheckedQualifiers qualifiers, JaktInternal::DynamicArray<ids::TypeId> params, bool can_throw, ids::TypeId return_type_id, ids::FunctionId pseudo_function_id);
-[[nodiscard]] static NonnullRefPtr<Type> Self(parser::CheckedQualifiers qualifiers);
-[[nodiscard]] static NonnullRefPtr<Type> Const(parser::CheckedQualifiers qualifiers, types::Value value);
+[[nodiscard]] static NonnullRefPtr<Type> Void(Jakt::parser::CheckedQualifiers qualifiers);
+[[nodiscard]] static NonnullRefPtr<Type> Bool(Jakt::parser::CheckedQualifiers qualifiers);
+[[nodiscard]] static NonnullRefPtr<Type> U8(Jakt::parser::CheckedQualifiers qualifiers);
+[[nodiscard]] static NonnullRefPtr<Type> U16(Jakt::parser::CheckedQualifiers qualifiers);
+[[nodiscard]] static NonnullRefPtr<Type> U32(Jakt::parser::CheckedQualifiers qualifiers);
+[[nodiscard]] static NonnullRefPtr<Type> U64(Jakt::parser::CheckedQualifiers qualifiers);
+[[nodiscard]] static NonnullRefPtr<Type> I8(Jakt::parser::CheckedQualifiers qualifiers);
+[[nodiscard]] static NonnullRefPtr<Type> I16(Jakt::parser::CheckedQualifiers qualifiers);
+[[nodiscard]] static NonnullRefPtr<Type> I32(Jakt::parser::CheckedQualifiers qualifiers);
+[[nodiscard]] static NonnullRefPtr<Type> I64(Jakt::parser::CheckedQualifiers qualifiers);
+[[nodiscard]] static NonnullRefPtr<Type> F32(Jakt::parser::CheckedQualifiers qualifiers);
+[[nodiscard]] static NonnullRefPtr<Type> F64(Jakt::parser::CheckedQualifiers qualifiers);
+[[nodiscard]] static NonnullRefPtr<Type> Usize(Jakt::parser::CheckedQualifiers qualifiers);
+[[nodiscard]] static NonnullRefPtr<Type> JaktString(Jakt::parser::CheckedQualifiers qualifiers);
+[[nodiscard]] static NonnullRefPtr<Type> CChar(Jakt::parser::CheckedQualifiers qualifiers);
+[[nodiscard]] static NonnullRefPtr<Type> CInt(Jakt::parser::CheckedQualifiers qualifiers);
+[[nodiscard]] static NonnullRefPtr<Type> Unknown(Jakt::parser::CheckedQualifiers qualifiers);
+[[nodiscard]] static NonnullRefPtr<Type> Never(Jakt::parser::CheckedQualifiers qualifiers);
+[[nodiscard]] static NonnullRefPtr<Type> TypeVariable(Jakt::parser::CheckedQualifiers qualifiers, ByteString name, JaktInternal::DynamicArray<Jakt::ids::TypeId> trait_implementations, bool is_value);
+[[nodiscard]] static NonnullRefPtr<Type> Dependent(Jakt::parser::CheckedQualifiers qualifiers, Jakt::ids::TypeId namespace_type, ByteString name);
+[[nodiscard]] static NonnullRefPtr<Type> GenericInstance(Jakt::parser::CheckedQualifiers qualifiers, Jakt::ids::StructId id, JaktInternal::DynamicArray<Jakt::ids::TypeId> args);
+[[nodiscard]] static NonnullRefPtr<Type> GenericEnumInstance(Jakt::parser::CheckedQualifiers qualifiers, Jakt::ids::EnumId id, JaktInternal::DynamicArray<Jakt::ids::TypeId> args);
+[[nodiscard]] static NonnullRefPtr<Type> GenericTraitInstance(Jakt::parser::CheckedQualifiers qualifiers, Jakt::ids::TraitId id, JaktInternal::DynamicArray<Jakt::ids::TypeId> args);
+[[nodiscard]] static NonnullRefPtr<Type> GenericResolvedType(Jakt::parser::CheckedQualifiers qualifiers, Jakt::ids::StructId id, JaktInternal::DynamicArray<Jakt::ids::TypeId> args);
+[[nodiscard]] static NonnullRefPtr<Type> Struct(Jakt::parser::CheckedQualifiers qualifiers, Jakt::ids::StructId value);
+[[nodiscard]] static NonnullRefPtr<Type> Enum(Jakt::parser::CheckedQualifiers qualifiers, Jakt::ids::EnumId value);
+[[nodiscard]] static NonnullRefPtr<Type> RawPtr(Jakt::parser::CheckedQualifiers qualifiers, Jakt::ids::TypeId value);
+[[nodiscard]] static NonnullRefPtr<Type> Trait(Jakt::parser::CheckedQualifiers qualifiers, Jakt::ids::TraitId value);
+[[nodiscard]] static NonnullRefPtr<Type> Reference(Jakt::parser::CheckedQualifiers qualifiers, Jakt::ids::TypeId value);
+[[nodiscard]] static NonnullRefPtr<Type> MutableReference(Jakt::parser::CheckedQualifiers qualifiers, Jakt::ids::TypeId value);
+[[nodiscard]] static NonnullRefPtr<Type> Function(Jakt::parser::CheckedQualifiers qualifiers, JaktInternal::DynamicArray<Jakt::ids::TypeId> params, bool can_throw, Jakt::ids::TypeId return_type_id, Jakt::ids::FunctionId pseudo_function_id);
+[[nodiscard]] static NonnullRefPtr<Type> Self(Jakt::parser::CheckedQualifiers qualifiers);
+[[nodiscard]] static NonnullRefPtr<Type> Const(Jakt::parser::CheckedQualifiers qualifiers, Jakt::types::Value value);
 ~Type();
 Type& operator=(Type const &);
 Type& operator=(Type &&);
@@ -267,59 +358,59 @@ Type(Type const&);
 Type(Type &&);
 private: void __jakt_destroy_variant();
 public:
-JaktInternal::Optional<JaktInternal::DynamicArray<types::CheckedGenericParameter>> generic_parameters(NonnullRefPtr<types::CheckedProgram> const program) const;
-bool is_boxed(NonnullRefPtr<types::CheckedProgram> const program) const;
+JaktInternal::Optional<JaktInternal::DynamicArray<Jakt::types::CheckedGenericParameter>> generic_parameters(NonnullRefPtr<Jakt::types::CheckedProgram> const program) const;
+bool is_boxed(NonnullRefPtr<Jakt::types::CheckedProgram> const program) const;
 bool is_concrete() const;
-i64 specificity(NonnullRefPtr<types::CheckedProgram> const program, i64 const base_specificity) const;
+i64 specificity(NonnullRefPtr<Jakt::types::CheckedProgram> const program, i64 const base_specificity) const;
 ByteString constructor_name() const;
-bool equals(NonnullRefPtr<typename types::Type> const rhs) const;
+bool equals(NonnullRefPtr<typename Jakt::types::Type> const rhs) const;
 bool is_builtin() const;
-types::BuiltinType as_builtin_type() const;
+Jakt::types::BuiltinType as_builtin_type() const;
 i64 get_bits() const;
 bool is_signed() const;
 i64 min() const;
 u64 max() const;
-ids::TypeId flip_signedness() const;
+Jakt::ids::TypeId flip_signedness() const;
 private:
 Type() {};
 };
 struct SpecializedType {
   public:
-public: ids::TypeId base_type_id;public: JaktInternal::DynamicArray<ids::TypeId> arguments;public: ids::TypeId type_id;public: SpecializedType(ids::TypeId a_base_type_id, JaktInternal::DynamicArray<ids::TypeId> a_arguments, ids::TypeId a_type_id);
+public: Jakt::ids::TypeId base_type_id;public: JaktInternal::DynamicArray<Jakt::ids::TypeId> arguments;public: Jakt::ids::TypeId type_id;public: SpecializedType(Jakt::ids::TypeId a_base_type_id, JaktInternal::DynamicArray<Jakt::ids::TypeId> a_arguments, Jakt::ids::TypeId a_type_id);
 
 public: ByteString debug_description() const;
 };struct ResolutionMixin {
   public:
-public: ids::ScopeId scope_id;public: bool mixin_vars;public: bool mixin_bindings;public: bool mixin_structs;public: bool mixin_functions;public: bool mixin_enums;public: bool mixin_types;public: bool mixin_traits;public: bool mixin_imports;public: bool mixin_aliases;public: ResolutionMixin(ids::ScopeId a_scope_id, bool a_mixin_vars, bool a_mixin_bindings, bool a_mixin_structs, bool a_mixin_functions, bool a_mixin_enums, bool a_mixin_types, bool a_mixin_traits, bool a_mixin_imports, bool a_mixin_aliases);
+public: Jakt::ids::ScopeId scope_id;public: bool mixin_vars;public: bool mixin_bindings;public: bool mixin_structs;public: bool mixin_functions;public: bool mixin_enums;public: bool mixin_types;public: bool mixin_traits;public: bool mixin_imports;public: bool mixin_aliases;public: ResolutionMixin(Jakt::ids::ScopeId a_scope_id, bool a_mixin_vars, bool a_mixin_bindings, bool a_mixin_structs, bool a_mixin_functions, bool a_mixin_enums, bool a_mixin_types, bool a_mixin_traits, bool a_mixin_imports, bool a_mixin_aliases);
 
 public: ByteString debug_description() const;
 };class Scope :public RefCounted<Scope>, public Weakable<Scope> {
   public:
 virtual ~Scope() = default;
-public: JaktInternal::Optional<ids::ScopeId> parent;public: bool can_throw;public: ByteString debug_name;public: bool is_block_scope;public: bool is_from_generated_code;public: JaktInternal::Optional<ByteString> namespace_name;public: JaktInternal::Optional<parser::ExternalName> external_name;public: JaktInternal::Dictionary<ByteString,ids::VarId> vars;public: JaktInternal::Dictionary<ByteString,types::Value> comptime_bindings;public: JaktInternal::Dictionary<ByteString,ids::StructId> structs;public: JaktInternal::Dictionary<ByteString,JaktInternal::DynamicArray<ids::FunctionId>> functions;public: JaktInternal::Dictionary<ByteString,ids::EnumId> enums;public: JaktInternal::Dictionary<ByteString,ids::TypeId> types;public: JaktInternal::Dictionary<ByteString,ids::TraitId> traits;public: JaktInternal::Dictionary<ByteString,ids::ModuleId> imports;public: JaktInternal::Dictionary<ByteString,ids::ScopeId> aliases;public: JaktInternal::Optional<ids::ScopeId> alias_scope;public: JaktInternal::DynamicArray<ids::ScopeId> children;public: JaktInternal::Optional<ByteString> import_path_if_extern;public: JaktInternal::Optional<JaktInternal::DynamicArray<types::ResolvedNamespace>> alias_path;public: JaktInternal::DynamicArray<parser::IncludeAction> after_extern_include;public: JaktInternal::DynamicArray<parser::IncludeAction> before_extern_include;public: JaktInternal::DynamicArray<types::ResolutionMixin> resolution_mixins;public: JaktInternal::Optional<ids::TypeId> relevant_type_id;public: JaktInternal::Optional<JaktInternal::DynamicArray<types::ResolvedForallChunk>> resolved_forall_chunks;public: JaktInternal::Dictionary<ByteString,types::SpecializedType> explicitly_specialized_types;public: JaktInternal::Optional<parser::ExternalName> namespace_name_for_codegen() const;
+public: JaktInternal::Optional<Jakt::ids::ScopeId> parent;public: bool can_throw;public: ByteString debug_name;public: bool is_block_scope;public: bool is_from_generated_code;public: JaktInternal::Optional<ByteString> namespace_name;public: JaktInternal::Optional<ByteString> module_namespace_name;public: JaktInternal::Optional<Jakt::parser::ExternalName> external_name;public: JaktInternal::Dictionary<ByteString,Jakt::ids::VarId> vars;public: JaktInternal::Dictionary<ByteString,Jakt::types::Value> comptime_bindings;public: JaktInternal::Dictionary<ByteString,Jakt::ids::StructId> structs;public: JaktInternal::Dictionary<ByteString,JaktInternal::DynamicArray<Jakt::ids::FunctionId>> functions;public: JaktInternal::Dictionary<ByteString,Jakt::ids::EnumId> enums;public: JaktInternal::Dictionary<ByteString,Jakt::ids::TypeId> types;public: JaktInternal::Dictionary<ByteString,Jakt::ids::TraitId> traits;public: JaktInternal::Dictionary<ByteString,Jakt::ids::ModuleId> imports;public: JaktInternal::Dictionary<ByteString,Jakt::ids::ScopeId> aliases;public: JaktInternal::Optional<Jakt::ids::ScopeId> alias_scope;public: JaktInternal::DynamicArray<Jakt::ids::ScopeId> children;public: JaktInternal::Optional<ByteString> import_path_if_extern;public: JaktInternal::Optional<JaktInternal::DynamicArray<Jakt::types::ResolvedNamespace>> alias_path;public: JaktInternal::DynamicArray<Jakt::parser::IncludeAction> after_extern_include;public: JaktInternal::DynamicArray<Jakt::parser::IncludeAction> before_extern_include;public: JaktInternal::DynamicArray<Jakt::types::ResolutionMixin> resolution_mixins;public: JaktInternal::Optional<Jakt::ids::TypeId> relevant_type_id;public: JaktInternal::Optional<JaktInternal::DynamicArray<Jakt::types::ResolvedForallChunk>> resolved_forall_chunks;public: JaktInternal::Dictionary<ByteString,Jakt::types::SpecializedType> explicitly_specialized_types;public: JaktInternal::Optional<Jakt::parser::ExternalName> namespace_name_for_codegen() const;
 public: protected:
-explicit Scope(JaktInternal::Optional<ids::ScopeId> a_parent, bool a_can_throw, ByteString a_debug_name, bool a_is_block_scope, bool a_is_from_generated_code, JaktInternal::Optional<ByteString> a_namespace_name, JaktInternal::Optional<parser::ExternalName> a_external_name, JaktInternal::Dictionary<ByteString,ids::VarId> a_vars, JaktInternal::Dictionary<ByteString,types::Value> a_comptime_bindings, JaktInternal::Dictionary<ByteString,ids::StructId> a_structs, JaktInternal::Dictionary<ByteString,JaktInternal::DynamicArray<ids::FunctionId>> a_functions, JaktInternal::Dictionary<ByteString,ids::EnumId> a_enums, JaktInternal::Dictionary<ByteString,ids::TypeId> a_types, JaktInternal::Dictionary<ByteString,ids::TraitId> a_traits, JaktInternal::Dictionary<ByteString,ids::ModuleId> a_imports, JaktInternal::Dictionary<ByteString,ids::ScopeId> a_aliases, JaktInternal::Optional<ids::ScopeId> a_alias_scope, JaktInternal::DynamicArray<ids::ScopeId> a_children, JaktInternal::Optional<ByteString> a_import_path_if_extern, JaktInternal::Optional<JaktInternal::DynamicArray<types::ResolvedNamespace>> a_alias_path, JaktInternal::DynamicArray<parser::IncludeAction> a_after_extern_include, JaktInternal::DynamicArray<parser::IncludeAction> a_before_extern_include, JaktInternal::DynamicArray<types::ResolutionMixin> a_resolution_mixins, JaktInternal::Optional<ids::TypeId> a_relevant_type_id, JaktInternal::Optional<JaktInternal::DynamicArray<types::ResolvedForallChunk>> a_resolved_forall_chunks, JaktInternal::Dictionary<ByteString,types::SpecializedType> a_explicitly_specialized_types);
+explicit Scope(JaktInternal::Optional<Jakt::ids::ScopeId> a_parent, bool a_can_throw, ByteString a_debug_name, bool a_is_block_scope, bool a_is_from_generated_code, JaktInternal::Optional<ByteString> a_namespace_name, JaktInternal::Optional<ByteString> a_module_namespace_name, JaktInternal::Optional<Jakt::parser::ExternalName> a_external_name, JaktInternal::Dictionary<ByteString,Jakt::ids::VarId> a_vars, JaktInternal::Dictionary<ByteString,Jakt::types::Value> a_comptime_bindings, JaktInternal::Dictionary<ByteString,Jakt::ids::StructId> a_structs, JaktInternal::Dictionary<ByteString,JaktInternal::DynamicArray<Jakt::ids::FunctionId>> a_functions, JaktInternal::Dictionary<ByteString,Jakt::ids::EnumId> a_enums, JaktInternal::Dictionary<ByteString,Jakt::ids::TypeId> a_types, JaktInternal::Dictionary<ByteString,Jakt::ids::TraitId> a_traits, JaktInternal::Dictionary<ByteString,Jakt::ids::ModuleId> a_imports, JaktInternal::Dictionary<ByteString,Jakt::ids::ScopeId> a_aliases, JaktInternal::Optional<Jakt::ids::ScopeId> a_alias_scope, JaktInternal::DynamicArray<Jakt::ids::ScopeId> a_children, JaktInternal::Optional<ByteString> a_import_path_if_extern, JaktInternal::Optional<JaktInternal::DynamicArray<Jakt::types::ResolvedNamespace>> a_alias_path, JaktInternal::DynamicArray<Jakt::parser::IncludeAction> a_after_extern_include, JaktInternal::DynamicArray<Jakt::parser::IncludeAction> a_before_extern_include, JaktInternal::DynamicArray<Jakt::types::ResolutionMixin> a_resolution_mixins, JaktInternal::Optional<Jakt::ids::TypeId> a_relevant_type_id, JaktInternal::Optional<JaktInternal::DynamicArray<Jakt::types::ResolvedForallChunk>> a_resolved_forall_chunks, JaktInternal::Dictionary<ByteString,Jakt::types::SpecializedType> a_explicitly_specialized_types);
 public:
-static NonnullRefPtr<Scope> __jakt_create(JaktInternal::Optional<ids::ScopeId> parent, bool can_throw, ByteString debug_name, bool is_block_scope, bool is_from_generated_code, JaktInternal::Optional<ByteString> namespace_name, JaktInternal::Optional<parser::ExternalName> external_name, JaktInternal::Dictionary<ByteString,ids::VarId> vars, JaktInternal::Dictionary<ByteString,types::Value> comptime_bindings, JaktInternal::Dictionary<ByteString,ids::StructId> structs, JaktInternal::Dictionary<ByteString,JaktInternal::DynamicArray<ids::FunctionId>> functions, JaktInternal::Dictionary<ByteString,ids::EnumId> enums, JaktInternal::Dictionary<ByteString,ids::TypeId> types, JaktInternal::Dictionary<ByteString,ids::TraitId> traits, JaktInternal::Dictionary<ByteString,ids::ModuleId> imports, JaktInternal::Dictionary<ByteString,ids::ScopeId> aliases, JaktInternal::Optional<ids::ScopeId> alias_scope, JaktInternal::DynamicArray<ids::ScopeId> children, JaktInternal::Optional<ByteString> import_path_if_extern, JaktInternal::Optional<JaktInternal::DynamicArray<types::ResolvedNamespace>> alias_path, JaktInternal::DynamicArray<parser::IncludeAction> after_extern_include, JaktInternal::DynamicArray<parser::IncludeAction> before_extern_include, JaktInternal::DynamicArray<types::ResolutionMixin> resolution_mixins, JaktInternal::Optional<ids::TypeId> relevant_type_id, JaktInternal::Optional<JaktInternal::DynamicArray<types::ResolvedForallChunk>> resolved_forall_chunks, JaktInternal::Dictionary<ByteString,types::SpecializedType> explicitly_specialized_types);
+static NonnullRefPtr<Scope> __jakt_create(JaktInternal::Optional<Jakt::ids::ScopeId> parent, bool can_throw, ByteString debug_name, bool is_block_scope, bool is_from_generated_code, JaktInternal::Optional<ByteString> namespace_name, JaktInternal::Optional<ByteString> module_namespace_name, JaktInternal::Optional<Jakt::parser::ExternalName> external_name, JaktInternal::Dictionary<ByteString,Jakt::ids::VarId> vars, JaktInternal::Dictionary<ByteString,Jakt::types::Value> comptime_bindings, JaktInternal::Dictionary<ByteString,Jakt::ids::StructId> structs, JaktInternal::Dictionary<ByteString,JaktInternal::DynamicArray<Jakt::ids::FunctionId>> functions, JaktInternal::Dictionary<ByteString,Jakt::ids::EnumId> enums, JaktInternal::Dictionary<ByteString,Jakt::ids::TypeId> types, JaktInternal::Dictionary<ByteString,Jakt::ids::TraitId> traits, JaktInternal::Dictionary<ByteString,Jakt::ids::ModuleId> imports, JaktInternal::Dictionary<ByteString,Jakt::ids::ScopeId> aliases, JaktInternal::Optional<Jakt::ids::ScopeId> alias_scope, JaktInternal::DynamicArray<Jakt::ids::ScopeId> children, JaktInternal::Optional<ByteString> import_path_if_extern, JaktInternal::Optional<JaktInternal::DynamicArray<Jakt::types::ResolvedNamespace>> alias_path, JaktInternal::DynamicArray<Jakt::parser::IncludeAction> after_extern_include, JaktInternal::DynamicArray<Jakt::parser::IncludeAction> before_extern_include, JaktInternal::DynamicArray<Jakt::types::ResolutionMixin> resolution_mixins, JaktInternal::Optional<Jakt::ids::TypeId> relevant_type_id, JaktInternal::Optional<JaktInternal::DynamicArray<Jakt::types::ResolvedForallChunk>> resolved_forall_chunks, JaktInternal::Dictionary<ByteString,Jakt::types::SpecializedType> explicitly_specialized_types);
 
 public: ByteString debug_description() const;
 };struct ResolvedForallChunk {
   public:
-public: JaktInternal::Dictionary<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<utility::Span,ids::TypeId>>> parameters;public: parser::ParsedNamespace parsed_namespace;public: JaktInternal::DynamicArray<ids::ScopeId> generated_scopes;public: ResolvedForallChunk(JaktInternal::Dictionary<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<utility::Span,ids::TypeId>>> a_parameters, parser::ParsedNamespace a_parsed_namespace, JaktInternal::DynamicArray<ids::ScopeId> a_generated_scopes);
+public: JaktInternal::Dictionary<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<Jakt::utility::Span,Jakt::ids::TypeId>>> parameters;public: Jakt::parser::ParsedNamespace parsed_namespace;public: JaktInternal::DynamicArray<Jakt::ids::ScopeId> generated_scopes;public: ResolvedForallChunk(JaktInternal::Dictionary<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<Jakt::utility::Span,Jakt::ids::TypeId>>> a_parameters, Jakt::parser::ParsedNamespace a_parsed_namespace, JaktInternal::DynamicArray<Jakt::ids::ScopeId> a_generated_scopes);
 
 public: ByteString debug_description() const;
 };class Module :public RefCounted<Module>, public Weakable<Module> {
   public:
 virtual ~Module() = default;
-public: ids::ModuleId id;public: ByteString name;public: JaktInternal::DynamicArray<NonnullRefPtr<typename types::Type>> types;public: ByteString resolved_import_path;public: bool is_root;public: JaktInternal::DynamicArray<NonnullRefPtr<types::CheckedFunction>> functions;public: JaktInternal::DynamicArray<types::CheckedStruct> structures;public: JaktInternal::DynamicArray<types::CheckedEnum> enums;public: JaktInternal::DynamicArray<NonnullRefPtr<types::Scope>> scopes;public: JaktInternal::DynamicArray<NonnullRefPtr<types::CheckedTrait>> traits;public: JaktInternal::DynamicArray<NonnullRefPtr<types::CheckedVariable>> variables;public: JaktInternal::DynamicArray<ids::ModuleId> imports;public: JaktInternal::Dictionary<size_t,ids::StructId> builtin_implementation_structs;public: bool is_prelude() const;
-public: ids::TypeId new_type_variable(JaktInternal::Optional<JaktInternal::DynamicArray<ids::TypeId>> const implemented_traits);
-public: ids::FunctionId next_function_id() const;
-public: ids::FunctionId add_function(NonnullRefPtr<types::CheckedFunction> const checked_function);
-public: ids::VarId add_variable(NonnullRefPtr<types::CheckedVariable> const checked_variable);
+public: Jakt::ids::ModuleId id;public: ByteString name;public: JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::Type>> types;public: ByteString resolved_import_path;public: bool is_root;public: JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::CheckedFunction>> functions;public: JaktInternal::DynamicArray<Jakt::types::CheckedStruct> structures;public: JaktInternal::DynamicArray<Jakt::types::CheckedEnum> enums;public: JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::Scope>> scopes;public: JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::CheckedTrait>> traits;public: JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::CheckedVariable>> variables;public: JaktInternal::DynamicArray<Jakt::ids::ModuleId> imports;public: JaktInternal::Dictionary<size_t,Jakt::ids::StructId> builtin_implementation_structs;public: bool is_prelude() const;
+public: Jakt::ids::TypeId new_type_variable(JaktInternal::Optional<JaktInternal::DynamicArray<Jakt::ids::TypeId>> const implemented_traits);
+public: Jakt::ids::FunctionId next_function_id() const;
+public: Jakt::ids::FunctionId add_function(NonnullRefPtr<Jakt::types::CheckedFunction> const checked_function);
+public: Jakt::ids::VarId add_variable(NonnullRefPtr<Jakt::types::CheckedVariable> const checked_variable);
 public: protected:
-explicit Module(ids::ModuleId a_id, ByteString a_name, JaktInternal::DynamicArray<NonnullRefPtr<typename types::Type>> a_types, ByteString a_resolved_import_path, bool a_is_root, JaktInternal::DynamicArray<NonnullRefPtr<types::CheckedFunction>> a_functions, JaktInternal::DynamicArray<types::CheckedStruct> a_structures, JaktInternal::DynamicArray<types::CheckedEnum> a_enums, JaktInternal::DynamicArray<NonnullRefPtr<types::Scope>> a_scopes, JaktInternal::DynamicArray<NonnullRefPtr<types::CheckedTrait>> a_traits, JaktInternal::DynamicArray<NonnullRefPtr<types::CheckedVariable>> a_variables, JaktInternal::DynamicArray<ids::ModuleId> a_imports, JaktInternal::Dictionary<size_t,ids::StructId> a_builtin_implementation_structs);
+explicit Module(Jakt::ids::ModuleId a_id, ByteString a_name, JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::Type>> a_types, ByteString a_resolved_import_path, bool a_is_root, JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::CheckedFunction>> a_functions, JaktInternal::DynamicArray<Jakt::types::CheckedStruct> a_structures, JaktInternal::DynamicArray<Jakt::types::CheckedEnum> a_enums, JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::Scope>> a_scopes, JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::CheckedTrait>> a_traits, JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::CheckedVariable>> a_variables, JaktInternal::DynamicArray<Jakt::ids::ModuleId> a_imports, JaktInternal::Dictionary<size_t,Jakt::ids::StructId> a_builtin_implementation_structs);
 public:
-static NonnullRefPtr<Module> __jakt_create(ids::ModuleId id, ByteString name, JaktInternal::DynamicArray<NonnullRefPtr<typename types::Type>> types, ByteString resolved_import_path, bool is_root, JaktInternal::DynamicArray<NonnullRefPtr<types::CheckedFunction>> functions, JaktInternal::DynamicArray<types::CheckedStruct> structures, JaktInternal::DynamicArray<types::CheckedEnum> enums, JaktInternal::DynamicArray<NonnullRefPtr<types::Scope>> scopes, JaktInternal::DynamicArray<NonnullRefPtr<types::CheckedTrait>> traits, JaktInternal::DynamicArray<NonnullRefPtr<types::CheckedVariable>> variables, JaktInternal::DynamicArray<ids::ModuleId> imports, JaktInternal::Dictionary<size_t,ids::StructId> builtin_implementation_structs);
+static NonnullRefPtr<Module> __jakt_create(Jakt::ids::ModuleId id, ByteString name, JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::Type>> types, ByteString resolved_import_path, bool is_root, JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::CheckedFunction>> functions, JaktInternal::DynamicArray<Jakt::types::CheckedStruct> structures, JaktInternal::DynamicArray<Jakt::types::CheckedEnum> enums, JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::Scope>> scopes, JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::CheckedTrait>> traits, JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::CheckedVariable>> variables, JaktInternal::DynamicArray<Jakt::ids::ModuleId> imports, JaktInternal::Dictionary<size_t,Jakt::ids::StructId> builtin_implementation_structs);
 
 public: ByteString debug_description() const;
 };struct CheckedTraitRequirements {
@@ -327,18 +418,18 @@ u8 __jakt_variant_index = 0;
 union VariantData {
 u8 __jakt_uninit_value;
 struct {
-JaktInternal::Dictionary<ByteString,ids::FunctionId> value;
+JaktInternal::Dictionary<ByteString,Jakt::ids::FunctionId> value;
 } Methods;
 struct {
-NonnullRefPtr<typename types::CheckedExpression> value;
+NonnullRefPtr<typename Jakt::types::CheckedExpression> value;
 } ComptimeExpression;
 constexpr VariantData() {}
 ~VariantData() {}
 } as;
 constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ByteString debug_description() const;
 [[nodiscard]] static CheckedTraitRequirements Nothing();
-[[nodiscard]] static CheckedTraitRequirements Methods(JaktInternal::Dictionary<ByteString,ids::FunctionId> value);
-[[nodiscard]] static CheckedTraitRequirements ComptimeExpression(NonnullRefPtr<typename types::CheckedExpression> value);
+[[nodiscard]] static CheckedTraitRequirements Methods(JaktInternal::Dictionary<ByteString,Jakt::ids::FunctionId> value);
+[[nodiscard]] static CheckedTraitRequirements ComptimeExpression(NonnullRefPtr<typename Jakt::types::CheckedExpression> value);
 ~CheckedTraitRequirements();
 CheckedTraitRequirements& operator=(CheckedTraitRequirements const &);
 CheckedTraitRequirements& operator=(CheckedTraitRequirements &&);
@@ -352,20 +443,20 @@ CheckedTraitRequirements() {};
 class CheckedTrait :public RefCounted<CheckedTrait>, public Weakable<CheckedTrait> {
   public:
 virtual ~CheckedTrait() = default;
-public: ByteString name;public: utility::Span name_span;public: types::CheckedTraitRequirements requirements;public: JaktInternal::DynamicArray<types::CheckedGenericParameter> generic_parameters;public: ids::ScopeId scope_id;public: protected:
-explicit CheckedTrait(ByteString a_name, utility::Span a_name_span, types::CheckedTraitRequirements a_requirements, JaktInternal::DynamicArray<types::CheckedGenericParameter> a_generic_parameters, ids::ScopeId a_scope_id);
+public: ByteString name;public: Jakt::utility::Span name_span;public: Jakt::types::CheckedTraitRequirements requirements;public: JaktInternal::DynamicArray<Jakt::types::CheckedGenericParameter> generic_parameters;public: Jakt::ids::ScopeId scope_id;public: protected:
+explicit CheckedTrait(ByteString a_name, Jakt::utility::Span a_name_span, Jakt::types::CheckedTraitRequirements a_requirements, JaktInternal::DynamicArray<Jakt::types::CheckedGenericParameter> a_generic_parameters, Jakt::ids::ScopeId a_scope_id);
 public:
-static NonnullRefPtr<CheckedTrait> __jakt_create(ByteString name, utility::Span name_span, types::CheckedTraitRequirements requirements, JaktInternal::DynamicArray<types::CheckedGenericParameter> generic_parameters, ids::ScopeId scope_id);
+static NonnullRefPtr<CheckedTrait> __jakt_create(ByteString name, Jakt::utility::Span name_span, Jakt::types::CheckedTraitRequirements requirements, JaktInternal::DynamicArray<Jakt::types::CheckedGenericParameter> generic_parameters, Jakt::ids::ScopeId scope_id);
 
 public: ByteString debug_description() const;
 };struct LoadedModule {
   public:
-public: ids::ModuleId module_id;public: utility::FileId file_id;public: LoadedModule(ids::ModuleId a_module_id, utility::FileId a_file_id);
+public: Jakt::ids::ModuleId module_id;public: Jakt::utility::FileId file_id;public: LoadedModule(Jakt::ids::ModuleId a_module_id, Jakt::utility::FileId a_file_id);
 
 public: ByteString debug_description() const;
 };struct CheckedNamespace {
   public:
-public: ByteString name;public: ids::ScopeId scope;public: CheckedNamespace(ByteString a_name, ids::ScopeId a_scope);
+public: ByteString name;public: Jakt::ids::ScopeId scope;public: CheckedNamespace(ByteString a_name, Jakt::ids::ScopeId a_scope);
 
 public: ByteString debug_description() const;
 };struct MaybeResolvedScope: public RefCounted<MaybeResolvedScope> {
@@ -373,18 +464,18 @@ u8 __jakt_variant_index = 0;
 union VariantData {
 u8 __jakt_uninit_value;
 struct {
-ids::ScopeId value;
+Jakt::ids::ScopeId value;
 } Resolved;
 struct {
-NonnullRefPtr<typename types::MaybeResolvedScope> parent_scope;
+NonnullRefPtr<typename Jakt::types::MaybeResolvedScope> parent_scope;
 ByteString relative_name;
 } Unresolved;
 constexpr VariantData() {}
 ~VariantData() {}
 } as;
 constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ByteString debug_description() const;
-[[nodiscard]] static NonnullRefPtr<MaybeResolvedScope> Resolved(ids::ScopeId value);
-[[nodiscard]] static NonnullRefPtr<MaybeResolvedScope> Unresolved(NonnullRefPtr<typename types::MaybeResolvedScope> parent_scope, ByteString relative_name);
+[[nodiscard]] static NonnullRefPtr<MaybeResolvedScope> Resolved(Jakt::ids::ScopeId value);
+[[nodiscard]] static NonnullRefPtr<MaybeResolvedScope> Unresolved(NonnullRefPtr<typename Jakt::types::MaybeResolvedScope> parent_scope, ByteString relative_name);
 ~MaybeResolvedScope();
 MaybeResolvedScope& operator=(MaybeResolvedScope const &);
 MaybeResolvedScope& operator=(MaybeResolvedScope &&);
@@ -392,7 +483,7 @@ MaybeResolvedScope(MaybeResolvedScope const&);
 MaybeResolvedScope(MaybeResolvedScope &&);
 private: void __jakt_destroy_variant();
 public:
-ErrorOr<NonnullRefPtr<typename types::MaybeResolvedScope>> try_resolve(NonnullRefPtr<types::CheckedProgram> const program) const;
+ErrorOr<NonnullRefPtr<typename Jakt::types::MaybeResolvedScope>> try_resolve(NonnullRefPtr<Jakt::types::CheckedProgram> const program) const;
 private:
 MaybeResolvedScope() {};
 };
@@ -401,8 +492,8 @@ u8 __jakt_variant_index = 0;
 union VariantData {
 u8 __jakt_uninit_value;
 struct {
-JaktInternal::DynamicArray<NonnullRefPtr<typename types::MaybeResolvedScope>> scopes;
-utility::Span span;
+JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::MaybeResolvedScope>> scopes;
+Jakt::utility::Span span;
 } Restricted;
 constexpr VariantData() {}
 ~VariantData() {}
@@ -410,7 +501,7 @@ constexpr VariantData() {}
 constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ByteString debug_description() const;
 [[nodiscard]] static CheckedVisibility Public();
 [[nodiscard]] static CheckedVisibility Private();
-[[nodiscard]] static CheckedVisibility Restricted(JaktInternal::DynamicArray<NonnullRefPtr<typename types::MaybeResolvedScope>> scopes, utility::Span span);
+[[nodiscard]] static CheckedVisibility Restricted(JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::MaybeResolvedScope>> scopes, Jakt::utility::Span span);
 ~CheckedVisibility();
 CheckedVisibility& operator=(CheckedVisibility const &);
 CheckedVisibility& operator=(CheckedVisibility &&);
@@ -455,11 +546,11 @@ BlockControlFlow(BlockControlFlow const&);
 BlockControlFlow(BlockControlFlow &&);
 private: void __jakt_destroy_variant();
 public:
-types::BlockControlFlow unify_with(types::BlockControlFlow const second) const;
-types::BlockControlFlow branch_unify_with(types::BlockControlFlow const second) const;
-types::BlockControlFlow updated(types::BlockControlFlow const second) const;
-types::BlockControlFlow partial() const;
-types::BlockControlFlow definitive() const;
+Jakt::types::BlockControlFlow unify_with(Jakt::types::BlockControlFlow const second) const;
+Jakt::types::BlockControlFlow branch_unify_with(Jakt::types::BlockControlFlow const second) const;
+Jakt::types::BlockControlFlow updated(Jakt::types::BlockControlFlow const second) const;
+Jakt::types::BlockControlFlow partial() const;
+Jakt::types::BlockControlFlow definitive() const;
 bool always_transfers_control() const;
 bool never_returns() const;
 bool always_returns() const;
@@ -471,42 +562,42 @@ BlockControlFlow() {};
 };
 struct CheckedBlock {
   public:
-public: JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> statements;public: ids::ScopeId scope_id;public: types::BlockControlFlow control_flow;public: JaktInternal::Optional<ids::TypeId> yielded_type;public: bool yielded_none;public: CheckedBlock(JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> a_statements, ids::ScopeId a_scope_id, types::BlockControlFlow a_control_flow, JaktInternal::Optional<ids::TypeId> a_yielded_type, bool a_yielded_none);
+public: JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::CheckedStatement>> statements;public: Jakt::ids::ScopeId scope_id;public: Jakt::types::BlockControlFlow control_flow;public: JaktInternal::Optional<Jakt::ids::TypeId> yielded_type;public: bool yielded_none;public: CheckedBlock(JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::CheckedStatement>> a_statements, Jakt::ids::ScopeId a_scope_id, Jakt::types::BlockControlFlow a_control_flow, JaktInternal::Optional<Jakt::ids::TypeId> a_yielded_type, bool a_yielded_none);
 
 public: ByteString debug_description() const;
 };class CheckedFunction :public RefCounted<CheckedFunction>, public Weakable<CheckedFunction> {
   public:
 virtual ~CheckedFunction() = default;
-public: ByteString name;public: utility::Span name_span;public: types::CheckedVisibility visibility;public: ids::TypeId return_type_id;public: JaktInternal::Optional<utility::Span> return_type_span;public: JaktInternal::DynamicArray<types::CheckedParameter> params;public: NonnullRefPtr<types::FunctionGenerics> generics;public: types::CheckedBlock block;public: bool can_throw;public: parser::FunctionType type;public: parser::FunctionLinkage linkage;public: ids::ScopeId function_scope_id;public: JaktInternal::Optional<ids::StructId> struct_id;public: bool is_instantiated;public: JaktInternal::Optional<parser::ParsedFunction> parsed_function;public: bool is_comptime;public: bool is_virtual;public: bool is_override;public: bool is_unsafe;public: bool has_varargs;public: JaktInternal::Optional<size_t> specialization_index;public: JaktInternal::Optional<ids::ScopeId> owner_scope;public: JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> owner_scope_generics;public: bool is_fully_checked;public: JaktInternal::Optional<parser::ExternalName> external_name;public: JaktInternal::Optional<ByteString> deprecated_message;public: JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,parser::ArgumentStoreLevel>>> stores_arguments;public: parser::InlineState force_inline;public: parser::ExternalName name_for_codegen() const;
-public: ErrorOr<void> map_types(Function<ErrorOr<ids::TypeId>(ids::TypeId)> const& map);
-public: NonnullRefPtr<types::CheckedFunction> copy() const;
-public: bool signature_matches(NonnullRefPtr<types::CheckedFunction> const other, bool const ignore_this) const;
+public: ByteString name;public: Jakt::utility::Span name_span;public: Jakt::types::CheckedVisibility visibility;public: Jakt::ids::TypeId return_type_id;public: JaktInternal::Optional<Jakt::utility::Span> return_type_span;public: JaktInternal::DynamicArray<Jakt::types::CheckedParameter> params;public: NonnullRefPtr<Jakt::types::FunctionGenerics> generics;public: Jakt::types::CheckedBlock block;public: bool can_throw;public: Jakt::parser::FunctionType type;public: Jakt::parser::FunctionLinkage linkage;public: Jakt::ids::ScopeId function_scope_id;public: JaktInternal::Optional<Jakt::ids::StructId> struct_id;public: bool is_instantiated;public: JaktInternal::Optional<Jakt::parser::ParsedFunction> parsed_function;public: bool is_comptime;public: bool is_virtual;public: bool is_override;public: bool is_unsafe;public: bool has_varargs;public: JaktInternal::Optional<size_t> specialization_index;public: JaktInternal::Optional<Jakt::ids::ScopeId> owner_scope;public: JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> owner_scope_generics;public: bool is_fully_checked;public: JaktInternal::Optional<Jakt::parser::ExternalName> external_name;public: JaktInternal::Optional<ByteString> deprecated_message;public: JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,Jakt::parser::ArgumentStoreLevel>>> stores_arguments;public: Jakt::parser::InlineState force_inline;public: bool is_raw_constructor;public: Jakt::parser::ExternalName name_for_codegen() const;
+public: ErrorOr<void> map_types(Function<ErrorOr<Jakt::ids::TypeId>(Jakt::ids::TypeId)> const& map);
+public: NonnullRefPtr<Jakt::types::CheckedFunction> copy() const;
+public: bool signature_matches(NonnullRefPtr<Jakt::types::CheckedFunction> const other, bool const ignore_this) const;
 public: bool is_static() const;
 public: bool is_mutating() const;
-public: void add_param(types::CheckedParameter const checked_param);
-public: void set_params(JaktInternal::DynamicArray<types::CheckedParameter> const checked_params);
-public: bool is_specialized_for_types(JaktInternal::DynamicArray<ids::TypeId> const types) const;
-public: parser::ParsedFunction to_parsed_function() const;
+public: void add_param(Jakt::types::CheckedParameter const checked_param);
+public: void set_params(JaktInternal::DynamicArray<Jakt::types::CheckedParameter> const checked_params);
+public: bool is_specialized_for_types(JaktInternal::DynamicArray<Jakt::ids::TypeId> const types) const;
+public: Jakt::parser::ParsedFunction to_parsed_function() const;
 public: protected:
-explicit CheckedFunction(ByteString a_name, utility::Span a_name_span, types::CheckedVisibility a_visibility, ids::TypeId a_return_type_id, JaktInternal::Optional<utility::Span> a_return_type_span, JaktInternal::DynamicArray<types::CheckedParameter> a_params, NonnullRefPtr<types::FunctionGenerics> a_generics, types::CheckedBlock a_block, bool a_can_throw, parser::FunctionType a_type, parser::FunctionLinkage a_linkage, ids::ScopeId a_function_scope_id, JaktInternal::Optional<ids::StructId> a_struct_id, bool a_is_instantiated, JaktInternal::Optional<parser::ParsedFunction> a_parsed_function, bool a_is_comptime, bool a_is_virtual, bool a_is_override, bool a_is_unsafe, bool a_has_varargs, JaktInternal::Optional<size_t> a_specialization_index, JaktInternal::Optional<ids::ScopeId> a_owner_scope, JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> a_owner_scope_generics, bool a_is_fully_checked, JaktInternal::Optional<parser::ExternalName> a_external_name, JaktInternal::Optional<ByteString> a_deprecated_message, JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,parser::ArgumentStoreLevel>>> a_stores_arguments, parser::InlineState a_force_inline);
+explicit CheckedFunction(ByteString a_name, Jakt::utility::Span a_name_span, Jakt::types::CheckedVisibility a_visibility, Jakt::ids::TypeId a_return_type_id, JaktInternal::Optional<Jakt::utility::Span> a_return_type_span, JaktInternal::DynamicArray<Jakt::types::CheckedParameter> a_params, NonnullRefPtr<Jakt::types::FunctionGenerics> a_generics, Jakt::types::CheckedBlock a_block, bool a_can_throw, Jakt::parser::FunctionType a_type, Jakt::parser::FunctionLinkage a_linkage, Jakt::ids::ScopeId a_function_scope_id, JaktInternal::Optional<Jakt::ids::StructId> a_struct_id, bool a_is_instantiated, JaktInternal::Optional<Jakt::parser::ParsedFunction> a_parsed_function, bool a_is_comptime, bool a_is_virtual, bool a_is_override, bool a_is_unsafe, bool a_has_varargs, JaktInternal::Optional<size_t> a_specialization_index, JaktInternal::Optional<Jakt::ids::ScopeId> a_owner_scope, JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> a_owner_scope_generics, bool a_is_fully_checked, JaktInternal::Optional<Jakt::parser::ExternalName> a_external_name, JaktInternal::Optional<ByteString> a_deprecated_message, JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,Jakt::parser::ArgumentStoreLevel>>> a_stores_arguments, Jakt::parser::InlineState a_force_inline, bool a_is_raw_constructor);
 public:
-static NonnullRefPtr<CheckedFunction> __jakt_create(ByteString name, utility::Span name_span, types::CheckedVisibility visibility, ids::TypeId return_type_id, JaktInternal::Optional<utility::Span> return_type_span, JaktInternal::DynamicArray<types::CheckedParameter> params, NonnullRefPtr<types::FunctionGenerics> generics, types::CheckedBlock block, bool can_throw, parser::FunctionType type, parser::FunctionLinkage linkage, ids::ScopeId function_scope_id, JaktInternal::Optional<ids::StructId> struct_id, bool is_instantiated, JaktInternal::Optional<parser::ParsedFunction> parsed_function, bool is_comptime, bool is_virtual, bool is_override, bool is_unsafe, bool has_varargs, JaktInternal::Optional<size_t> specialization_index, JaktInternal::Optional<ids::ScopeId> owner_scope, JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> owner_scope_generics, bool is_fully_checked, JaktInternal::Optional<parser::ExternalName> external_name, JaktInternal::Optional<ByteString> deprecated_message, JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,parser::ArgumentStoreLevel>>> stores_arguments, parser::InlineState force_inline);
+static NonnullRefPtr<CheckedFunction> __jakt_create(ByteString name, Jakt::utility::Span name_span, Jakt::types::CheckedVisibility visibility, Jakt::ids::TypeId return_type_id, JaktInternal::Optional<Jakt::utility::Span> return_type_span, JaktInternal::DynamicArray<Jakt::types::CheckedParameter> params, NonnullRefPtr<Jakt::types::FunctionGenerics> generics, Jakt::types::CheckedBlock block, bool can_throw, Jakt::parser::FunctionType type, Jakt::parser::FunctionLinkage linkage, Jakt::ids::ScopeId function_scope_id, JaktInternal::Optional<Jakt::ids::StructId> struct_id, bool is_instantiated, JaktInternal::Optional<Jakt::parser::ParsedFunction> parsed_function, bool is_comptime, bool is_virtual, bool is_override, bool is_unsafe, bool has_varargs, JaktInternal::Optional<size_t> specialization_index, JaktInternal::Optional<Jakt::ids::ScopeId> owner_scope, JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> owner_scope_generics, bool is_fully_checked, JaktInternal::Optional<Jakt::parser::ExternalName> external_name, JaktInternal::Optional<ByteString> deprecated_message, JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Tuple<size_t,Jakt::parser::ArgumentStoreLevel>>> stores_arguments, Jakt::parser::InlineState force_inline, bool is_raw_constructor);
 
 public: ByteString debug_description() const;
 };class FunctionGenerics :public RefCounted<FunctionGenerics>, public Weakable<FunctionGenerics> {
   public:
 virtual ~FunctionGenerics() = default;
-public: ids::ScopeId base_scope_id;public: JaktInternal::DynamicArray<types::CheckedParameter> base_params;public: JaktInternal::DynamicArray<types::FunctionGenericParameter> params;public: JaktInternal::DynamicArray<JaktInternal::DynamicArray<ids::TypeId>> specializations;public: bool is_specialized_for_types(JaktInternal::DynamicArray<ids::TypeId> const types) const;
+public: Jakt::ids::ScopeId base_scope_id;public: JaktInternal::DynamicArray<Jakt::types::CheckedParameter> base_params;public: JaktInternal::DynamicArray<Jakt::types::FunctionGenericParameter> params;public: JaktInternal::DynamicArray<JaktInternal::DynamicArray<Jakt::ids::TypeId>> specializations;public: bool is_specialized_for_types(JaktInternal::DynamicArray<Jakt::ids::TypeId> const types) const;
 public: protected:
-explicit FunctionGenerics(ids::ScopeId a_base_scope_id, JaktInternal::DynamicArray<types::CheckedParameter> a_base_params, JaktInternal::DynamicArray<types::FunctionGenericParameter> a_params, JaktInternal::DynamicArray<JaktInternal::DynamicArray<ids::TypeId>> a_specializations);
+explicit FunctionGenerics(Jakt::ids::ScopeId a_base_scope_id, JaktInternal::DynamicArray<Jakt::types::CheckedParameter> a_base_params, JaktInternal::DynamicArray<Jakt::types::FunctionGenericParameter> a_params, JaktInternal::DynamicArray<JaktInternal::DynamicArray<Jakt::ids::TypeId>> a_specializations);
 public:
-static NonnullRefPtr<FunctionGenerics> __jakt_create(ids::ScopeId base_scope_id, JaktInternal::DynamicArray<types::CheckedParameter> base_params, JaktInternal::DynamicArray<types::FunctionGenericParameter> params, JaktInternal::DynamicArray<JaktInternal::DynamicArray<ids::TypeId>> specializations);
+static NonnullRefPtr<FunctionGenerics> __jakt_create(Jakt::ids::ScopeId base_scope_id, JaktInternal::DynamicArray<Jakt::types::CheckedParameter> base_params, JaktInternal::DynamicArray<Jakt::types::FunctionGenericParameter> params, JaktInternal::DynamicArray<JaktInternal::DynamicArray<Jakt::ids::TypeId>> specializations);
 
 public: ByteString debug_description() const;
 };struct CheckedParameter {
   public:
-public: bool requires_label;public: NonnullRefPtr<types::CheckedVariable> variable;public: JaktInternal::Optional<JaktInternal::Tuple<NonnullRefPtr<typename parser::ParsedExpression>,ids::ScopeId>> default_value_expression;public: ErrorOr<types::CheckedParameter> map_types(Function<ErrorOr<ids::TypeId>(ids::TypeId)> const& map) const;
-public: CheckedParameter(bool a_requires_label, NonnullRefPtr<types::CheckedVariable> a_variable, JaktInternal::Optional<JaktInternal::Tuple<NonnullRefPtr<typename parser::ParsedExpression>,ids::ScopeId>> a_default_value_expression);
+public: bool requires_label;public: NonnullRefPtr<Jakt::types::CheckedVariable> variable;public: JaktInternal::Optional<JaktInternal::Tuple<NonnullRefPtr<typename Jakt::parser::ParsedExpression>,Jakt::ids::ScopeId>> default_value_expression;public: ErrorOr<Jakt::types::CheckedParameter> map_types(Function<ErrorOr<Jakt::ids::TypeId>(Jakt::ids::TypeId)> const& map) const;
+public: CheckedParameter(bool a_requires_label, NonnullRefPtr<Jakt::types::CheckedVariable> a_variable, JaktInternal::Optional<JaktInternal::Tuple<NonnullRefPtr<typename Jakt::parser::ParsedExpression>,Jakt::ids::ScopeId>> a_default_value_expression);
 
 public: ByteString debug_description() const;
 };struct CheckedCapture {
@@ -515,7 +606,7 @@ union CommonData {
 u8 __jakt_uninit_common;
 struct {
 ByteString name;
-utility::Span span;
+Jakt::utility::Span span;
 } init_common;
 constexpr CommonData() {}
 ~CommonData() {}
@@ -526,11 +617,11 @@ constexpr VariantData() {}
 ~VariantData() {}
 } as;
 constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ByteString debug_description() const;
-[[nodiscard]] static CheckedCapture ByValue(ByteString name, utility::Span span);
-[[nodiscard]] static CheckedCapture ByReference(ByteString name, utility::Span span);
-[[nodiscard]] static CheckedCapture ByMutableReference(ByteString name, utility::Span span);
-[[nodiscard]] static CheckedCapture ByComptimeDependency(ByteString name, utility::Span span);
-[[nodiscard]] static CheckedCapture AllByReference(ByteString name, utility::Span span);
+[[nodiscard]] static CheckedCapture ByValue(ByteString name, Jakt::utility::Span span);
+[[nodiscard]] static CheckedCapture ByReference(ByteString name, Jakt::utility::Span span);
+[[nodiscard]] static CheckedCapture ByMutableReference(ByteString name, Jakt::utility::Span span);
+[[nodiscard]] static CheckedCapture ByComptimeDependency(ByteString name, Jakt::utility::Span span);
+[[nodiscard]] static CheckedCapture AllByReference(ByteString name, Jakt::utility::Span span);
 ~CheckedCapture();
 CheckedCapture& operator=(CheckedCapture const &);
 CheckedCapture& operator=(CheckedCapture &&);
@@ -563,52 +654,56 @@ FunctionGenericParameterKind() {};
 };
 struct CheckedGenericParameter {
   public:
-public: ids::TypeId type_id;public: JaktInternal::DynamicArray<ids::TraitId> constraints;public: utility::Span span;public: static types::CheckedGenericParameter make(ids::TypeId const type_id, utility::Span const span);
-public: CheckedGenericParameter(ids::TypeId a_type_id, JaktInternal::DynamicArray<ids::TraitId> a_constraints, utility::Span a_span);
+public: Jakt::ids::TypeId type_id;public: JaktInternal::DynamicArray<Jakt::ids::TraitId> constraints;public: Jakt::utility::Span span;public: static Jakt::types::CheckedGenericParameter make(Jakt::ids::TypeId const type_id, Jakt::utility::Span const span);
+public: CheckedGenericParameter(Jakt::ids::TypeId a_type_id, JaktInternal::DynamicArray<Jakt::ids::TraitId> a_constraints, Jakt::utility::Span a_span);
 
 public: ByteString debug_description() const;
 };struct FunctionGenericParameter {
   public:
-public: types::FunctionGenericParameterKind kind;public: types::CheckedGenericParameter checked_parameter;public: ids::TypeId type_id() const;
-public: static types::FunctionGenericParameter parameter(ids::TypeId const type_id, utility::Span const span);
-public: FunctionGenericParameter(types::FunctionGenericParameterKind a_kind, types::CheckedGenericParameter a_checked_parameter);
+public: Jakt::types::FunctionGenericParameterKind kind;public: Jakt::types::CheckedGenericParameter checked_parameter;public: Jakt::ids::TypeId type_id() const;
+public: static Jakt::types::FunctionGenericParameter parameter(Jakt::ids::TypeId const type_id, Jakt::utility::Span const span);
+public: FunctionGenericParameter(Jakt::types::FunctionGenericParameterKind a_kind, Jakt::types::CheckedGenericParameter a_checked_parameter);
 
 public: ByteString debug_description() const;
 };class CheckedVariable :public RefCounted<CheckedVariable>, public Weakable<CheckedVariable> {
   public:
 virtual ~CheckedVariable() = default;
-public: ByteString name;public: ids::TypeId type_id;public: bool is_mutable;public: utility::Span definition_span;public: JaktInternal::Optional<utility::Span> type_span;public: types::CheckedVisibility visibility;public: JaktInternal::Optional<ids::ScopeId> owner_scope;public: JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> owner_scope_generics;public: JaktInternal::Optional<parser::ExternalName> external_name;public: ErrorOr<NonnullRefPtr<types::CheckedVariable>> map_types(Function<ErrorOr<ids::TypeId>(ids::TypeId)> const& map) const;
-public: parser::ExternalName name_for_codegen() const;
+public: ByteString name;public: Jakt::ids::TypeId type_id;public: bool is_mutable;public: Jakt::utility::Span definition_span;public: JaktInternal::Optional<Jakt::utility::Span> type_span;public: Jakt::types::CheckedVisibility visibility;public: JaktInternal::Optional<Jakt::ids::ScopeId> owner_scope;public: JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> owner_scope_generics;public: JaktInternal::Optional<Jakt::parser::ExternalName> external_name;public: ErrorOr<NonnullRefPtr<Jakt::types::CheckedVariable>> map_types(Function<ErrorOr<Jakt::ids::TypeId>(Jakt::ids::TypeId)> const& map) const;
+public: Jakt::parser::ExternalName name_for_codegen() const;
 public: protected:
-explicit CheckedVariable(ByteString a_name, ids::TypeId a_type_id, bool a_is_mutable, utility::Span a_definition_span, JaktInternal::Optional<utility::Span> a_type_span, types::CheckedVisibility a_visibility, JaktInternal::Optional<ids::ScopeId> a_owner_scope, JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> a_owner_scope_generics, JaktInternal::Optional<parser::ExternalName> a_external_name);
+explicit CheckedVariable(ByteString a_name, Jakt::ids::TypeId a_type_id, bool a_is_mutable, Jakt::utility::Span a_definition_span, JaktInternal::Optional<Jakt::utility::Span> a_type_span, Jakt::types::CheckedVisibility a_visibility, JaktInternal::Optional<Jakt::ids::ScopeId> a_owner_scope, JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> a_owner_scope_generics, JaktInternal::Optional<Jakt::parser::ExternalName> a_external_name);
 public:
-static NonnullRefPtr<CheckedVariable> __jakt_create(ByteString name, ids::TypeId type_id, bool is_mutable, utility::Span definition_span, JaktInternal::Optional<utility::Span> type_span, types::CheckedVisibility visibility, JaktInternal::Optional<ids::ScopeId> owner_scope, JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> owner_scope_generics, JaktInternal::Optional<parser::ExternalName> external_name);
+static NonnullRefPtr<CheckedVariable> __jakt_create(ByteString name, Jakt::ids::TypeId type_id, bool is_mutable, Jakt::utility::Span definition_span, JaktInternal::Optional<Jakt::utility::Span> type_span, Jakt::types::CheckedVisibility visibility, JaktInternal::Optional<Jakt::ids::ScopeId> owner_scope, JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> owner_scope_generics, JaktInternal::Optional<Jakt::parser::ExternalName> external_name);
 
 public: ByteString debug_description() const;
 };struct CheckedVarDecl {
   public:
-public: ByteString name;public: bool is_mutable;public: utility::Span span;public: ids::TypeId type_id;public: CheckedVarDecl(ByteString a_name, bool a_is_mutable, utility::Span a_span, ids::TypeId a_type_id);
+public: ByteString name;public: bool is_mutable;public: Jakt::utility::Span span;public: Jakt::ids::TypeId type_id;public: CheckedVarDecl(ByteString a_name, bool a_is_mutable, Jakt::utility::Span a_span, Jakt::ids::TypeId a_type_id);
 
 public: ByteString debug_description() const;
 };struct FieldRecord {
   public:
-public: ids::StructId struct_id;public: ids::VarId field_id;public: FieldRecord(ids::StructId a_struct_id, ids::VarId a_field_id);
+public: Jakt::ids::StructId struct_id;public: Jakt::ids::VarId field_id;public: FieldRecord(Jakt::ids::StructId a_struct_id, Jakt::ids::VarId a_field_id);
 
 public: ByteString debug_description() const;
-};struct CheckedField {
+};class CheckedField :public RefCounted<CheckedField>, public Weakable<CheckedField> {
   public:
-public: ids::VarId variable_id;public: JaktInternal::Optional<JaktInternal::Tuple<NonnullRefPtr<typename parser::ParsedExpression>,ids::ScopeId>> default_value_expression;public: CheckedField(ids::VarId a_variable_id, JaktInternal::Optional<JaktInternal::Tuple<NonnullRefPtr<typename parser::ParsedExpression>,ids::ScopeId>> a_default_value_expression);
+virtual ~CheckedField() = default;
+public: Jakt::ids::VarId variable_id;public: JaktInternal::Optional<JaktInternal::Tuple<NonnullRefPtr<typename Jakt::parser::ParsedExpression>,Jakt::ids::ScopeId>> default_value_expression;public: JaktInternal::Optional<NonnullRefPtr<typename Jakt::types::CheckedExpression>> default_value_in_definition_scope;public: protected:
+explicit CheckedField(Jakt::ids::VarId a_variable_id, JaktInternal::Optional<JaktInternal::Tuple<NonnullRefPtr<typename Jakt::parser::ParsedExpression>,Jakt::ids::ScopeId>> a_default_value_expression, JaktInternal::Optional<NonnullRefPtr<typename Jakt::types::CheckedExpression>> a_default_value_in_definition_scope);
+public:
+static NonnullRefPtr<CheckedField> __jakt_create(Jakt::ids::VarId variable_id, JaktInternal::Optional<JaktInternal::Tuple<NonnullRefPtr<typename Jakt::parser::ParsedExpression>,Jakt::ids::ScopeId>> default_value_expression, JaktInternal::Optional<NonnullRefPtr<typename Jakt::types::CheckedExpression>> default_value_in_definition_scope);
 
 public: ByteString debug_description() const;
 };struct CheckedStruct {
   public:
-public: ByteString name;public: utility::Span name_span;public: JaktInternal::DynamicArray<types::CheckedGenericParameter> generic_parameters;public: JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Optional<ids::TypeId>>> generic_parameter_defaults;public: JaktInternal::DynamicArray<types::CheckedField> fields;public: ids::ScopeId scope_id;public: parser::DefinitionLinkage definition_linkage;public: JaktInternal::Dictionary<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<ids::TraitId,JaktInternal::DynamicArray<ids::TypeId>>>> trait_implementations;public: parser::RecordType record_type;public: ids::TypeId type_id;public: JaktInternal::Optional<ids::StructId> super_struct_id;public: JaktInternal::Optional<parser::ExternalName> external_name;public: JaktInternal::Optional<ids::TypeId> implements_type;public: JaktInternal::Optional<ByteString> create_function_name;public: parser::ExternalName name_for_codegen() const;
-public: CheckedStruct(ByteString a_name, utility::Span a_name_span, JaktInternal::DynamicArray<types::CheckedGenericParameter> a_generic_parameters, JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Optional<ids::TypeId>>> a_generic_parameter_defaults, JaktInternal::DynamicArray<types::CheckedField> a_fields, ids::ScopeId a_scope_id, parser::DefinitionLinkage a_definition_linkage, JaktInternal::Dictionary<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<ids::TraitId,JaktInternal::DynamicArray<ids::TypeId>>>> a_trait_implementations, parser::RecordType a_record_type, ids::TypeId a_type_id, JaktInternal::Optional<ids::StructId> a_super_struct_id, JaktInternal::Optional<parser::ExternalName> a_external_name, JaktInternal::Optional<ids::TypeId> a_implements_type, JaktInternal::Optional<ByteString> a_create_function_name);
+public: ByteString name;public: Jakt::utility::Span name_span;public: JaktInternal::DynamicArray<Jakt::types::CheckedGenericParameter> generic_parameters;public: JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Optional<Jakt::ids::TypeId>>> generic_parameter_defaults;public: JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::CheckedField>> fields;public: Jakt::ids::ScopeId scope_id;public: Jakt::parser::DefinitionLinkage definition_linkage;public: JaktInternal::Dictionary<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<Jakt::ids::TraitId,JaktInternal::DynamicArray<Jakt::ids::TypeId>>>> trait_implementations;public: Jakt::parser::RecordType record_type;public: Jakt::ids::TypeId type_id;public: JaktInternal::Optional<Jakt::ids::StructId> super_struct_id;public: JaktInternal::Optional<Jakt::parser::ExternalName> external_name;public: JaktInternal::Optional<Jakt::ids::TypeId> implements_type;public: JaktInternal::Optional<ByteString> create_function_name;public: Jakt::parser::ExternalName name_for_codegen() const;
+public: CheckedStruct(ByteString a_name, Jakt::utility::Span a_name_span, JaktInternal::DynamicArray<Jakt::types::CheckedGenericParameter> a_generic_parameters, JaktInternal::Optional<JaktInternal::DynamicArray<JaktInternal::Optional<Jakt::ids::TypeId>>> a_generic_parameter_defaults, JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::CheckedField>> a_fields, Jakt::ids::ScopeId a_scope_id, Jakt::parser::DefinitionLinkage a_definition_linkage, JaktInternal::Dictionary<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<Jakt::ids::TraitId,JaktInternal::DynamicArray<Jakt::ids::TypeId>>>> a_trait_implementations, Jakt::parser::RecordType a_record_type, Jakt::ids::TypeId a_type_id, JaktInternal::Optional<Jakt::ids::StructId> a_super_struct_id, JaktInternal::Optional<Jakt::parser::ExternalName> a_external_name, JaktInternal::Optional<Jakt::ids::TypeId> a_implements_type, JaktInternal::Optional<ByteString> a_create_function_name);
 
 public: ByteString debug_description() const;
 };struct CheckedEnum {
   public:
-public: ByteString name;public: utility::Span name_span;public: JaktInternal::DynamicArray<types::CheckedGenericParameter> generic_parameters;public: JaktInternal::DynamicArray<types::CheckedEnumVariant> variants;public: JaktInternal::DynamicArray<types::CheckedField> fields;public: ids::ScopeId scope_id;public: parser::DefinitionLinkage definition_linkage;public: JaktInternal::Dictionary<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<ids::TraitId,JaktInternal::DynamicArray<ids::TypeId>>>> trait_implementations;public: parser::RecordType record_type;public: ids::TypeId underlying_type_id;public: ids::TypeId type_id;public: bool is_boxed;public: CheckedEnum(ByteString a_name, utility::Span a_name_span, JaktInternal::DynamicArray<types::CheckedGenericParameter> a_generic_parameters, JaktInternal::DynamicArray<types::CheckedEnumVariant> a_variants, JaktInternal::DynamicArray<types::CheckedField> a_fields, ids::ScopeId a_scope_id, parser::DefinitionLinkage a_definition_linkage, JaktInternal::Dictionary<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<ids::TraitId,JaktInternal::DynamicArray<ids::TypeId>>>> a_trait_implementations, parser::RecordType a_record_type, ids::TypeId a_underlying_type_id, ids::TypeId a_type_id, bool a_is_boxed);
+public: ByteString name;public: Jakt::utility::Span name_span;public: JaktInternal::DynamicArray<Jakt::types::CheckedGenericParameter> generic_parameters;public: JaktInternal::DynamicArray<Jakt::types::CheckedEnumVariant> variants;public: JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::CheckedField>> fields;public: Jakt::ids::ScopeId scope_id;public: Jakt::parser::DefinitionLinkage definition_linkage;public: JaktInternal::Dictionary<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<Jakt::ids::TraitId,JaktInternal::DynamicArray<Jakt::ids::TypeId>>>> trait_implementations;public: Jakt::parser::RecordType record_type;public: Jakt::ids::TypeId underlying_type_id;public: Jakt::ids::TypeId type_id;public: bool is_boxed;public: CheckedEnum(ByteString a_name, Jakt::utility::Span a_name_span, JaktInternal::DynamicArray<Jakt::types::CheckedGenericParameter> a_generic_parameters, JaktInternal::DynamicArray<Jakt::types::CheckedEnumVariant> a_variants, JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::CheckedField>> a_fields, Jakt::ids::ScopeId a_scope_id, Jakt::parser::DefinitionLinkage a_definition_linkage, JaktInternal::Dictionary<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<Jakt::ids::TraitId,JaktInternal::DynamicArray<Jakt::ids::TypeId>>>> a_trait_implementations, Jakt::parser::RecordType a_record_type, Jakt::ids::TypeId a_underlying_type_id, Jakt::ids::TypeId a_type_id, bool a_is_boxed);
 
 public: ByteString debug_description() const;
 };struct CheckedEnumVariant {
@@ -616,36 +711,36 @@ u8 __jakt_variant_index = 0;
 union VariantData {
 u8 __jakt_uninit_value;
 struct {
-ids::EnumId enum_id;
+Jakt::ids::EnumId enum_id;
 ByteString name;
-utility::Span span;
+Jakt::utility::Span span;
 } Untyped;
 struct {
-ids::EnumId enum_id;
+Jakt::ids::EnumId enum_id;
 ByteString name;
-ids::TypeId type_id;
-utility::Span span;
+Jakt::ids::TypeId type_id;
+Jakt::utility::Span span;
 } Typed;
 struct {
-ids::EnumId enum_id;
+Jakt::ids::EnumId enum_id;
 ByteString name;
-NonnullRefPtr<typename types::CheckedExpression> expr;
-utility::Span span;
+NonnullRefPtr<typename Jakt::types::CheckedExpression> expr;
+Jakt::utility::Span span;
 } WithValue;
 struct {
-ids::EnumId enum_id;
+Jakt::ids::EnumId enum_id;
 ByteString name;
-JaktInternal::DynamicArray<ids::VarId> fields;
-utility::Span span;
+JaktInternal::DynamicArray<Jakt::ids::VarId> fields;
+Jakt::utility::Span span;
 } StructLike;
 constexpr VariantData() {}
 ~VariantData() {}
 } as;
 constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ByteString debug_description() const;
-[[nodiscard]] static CheckedEnumVariant Untyped(ids::EnumId enum_id, ByteString name, utility::Span span);
-[[nodiscard]] static CheckedEnumVariant Typed(ids::EnumId enum_id, ByteString name, ids::TypeId type_id, utility::Span span);
-[[nodiscard]] static CheckedEnumVariant WithValue(ids::EnumId enum_id, ByteString name, NonnullRefPtr<typename types::CheckedExpression> expr, utility::Span span);
-[[nodiscard]] static CheckedEnumVariant StructLike(ids::EnumId enum_id, ByteString name, JaktInternal::DynamicArray<ids::VarId> fields, utility::Span span);
+[[nodiscard]] static CheckedEnumVariant Untyped(Jakt::ids::EnumId enum_id, ByteString name, Jakt::utility::Span span);
+[[nodiscard]] static CheckedEnumVariant Typed(Jakt::ids::EnumId enum_id, ByteString name, Jakt::ids::TypeId type_id, Jakt::utility::Span span);
+[[nodiscard]] static CheckedEnumVariant WithValue(Jakt::ids::EnumId enum_id, ByteString name, NonnullRefPtr<typename Jakt::types::CheckedExpression> expr, Jakt::utility::Span span);
+[[nodiscard]] static CheckedEnumVariant StructLike(Jakt::ids::EnumId enum_id, ByteString name, JaktInternal::DynamicArray<Jakt::ids::VarId> fields, Jakt::utility::Span span);
 ~CheckedEnumVariant();
 CheckedEnumVariant& operator=(CheckedEnumVariant const &);
 CheckedEnumVariant& operator=(CheckedEnumVariant &&);
@@ -653,16 +748,16 @@ CheckedEnumVariant(CheckedEnumVariant const&);
 CheckedEnumVariant(CheckedEnumVariant &&);
 private: void __jakt_destroy_variant();
 public:
-bool equals(types::CheckedEnumVariant const other) const;
-ids::EnumId enum_id() const;
-utility::Span span() const;
+bool equals(Jakt::types::CheckedEnumVariant const other) const;
+Jakt::ids::EnumId enum_id() const;
+Jakt::utility::Span span() const;
 ByteString name() const;
 private:
 CheckedEnumVariant() {};
 };
 struct CheckedEnumVariantBinding {
   public:
-public: JaktInternal::Optional<ByteString> name;public: ByteString binding;public: ids::TypeId type_id;public: utility::Span span;public: CheckedEnumVariantBinding(JaktInternal::Optional<ByteString> a_name, ByteString a_binding, ids::TypeId a_type_id, utility::Span a_span);
+public: JaktInternal::Optional<ByteString> name;public: ByteString binding;public: Jakt::ids::TypeId type_id;public: Jakt::utility::Span span;public: CheckedEnumVariantBinding(JaktInternal::Optional<ByteString> a_name, ByteString a_binding, Jakt::ids::TypeId a_type_id, Jakt::utility::Span a_span);
 
 public: ByteString debug_description() const;
 };struct CheckedStatement: public RefCounted<CheckedStatement> {
@@ -670,86 +765,86 @@ u8 __jakt_variant_index = 0;
 union VariantData {
 u8 __jakt_uninit_value;
 struct {
-NonnullRefPtr<typename types::CheckedExpression> expr;
-utility::Span span;
+NonnullRefPtr<typename Jakt::types::CheckedExpression> expr;
+Jakt::utility::Span span;
 } Expression;
 struct {
-NonnullRefPtr<typename types::CheckedStatement> statement;
-utility::Span span;
+NonnullRefPtr<typename Jakt::types::CheckedStatement> statement;
+Jakt::utility::Span span;
 } Defer;
 struct {
-JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> vars;
-NonnullRefPtr<typename types::CheckedStatement> var_decl;
-utility::Span span;
+JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::CheckedStatement>> vars;
+NonnullRefPtr<typename Jakt::types::CheckedStatement> var_decl;
+Jakt::utility::Span span;
 } DestructuringAssignment;
 struct {
-ids::VarId var_id;
-NonnullRefPtr<typename types::CheckedExpression> init;
-utility::Span span;
+Jakt::ids::VarId var_id;
+NonnullRefPtr<typename Jakt::types::CheckedExpression> init;
+Jakt::utility::Span span;
 } VarDecl;
 struct {
-NonnullRefPtr<typename types::CheckedExpression> condition;
-types::CheckedBlock then_block;
-JaktInternal::Optional<NonnullRefPtr<typename types::CheckedStatement>> else_statement;
-utility::Span span;
+NonnullRefPtr<typename Jakt::types::CheckedExpression> condition;
+Jakt::types::CheckedBlock then_block;
+JaktInternal::Optional<NonnullRefPtr<typename Jakt::types::CheckedStatement>> else_statement;
+Jakt::utility::Span span;
 } If;
 struct {
-types::CheckedBlock block;
-utility::Span span;
+Jakt::types::CheckedBlock block;
+Jakt::utility::Span span;
 } Block;
 struct {
-types::CheckedBlock block;
-utility::Span span;
+Jakt::types::CheckedBlock block;
+Jakt::utility::Span span;
 } Loop;
 struct {
-NonnullRefPtr<typename types::CheckedExpression> condition;
-types::CheckedBlock block;
-utility::Span span;
+NonnullRefPtr<typename Jakt::types::CheckedExpression> condition;
+Jakt::types::CheckedBlock block;
+Jakt::utility::Span span;
 } While;
 struct {
-JaktInternal::Optional<NonnullRefPtr<typename types::CheckedExpression>> val;
-JaktInternal::Optional<utility::Span> span;
+JaktInternal::Optional<NonnullRefPtr<typename Jakt::types::CheckedExpression>> val;
+JaktInternal::Optional<Jakt::utility::Span> span;
 } Return;
 struct {
-utility::Span value;
+Jakt::utility::Span value;
 } Break;
 struct {
-utility::Span value;
+Jakt::utility::Span value;
 } Continue;
 struct {
-NonnullRefPtr<typename types::CheckedExpression> expr;
-utility::Span span;
+NonnullRefPtr<typename Jakt::types::CheckedExpression> expr;
+Jakt::utility::Span span;
 } Throw;
 struct {
-JaktInternal::Optional<NonnullRefPtr<typename types::CheckedExpression>> expr;
-utility::Span span;
+JaktInternal::Optional<NonnullRefPtr<typename Jakt::types::CheckedExpression>> expr;
+Jakt::utility::Span span;
 } Yield;
 struct {
 JaktInternal::DynamicArray<ByteString> lines;
-utility::Span span;
+Jakt::utility::Span span;
 } InlineCpp;
 struct {
-utility::Span value;
+Jakt::utility::Span value;
 } Garbage;
 constexpr VariantData() {}
 ~VariantData() {}
 } as;
 constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ByteString debug_description() const;
-[[nodiscard]] static NonnullRefPtr<CheckedStatement> Expression(NonnullRefPtr<typename types::CheckedExpression> expr, utility::Span span);
-[[nodiscard]] static NonnullRefPtr<CheckedStatement> Defer(NonnullRefPtr<typename types::CheckedStatement> statement, utility::Span span);
-[[nodiscard]] static NonnullRefPtr<CheckedStatement> DestructuringAssignment(JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> vars, NonnullRefPtr<typename types::CheckedStatement> var_decl, utility::Span span);
-[[nodiscard]] static NonnullRefPtr<CheckedStatement> VarDecl(ids::VarId var_id, NonnullRefPtr<typename types::CheckedExpression> init, utility::Span span);
-[[nodiscard]] static NonnullRefPtr<CheckedStatement> If(NonnullRefPtr<typename types::CheckedExpression> condition, types::CheckedBlock then_block, JaktInternal::Optional<NonnullRefPtr<typename types::CheckedStatement>> else_statement, utility::Span span);
-[[nodiscard]] static NonnullRefPtr<CheckedStatement> Block(types::CheckedBlock block, utility::Span span);
-[[nodiscard]] static NonnullRefPtr<CheckedStatement> Loop(types::CheckedBlock block, utility::Span span);
-[[nodiscard]] static NonnullRefPtr<CheckedStatement> While(NonnullRefPtr<typename types::CheckedExpression> condition, types::CheckedBlock block, utility::Span span);
-[[nodiscard]] static NonnullRefPtr<CheckedStatement> Return(JaktInternal::Optional<NonnullRefPtr<typename types::CheckedExpression>> val, JaktInternal::Optional<utility::Span> span);
-[[nodiscard]] static NonnullRefPtr<CheckedStatement> Break(utility::Span value);
-[[nodiscard]] static NonnullRefPtr<CheckedStatement> Continue(utility::Span value);
-[[nodiscard]] static NonnullRefPtr<CheckedStatement> Throw(NonnullRefPtr<typename types::CheckedExpression> expr, utility::Span span);
-[[nodiscard]] static NonnullRefPtr<CheckedStatement> Yield(JaktInternal::Optional<NonnullRefPtr<typename types::CheckedExpression>> expr, utility::Span span);
-[[nodiscard]] static NonnullRefPtr<CheckedStatement> InlineCpp(JaktInternal::DynamicArray<ByteString> lines, utility::Span span);
-[[nodiscard]] static NonnullRefPtr<CheckedStatement> Garbage(utility::Span value);
+[[nodiscard]] static NonnullRefPtr<CheckedStatement> Expression(NonnullRefPtr<typename Jakt::types::CheckedExpression> expr, Jakt::utility::Span span);
+[[nodiscard]] static NonnullRefPtr<CheckedStatement> Defer(NonnullRefPtr<typename Jakt::types::CheckedStatement> statement, Jakt::utility::Span span);
+[[nodiscard]] static NonnullRefPtr<CheckedStatement> DestructuringAssignment(JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::CheckedStatement>> vars, NonnullRefPtr<typename Jakt::types::CheckedStatement> var_decl, Jakt::utility::Span span);
+[[nodiscard]] static NonnullRefPtr<CheckedStatement> VarDecl(Jakt::ids::VarId var_id, NonnullRefPtr<typename Jakt::types::CheckedExpression> init, Jakt::utility::Span span);
+[[nodiscard]] static NonnullRefPtr<CheckedStatement> If(NonnullRefPtr<typename Jakt::types::CheckedExpression> condition, Jakt::types::CheckedBlock then_block, JaktInternal::Optional<NonnullRefPtr<typename Jakt::types::CheckedStatement>> else_statement, Jakt::utility::Span span);
+[[nodiscard]] static NonnullRefPtr<CheckedStatement> Block(Jakt::types::CheckedBlock block, Jakt::utility::Span span);
+[[nodiscard]] static NonnullRefPtr<CheckedStatement> Loop(Jakt::types::CheckedBlock block, Jakt::utility::Span span);
+[[nodiscard]] static NonnullRefPtr<CheckedStatement> While(NonnullRefPtr<typename Jakt::types::CheckedExpression> condition, Jakt::types::CheckedBlock block, Jakt::utility::Span span);
+[[nodiscard]] static NonnullRefPtr<CheckedStatement> Return(JaktInternal::Optional<NonnullRefPtr<typename Jakt::types::CheckedExpression>> val, JaktInternal::Optional<Jakt::utility::Span> span);
+[[nodiscard]] static NonnullRefPtr<CheckedStatement> Break(Jakt::utility::Span value);
+[[nodiscard]] static NonnullRefPtr<CheckedStatement> Continue(Jakt::utility::Span value);
+[[nodiscard]] static NonnullRefPtr<CheckedStatement> Throw(NonnullRefPtr<typename Jakt::types::CheckedExpression> expr, Jakt::utility::Span span);
+[[nodiscard]] static NonnullRefPtr<CheckedStatement> Yield(JaktInternal::Optional<NonnullRefPtr<typename Jakt::types::CheckedExpression>> expr, Jakt::utility::Span span);
+[[nodiscard]] static NonnullRefPtr<CheckedStatement> InlineCpp(JaktInternal::DynamicArray<ByteString> lines, Jakt::utility::Span span);
+[[nodiscard]] static NonnullRefPtr<CheckedStatement> Garbage(Jakt::utility::Span value);
 ~CheckedStatement();
 CheckedStatement& operator=(CheckedStatement const &);
 CheckedStatement& operator=(CheckedStatement &&);
@@ -757,8 +852,10 @@ CheckedStatement(CheckedStatement const&);
 CheckedStatement(CheckedStatement &&);
 private: void __jakt_destroy_variant();
 public:
-JaktInternal::Optional<utility::Span> span() const;
-static JaktInternal::Optional<NonnullRefPtr<typename types::CheckedStatement>> none();
+JaktInternal::Optional<Jakt::utility::Span> span() const;
+static JaktInternal::Optional<NonnullRefPtr<typename Jakt::types::CheckedStatement>> none();
+static Jakt::types::BlockControlFlow maybe_control_flow(JaktInternal::Optional<NonnullRefPtr<typename Jakt::types::CheckedStatement>> const statement, Jakt::types::BlockControlFlow const other_branch);
+Jakt::types::BlockControlFlow control_flow() const;
 private:
 CheckedStatement() {};
 };
@@ -789,7 +886,7 @@ NumberConstant(NumberConstant const&);
 NumberConstant(NumberConstant &&);
 private: void __jakt_destroy_variant();
 public:
-bool can_fit_number(ids::TypeId const type_id, NonnullRefPtr<types::CheckedProgram> const program) const;
+bool can_fit_number(Jakt::ids::TypeId const type_id, NonnullRefPtr<Jakt::types::CheckedProgram> const program) const;
 size_t to_usize() const;
 private:
 NumberConstant() {};
@@ -853,7 +950,7 @@ CheckedNumericConstant(CheckedNumericConstant const&);
 CheckedNumericConstant(CheckedNumericConstant &&);
 private: void __jakt_destroy_variant();
 public:
-JaktInternal::Optional<types::NumberConstant> number_constant() const;
+JaktInternal::Optional<Jakt::types::NumberConstant> number_constant() const;
 private:
 CheckedNumericConstant() {};
 };
@@ -882,8 +979,8 @@ StringLiteral() {};
 };
 struct CheckedStringLiteral {
   public:
-public: types::StringLiteral value;public: ids::TypeId type_id;public: bool may_throw;public: ByteString to_string() const;
-public: CheckedStringLiteral(types::StringLiteral a_value, ids::TypeId a_type_id, bool a_may_throw);
+public: Jakt::types::StringLiteral value;public: Jakt::ids::TypeId type_id;public: bool may_throw;public: ByteString to_string() const;
+public: CheckedStringLiteral(Jakt::types::StringLiteral a_value, Jakt::ids::TypeId a_type_id, bool a_may_throw);
 
 public: ByteString debug_description() const;
 };struct CheckedTypeCast {
@@ -891,21 +988,21 @@ u8 __jakt_variant_index = 0;
 union VariantData {
 u8 __jakt_uninit_value;
 struct {
-ids::TypeId value;
+Jakt::ids::TypeId value;
 } Fallible;
 struct {
-ids::TypeId value;
+Jakt::ids::TypeId value;
 } Infallible;
 struct {
-ids::TypeId value;
+Jakt::ids::TypeId value;
 } Identity;
 constexpr VariantData() {}
 ~VariantData() {}
 } as;
 constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ByteString debug_description() const;
-[[nodiscard]] static CheckedTypeCast Fallible(ids::TypeId value);
-[[nodiscard]] static CheckedTypeCast Infallible(ids::TypeId value);
-[[nodiscard]] static CheckedTypeCast Identity(ids::TypeId value);
+[[nodiscard]] static CheckedTypeCast Fallible(Jakt::ids::TypeId value);
+[[nodiscard]] static CheckedTypeCast Infallible(Jakt::ids::TypeId value);
+[[nodiscard]] static CheckedTypeCast Identity(Jakt::ids::TypeId value);
 ~CheckedTypeCast();
 CheckedTypeCast& operator=(CheckedTypeCast const &);
 CheckedTypeCast& operator=(CheckedTypeCast &&);
@@ -913,7 +1010,7 @@ CheckedTypeCast(CheckedTypeCast const&);
 CheckedTypeCast(CheckedTypeCast &&);
 private: void __jakt_destroy_variant();
 public:
-ids::TypeId type_id() const;
+Jakt::ids::TypeId type_id() const;
 private:
 CheckedTypeCast() {};
 };
@@ -922,18 +1019,18 @@ u8 __jakt_variant_index = 0;
 union VariantData {
 u8 __jakt_uninit_value;
 struct {
-types::CheckedTypeCast value;
+Jakt::types::CheckedTypeCast value;
 } TypeCast;
 struct {
-ids::TypeId value;
+Jakt::ids::TypeId value;
 } Is;
 struct {
-types::CheckedEnumVariant enum_variant;
-JaktInternal::DynamicArray<types::CheckedEnumVariantBinding> bindings;
-ids::TypeId type_id;
+Jakt::types::CheckedEnumVariant enum_variant;
+JaktInternal::DynamicArray<Jakt::types::CheckedEnumVariantBinding> bindings;
+Jakt::ids::TypeId type_id;
 } IsEnumVariant;
 struct {
-ids::TypeId value;
+Jakt::ids::TypeId value;
 } Sizeof;
 constexpr VariantData() {}
 ~VariantData() {}
@@ -950,12 +1047,12 @@ constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 
 [[nodiscard]] static CheckedUnaryOperator MutableReference();
 [[nodiscard]] static CheckedUnaryOperator LogicalNot();
 [[nodiscard]] static CheckedUnaryOperator BitwiseNot();
-[[nodiscard]] static CheckedUnaryOperator TypeCast(types::CheckedTypeCast value);
-[[nodiscard]] static CheckedUnaryOperator Is(ids::TypeId value);
-[[nodiscard]] static CheckedUnaryOperator IsEnumVariant(types::CheckedEnumVariant enum_variant, JaktInternal::DynamicArray<types::CheckedEnumVariantBinding> bindings, ids::TypeId type_id);
+[[nodiscard]] static CheckedUnaryOperator TypeCast(Jakt::types::CheckedTypeCast value);
+[[nodiscard]] static CheckedUnaryOperator Is(Jakt::ids::TypeId value);
+[[nodiscard]] static CheckedUnaryOperator IsEnumVariant(Jakt::types::CheckedEnumVariant enum_variant, JaktInternal::DynamicArray<Jakt::types::CheckedEnumVariantBinding> bindings, Jakt::ids::TypeId type_id);
 [[nodiscard]] static CheckedUnaryOperator IsSome();
 [[nodiscard]] static CheckedUnaryOperator IsNone();
-[[nodiscard]] static CheckedUnaryOperator Sizeof(ids::TypeId value);
+[[nodiscard]] static CheckedUnaryOperator Sizeof(Jakt::ids::TypeId value);
 ~CheckedUnaryOperator();
 CheckedUnaryOperator& operator=(CheckedUnaryOperator const &);
 CheckedUnaryOperator& operator=(CheckedUnaryOperator &&);
@@ -971,17 +1068,17 @@ u8 __jakt_variant_index = 0;
 union VariantData {
 u8 __jakt_uninit_value;
 struct {
-NonnullRefPtr<typename types::CheckedExpression> value;
+NonnullRefPtr<typename Jakt::types::CheckedExpression> value;
 } Expression;
 struct {
-types::CheckedBlock value;
+Jakt::types::CheckedBlock value;
 } Block;
 constexpr VariantData() {}
 ~VariantData() {}
 } as;
 constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ByteString debug_description() const;
-[[nodiscard]] static CheckedMatchBody Expression(NonnullRefPtr<typename types::CheckedExpression> value);
-[[nodiscard]] static CheckedMatchBody Block(types::CheckedBlock value);
+[[nodiscard]] static CheckedMatchBody Expression(NonnullRefPtr<typename Jakt::types::CheckedExpression> value);
+[[nodiscard]] static CheckedMatchBody Block(Jakt::types::CheckedBlock value);
 ~CheckedMatchBody();
 CheckedMatchBody& operator=(CheckedMatchBody const &);
 CheckedMatchBody& operator=(CheckedMatchBody &&);
@@ -994,7 +1091,7 @@ CheckedMatchBody() {};
 };
 struct ClassInstanceRebind {
   public:
-public: ByteString name;public: utility::Span name_span;public: bool is_mutable;public: bool is_reference;public: ClassInstanceRebind(ByteString a_name, utility::Span a_name_span, bool a_is_mutable, bool a_is_reference);
+public: ByteString name;public: Jakt::utility::Span name_span;public: bool is_mutable;public: bool is_reference;public: ClassInstanceRebind(ByteString a_name, Jakt::utility::Span a_name_span, bool a_is_mutable, bool a_is_reference);
 
 public: ByteString debug_description() const;
 };struct CheckedMatchCase {
@@ -1002,7 +1099,7 @@ u8 __jakt_variant_index = 0;
 union CommonData {
 u8 __jakt_uninit_common;
 struct {
-JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> defaults;
+JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::CheckedStatement>> defaults;
 } init_common;
 constexpr CommonData() {}
 ~CommonData() {}
@@ -1011,37 +1108,37 @@ union VariantData {
 u8 __jakt_uninit_value;
 struct {
 ByteString name;
-JaktInternal::DynamicArray<parser::EnumVariantPatternArgument> args;
-ids::TypeId subject_type_id;
+JaktInternal::DynamicArray<Jakt::parser::EnumVariantPatternArgument> args;
+Jakt::ids::TypeId subject_type_id;
 size_t index;
-ids::ScopeId scope_id;
-types::CheckedMatchBody body;
-utility::Span marker_span;
+Jakt::ids::ScopeId scope_id;
+Jakt::types::CheckedMatchBody body;
+Jakt::utility::Span marker_span;
 } EnumVariant;
 struct {
-NonnullRefPtr<typename types::CheckedExpression> expression;
-types::CheckedMatchBody body;
-utility::Span marker_span;
+NonnullRefPtr<typename Jakt::types::CheckedExpression> expression;
+Jakt::types::CheckedMatchBody body;
+Jakt::utility::Span marker_span;
 } Expression;
 struct {
-ids::TypeId type;
-types::CheckedMatchBody body;
-JaktInternal::Optional<types::ClassInstanceRebind> rebind_name;
-utility::Span marker_span;
+Jakt::ids::TypeId type;
+Jakt::types::CheckedMatchBody body;
+JaktInternal::Optional<Jakt::types::ClassInstanceRebind> rebind_name;
+Jakt::utility::Span marker_span;
 } ClassInstance;
 struct {
 bool has_arguments;
-types::CheckedMatchBody body;
-utility::Span marker_span;
+Jakt::types::CheckedMatchBody body;
+Jakt::utility::Span marker_span;
 } CatchAll;
 constexpr VariantData() {}
 ~VariantData() {}
 } as;
 constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ByteString debug_description() const;
-[[nodiscard]] static CheckedMatchCase EnumVariant(JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> defaults, ByteString name, JaktInternal::DynamicArray<parser::EnumVariantPatternArgument> args, ids::TypeId subject_type_id, size_t index, ids::ScopeId scope_id, types::CheckedMatchBody body, utility::Span marker_span);
-[[nodiscard]] static CheckedMatchCase Expression(JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> defaults, NonnullRefPtr<typename types::CheckedExpression> expression, types::CheckedMatchBody body, utility::Span marker_span);
-[[nodiscard]] static CheckedMatchCase ClassInstance(JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> defaults, ids::TypeId type, types::CheckedMatchBody body, JaktInternal::Optional<types::ClassInstanceRebind> rebind_name, utility::Span marker_span);
-[[nodiscard]] static CheckedMatchCase CatchAll(JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedStatement>> defaults, bool has_arguments, types::CheckedMatchBody body, utility::Span marker_span);
+[[nodiscard]] static CheckedMatchCase EnumVariant(JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::CheckedStatement>> defaults, ByteString name, JaktInternal::DynamicArray<Jakt::parser::EnumVariantPatternArgument> args, Jakt::ids::TypeId subject_type_id, size_t index, Jakt::ids::ScopeId scope_id, Jakt::types::CheckedMatchBody body, Jakt::utility::Span marker_span);
+[[nodiscard]] static CheckedMatchCase Expression(JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::CheckedStatement>> defaults, NonnullRefPtr<typename Jakt::types::CheckedExpression> expression, Jakt::types::CheckedMatchBody body, Jakt::utility::Span marker_span);
+[[nodiscard]] static CheckedMatchCase ClassInstance(JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::CheckedStatement>> defaults, Jakt::ids::TypeId type, Jakt::types::CheckedMatchBody body, JaktInternal::Optional<Jakt::types::ClassInstanceRebind> rebind_name, Jakt::utility::Span marker_span);
+[[nodiscard]] static CheckedMatchCase CatchAll(JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::CheckedStatement>> defaults, bool has_arguments, Jakt::types::CheckedMatchBody body, Jakt::utility::Span marker_span);
 ~CheckedMatchCase();
 CheckedMatchCase& operator=(CheckedMatchCase const &);
 CheckedMatchCase& operator=(CheckedMatchCase &&);
@@ -1054,18 +1151,18 @@ CheckedMatchCase() {};
 };
 struct CheckedCall {
   public:
-public: JaktInternal::DynamicArray<types::ResolvedNamespace> namespace_;public: ByteString name;public: JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>> args;public: JaktInternal::DynamicArray<ids::TypeId> type_args;public: JaktInternal::Optional<ids::FunctionId> function_id;public: ids::TypeId return_type;public: bool callee_throws;public: JaktInternal::Optional<parser::ExternalName> external_name;public: parser::InlineState force_inline;public: parser::ExternalName name_for_codegen() const;
-public: CheckedCall(JaktInternal::DynamicArray<types::ResolvedNamespace> a_namespace_, ByteString a_name, JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename types::CheckedExpression>>> a_args, JaktInternal::DynamicArray<ids::TypeId> a_type_args, JaktInternal::Optional<ids::FunctionId> a_function_id, ids::TypeId a_return_type, bool a_callee_throws, JaktInternal::Optional<parser::ExternalName> a_external_name, parser::InlineState a_force_inline);
+public: JaktInternal::DynamicArray<Jakt::types::ResolvedNamespace> namespace_;public: ByteString name;public: JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename Jakt::types::CheckedExpression>>> args;public: JaktInternal::DynamicArray<Jakt::ids::TypeId> type_args;public: JaktInternal::Optional<Jakt::ids::FunctionId> function_id;public: Jakt::ids::TypeId return_type;public: bool callee_throws;public: JaktInternal::Optional<Jakt::parser::ExternalName> external_name;public: Jakt::parser::InlineState force_inline;public: Jakt::parser::ExternalName name_for_codegen() const;
+public: CheckedCall(JaktInternal::DynamicArray<Jakt::types::ResolvedNamespace> a_namespace_, ByteString a_name, JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,NonnullRefPtr<typename Jakt::types::CheckedExpression>>> a_args, JaktInternal::DynamicArray<Jakt::ids::TypeId> a_type_args, JaktInternal::Optional<Jakt::ids::FunctionId> a_function_id, Jakt::ids::TypeId a_return_type, bool a_callee_throws, JaktInternal::Optional<Jakt::parser::ExternalName> a_external_name, Jakt::parser::InlineState a_force_inline);
 
 public: ByteString debug_description() const;
 };struct OperatorTraitImplementation {
   public:
-public: ids::TraitId trait_id;public: JaktInternal::DynamicArray<ids::TypeId> trait_generic_arguments;public: types::CheckedCall call_expression;public: OperatorTraitImplementation(ids::TraitId a_trait_id, JaktInternal::DynamicArray<ids::TypeId> a_trait_generic_arguments, types::CheckedCall a_call_expression);
+public: Jakt::ids::TraitId trait_id;public: JaktInternal::DynamicArray<Jakt::ids::TypeId> trait_generic_arguments;public: Jakt::types::CheckedCall call_expression;public: OperatorTraitImplementation(Jakt::ids::TraitId a_trait_id, JaktInternal::DynamicArray<Jakt::ids::TypeId> a_trait_generic_arguments, Jakt::types::CheckedCall a_call_expression);
 
 public: ByteString debug_description() const;
 };struct CheckedBinaryOperator {
   public:
-public: parser::BinaryOperator op;public: JaktInternal::Optional<types::OperatorTraitImplementation> trait_implementation;public: CheckedBinaryOperator(parser::BinaryOperator a_op, JaktInternal::Optional<types::OperatorTraitImplementation> a_trait_implementation);
+public: Jakt::parser::BinaryOperator op;public: JaktInternal::Optional<Jakt::types::OperatorTraitImplementation> trait_implementation;public: CheckedBinaryOperator(Jakt::parser::BinaryOperator a_op, JaktInternal::Optional<Jakt::types::OperatorTraitImplementation> a_trait_implementation);
 
 public: ByteString debug_description() const;
 };struct CheckedExpression: public RefCounted<CheckedExpression> {
@@ -1073,7 +1170,7 @@ u8 __jakt_variant_index = 0;
 union CommonData {
 u8 __jakt_uninit_common;
 struct {
-JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences;
+JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences;
 } init_common;
 constexpr CommonData() {}
 ~CommonData() {}
@@ -1082,259 +1179,259 @@ union VariantData {
 u8 __jakt_uninit_value;
 struct {
 bool val;
-utility::Span span;
+Jakt::utility::Span span;
 } Boolean;
 struct {
-types::CheckedNumericConstant val;
-utility::Span span;
-ids::TypeId type_id;
+Jakt::types::CheckedNumericConstant val;
+Jakt::utility::Span span;
+Jakt::ids::TypeId type_id;
 } NumericConstant;
 struct {
-types::CheckedStringLiteral val;
-utility::Span span;
+Jakt::types::CheckedStringLiteral val;
+Jakt::utility::Span span;
 } QuotedString;
 struct {
 ByteString val;
-utility::Span span;
+Jakt::utility::Span span;
 } ByteConstant;
 struct {
 ByteString val;
-utility::Span span;
+Jakt::utility::Span span;
 } CharacterConstant;
 struct {
 ByteString val;
-utility::Span span;
+Jakt::utility::Span span;
 } CCharacterConstant;
 struct {
-NonnullRefPtr<typename types::CheckedExpression> expr;
-types::CheckedUnaryOperator op;
-utility::Span span;
-ids::TypeId type_id;
+NonnullRefPtr<typename Jakt::types::CheckedExpression> expr;
+Jakt::types::CheckedUnaryOperator op;
+Jakt::utility::Span span;
+Jakt::ids::TypeId type_id;
 } UnaryOp;
 struct {
-NonnullRefPtr<typename types::CheckedExpression> lhs;
-types::CheckedBinaryOperator op;
-NonnullRefPtr<typename types::CheckedExpression> rhs;
-utility::Span span;
-ids::TypeId type_id;
+NonnullRefPtr<typename Jakt::types::CheckedExpression> lhs;
+Jakt::types::CheckedBinaryOperator op;
+NonnullRefPtr<typename Jakt::types::CheckedExpression> rhs;
+Jakt::utility::Span span;
+Jakt::ids::TypeId type_id;
 } BinaryOp;
 struct {
-JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedExpression>> vals;
-utility::Span span;
-ids::TypeId type_id;
+JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::CheckedExpression>> vals;
+Jakt::utility::Span span;
+Jakt::ids::TypeId type_id;
 } JaktTuple;
 struct {
-JaktInternal::Optional<NonnullRefPtr<typename types::CheckedExpression>> from;
-JaktInternal::Optional<NonnullRefPtr<typename types::CheckedExpression>> to;
-utility::Span span;
-ids::TypeId type_id;
+JaktInternal::Optional<NonnullRefPtr<typename Jakt::types::CheckedExpression>> from;
+JaktInternal::Optional<NonnullRefPtr<typename Jakt::types::CheckedExpression>> to;
+Jakt::utility::Span span;
+Jakt::ids::TypeId type_id;
 } Range;
 struct {
-JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedExpression>> vals;
-JaktInternal::Optional<NonnullRefPtr<typename types::CheckedExpression>> repeat;
-utility::Span span;
-ids::TypeId type_id;
-ids::TypeId inner_type_id;
+JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::CheckedExpression>> vals;
+JaktInternal::Optional<NonnullRefPtr<typename Jakt::types::CheckedExpression>> repeat;
+Jakt::utility::Span span;
+Jakt::ids::TypeId type_id;
+Jakt::ids::TypeId inner_type_id;
 } JaktArray;
 struct {
-JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedExpression>> vals;
-utility::Span span;
-ids::TypeId type_id;
-ids::TypeId inner_type_id;
+JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::CheckedExpression>> vals;
+Jakt::utility::Span span;
+Jakt::ids::TypeId type_id;
+Jakt::ids::TypeId inner_type_id;
 } JaktSet;
 struct {
-JaktInternal::DynamicArray<JaktInternal::Tuple<NonnullRefPtr<typename types::CheckedExpression>,NonnullRefPtr<typename types::CheckedExpression>>> vals;
-utility::Span span;
-ids::TypeId type_id;
-ids::TypeId key_type_id;
-ids::TypeId value_type_id;
+JaktInternal::DynamicArray<JaktInternal::Tuple<NonnullRefPtr<typename Jakt::types::CheckedExpression>,NonnullRefPtr<typename Jakt::types::CheckedExpression>>> vals;
+Jakt::utility::Span span;
+Jakt::ids::TypeId type_id;
+Jakt::ids::TypeId key_type_id;
+Jakt::ids::TypeId value_type_id;
 } JaktDictionary;
 struct {
-NonnullRefPtr<typename types::CheckedExpression> expr;
-NonnullRefPtr<typename types::CheckedExpression> index;
-utility::Span span;
-ids::TypeId type_id;
+NonnullRefPtr<typename Jakt::types::CheckedExpression> expr;
+NonnullRefPtr<typename Jakt::types::CheckedExpression> index;
+Jakt::utility::Span span;
+Jakt::ids::TypeId type_id;
 } IndexedExpression;
 struct {
-NonnullRefPtr<typename types::CheckedExpression> expr;
-NonnullRefPtr<typename types::CheckedExpression> index;
-utility::Span span;
-ids::TypeId type_id;
+NonnullRefPtr<typename Jakt::types::CheckedExpression> expr;
+NonnullRefPtr<typename Jakt::types::CheckedExpression> index;
+Jakt::utility::Span span;
+Jakt::ids::TypeId type_id;
 } IndexedDictionary;
 struct {
-NonnullRefPtr<typename types::CheckedExpression> expr;
+NonnullRefPtr<typename Jakt::types::CheckedExpression> expr;
 size_t index;
-utility::Span span;
+Jakt::utility::Span span;
 bool is_optional;
-ids::TypeId type_id;
+Jakt::ids::TypeId type_id;
 } IndexedTuple;
 struct {
-NonnullRefPtr<typename types::CheckedExpression> expr;
+NonnullRefPtr<typename Jakt::types::CheckedExpression> expr;
 ByteString name;
-JaktInternal::Optional<ids::VarId> index;
-utility::Span span;
+JaktInternal::Optional<Jakt::ids::VarId> index;
+Jakt::utility::Span span;
 bool is_optional;
-ids::TypeId type_id;
+Jakt::ids::TypeId type_id;
 } IndexedStruct;
 struct {
-NonnullRefPtr<typename types::CheckedExpression> expr;
+NonnullRefPtr<typename Jakt::types::CheckedExpression> expr;
 ByteString index;
-utility::Span span;
+Jakt::utility::Span span;
 bool is_optional;
-ids::TypeId type_id;
+Jakt::ids::TypeId type_id;
 } IndexedCommonEnumMember;
 struct {
-NonnullRefPtr<typename types::CheckedExpression> expr;
-NonnullRefPtr<typename types::CheckedExpression> index;
+NonnullRefPtr<typename Jakt::types::CheckedExpression> expr;
+NonnullRefPtr<typename Jakt::types::CheckedExpression> index;
 bool is_optional;
-utility::Span span;
+Jakt::utility::Span span;
 } ComptimeIndex;
 struct {
-NonnullRefPtr<typename types::CheckedExpression> expr;
-JaktInternal::DynamicArray<types::CheckedMatchCase> match_cases;
-utility::Span span;
-ids::TypeId type_id;
+NonnullRefPtr<typename Jakt::types::CheckedExpression> expr;
+JaktInternal::DynamicArray<Jakt::types::CheckedMatchCase> match_cases;
+Jakt::utility::Span span;
+Jakt::ids::TypeId type_id;
 bool all_variants_constant;
 } Match;
 struct {
-NonnullRefPtr<typename types::CheckedExpression> expr;
-types::CheckedEnumVariantBinding arg;
-types::CheckedEnumVariant enum_variant;
-utility::Span span;
+NonnullRefPtr<typename Jakt::types::CheckedExpression> expr;
+Jakt::types::CheckedEnumVariantBinding arg;
+Jakt::types::CheckedEnumVariant enum_variant;
+Jakt::utility::Span span;
 } EnumVariantArg;
 struct {
-types::CheckedCall call;
-utility::Span span;
-ids::TypeId type_id;
+Jakt::types::CheckedCall call;
+Jakt::utility::Span span;
+Jakt::ids::TypeId type_id;
 } Call;
 struct {
-NonnullRefPtr<typename types::CheckedExpression> expr;
-types::CheckedCall call;
-utility::Span span;
+NonnullRefPtr<typename Jakt::types::CheckedExpression> expr;
+Jakt::types::CheckedCall call;
+Jakt::utility::Span span;
 bool is_optional;
-ids::TypeId type_id;
+Jakt::ids::TypeId type_id;
 } MethodCall;
 struct {
-JaktInternal::DynamicArray<types::CheckedNamespace> namespaces;
-NonnullRefPtr<types::CheckedVariable> var;
-utility::Span span;
+JaktInternal::DynamicArray<Jakt::types::CheckedNamespace> namespaces;
+NonnullRefPtr<Jakt::types::CheckedVariable> var;
+Jakt::utility::Span span;
 } NamespacedVar;
 struct {
-NonnullRefPtr<types::CheckedVariable> var;
-utility::Span span;
+NonnullRefPtr<Jakt::types::CheckedVariable> var;
+Jakt::utility::Span span;
 } Var;
 struct {
-utility::Span span;
-ids::TypeId type_id;
+Jakt::utility::Span span;
+Jakt::ids::TypeId type_id;
 } OptionalNone;
 struct {
-NonnullRefPtr<typename types::CheckedExpression> expr;
-utility::Span span;
-ids::TypeId type_id;
+NonnullRefPtr<typename Jakt::types::CheckedExpression> expr;
+Jakt::utility::Span span;
+Jakt::ids::TypeId type_id;
 } OptionalSome;
 struct {
-NonnullRefPtr<typename types::CheckedExpression> expr;
-utility::Span span;
-ids::TypeId type_id;
+NonnullRefPtr<typename Jakt::types::CheckedExpression> expr;
+Jakt::utility::Span span;
+Jakt::ids::TypeId type_id;
 } ForcedUnwrap;
 struct {
-types::CheckedBlock block;
-utility::Span span;
-ids::TypeId type_id;
+Jakt::types::CheckedBlock block;
+Jakt::utility::Span span;
+Jakt::ids::TypeId type_id;
 } Block;
 struct {
-JaktInternal::DynamicArray<types::CheckedCapture> captures;
-JaktInternal::DynamicArray<types::CheckedParameter> params;
+JaktInternal::DynamicArray<Jakt::types::CheckedCapture> captures;
+JaktInternal::DynamicArray<Jakt::types::CheckedParameter> params;
 bool can_throw;
-ids::TypeId return_type_id;
-types::CheckedBlock block;
-utility::Span span;
-ids::TypeId type_id;
-JaktInternal::Optional<ids::FunctionId> pseudo_function_id;
-ids::ScopeId scope_id;
+Jakt::ids::TypeId return_type_id;
+Jakt::types::CheckedBlock block;
+Jakt::utility::Span span;
+Jakt::ids::TypeId type_id;
+JaktInternal::Optional<Jakt::ids::FunctionId> pseudo_function_id;
+Jakt::ids::ScopeId scope_id;
 } Function;
 struct {
-JaktInternal::DynamicArray<types::CheckedCapture> captures;
-JaktInternal::DynamicArray<types::CheckedParameter> params;
+JaktInternal::DynamicArray<Jakt::types::CheckedCapture> captures;
+JaktInternal::DynamicArray<Jakt::types::CheckedParameter> params;
 bool can_throw;
-ids::TypeId return_type_id;
-parser::ParsedBlock block;
-utility::Span span;
-ids::TypeId type_id;
-JaktInternal::Optional<ids::FunctionId> pseudo_function_id;
-ids::ScopeId scope_id;
+Jakt::ids::TypeId return_type_id;
+Jakt::parser::ParsedBlock block;
+Jakt::utility::Span span;
+Jakt::ids::TypeId type_id;
+JaktInternal::Optional<Jakt::ids::FunctionId> pseudo_function_id;
+Jakt::ids::ScopeId scope_id;
 } DependentFunction;
 struct {
-NonnullRefPtr<typename types::CheckedExpression> expr;
-utility::Span span;
-ids::TypeId type_id;
+NonnullRefPtr<typename Jakt::types::CheckedExpression> expr;
+Jakt::utility::Span span;
+Jakt::ids::TypeId type_id;
 } Must;
 struct {
-NonnullRefPtr<typename types::CheckedExpression> expr;
-JaktInternal::Optional<types::CheckedBlock> catch_block;
-JaktInternal::Optional<utility::Span> catch_span;
+NonnullRefPtr<typename Jakt::types::CheckedExpression> expr;
+JaktInternal::Optional<Jakt::types::CheckedBlock> catch_block;
+JaktInternal::Optional<Jakt::utility::Span> catch_span;
 JaktInternal::Optional<ByteString> catch_name;
-utility::Span span;
-ids::TypeId type_id;
-ids::TypeId inner_type_id;
+Jakt::utility::Span span;
+Jakt::ids::TypeId type_id;
+Jakt::ids::TypeId inner_type_id;
 } Try;
 struct {
-NonnullRefPtr<typename types::CheckedStatement> stmt;
-types::CheckedBlock catch_block;
+NonnullRefPtr<typename Jakt::types::CheckedStatement> stmt;
+Jakt::types::CheckedBlock catch_block;
 ByteString error_name;
-utility::Span error_span;
-utility::Span span;
-ids::TypeId type_id;
+Jakt::utility::Span error_span;
+Jakt::utility::Span span;
+Jakt::ids::TypeId type_id;
 } TryBlock;
 struct {
-ids::TypeId type;
-utility::Span span;
-ids::TypeId type_id;
+Jakt::ids::TypeId type;
+Jakt::utility::Span span;
+Jakt::ids::TypeId type_id;
 } Reflect;
 struct {
-utility::Span span;
-ids::TypeId type_id;
+Jakt::utility::Span span;
+Jakt::ids::TypeId type_id;
 } Garbage;
 constexpr VariantData() {}
 ~VariantData() {}
 } as;
 constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ByteString debug_description() const;
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> Boolean(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, bool val, utility::Span span);
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> NumericConstant(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, types::CheckedNumericConstant val, utility::Span span, ids::TypeId type_id);
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> QuotedString(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, types::CheckedStringLiteral val, utility::Span span);
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> ByteConstant(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, ByteString val, utility::Span span);
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> CharacterConstant(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, ByteString val, utility::Span span);
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> CCharacterConstant(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, ByteString val, utility::Span span);
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> UnaryOp(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, NonnullRefPtr<typename types::CheckedExpression> expr, types::CheckedUnaryOperator op, utility::Span span, ids::TypeId type_id);
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> BinaryOp(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, NonnullRefPtr<typename types::CheckedExpression> lhs, types::CheckedBinaryOperator op, NonnullRefPtr<typename types::CheckedExpression> rhs, utility::Span span, ids::TypeId type_id);
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> JaktTuple(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedExpression>> vals, utility::Span span, ids::TypeId type_id);
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> Range(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, JaktInternal::Optional<NonnullRefPtr<typename types::CheckedExpression>> from, JaktInternal::Optional<NonnullRefPtr<typename types::CheckedExpression>> to, utility::Span span, ids::TypeId type_id);
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> JaktArray(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedExpression>> vals, JaktInternal::Optional<NonnullRefPtr<typename types::CheckedExpression>> repeat, utility::Span span, ids::TypeId type_id, ids::TypeId inner_type_id);
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> JaktSet(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, JaktInternal::DynamicArray<NonnullRefPtr<typename types::CheckedExpression>> vals, utility::Span span, ids::TypeId type_id, ids::TypeId inner_type_id);
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> JaktDictionary(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, JaktInternal::DynamicArray<JaktInternal::Tuple<NonnullRefPtr<typename types::CheckedExpression>,NonnullRefPtr<typename types::CheckedExpression>>> vals, utility::Span span, ids::TypeId type_id, ids::TypeId key_type_id, ids::TypeId value_type_id);
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> IndexedExpression(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, NonnullRefPtr<typename types::CheckedExpression> expr, NonnullRefPtr<typename types::CheckedExpression> index, utility::Span span, ids::TypeId type_id);
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> IndexedDictionary(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, NonnullRefPtr<typename types::CheckedExpression> expr, NonnullRefPtr<typename types::CheckedExpression> index, utility::Span span, ids::TypeId type_id);
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> IndexedTuple(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, NonnullRefPtr<typename types::CheckedExpression> expr, size_t index, utility::Span span, bool is_optional, ids::TypeId type_id);
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> IndexedStruct(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, NonnullRefPtr<typename types::CheckedExpression> expr, ByteString name, JaktInternal::Optional<ids::VarId> index, utility::Span span, bool is_optional, ids::TypeId type_id);
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> IndexedCommonEnumMember(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, NonnullRefPtr<typename types::CheckedExpression> expr, ByteString index, utility::Span span, bool is_optional, ids::TypeId type_id);
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> ComptimeIndex(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, NonnullRefPtr<typename types::CheckedExpression> expr, NonnullRefPtr<typename types::CheckedExpression> index, bool is_optional, utility::Span span);
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> Match(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, NonnullRefPtr<typename types::CheckedExpression> expr, JaktInternal::DynamicArray<types::CheckedMatchCase> match_cases, utility::Span span, ids::TypeId type_id, bool all_variants_constant);
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> EnumVariantArg(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, NonnullRefPtr<typename types::CheckedExpression> expr, types::CheckedEnumVariantBinding arg, types::CheckedEnumVariant enum_variant, utility::Span span);
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> Call(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, types::CheckedCall call, utility::Span span, ids::TypeId type_id);
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> MethodCall(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, NonnullRefPtr<typename types::CheckedExpression> expr, types::CheckedCall call, utility::Span span, bool is_optional, ids::TypeId type_id);
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> NamespacedVar(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, JaktInternal::DynamicArray<types::CheckedNamespace> namespaces, NonnullRefPtr<types::CheckedVariable> var, utility::Span span);
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> Var(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, NonnullRefPtr<types::CheckedVariable> var, utility::Span span);
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> OptionalNone(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, utility::Span span, ids::TypeId type_id);
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> OptionalSome(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, NonnullRefPtr<typename types::CheckedExpression> expr, utility::Span span, ids::TypeId type_id);
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> ForcedUnwrap(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, NonnullRefPtr<typename types::CheckedExpression> expr, utility::Span span, ids::TypeId type_id);
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> Block(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, types::CheckedBlock block, utility::Span span, ids::TypeId type_id);
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> Function(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, JaktInternal::DynamicArray<types::CheckedCapture> captures, JaktInternal::DynamicArray<types::CheckedParameter> params, bool can_throw, ids::TypeId return_type_id, types::CheckedBlock block, utility::Span span, ids::TypeId type_id, JaktInternal::Optional<ids::FunctionId> pseudo_function_id, ids::ScopeId scope_id);
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> DependentFunction(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, JaktInternal::DynamicArray<types::CheckedCapture> captures, JaktInternal::DynamicArray<types::CheckedParameter> params, bool can_throw, ids::TypeId return_type_id, parser::ParsedBlock block, utility::Span span, ids::TypeId type_id, JaktInternal::Optional<ids::FunctionId> pseudo_function_id, ids::ScopeId scope_id);
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> Must(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, NonnullRefPtr<typename types::CheckedExpression> expr, utility::Span span, ids::TypeId type_id);
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> Try(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, NonnullRefPtr<typename types::CheckedExpression> expr, JaktInternal::Optional<types::CheckedBlock> catch_block, JaktInternal::Optional<utility::Span> catch_span, JaktInternal::Optional<ByteString> catch_name, utility::Span span, ids::TypeId type_id, ids::TypeId inner_type_id);
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> TryBlock(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, NonnullRefPtr<typename types::CheckedStatement> stmt, types::CheckedBlock catch_block, ByteString error_name, utility::Span error_span, utility::Span span, ids::TypeId type_id);
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> Reflect(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, ids::TypeId type, utility::Span span, ids::TypeId type_id);
-[[nodiscard]] static NonnullRefPtr<CheckedExpression> Garbage(JaktInternal::Optional<JaktInternal::Dictionary<ids::TypeId,ids::TypeId>> generic_inferences, utility::Span span, ids::TypeId type_id);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> Boolean(JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences, bool val, Jakt::utility::Span span);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> NumericConstant(JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences, Jakt::types::CheckedNumericConstant val, Jakt::utility::Span span, Jakt::ids::TypeId type_id);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> QuotedString(JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences, Jakt::types::CheckedStringLiteral val, Jakt::utility::Span span);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> ByteConstant(JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences, ByteString val, Jakt::utility::Span span);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> CharacterConstant(JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences, ByteString val, Jakt::utility::Span span);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> CCharacterConstant(JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences, ByteString val, Jakt::utility::Span span);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> UnaryOp(JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences, NonnullRefPtr<typename Jakt::types::CheckedExpression> expr, Jakt::types::CheckedUnaryOperator op, Jakt::utility::Span span, Jakt::ids::TypeId type_id);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> BinaryOp(JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences, NonnullRefPtr<typename Jakt::types::CheckedExpression> lhs, Jakt::types::CheckedBinaryOperator op, NonnullRefPtr<typename Jakt::types::CheckedExpression> rhs, Jakt::utility::Span span, Jakt::ids::TypeId type_id);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> JaktTuple(JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences, JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::CheckedExpression>> vals, Jakt::utility::Span span, Jakt::ids::TypeId type_id);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> Range(JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences, JaktInternal::Optional<NonnullRefPtr<typename Jakt::types::CheckedExpression>> from, JaktInternal::Optional<NonnullRefPtr<typename Jakt::types::CheckedExpression>> to, Jakt::utility::Span span, Jakt::ids::TypeId type_id);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> JaktArray(JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences, JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::CheckedExpression>> vals, JaktInternal::Optional<NonnullRefPtr<typename Jakt::types::CheckedExpression>> repeat, Jakt::utility::Span span, Jakt::ids::TypeId type_id, Jakt::ids::TypeId inner_type_id);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> JaktSet(JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences, JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::CheckedExpression>> vals, Jakt::utility::Span span, Jakt::ids::TypeId type_id, Jakt::ids::TypeId inner_type_id);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> JaktDictionary(JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences, JaktInternal::DynamicArray<JaktInternal::Tuple<NonnullRefPtr<typename Jakt::types::CheckedExpression>,NonnullRefPtr<typename Jakt::types::CheckedExpression>>> vals, Jakt::utility::Span span, Jakt::ids::TypeId type_id, Jakt::ids::TypeId key_type_id, Jakt::ids::TypeId value_type_id);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> IndexedExpression(JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences, NonnullRefPtr<typename Jakt::types::CheckedExpression> expr, NonnullRefPtr<typename Jakt::types::CheckedExpression> index, Jakt::utility::Span span, Jakt::ids::TypeId type_id);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> IndexedDictionary(JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences, NonnullRefPtr<typename Jakt::types::CheckedExpression> expr, NonnullRefPtr<typename Jakt::types::CheckedExpression> index, Jakt::utility::Span span, Jakt::ids::TypeId type_id);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> IndexedTuple(JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences, NonnullRefPtr<typename Jakt::types::CheckedExpression> expr, size_t index, Jakt::utility::Span span, bool is_optional, Jakt::ids::TypeId type_id);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> IndexedStruct(JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences, NonnullRefPtr<typename Jakt::types::CheckedExpression> expr, ByteString name, JaktInternal::Optional<Jakt::ids::VarId> index, Jakt::utility::Span span, bool is_optional, Jakt::ids::TypeId type_id);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> IndexedCommonEnumMember(JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences, NonnullRefPtr<typename Jakt::types::CheckedExpression> expr, ByteString index, Jakt::utility::Span span, bool is_optional, Jakt::ids::TypeId type_id);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> ComptimeIndex(JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences, NonnullRefPtr<typename Jakt::types::CheckedExpression> expr, NonnullRefPtr<typename Jakt::types::CheckedExpression> index, bool is_optional, Jakt::utility::Span span);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> Match(JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences, NonnullRefPtr<typename Jakt::types::CheckedExpression> expr, JaktInternal::DynamicArray<Jakt::types::CheckedMatchCase> match_cases, Jakt::utility::Span span, Jakt::ids::TypeId type_id, bool all_variants_constant);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> EnumVariantArg(JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences, NonnullRefPtr<typename Jakt::types::CheckedExpression> expr, Jakt::types::CheckedEnumVariantBinding arg, Jakt::types::CheckedEnumVariant enum_variant, Jakt::utility::Span span);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> Call(JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences, Jakt::types::CheckedCall call, Jakt::utility::Span span, Jakt::ids::TypeId type_id);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> MethodCall(JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences, NonnullRefPtr<typename Jakt::types::CheckedExpression> expr, Jakt::types::CheckedCall call, Jakt::utility::Span span, bool is_optional, Jakt::ids::TypeId type_id);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> NamespacedVar(JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences, JaktInternal::DynamicArray<Jakt::types::CheckedNamespace> namespaces, NonnullRefPtr<Jakt::types::CheckedVariable> var, Jakt::utility::Span span);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> Var(JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences, NonnullRefPtr<Jakt::types::CheckedVariable> var, Jakt::utility::Span span);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> OptionalNone(JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences, Jakt::utility::Span span, Jakt::ids::TypeId type_id);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> OptionalSome(JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences, NonnullRefPtr<typename Jakt::types::CheckedExpression> expr, Jakt::utility::Span span, Jakt::ids::TypeId type_id);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> ForcedUnwrap(JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences, NonnullRefPtr<typename Jakt::types::CheckedExpression> expr, Jakt::utility::Span span, Jakt::ids::TypeId type_id);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> Block(JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences, Jakt::types::CheckedBlock block, Jakt::utility::Span span, Jakt::ids::TypeId type_id);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> Function(JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences, JaktInternal::DynamicArray<Jakt::types::CheckedCapture> captures, JaktInternal::DynamicArray<Jakt::types::CheckedParameter> params, bool can_throw, Jakt::ids::TypeId return_type_id, Jakt::types::CheckedBlock block, Jakt::utility::Span span, Jakt::ids::TypeId type_id, JaktInternal::Optional<Jakt::ids::FunctionId> pseudo_function_id, Jakt::ids::ScopeId scope_id);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> DependentFunction(JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences, JaktInternal::DynamicArray<Jakt::types::CheckedCapture> captures, JaktInternal::DynamicArray<Jakt::types::CheckedParameter> params, bool can_throw, Jakt::ids::TypeId return_type_id, Jakt::parser::ParsedBlock block, Jakt::utility::Span span, Jakt::ids::TypeId type_id, JaktInternal::Optional<Jakt::ids::FunctionId> pseudo_function_id, Jakt::ids::ScopeId scope_id);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> Must(JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences, NonnullRefPtr<typename Jakt::types::CheckedExpression> expr, Jakt::utility::Span span, Jakt::ids::TypeId type_id);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> Try(JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences, NonnullRefPtr<typename Jakt::types::CheckedExpression> expr, JaktInternal::Optional<Jakt::types::CheckedBlock> catch_block, JaktInternal::Optional<Jakt::utility::Span> catch_span, JaktInternal::Optional<ByteString> catch_name, Jakt::utility::Span span, Jakt::ids::TypeId type_id, Jakt::ids::TypeId inner_type_id);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> TryBlock(JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences, NonnullRefPtr<typename Jakt::types::CheckedStatement> stmt, Jakt::types::CheckedBlock catch_block, ByteString error_name, Jakt::utility::Span error_span, Jakt::utility::Span span, Jakt::ids::TypeId type_id);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> Reflect(JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences, Jakt::ids::TypeId type, Jakt::utility::Span span, Jakt::ids::TypeId type_id);
+[[nodiscard]] static NonnullRefPtr<CheckedExpression> Garbage(JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences, Jakt::utility::Span span, Jakt::ids::TypeId type_id);
 ~CheckedExpression();
 CheckedExpression& operator=(CheckedExpression const &);
 CheckedExpression& operator=(CheckedExpression &&);
@@ -1342,79 +1439,79 @@ CheckedExpression(CheckedExpression const&);
 CheckedExpression(CheckedExpression &&);
 private: void __jakt_destroy_variant();
 public:
-JaktInternal::Optional<types::NumberConstant> to_number_constant(NonnullRefPtr<types::CheckedProgram> const program) const;
-utility::Span span() const;
-bool is_mutable(NonnullRefPtr<types::CheckedProgram> const program) const;
+JaktInternal::Optional<Jakt::types::NumberConstant> to_number_constant(NonnullRefPtr<Jakt::types::CheckedProgram> const program) const;
+Jakt::utility::Span span() const;
+bool is_mutable(NonnullRefPtr<Jakt::types::CheckedProgram> const program) const;
 bool can_throw() const;
-ids::TypeId type() const;
-types::BlockControlFlow control_flow() const;
+Jakt::ids::TypeId type() const;
+Jakt::types::BlockControlFlow control_flow() const;
 private:
 CheckedExpression() {};
 };
 struct ResolvedNamespace {
   public:
-public: ByteString name;public: JaktInternal::Optional<parser::ExternalName> external_name;public: JaktInternal::Optional<JaktInternal::DynamicArray<ids::TypeId>> generic_parameters;public: parser::ExternalName name_for_codegen() const;
-public: ResolvedNamespace(ByteString a_name, JaktInternal::Optional<parser::ExternalName> a_external_name, JaktInternal::Optional<JaktInternal::DynamicArray<ids::TypeId>> a_generic_parameters);
+public: ByteString name;public: JaktInternal::Optional<Jakt::parser::ExternalName> external_name;public: JaktInternal::Optional<JaktInternal::DynamicArray<Jakt::ids::TypeId>> generic_parameters;public: Jakt::parser::ExternalName name_for_codegen() const;
+public: ResolvedNamespace(ByteString a_name, JaktInternal::Optional<Jakt::parser::ExternalName> a_external_name, JaktInternal::Optional<JaktInternal::DynamicArray<Jakt::ids::TypeId>> a_generic_parameters);
 
 public: ByteString debug_description() const;
 };class CheckedProgram :public RefCounted<CheckedProgram>, public Weakable<CheckedProgram> {
   public:
 virtual ~CheckedProgram() = default;
-public: NonnullRefPtr<compiler::Compiler> compiler;public: JaktInternal::DynamicArray<NonnullRefPtr<types::Module>> modules;public: JaktInternal::Dictionary<ByteString,types::LoadedModule> loaded_modules;public: ids::ModuleId create_module(ByteString const name, bool const is_root, JaktInternal::Optional<ByteString> const path);
-public: ByteString debug_description_of(ids::ScopeId const scope_id) const;
-public: ids::ScopeId create_scope(JaktInternal::Optional<ids::ScopeId> const parent_scope_id, bool const can_throw, ByteString const debug_name, ids::ModuleId const module_id, bool const for_block);
-public: ids::TypeId apply_qualifiers_to_type(parser::CheckedQualifiers const qualifiers, ids::TypeId const type_id);
-public: ids::StructId builtin_implementation_struct(types::BuiltinType const builtin, ids::ModuleId const for_module);
-public: NonnullRefPtr<types::Module> get_module(ids::ModuleId const id) const;
-public: NonnullRefPtr<types::CheckedFunction> get_function(ids::FunctionId const id) const;
-public: NonnullRefPtr<types::CheckedVariable> get_variable(ids::VarId const id) const;
-public: NonnullRefPtr<typename types::Type> get_type(ids::TypeId const id) const;
-public: types::CheckedEnum get_enum(ids::EnumId const id) const;
-public: types::CheckedStruct get_struct(ids::StructId const id) const;
-public: NonnullRefPtr<types::Scope> get_scope(ids::ScopeId const id) const;
-public: NonnullRefPtr<types::CheckedTrait> get_trait(ids::TraitId const id) const;
-public: ids::ScopeId prelude_scope_id() const;
-public: ids::ModuleId prelude_module_id() const;
-public: void set_loaded_module(ByteString const module_name, types::LoadedModule const loaded_module);
-public: JaktInternal::Optional<types::LoadedModule> get_loaded_module(ByteString const module_name) const;
-public: void set_owner_scope_if_needed(ids::ScopeId const parent_scope_id, JaktInternal::DynamicArray<ids::FunctionId> const overload_set, utility::Span const span);
-public: void set_owner_scope_if_needed(ids::ScopeId const parent_scope_id, ids::VarId const var_id);
-public: ErrorOr<JaktInternal::Optional<NonnullRefPtr<types::CheckedVariable>>> find_var_in_scope(ids::ScopeId const scope_id, ByteString const var, bool const ignore_mixin_scopes, JaktInternal::Optional<ids::ScopeId> const root_scope) const;
-public: ErrorOr<JaktInternal::Optional<types::Value>> find_comptime_binding_in_scope(ids::ScopeId const scope_id, ByteString const name, bool const ignore_mixin_scopes, JaktInternal::Optional<ids::ScopeId> const root_scope) const;
-public: ErrorOr<JaktInternal::Optional<JaktInternal::Tuple<ids::TypeId,ids::ScopeId>>> find_type_scope(ids::ScopeId const scope_id, ByteString const name, bool const ignore_mixin_scopes, JaktInternal::Optional<ids::ScopeId> const root_scope) const;
-public: ErrorOr<JaktInternal::Optional<ids::TypeId>> find_type_in_scope(ids::ScopeId const scope_id, ByteString const name, bool const ignore_mixin_scopes, JaktInternal::Optional<ids::ScopeId> const root_scope) const;
-public: ErrorOr<JaktInternal::Optional<ids::EnumId>> find_enum_in_scope(ids::ScopeId const scope_id, ByteString const name, bool const ignore_mixin_scopes, JaktInternal::Optional<ids::ScopeId> const root_scope) const;
-public: ErrorOr<JaktInternal::Optional<ids::TraitId>> find_trait_in_scope(ids::ScopeId const scope_id, ByteString const name, bool const ignore_mixin_scopes, JaktInternal::Optional<ids::ScopeId> const root_scope) const;
-public: bool is_integer(ids::TypeId const type_id) const;
-public: bool is_floating(ids::TypeId const type_id) const;
-public: bool is_numeric(ids::TypeId const type_id) const;
-public: ErrorOr<bool> is_string(ids::TypeId const type_id) const;
-public: i64 get_bits(ids::TypeId const type_id) const;
-public: bool is_signed(ids::TypeId const type_id) const;
-private: ErrorOr<JaktInternal::Optional<bool>> for_each_scope_accessible_unqualified_from_scope_direct_chain(ids::ScopeId const scope_id, Function<ErrorOr<typename utility::IterationDecision<bool>>(types::ResolutionMixin, JaktInternal::Optional<ByteString>, bool)> const& callback, JaktInternal::Optional<ids::ScopeId> const root_scope) const;
-private: ErrorOr<JaktInternal::Optional<bool>> for_each_scope_accessible_unqualified_from_scope_impl(ids::ScopeId const scope_id, Function<ErrorOr<typename utility::IterationDecision<bool>>(types::ResolutionMixin, JaktInternal::Optional<ByteString>, bool)> const& callback, bool const ignore_mixin_scopes, JaktInternal::Optional<ids::ScopeId> const root_scope) const;
-public: ErrorOr<JaktInternal::Optional<ids::StructId>> find_struct_in_scope(ids::ScopeId const scope_id, ByteString const name, bool const ignore_mixin_scopes, JaktInternal::Optional<ids::ScopeId> const root_scope) const;
-public: ErrorOr<ids::StructId> find_struct_in_prelude(ByteString const name) const;
-public: ErrorOr<bool> is_scope_directly_accessible_from(ids::ScopeId const check_scope_id, ids::ScopeId const scope_id, bool const ignore_mixin_scopes) const;
-public: ErrorOr<types::StructOrEnumId> find_reflected_primitive(ByteString const primitive) const;
-public: ids::ScopeId find_type_scope_id(ids::TypeId const type_id);
-public: JaktInternal::Optional<ids::ScopeId> find_namespace_in_immediate_children_of_scope(ids::ScopeId const scope_id, ByteString const name, bool const treat_aliases_as_imports) const;
-public: ErrorOr<JaktInternal::Optional<JaktInternal::Tuple<ids::ScopeId,bool>>> find_namespace_in_scope(ids::ScopeId const scope_id, ByteString const name, bool const treat_aliases_as_imports, bool const ignore_mixin_scopes, JaktInternal::Optional<ids::ScopeId> const root_scope) const;
-public: ErrorOr<JaktInternal::Optional<ids::FunctionId>> find_function_in_scope(ids::ScopeId const parent_scope_id, ByteString const function_name, JaktInternal::Optional<ids::ScopeId> const root_scope) const;
-public: ErrorOr<JaktInternal::Optional<ids::FunctionId>> find_default_constructors_in_scope(ids::ScopeId const parent_scope_id, ByteString const function_name, JaktInternal::Optional<ids::ScopeId> const root_scope) const;
-public: ErrorOr<JaktInternal::Optional<JaktInternal::DynamicArray<ids::FunctionId>>> find_functions_with_name_in_scope(ids::ScopeId const parent_scope_id, ByteString const function_name, bool const ignore_mixin_scopes, JaktInternal::Optional<ids::ScopeId> const root_scope) const;
-public: ErrorOr<JaktInternal::Optional<JaktInternal::Tuple<JaktInternal::DynamicArray<ids::FunctionId>,ids::ScopeId>>> find_scoped_functions_with_name_in_scope(ids::ScopeId const parent_scope_id, ByteString const function_name, bool const ignore_mixin_scopes, JaktInternal::Optional<ids::ScopeId> const root_scope) const;
-public: ErrorOr<JaktInternal::Optional<ids::StructId>> check_and_extract_weak_ptr(ids::StructId const struct_id, JaktInternal::DynamicArray<ids::TypeId> const args) const;
-public: ErrorOr<ByteString> type_name(ids::TypeId const type_id, bool const debug_mode) const;
-public: ids::TypeId find_or_add_type_id(NonnullRefPtr<typename types::Type> const type, ids::ModuleId const module_id, bool const only_in_current_module);
-public: ErrorOr<ids::TypeId> substitute_typevars_in_type(ids::TypeId const type_id, types::GenericInferences const generic_inferences, ids::ModuleId const module_id);
-private: ErrorOr<ids::TypeId> substitute_typevars_in_type_helper(ids::TypeId const type_id, types::GenericInferences const generic_inferences, ids::ModuleId const module_id);
+public: NonnullRefPtr<Jakt::compiler::Compiler> compiler;public: JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::Module>> modules;public: JaktInternal::Dictionary<ByteString,JaktInternal::Dictionary<Jakt::ids::TypeId,JaktInternal::DynamicArray<Jakt::parser::ParsedName>>> exports;public: JaktInternal::Dictionary<ByteString,Jakt::types::LoadedModule> loaded_modules;public: Jakt::ids::ModuleId create_module(ByteString const name, bool const is_root, JaktInternal::Optional<ByteString> const path);
+public: ByteString debug_description_of(Jakt::ids::ScopeId const scope_id) const;
+public: Jakt::ids::ScopeId create_scope(JaktInternal::Optional<Jakt::ids::ScopeId> const parent_scope_id, bool const can_throw, ByteString const debug_name, Jakt::ids::ModuleId const module_id, bool const for_block);
+public: Jakt::ids::TypeId apply_qualifiers_to_type(Jakt::parser::CheckedQualifiers const qualifiers, Jakt::ids::TypeId const type_id);
+public: Jakt::ids::StructId builtin_implementation_struct(Jakt::types::BuiltinType const builtin, Jakt::ids::ModuleId const for_module);
+public: NonnullRefPtr<Jakt::types::Module> get_module(Jakt::ids::ModuleId const id) const;
+public: NonnullRefPtr<Jakt::types::CheckedFunction> get_function(Jakt::ids::FunctionId const id) const;
+public: NonnullRefPtr<Jakt::types::CheckedVariable> get_variable(Jakt::ids::VarId const id) const;
+public: NonnullRefPtr<typename Jakt::types::Type> get_type(Jakt::ids::TypeId const id) const;
+public: Jakt::types::CheckedEnum get_enum(Jakt::ids::EnumId const id) const;
+public: Jakt::types::CheckedStruct get_struct(Jakt::ids::StructId const id) const;
+public: NonnullRefPtr<Jakt::types::Scope> get_scope(Jakt::ids::ScopeId const id) const;
+public: NonnullRefPtr<Jakt::types::CheckedTrait> get_trait(Jakt::ids::TraitId const id) const;
+public: Jakt::ids::ScopeId prelude_scope_id() const;
+public: Jakt::ids::ModuleId prelude_module_id() const;
+public: void set_loaded_module(ByteString const module_name, Jakt::types::LoadedModule const loaded_module);
+public: JaktInternal::Optional<Jakt::types::LoadedModule> get_loaded_module(ByteString const module_name) const;
+public: void set_owner_scope_if_needed(Jakt::ids::ScopeId const parent_scope_id, JaktInternal::DynamicArray<Jakt::ids::FunctionId> const overload_set, Jakt::utility::Span const span);
+public: void set_owner_scope_if_needed(Jakt::ids::ScopeId const parent_scope_id, Jakt::ids::VarId const var_id);
+public: ErrorOr<JaktInternal::Optional<NonnullRefPtr<Jakt::types::CheckedVariable>>> find_var_in_scope(Jakt::ids::ScopeId const scope_id, ByteString const var, bool const ignore_mixin_scopes, JaktInternal::Optional<Jakt::ids::ScopeId> const root_scope) const;
+public: ErrorOr<JaktInternal::Optional<Jakt::types::Value>> find_comptime_binding_in_scope(Jakt::ids::ScopeId const scope_id, ByteString const name, bool const ignore_mixin_scopes, JaktInternal::Optional<Jakt::ids::ScopeId> const root_scope) const;
+public: ErrorOr<JaktInternal::Optional<JaktInternal::Tuple<Jakt::ids::TypeId,Jakt::ids::ScopeId>>> find_type_scope(Jakt::ids::ScopeId const scope_id, ByteString const name, bool const ignore_mixin_scopes, JaktInternal::Optional<Jakt::ids::ScopeId> const root_scope) const;
+public: ErrorOr<JaktInternal::Optional<Jakt::ids::TypeId>> find_type_in_scope(Jakt::ids::ScopeId const scope_id, ByteString const name, bool const ignore_mixin_scopes, JaktInternal::Optional<Jakt::ids::ScopeId> const root_scope) const;
+public: ErrorOr<JaktInternal::Optional<Jakt::ids::EnumId>> find_enum_in_scope(Jakt::ids::ScopeId const scope_id, ByteString const name, bool const ignore_mixin_scopes, JaktInternal::Optional<Jakt::ids::ScopeId> const root_scope) const;
+public: ErrorOr<JaktInternal::Optional<Jakt::ids::TraitId>> find_trait_in_scope(Jakt::ids::ScopeId const scope_id, ByteString const name, bool const ignore_mixin_scopes, JaktInternal::Optional<Jakt::ids::ScopeId> const root_scope) const;
+public: bool is_integer(Jakt::ids::TypeId const type_id) const;
+public: bool is_floating(Jakt::ids::TypeId const type_id) const;
+public: bool is_numeric(Jakt::ids::TypeId const type_id) const;
+public: ErrorOr<bool> is_string(Jakt::ids::TypeId const type_id) const;
+public: i64 get_bits(Jakt::ids::TypeId const type_id) const;
+public: bool is_signed(Jakt::ids::TypeId const type_id) const;
+private: ErrorOr<JaktInternal::Optional<bool>> for_each_scope_accessible_unqualified_from_scope_direct_chain(Jakt::ids::ScopeId const scope_id, Function<ErrorOr<typename Jakt::utility::IterationDecision<bool>>(Jakt::types::ResolutionMixin, JaktInternal::Optional<ByteString>, bool)> const& callback, JaktInternal::Optional<Jakt::ids::ScopeId> const root_scope) const;
+private: ErrorOr<JaktInternal::Optional<bool>> for_each_scope_accessible_unqualified_from_scope_impl(Jakt::ids::ScopeId const scope_id, Function<ErrorOr<typename Jakt::utility::IterationDecision<bool>>(Jakt::types::ResolutionMixin, JaktInternal::Optional<ByteString>, bool)> const& callback, bool const ignore_mixin_scopes, JaktInternal::Optional<Jakt::ids::ScopeId> const root_scope) const;
+public: ErrorOr<JaktInternal::Optional<Jakt::ids::StructId>> find_struct_in_scope(Jakt::ids::ScopeId const scope_id, ByteString const name, bool const ignore_mixin_scopes, JaktInternal::Optional<Jakt::ids::ScopeId> const root_scope) const;
+public: ErrorOr<Jakt::ids::StructId> find_struct_in_prelude(ByteString const name) const;
+public: ErrorOr<bool> is_scope_directly_accessible_from(Jakt::ids::ScopeId const check_scope_id, Jakt::ids::ScopeId const scope_id, bool const ignore_mixin_scopes) const;
+public: ErrorOr<Jakt::types::StructOrEnumId> find_reflected_primitive(ByteString const primitive) const;
+public: Jakt::ids::ScopeId find_type_scope_id(Jakt::ids::TypeId const type_id);
+public: JaktInternal::Optional<Jakt::ids::ScopeId> find_namespace_in_immediate_children_of_scope(Jakt::ids::ScopeId const scope_id, ByteString const name, bool const treat_aliases_as_imports) const;
+public: ErrorOr<JaktInternal::Optional<JaktInternal::Tuple<Jakt::ids::ScopeId,bool>>> find_namespace_in_scope(Jakt::ids::ScopeId const scope_id, ByteString const name, bool const treat_aliases_as_imports, bool const ignore_mixin_scopes, JaktInternal::Optional<Jakt::ids::ScopeId> const root_scope) const;
+public: ErrorOr<JaktInternal::Optional<Jakt::ids::FunctionId>> find_function_in_scope(Jakt::ids::ScopeId const parent_scope_id, ByteString const function_name, JaktInternal::Optional<Jakt::ids::ScopeId> const root_scope) const;
+public: ErrorOr<JaktInternal::Optional<Jakt::ids::FunctionId>> find_default_constructors_in_scope(Jakt::ids::ScopeId const parent_scope_id, ByteString const function_name, JaktInternal::Optional<Jakt::ids::ScopeId> const root_scope) const;
+public: ErrorOr<JaktInternal::Optional<JaktInternal::DynamicArray<Jakt::ids::FunctionId>>> find_functions_with_name_in_scope(Jakt::ids::ScopeId const parent_scope_id, ByteString const function_name, bool const ignore_mixin_scopes, JaktInternal::Optional<Jakt::ids::ScopeId> const root_scope) const;
+public: ErrorOr<JaktInternal::Optional<JaktInternal::Tuple<JaktInternal::DynamicArray<Jakt::ids::FunctionId>,Jakt::ids::ScopeId>>> find_scoped_functions_with_name_in_scope(Jakt::ids::ScopeId const parent_scope_id, ByteString const function_name, bool const ignore_mixin_scopes, JaktInternal::Optional<Jakt::ids::ScopeId> const root_scope) const;
+public: ErrorOr<JaktInternal::Optional<Jakt::ids::StructId>> check_and_extract_weak_ptr(Jakt::ids::StructId const struct_id, JaktInternal::DynamicArray<Jakt::ids::TypeId> const args) const;
+public: ErrorOr<ByteString> type_name(Jakt::ids::TypeId const type_id, bool const debug_mode) const;
+public: Jakt::ids::TypeId find_or_add_type_id(NonnullRefPtr<typename Jakt::types::Type> const type, Jakt::ids::ModuleId const module_id, bool const only_in_current_module);
+public: ErrorOr<Jakt::ids::TypeId> substitute_typevars_in_type(Jakt::ids::TypeId const type_id, Jakt::types::GenericInferences const generic_inferences, Jakt::ids::ModuleId const module_id);
+private: ErrorOr<Jakt::ids::TypeId> substitute_typevars_in_type_helper(Jakt::ids::TypeId const type_id, Jakt::types::GenericInferences const generic_inferences, Jakt::ids::ModuleId const module_id);
 public: template <typename T>
-ErrorOr<JaktInternal::Optional<T>> for_each_scope_accessible_unqualified_from_scope(ids::ScopeId const scope_id, Function<ErrorOr<typename utility::IterationDecision<T>>(types::ResolutionMixin, JaktInternal::Optional<ByteString>, bool)> const& callback, bool const ignore_mixin_scopes, JaktInternal::Optional<ids::ScopeId> const root_scope) const;
+ErrorOr<JaktInternal::Optional<T>> for_each_scope_accessible_unqualified_from_scope(Jakt::ids::ScopeId const scope_id, Function<ErrorOr<typename Jakt::utility::IterationDecision<T>>(Jakt::types::ResolutionMixin, JaktInternal::Optional<ByteString>, bool)> const& callback, bool const ignore_mixin_scopes, JaktInternal::Optional<Jakt::ids::ScopeId> const root_scope) const;
 public: public: public: public: public: public: public: public: public: public: protected:
-explicit CheckedProgram(NonnullRefPtr<compiler::Compiler> a_compiler, JaktInternal::DynamicArray<NonnullRefPtr<types::Module>> a_modules, JaktInternal::Dictionary<ByteString,types::LoadedModule> a_loaded_modules);
+explicit CheckedProgram(NonnullRefPtr<Jakt::compiler::Compiler> a_compiler, JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::Module>> a_modules, JaktInternal::Dictionary<ByteString,JaktInternal::Dictionary<Jakt::ids::TypeId,JaktInternal::DynamicArray<Jakt::parser::ParsedName>>> a_exports, JaktInternal::Dictionary<ByteString,Jakt::types::LoadedModule> a_loaded_modules);
 public:
-static NonnullRefPtr<CheckedProgram> __jakt_create(NonnullRefPtr<compiler::Compiler> compiler, JaktInternal::DynamicArray<NonnullRefPtr<types::Module>> modules, JaktInternal::Dictionary<ByteString,types::LoadedModule> loaded_modules);
+static NonnullRefPtr<CheckedProgram> __jakt_create(NonnullRefPtr<Jakt::compiler::Compiler> compiler, JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::Module>> modules, JaktInternal::Dictionary<ByteString,JaktInternal::Dictionary<Jakt::ids::TypeId,JaktInternal::DynamicArray<Jakt::parser::ParsedName>>> exports, JaktInternal::Dictionary<ByteString,Jakt::types::LoadedModule> loaded_modules);
 
 public: ByteString debug_description() const;
 };struct ValueImpl: public RefCounted<ValueImpl> {
@@ -1470,53 +1567,53 @@ struct {
 int value;
 } CInt;
 struct {
-JaktInternal::DynamicArray<types::Value> fields;
-ids::StructId struct_id;
-JaktInternal::Optional<ids::FunctionId> constructor;
+JaktInternal::DynamicArray<Jakt::types::Value> fields;
+Jakt::ids::StructId struct_id;
+JaktInternal::Optional<Jakt::ids::FunctionId> constructor;
 } Struct;
 struct {
-JaktInternal::DynamicArray<types::Value> fields;
-ids::StructId struct_id;
-JaktInternal::Optional<ids::FunctionId> constructor;
+JaktInternal::DynamicArray<Jakt::types::Value> fields;
+Jakt::ids::StructId struct_id;
+JaktInternal::Optional<Jakt::ids::FunctionId> constructor;
 } Class;
 struct {
-JaktInternal::DynamicArray<types::Value> fields;
-ids::EnumId enum_id;
-ids::FunctionId constructor;
+JaktInternal::DynamicArray<Jakt::types::Value> fields;
+Jakt::ids::EnumId enum_id;
+Jakt::ids::FunctionId constructor;
 } Enum;
 struct {
-JaktInternal::DynamicArray<types::Value> values;
-ids::TypeId type_id;
+JaktInternal::DynamicArray<Jakt::types::Value> values;
+Jakt::ids::TypeId type_id;
 } JaktArray;
 struct {
-JaktInternal::DynamicArray<types::Value> keys;
-JaktInternal::DynamicArray<types::Value> values;
-ids::TypeId type_id;
+JaktInternal::DynamicArray<Jakt::types::Value> keys;
+JaktInternal::DynamicArray<Jakt::types::Value> values;
+Jakt::ids::TypeId type_id;
 } JaktDictionary;
 struct {
-JaktInternal::DynamicArray<types::Value> values;
-ids::TypeId type_id;
+JaktInternal::DynamicArray<Jakt::types::Value> values;
+Jakt::ids::TypeId type_id;
 } JaktSet;
 struct {
-NonnullRefPtr<typename types::ValueImpl> value;
+NonnullRefPtr<typename Jakt::types::ValueImpl> value;
 } RawPtr;
 struct {
-types::Value value;
+Jakt::types::Value value;
 } OptionalSome;
 struct {
-JaktInternal::DynamicArray<types::Value> fields;
-ids::TypeId type_id;
+JaktInternal::DynamicArray<Jakt::types::Value> fields;
+Jakt::ids::TypeId type_id;
 } JaktTuple;
 struct {
-JaktInternal::Dictionary<ByteString,types::Value> captures;
-JaktInternal::Dictionary<ByteString,JaktInternal::Tuple<ids::TypeId,JaktInternal::Optional<JaktInternal::Tuple<NonnullRefPtr<typename parser::ParsedExpression>,ids::ScopeId>>>> params;
-ids::TypeId return_type_id;
-ids::TypeId type_id;
-types::CheckedBlock block;
+JaktInternal::Dictionary<ByteString,Jakt::types::Value> captures;
+JaktInternal::Dictionary<ByteString,JaktInternal::Tuple<Jakt::ids::TypeId,JaktInternal::Optional<JaktInternal::Tuple<NonnullRefPtr<typename Jakt::parser::ParsedExpression>,Jakt::ids::ScopeId>>>> params;
+Jakt::ids::TypeId return_type_id;
+Jakt::ids::TypeId type_id;
+Jakt::types::CheckedBlock block;
 bool can_throw;
-JaktInternal::DynamicArray<types::CheckedParameter> checked_params;
-ids::ScopeId scope_id;
-JaktInternal::Optional<ids::FunctionId> pseudo_function_id;
+JaktInternal::DynamicArray<Jakt::types::CheckedParameter> checked_params;
+Jakt::ids::ScopeId scope_id;
+JaktInternal::Optional<Jakt::ids::FunctionId> pseudo_function_id;
 } Function;
 constexpr VariantData() {}
 ~VariantData() {}
@@ -1539,17 +1636,17 @@ constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 
 [[nodiscard]] static NonnullRefPtr<ValueImpl> StringView(ByteString value);
 [[nodiscard]] static NonnullRefPtr<ValueImpl> CChar(char value);
 [[nodiscard]] static NonnullRefPtr<ValueImpl> CInt(int value);
-[[nodiscard]] static NonnullRefPtr<ValueImpl> Struct(JaktInternal::DynamicArray<types::Value> fields, ids::StructId struct_id, JaktInternal::Optional<ids::FunctionId> constructor);
-[[nodiscard]] static NonnullRefPtr<ValueImpl> Class(JaktInternal::DynamicArray<types::Value> fields, ids::StructId struct_id, JaktInternal::Optional<ids::FunctionId> constructor);
-[[nodiscard]] static NonnullRefPtr<ValueImpl> Enum(JaktInternal::DynamicArray<types::Value> fields, ids::EnumId enum_id, ids::FunctionId constructor);
-[[nodiscard]] static NonnullRefPtr<ValueImpl> JaktArray(JaktInternal::DynamicArray<types::Value> values, ids::TypeId type_id);
-[[nodiscard]] static NonnullRefPtr<ValueImpl> JaktDictionary(JaktInternal::DynamicArray<types::Value> keys, JaktInternal::DynamicArray<types::Value> values, ids::TypeId type_id);
-[[nodiscard]] static NonnullRefPtr<ValueImpl> JaktSet(JaktInternal::DynamicArray<types::Value> values, ids::TypeId type_id);
-[[nodiscard]] static NonnullRefPtr<ValueImpl> RawPtr(NonnullRefPtr<typename types::ValueImpl> value);
-[[nodiscard]] static NonnullRefPtr<ValueImpl> OptionalSome(types::Value value);
+[[nodiscard]] static NonnullRefPtr<ValueImpl> Struct(JaktInternal::DynamicArray<Jakt::types::Value> fields, Jakt::ids::StructId struct_id, JaktInternal::Optional<Jakt::ids::FunctionId> constructor);
+[[nodiscard]] static NonnullRefPtr<ValueImpl> Class(JaktInternal::DynamicArray<Jakt::types::Value> fields, Jakt::ids::StructId struct_id, JaktInternal::Optional<Jakt::ids::FunctionId> constructor);
+[[nodiscard]] static NonnullRefPtr<ValueImpl> Enum(JaktInternal::DynamicArray<Jakt::types::Value> fields, Jakt::ids::EnumId enum_id, Jakt::ids::FunctionId constructor);
+[[nodiscard]] static NonnullRefPtr<ValueImpl> JaktArray(JaktInternal::DynamicArray<Jakt::types::Value> values, Jakt::ids::TypeId type_id);
+[[nodiscard]] static NonnullRefPtr<ValueImpl> JaktDictionary(JaktInternal::DynamicArray<Jakt::types::Value> keys, JaktInternal::DynamicArray<Jakt::types::Value> values, Jakt::ids::TypeId type_id);
+[[nodiscard]] static NonnullRefPtr<ValueImpl> JaktSet(JaktInternal::DynamicArray<Jakt::types::Value> values, Jakt::ids::TypeId type_id);
+[[nodiscard]] static NonnullRefPtr<ValueImpl> RawPtr(NonnullRefPtr<typename Jakt::types::ValueImpl> value);
+[[nodiscard]] static NonnullRefPtr<ValueImpl> OptionalSome(Jakt::types::Value value);
 [[nodiscard]] static NonnullRefPtr<ValueImpl> OptionalNone();
-[[nodiscard]] static NonnullRefPtr<ValueImpl> JaktTuple(JaktInternal::DynamicArray<types::Value> fields, ids::TypeId type_id);
-[[nodiscard]] static NonnullRefPtr<ValueImpl> Function(JaktInternal::Dictionary<ByteString,types::Value> captures, JaktInternal::Dictionary<ByteString,JaktInternal::Tuple<ids::TypeId,JaktInternal::Optional<JaktInternal::Tuple<NonnullRefPtr<typename parser::ParsedExpression>,ids::ScopeId>>>> params, ids::TypeId return_type_id, ids::TypeId type_id, types::CheckedBlock block, bool can_throw, JaktInternal::DynamicArray<types::CheckedParameter> checked_params, ids::ScopeId scope_id, JaktInternal::Optional<ids::FunctionId> pseudo_function_id);
+[[nodiscard]] static NonnullRefPtr<ValueImpl> JaktTuple(JaktInternal::DynamicArray<Jakt::types::Value> fields, Jakt::ids::TypeId type_id);
+[[nodiscard]] static NonnullRefPtr<ValueImpl> Function(JaktInternal::Dictionary<ByteString,Jakt::types::Value> captures, JaktInternal::Dictionary<ByteString,JaktInternal::Tuple<Jakt::ids::TypeId,JaktInternal::Optional<JaktInternal::Tuple<NonnullRefPtr<typename Jakt::parser::ParsedExpression>,Jakt::ids::ScopeId>>>> params, Jakt::ids::TypeId return_type_id, Jakt::ids::TypeId type_id, Jakt::types::CheckedBlock block, bool can_throw, JaktInternal::DynamicArray<Jakt::types::CheckedParameter> checked_params, Jakt::ids::ScopeId scope_id, JaktInternal::Optional<Jakt::ids::FunctionId> pseudo_function_id);
 ~ValueImpl();
 ValueImpl& operator=(ValueImpl const &);
 ValueImpl& operator=(ValueImpl &&);
@@ -1557,9 +1654,9 @@ ValueImpl(ValueImpl const&);
 ValueImpl(ValueImpl &&);
 private: void __jakt_destroy_variant();
 public:
-ErrorOr<ids::TypeId> type_id(NonnullRefPtr<types::CheckedProgram>& program) const;
-NonnullRefPtr<typename types::ValueImpl> copy() const;
-bool equals(NonnullRefPtr<typename types::ValueImpl> const other) const;
+ErrorOr<Jakt::ids::TypeId> type_id(NonnullRefPtr<Jakt::types::CheckedProgram>& program) const;
+NonnullRefPtr<typename Jakt::types::ValueImpl> copy() const;
+bool equals(NonnullRefPtr<typename Jakt::types::ValueImpl> const other) const;
 private:
 ValueImpl() {};
 };
@@ -1596,10 +1693,10 @@ NumericOrStringValue() {};
 class TypecheckFunctions :public RefCounted<TypecheckFunctions>, public Weakable<TypecheckFunctions> {
   public:
 virtual ~TypecheckFunctions() = default;
-public: Function<ErrorOr<types::CheckedBlock>(parser::ParsedBlock, ids::ScopeId, types::SafetyMode, JaktInternal::Optional<ids::TypeId>, JaktInternal::Optional<ids::FunctionId>)> block;public: Function<ErrorOr<ids::FunctionId>(NonnullRefPtr<types::CheckedFunction>)> register_function;public: protected:
-explicit TypecheckFunctions(Function<ErrorOr<types::CheckedBlock>(parser::ParsedBlock, ids::ScopeId, types::SafetyMode, JaktInternal::Optional<ids::TypeId>, JaktInternal::Optional<ids::FunctionId>)> a_block, Function<ErrorOr<ids::FunctionId>(NonnullRefPtr<types::CheckedFunction>)> a_register_function);
+public: Function<ErrorOr<Jakt::types::CheckedBlock>(Jakt::parser::ParsedBlock, Jakt::ids::ScopeId, Jakt::types::SafetyMode, JaktInternal::Optional<Jakt::ids::TypeId>, JaktInternal::Optional<Jakt::ids::FunctionId>)> block;public: Function<ErrorOr<Jakt::ids::FunctionId>(NonnullRefPtr<Jakt::types::CheckedFunction>)> register_function;public: protected:
+explicit TypecheckFunctions(Function<ErrorOr<Jakt::types::CheckedBlock>(Jakt::parser::ParsedBlock, Jakt::ids::ScopeId, Jakt::types::SafetyMode, JaktInternal::Optional<Jakt::ids::TypeId>, JaktInternal::Optional<Jakt::ids::FunctionId>)> a_block, Function<ErrorOr<Jakt::ids::FunctionId>(NonnullRefPtr<Jakt::types::CheckedFunction>)> a_register_function);
 public:
-static NonnullRefPtr<TypecheckFunctions> __jakt_create(Function<ErrorOr<types::CheckedBlock>(parser::ParsedBlock, ids::ScopeId, types::SafetyMode, JaktInternal::Optional<ids::TypeId>, JaktInternal::Optional<ids::FunctionId>)> block, Function<ErrorOr<ids::FunctionId>(NonnullRefPtr<types::CheckedFunction>)> register_function);
+static NonnullRefPtr<TypecheckFunctions> __jakt_create(Function<ErrorOr<Jakt::types::CheckedBlock>(Jakt::parser::ParsedBlock, Jakt::ids::ScopeId, Jakt::types::SafetyMode, JaktInternal::Optional<Jakt::ids::TypeId>, JaktInternal::Optional<Jakt::ids::FunctionId>)> block, Function<ErrorOr<Jakt::ids::FunctionId>(NonnullRefPtr<Jakt::types::CheckedFunction>)> register_function);
 
 public: ByteString debug_description() const;
 };}

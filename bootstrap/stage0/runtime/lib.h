@@ -70,6 +70,14 @@ class Set;
 
 #include <math.h>
 
+#define TRY_EXPLICIT(expr) \
+    ({ \
+        auto&& _jakt_value = (expr); \
+        if (_jakt_value.is_error()) \
+            return JaktInternal::ExplicitValue{_jakt_value.release_error()}; \
+        _jakt_value.release_value(); \
+    })
+
 namespace JaktInternal {
 
 #ifdef JAKT_CONTINUE_ON_PANIC

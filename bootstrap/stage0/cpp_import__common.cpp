@@ -1,4 +1,9 @@
+#ifdef _WIN32
+extern "C" __cdecl int SetConsoleOutputCP(unsigned int code_page);
+#endif
 #include "cpp_import__common.h"
+#include "cpp_import__common.h"
+#include "utility.h"
 namespace Jakt {
 namespace cpp_import__common {
 ErrorOr<ByteString> read_all(ByteString const filename) {
@@ -25,23 +30,23 @@ return ((builder).to_string());
 }
 }
 
-ByteString cpp_import__common::CppImportErrors::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("CppImportErrors("sv);{
+ByteString Jakt::cpp_import__common::CppImportErrors::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("CppImportErrors("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 }
 builder.append(")"sv);return builder.to_string(); }
-StringView cpp_import__common::CppImportErrors::path_not_found() {
+StringView Jakt::cpp_import__common::CppImportErrors::path_not_found() {
 {
 return (StringView::from_string_literal("Could not find import path"sv));
 }
 }
 
-StringView cpp_import__common::CppImportErrors::no_this_type() {
+StringView Jakt::cpp_import__common::CppImportErrors::no_this_type() {
 {
 return (StringView::from_string_literal("No 'this' type when compiling a function"sv));
 }
 }
 
-cpp_import__common::CppImportErrors::CppImportErrors(){}
+Jakt::cpp_import__common::CppImportErrors::CppImportErrors(){}
 
 }
 } // namespace Jakt
