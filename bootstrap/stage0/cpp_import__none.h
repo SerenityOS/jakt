@@ -1,15 +1,18 @@
 #pragma once
-#include "__unified_forward.h"
+#include <lib.h>
 #include "types.h"
 #include "ids.h"
 #include "compiler.h"
 #include "jakt__path.h"
 namespace Jakt {
 namespace cpp_import__none {
+struct CppImportProcessor;
+}
+namespace cpp_import__none {
 struct CppImportProcessor {
   public:
-public: static cpp_import__none::CppImportProcessor create();
-public: ErrorOr<ids::ScopeId> process_cpp_import(NonnullRefPtr<types::CheckedProgram>& program, jakt__path::Path const import_path, ids::ScopeId const scope_id, bool const is_c, JaktInternal::Dictionary<ByteString,ByteString> const defines);
+public: static Jakt::cpp_import__none::CppImportProcessor create();
+public: ErrorOr<Jakt::ids::ScopeId> process_cpp_import(NonnullRefPtr<Jakt::types::CheckedProgram>& program, Jakt::jakt__path::Path const import_path, Jakt::ids::ScopeId const scope_id, bool const is_c, JaktInternal::Dictionary<ByteString,ByteString> const defines);
 public: CppImportProcessor();
 
 public: ByteString debug_description() const;

@@ -1,26 +1,19 @@
+#ifdef _WIN32
+extern "C" __cdecl int SetConsoleOutputCP(unsigned int code_page);
+#endif
 #include "ids.h"
 namespace Jakt {
 namespace ids {
-ByteString ids::ModuleId::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ModuleId("sv);{
+ByteString Jakt::ids::ModuleId::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ModuleId("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("id: {}", id);
 }
 builder.append(")"sv);return builder.to_string(); }
-ids::ModuleId::ModuleId(size_t a_id): id(move(a_id)){}
+Jakt::ids::ModuleId::ModuleId(size_t a_id): id(move(a_id)){}
 
 
-ByteString ids::VarId::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("VarId("sv);{
-JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
-JaktInternal::PrettyPrint::must_output_indentation(builder);
-builder.appendff("module: {}, ", module);
-JaktInternal::PrettyPrint::must_output_indentation(builder);
-builder.appendff("id: {}", id);
-}
-builder.append(")"sv);return builder.to_string(); }
-ids::VarId::VarId(ids::ModuleId a_module, size_t a_id): module(move(a_module)), id(move(a_id)){}
-
-ByteString ids::FunctionId::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("FunctionId("sv);{
+ByteString Jakt::ids::VarId::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("VarId("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("module: {}, ", module);
@@ -28,9 +21,9 @@ JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("id: {}", id);
 }
 builder.append(")"sv);return builder.to_string(); }
-ids::FunctionId::FunctionId(ids::ModuleId a_module, size_t a_id): module(move(a_module)), id(move(a_id)){}
+Jakt::ids::VarId::VarId(Jakt::ids::ModuleId a_module, size_t a_id): module(move(a_module)), id(move(a_id)){}
 
-ByteString ids::StructId::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("StructId("sv);{
+ByteString Jakt::ids::FunctionId::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("FunctionId("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("module: {}, ", module);
@@ -38,10 +31,9 @@ JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("id: {}", id);
 }
 builder.append(")"sv);return builder.to_string(); }
-ids::StructId::StructId(ids::ModuleId a_module, size_t a_id): module(move(a_module)), id(move(a_id)){}
+Jakt::ids::FunctionId::FunctionId(Jakt::ids::ModuleId a_module, size_t a_id): module(move(a_module)), id(move(a_id)){}
 
-
-ByteString ids::EnumId::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("EnumId("sv);{
+ByteString Jakt::ids::StructId::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("StructId("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("module: {}, ", module);
@@ -49,9 +41,10 @@ JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("id: {}", id);
 }
 builder.append(")"sv);return builder.to_string(); }
-ids::EnumId::EnumId(ids::ModuleId a_module, size_t a_id): module(move(a_module)), id(move(a_id)){}
+Jakt::ids::StructId::StructId(Jakt::ids::ModuleId a_module, size_t a_id): module(move(a_module)), id(move(a_id)){}
 
-ByteString ids::TypeId::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("TypeId("sv);{
+
+ByteString Jakt::ids::EnumId::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("EnumId("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("module: {}, ", module);
@@ -59,10 +52,9 @@ JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("id: {}", id);
 }
 builder.append(")"sv);return builder.to_string(); }
-ids::TypeId::TypeId(ids::ModuleId a_module, size_t a_id): module(move(a_module)), id(move(a_id)){}
+Jakt::ids::EnumId::EnumId(Jakt::ids::ModuleId a_module, size_t a_id): module(move(a_module)), id(move(a_id)){}
 
-
-ByteString ids::TraitId::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("TraitId("sv);{
+ByteString Jakt::ids::TypeId::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("TypeId("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("module: {}, ", module);
@@ -70,9 +62,20 @@ JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("id: {}", id);
 }
 builder.append(")"sv);return builder.to_string(); }
-ids::TraitId::TraitId(ids::ModuleId a_module, size_t a_id): module(move(a_module)), id(move(a_id)){}
+Jakt::ids::TypeId::TypeId(Jakt::ids::ModuleId a_module, size_t a_id): module(move(a_module)), id(move(a_id)){}
 
-ByteString ids::ScopeId::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ScopeId("sv);{
+
+ByteString Jakt::ids::TraitId::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("TraitId("sv);{
+JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("module: {}, ", module);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("id: {}", id);
+}
+builder.append(")"sv);return builder.to_string(); }
+Jakt::ids::TraitId::TraitId(Jakt::ids::ModuleId a_module, size_t a_id): module(move(a_module)), id(move(a_id)){}
+
+ByteString Jakt::ids::ScopeId::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ScopeId("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("module_id: {}, ", module_id);
@@ -80,7 +83,7 @@ JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("id: {}", id);
 }
 builder.append(")"sv);return builder.to_string(); }
-ids::ScopeId::ScopeId(ids::ModuleId a_module_id, size_t a_id): module_id(move(a_module_id)), id(move(a_id)){}
+Jakt::ids::ScopeId::ScopeId(Jakt::ids::ModuleId a_module_id, size_t a_id): module_id(move(a_module_id)), id(move(a_id)){}
 
 
 }

@@ -1,9 +1,10 @@
 #pragma once
-#include "__unified_forward.h"
+#include <lib.h>
 #include "repl_backend__default.h"
 #include "platform.h"
 #include "typechecker.h"
 #include "interpreter.h"
+#include "types.h"
 #include "ids.h"
 #include "parser.h"
 #include "lexer.h"
@@ -14,14 +15,21 @@
 #include "jakt__arguments.h"
 namespace Jakt {
 namespace repl {
+struct REPL;
+ErrorOr<ByteString> serialize_unary_operation(Jakt::types::CheckedUnaryOperator const op, ByteString const expr);
+
+ErrorOr<ByteString> serialize_ast_node(NonnullRefPtr<typename Jakt::types::CheckedExpression> const node);
+
+}
+namespace repl {
 struct REPL {
   public:
-public: NonnullRefPtr<compiler::Compiler> compiler;public: typechecker::Typechecker typechecker;public: ids::ScopeId root_scope_id;public: NonnullRefPtr<interpreter::InterpreterScope> root_interpreter_scope;public: utility::FileId file_id;public: static ErrorOr<repl::REPL> create(jakt__path::Path const runtime_path, JaktInternal::Optional<ByteString> const target_triple, JaktInternal::Dictionary<ByteString,ByteString> const user_configuration);
+public: NonnullRefPtr<Jakt::compiler::Compiler> compiler;public: Jakt::typechecker::Typechecker typechecker;public: Jakt::ids::ScopeId root_scope_id;public: NonnullRefPtr<Jakt::interpreter::InterpreterScope> root_interpreter_scope;public: Jakt::utility::FileId file_id;public: static ErrorOr<Jakt::repl::REPL> create(Jakt::jakt__path::Path const runtime_path, JaktInternal::Optional<ByteString> const target_triple, JaktInternal::Dictionary<ByteString,ByteString> const user_configuration);
 public: ErrorOr<bool> handle_possible_error();
 public: static JaktInternal::DynamicArray<u8> line_to_bytes(ByteString const line);
-public: static bool check_parens(JaktInternal::DynamicArray<lexer::Token> const tokens);
+public: static bool check_parens(JaktInternal::DynamicArray<Jakt::lexer::Token> const tokens);
 public: ErrorOr<void> run();
-public: REPL(NonnullRefPtr<compiler::Compiler> a_compiler, typechecker::Typechecker a_typechecker, ids::ScopeId a_root_scope_id, NonnullRefPtr<interpreter::InterpreterScope> a_root_interpreter_scope, utility::FileId a_file_id);
+public: REPL(NonnullRefPtr<Jakt::compiler::Compiler> a_compiler, Jakt::typechecker::Typechecker a_typechecker, Jakt::ids::ScopeId a_root_scope_id, NonnullRefPtr<Jakt::interpreter::InterpreterScope> a_root_interpreter_scope, Jakt::utility::FileId a_file_id);
 
 public: ByteString debug_description() const;
 };}

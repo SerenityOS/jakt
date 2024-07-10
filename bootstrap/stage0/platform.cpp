@@ -1,7 +1,10 @@
+#ifdef _WIN32
+extern "C" __cdecl int SetConsoleOutputCP(unsigned int code_page);
+#endif
 #include "platform.h"
 namespace Jakt {
 namespace platform {
-ErrorOr<ByteString> library_name_for_target(ByteString const name,jakt__platform::Target const target) {
+ErrorOr<ByteString> library_name_for_target(ByteString const name,Jakt::jakt__platform::Target const target) {
 {
 ByteString const target_name = TRY((((target).name(false))));
 return __jakt_format((StringView::from_string_literal("{}/{}"sv)),target_name,({

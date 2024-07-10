@@ -1,3 +1,6 @@
+#ifdef _WIN32
+extern "C" __cdecl int SetConsoleOutputCP(unsigned int code_page);
+#endif
 #include "platform__unknown_compiler.h"
 namespace Jakt {
 namespace platform__unknown_compiler {

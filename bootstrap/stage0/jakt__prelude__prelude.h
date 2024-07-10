@@ -1,5 +1,5 @@
 #pragma once
-#include "__unified_forward.h"
+#include <lib.h>
 #include "jakt__prelude__class_name.h"
 #include "jakt__prelude__hash.h"
 #include "jakt__prelude__operators.h"

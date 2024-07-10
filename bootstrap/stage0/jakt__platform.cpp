@@ -1,9 +1,14 @@
+#ifdef _WIN32
+extern "C" __cdecl int SetConsoleOutputCP(unsigned int code_page);
+#endif
 #include "jakt__platform.h"
+#include "jakt__arguments.h"
+#include "jakt__prelude__operators.h"
 namespace Jakt {
 namespace jakt__platform {
 ErrorOr<JaktInternal::DynamicArray<ByteString>> platform_import_names() {
 {
-jakt__platform::Target const target = TRY((jakt__platform::Target::active()));
+Jakt::jakt__platform::Target const target = TRY((Jakt::jakt__platform::Target::active()));
 return ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::DynamicArray<ByteString>,ErrorOr<JaktInternal::DynamicArray<ByteString>>> {
 auto __jakt_enum_value = (((target).os));
@@ -78,8 +83,8 @@ JaktInternal::Optional<size_t> last_namespace_separator(ByteString const name) {
 {
 size_t i = JaktInternal::checked_sub(((name).length()),static_cast<size_t>(1ULL));
 while ([](size_t const& self, size_t rhs) -> bool {{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
-return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> Jakt::jakt__prelude__operators::Ordering {{
+return (infallible_enum_cast<Jakt::jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
 (self,rhs))))) != (static_cast<u8>(0)));
@@ -95,7 +100,7 @@ return JaktInternal::OptionalNone();
 }
 }
 
-ByteString jakt__platform::Target::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("Target("sv);{
+ByteString Jakt::jakt__platform::Target::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("Target("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("arch: \"{}\", ", arch);
@@ -107,25 +112,25 @@ JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("abi: \"{}\"", abi);
 }
 builder.append(")"sv);return builder.to_string(); }
-ErrorOr<jakt__platform::Target> jakt__platform::Target::from_triple(ByteString const triple) {
+ErrorOr<Jakt::jakt__platform::Target> Jakt::jakt__platform::Target::from_triple(ByteString const triple) {
 {
 JaktInternal::DynamicArray<ByteString> const parts = ((triple).split('-'));
 if (((((parts).size())) != (static_cast<size_t>(4ULL)))){
 warnln((StringView::from_string_literal("Invalid target triple '{}'"sv)),triple);
 return Error::from_errno(static_cast<i32>(22));
 }
-return jakt__platform::Target(((parts)[static_cast<i64>(0LL)]),((parts)[static_cast<i64>(1LL)]),((parts)[static_cast<i64>(2LL)]),((parts)[static_cast<i64>(3LL)]));
+return Jakt::jakt__platform::Target(((parts)[static_cast<i64>(0LL)]),((parts)[static_cast<i64>(1LL)]),((parts)[static_cast<i64>(2LL)]),((parts)[static_cast<i64>(3LL)]));
 }
 }
 
-ErrorOr<jakt__platform::Target> jakt__platform::Target::active() {
+ErrorOr<Jakt::jakt__platform::Target> Jakt::jakt__platform::Target::active() {
 {
-ByteString const triple = TRY((jakt__compiler::target_triple_string()));
-return TRY((jakt__platform::Target::from_triple(triple)));
+ByteString const triple = TRY((Jakt::jakt__compiler::target_triple_string()));
+return ((Jakt::jakt__platform::Target::from_triple(triple)));
 }
 }
 
-ErrorOr<ByteString> jakt__platform::Target::name(bool const abbreviate) const {
+ErrorOr<ByteString> Jakt::jakt__platform::Target::name(bool const abbreviate) const {
 {
 return ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<ByteString>> {
@@ -145,9 +150,9 @@ VERIFY_NOT_REACHED();
 }
 }
 
-jakt__platform::Target::Target(ByteString a_arch, ByteString a_platform, ByteString a_os, ByteString a_abi): arch(move(a_arch)), platform(move(a_platform)), os(move(a_os)), abi(move(a_abi)){}
+Jakt::jakt__platform::Target::Target(ByteString a_arch, ByteString a_platform, ByteString a_os, ByteString a_abi): arch(move(a_arch)), platform(move(a_platform)), os(move(a_os)), abi(move(a_abi)){}
 
-ErrorOr<size_t> jakt__platform::Target::size_t_size() const {
+ErrorOr<size_t> Jakt::jakt__platform::Target::size_t_size() const {
 {
 return ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<size_t>> {
@@ -171,7 +176,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("size_
 }
 }
 
-ErrorOr<size_t> jakt__platform::Target::pointer_size() const {
+ErrorOr<size_t> Jakt::jakt__platform::Target::pointer_size() const {
 {
 return ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<size_t>> {
@@ -195,7 +200,7 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("point
 }
 }
 
-ErrorOr<size_t> jakt__platform::Target::int_size() const {
+ErrorOr<size_t> Jakt::jakt__platform::Target::int_size() const {
 {
 return ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,ErrorOr<size_t>> {
@@ -219,21 +224,21 @@ return Error::__jakt_from_string_literal((StringView::from_string_literal("int s
 }
 }
 
-ErrorOr<size_t> jakt__platform::Target::size_t_alignment() const {
+ErrorOr<size_t> Jakt::jakt__platform::Target::size_t_alignment() const {
 {
-return TRY((((*this).size_t_size())));
+return ((((*this).size_t_size())));
 }
 }
 
-ErrorOr<size_t> jakt__platform::Target::pointer_alignment() const {
+ErrorOr<size_t> Jakt::jakt__platform::Target::pointer_alignment() const {
 {
-return TRY((((*this).pointer_size())));
+return ((((*this).pointer_size())));
 }
 }
 
-ErrorOr<size_t> jakt__platform::Target::int_alignment() const {
+ErrorOr<size_t> Jakt::jakt__platform::Target::int_alignment() const {
 {
-return TRY((((*this).int_size())));
+return ((((*this).int_size())));
 }
 }
 

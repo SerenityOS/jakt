@@ -1,7 +1,10 @@
 #pragma once
-#include "__unified_forward.h"
+#include <lib.h>
 #include "jakt__compiler.h"
 namespace Jakt {
+namespace jakt__prelude__configuration {
+struct UserConfiguration;
+}
 namespace jakt__prelude__configuration {
 struct UserConfiguration {
   public:

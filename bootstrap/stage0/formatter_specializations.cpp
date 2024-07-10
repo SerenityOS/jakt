@@ -1,17 +1,14 @@
 #include "formatter.h"
-#include "formatter.h"
-#include "lexer.h"
-#include "compiler.h"
 namespace Jakt {
 namespace formatter {
 
-/* specialisation 0 of function collapse: ["lexer::Token"] */
-template<> JaktInternal::Optional<lexer::Token> collapse<lexer::Token>(JaktInternal::Optional<JaktInternal::Optional<lexer::Token>> const x);
+/* specialisation 0 of function collapse: ["Jakt::lexer::Token"] */
+template<> JaktInternal::Optional<Jakt::lexer::Token> collapse<Jakt::lexer::Token>(JaktInternal::Optional<JaktInternal::Optional<Jakt::lexer::Token>> const x);
 template<>
-JaktInternal::Optional<lexer::Token> collapse<lexer::Token>(JaktInternal::Optional<JaktInternal::Optional<lexer::Token>> const x) {
+JaktInternal::Optional<Jakt::lexer::Token> collapse<Jakt::lexer::Token>(JaktInternal::Optional<JaktInternal::Optional<Jakt::lexer::Token>> const x) {
 {
 return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<lexer::Token>,JaktInternal::Optional<lexer::Token>> {
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<Jakt::lexer::Token>,JaktInternal::Optional<Jakt::lexer::Token>> {
 auto __jakt_enum_value = (((x).has_value()));
 if (__jakt_enum_value == true) {
 return JaktInternal::ExplicitValue((x.value()));

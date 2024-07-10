@@ -1,6 +1,5 @@
 #include "jakt__platform__utility.h"
 #include "jakt__libc__io.h"
-#include "jakt__platform__utility.h"
 namespace Jakt {
 namespace jakt__platform__utility {
 
@@ -21,7 +20,7 @@ bool const dep = true;
 return nullptr;
 }
 
-abort();
+Jakt::abort();
 }
 }
 ;
@@ -37,7 +36,7 @@ bool const dep = true;
 return nullptr;
 }
 
-abort();
+Jakt::abort();
 }
 }
 ;
@@ -55,7 +54,7 @@ ptr = static_cast<RemoveReference<decltype(ptr)>>(calloc(count, sizeof(*ptr)));
 }
 }
 ;
-char* ptr = jakt__platform__utility::null<char*>();
+char* ptr = Jakt::jakt__platform__utility::null<char*>();
 alloc_impl(((ptr)));
 return ptr;
 }

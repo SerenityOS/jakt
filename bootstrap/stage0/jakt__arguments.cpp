@@ -1,7 +1,12 @@
+#ifdef _WIN32
+extern "C" __cdecl int SetConsoleOutputCP(unsigned int code_page);
+#endif
 #include "jakt__arguments.h"
+#include "jakt__prelude__operators.h"
+#include "jakt__prelude__static_array.h"
 namespace Jakt {
 namespace jakt__arguments {
-ByteString jakt__arguments::ArgsParser::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ArgsParser("sv);{
+ByteString Jakt::jakt__arguments::ArgsParser::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("ArgsParser("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("args: {}, ", args);
@@ -11,7 +16,7 @@ JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("definitely_positional_args: {}", definitely_positional_args);
 }
 builder.append(")"sv);return builder.to_string(); }
-ErrorOr<bool> jakt__arguments::ArgsParser::flag(JaktInternal::DynamicArray<ByteString> const names) {
+ErrorOr<bool> Jakt::jakt__arguments::ArgsParser::flag(JaktInternal::DynamicArray<ByteString> const names) {
 {
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(((((*this).args)).size()))});
@@ -49,7 +54,7 @@ return false;
 }
 }
 
-ErrorOr<JaktInternal::Optional<ByteString>> jakt__arguments::ArgsParser::option(JaktInternal::DynamicArray<ByteString> const names) {
+ErrorOr<JaktInternal::Optional<ByteString>> Jakt::jakt__arguments::ArgsParser::option(JaktInternal::DynamicArray<ByteString> const names) {
 {
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(1ULL)),static_cast<size_t>(((((*this).args)).size()))});
@@ -71,8 +76,8 @@ ByteString name = (_magic_value.value());
 {
 if (((((((*this).args))[i])) == (name))){
 if ([](size_t const& self, size_t rhs) -> bool {{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
-return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> Jakt::jakt__prelude__operators::Ordering {{
+return (infallible_enum_cast<Jakt::jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
 (self,rhs))))) != (static_cast<u8>(2)));
@@ -104,7 +109,7 @@ return JaktInternal::OptionalNone();
 }
 }
 
-ErrorOr<JaktInternal::DynamicArray<ByteString>> jakt__arguments::ArgsParser::option_multiple(JaktInternal::DynamicArray<ByteString> const names) {
+ErrorOr<JaktInternal::DynamicArray<ByteString>> Jakt::jakt__arguments::ArgsParser::option_multiple(JaktInternal::DynamicArray<ByteString> const names) {
 {
 JaktInternal::DynamicArray<ByteString> result = DynamicArray<ByteString>::create_with({});
 {
@@ -127,8 +132,8 @@ ByteString name = (_magic_value.value());
 {
 if (((((((*this).args))[i])) == (name))){
 if ([](size_t const& self, size_t rhs) -> bool {{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> jakt__prelude__operators::Ordering {{
-return (infallible_enum_cast<jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
+return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> Jakt::jakt__prelude__operators::Ordering {{
+return (infallible_enum_cast<Jakt::jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
 }
 (self,rhs))))) != (static_cast<u8>(2)));
@@ -161,9 +166,9 @@ return result;
 }
 }
 
-jakt__arguments::ArgsParser jakt__arguments::ArgsParser::from_args(JaktInternal::DynamicArray<ByteString> const args) {
+Jakt::jakt__arguments::ArgsParser Jakt::jakt__arguments::ArgsParser::from_args(JaktInternal::DynamicArray<ByteString> const args) {
 {
-jakt__arguments::ArgsParser parser = jakt__arguments::ArgsParser(args,DynamicArray<size_t>::create_with({}),DynamicArray<ByteString>::create_with({}));
+Jakt::jakt__arguments::ArgsParser parser = Jakt::jakt__arguments::ArgsParser(args,DynamicArray<size_t>::create_with({}),DynamicArray<ByteString>::create_with({}));
 size_t i = static_cast<size_t>(0ULL);
 {
 JaktInternal::ArrayIterator<ByteString> _magic = ((((parser).args)).iterator());
@@ -189,7 +194,7 @@ return parser;
 }
 }
 
-JaktInternal::DynamicArray<ByteString> jakt__arguments::ArgsParser::remaining_arguments() const {
+JaktInternal::DynamicArray<ByteString> Jakt::jakt__arguments::ArgsParser::remaining_arguments() const {
 {
 JaktInternal::DynamicArray<ByteString> remaining = DynamicArray<ByteString>::create_with({});
 {
@@ -228,7 +233,7 @@ return remaining;
 }
 }
 
-jakt__arguments::ArgsParser::ArgsParser(JaktInternal::DynamicArray<ByteString> a_args, JaktInternal::DynamicArray<size_t> a_removed_indices, JaktInternal::DynamicArray<ByteString> a_definitely_positional_args): args(move(a_args)), removed_indices(move(a_removed_indices)), definitely_positional_args(move(a_definitely_positional_args)){}
+Jakt::jakt__arguments::ArgsParser::ArgsParser(JaktInternal::DynamicArray<ByteString> a_args, JaktInternal::DynamicArray<size_t> a_removed_indices, JaktInternal::DynamicArray<ByteString> a_definitely_positional_args): args(move(a_args)), removed_indices(move(a_removed_indices)), definitely_positional_args(move(a_definitely_positional_args)){}
 
 }
 } // namespace Jakt

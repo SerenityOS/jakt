@@ -1,12 +1,27 @@
 #pragma once
-#include "__unified_forward.h"
+#include <lib.h>
 #include "jakt__compiler.h"
+#include "jakt__prelude__static_array.h"
 namespace Jakt {
+namespace jakt__platform {
+struct Target;
+
+
+
+
+
+ErrorOr<JaktInternal::DynamicArray<ByteString>> platform_import_names();
+
+ErrorOr<JaktInternal::DynamicArray<ByteString>> add_to_each(JaktInternal::DynamicArray<ByteString> const strings, ByteString const prefix, ByteString const suffix);
+
+JaktInternal::Optional<size_t> last_namespace_separator(ByteString const name);
+
+}
 namespace jakt__platform {
 struct Target {
   public:
-public: ByteString arch;public: ByteString platform;public: ByteString os;public: ByteString abi;public: static ErrorOr<jakt__platform::Target> from_triple(ByteString const triple);
-public: static ErrorOr<jakt__platform::Target> active();
+public: ByteString arch;public: ByteString platform;public: ByteString os;public: ByteString abi;public: static ErrorOr<Jakt::jakt__platform::Target> from_triple(ByteString const triple);
+public: static ErrorOr<Jakt::jakt__platform::Target> active();
 public: ErrorOr<ByteString> name(bool const abbreviate) const;
 public: Target(ByteString a_arch, ByteString a_platform, ByteString a_os, ByteString a_abi);
 

@@ -1,11 +1,21 @@
 #pragma once
-#include "__unified_forward.h"
+#include <lib.h>
 #include "jakt__prelude__hash.h"
 namespace Jakt {
 namespace ids {
+struct ModuleId;
+struct VarId;
+struct FunctionId;
+struct StructId;
+struct EnumId;
+struct TypeId;
+struct TraitId;
+struct ScopeId;
+}
+namespace ids {
 struct ModuleId {
   public:
-public: size_t id;public: __attribute__((always_inline)) inline bool equals(ids::ModuleId const rhs) const {
+public: size_t id;public: __attribute__((always_inline)) inline bool equals(Jakt::ids::ModuleId const rhs) const {
 {
 return ((((*this).id)) == (((rhs).id)));
 }
@@ -24,22 +34,22 @@ public: ModuleId(size_t a_id);
 public: public: public: ByteString debug_description() const;
 };struct VarId {
   public:
-public: ids::ModuleId module;public: size_t id;public: VarId(ids::ModuleId a_module, size_t a_id);
+public: Jakt::ids::ModuleId module;public: size_t id;public: VarId(Jakt::ids::ModuleId a_module, size_t a_id);
 
 public: ByteString debug_description() const;
 };struct FunctionId {
   public:
-public: ids::ModuleId module;public: size_t id;public: __attribute__((always_inline)) inline bool equals(ids::FunctionId const rhs) const {
+public: Jakt::ids::ModuleId module;public: size_t id;public: __attribute__((always_inline)) inline bool equals(Jakt::ids::FunctionId const rhs) const {
 {
 return (((((((*this).module)).id)) == (((((rhs).module)).id))) && ((((*this).id)) == (((rhs).id))));
 }
 }
-public: FunctionId(ids::ModuleId a_module, size_t a_id);
+public: FunctionId(Jakt::ids::ModuleId a_module, size_t a_id);
 
 public: ByteString debug_description() const;
 };struct StructId {
   public:
-public: ids::ModuleId module;public: size_t id;public: __attribute__((always_inline)) inline bool equals(ids::StructId const rhs) const {
+public: Jakt::ids::ModuleId module;public: size_t id;public: __attribute__((always_inline)) inline bool equals(Jakt::ids::StructId const rhs) const {
 {
 return (((((((*this).module)).id)) == (((((rhs).module)).id))) && ((((*this).id)) == (((rhs).id))));
 }
@@ -53,34 +63,34 @@ return ((AK::Traits<size_t>()).hash(self));
 (((*this).id)),((((*this).module)).hash()));
 }
 }
-public: StructId(ids::ModuleId a_module, size_t a_id);
+public: StructId(Jakt::ids::ModuleId a_module, size_t a_id);
 
 public: public: public: ByteString debug_description() const;
 };struct EnumId {
   public:
-public: ids::ModuleId module;public: size_t id;public: __attribute__((always_inline)) inline bool equals(ids::EnumId const rhs) const {
+public: Jakt::ids::ModuleId module;public: size_t id;public: __attribute__((always_inline)) inline bool equals(Jakt::ids::EnumId const rhs) const {
 {
 return (((((((*this).module)).id)) == (((((rhs).module)).id))) && ((((*this).id)) == (((rhs).id))));
 }
 }
-public: EnumId(ids::ModuleId a_module, size_t a_id);
+public: EnumId(Jakt::ids::ModuleId a_module, size_t a_id);
 
 public: ByteString debug_description() const;
 };struct TypeId {
   public:
-public: ids::ModuleId module;public: size_t id;public: __attribute__((always_inline)) inline static JaktInternal::Optional<ids::TypeId> none() {
+public: Jakt::ids::ModuleId module;public: size_t id;public: __attribute__((always_inline)) inline static JaktInternal::Optional<Jakt::ids::TypeId> none() {
 {
 return JaktInternal::OptionalNone();
 }
 }
-public: __attribute__((always_inline)) inline bool equals(ids::TypeId const rhs) const {
+public: __attribute__((always_inline)) inline bool equals(Jakt::ids::TypeId const rhs) const {
 {
 return (((((((*this).module)).id)) == (((((rhs).module)).id))) && ((((*this).id)) == (((rhs).id))));
 }
 }
 public: __attribute__((always_inline)) inline u32 hash() const {
 {
-return [](size_t const& self, ids::ModuleId const& other) -> u32 {{
+return [](size_t const& self, Jakt::ids::ModuleId const& other) -> u32 {{
 return pair_int_hash([](size_t const& self) -> u32 {{
 return ((AK::Traits<size_t>()).hash(self));
 }
@@ -91,22 +101,22 @@ return ((AK::Traits<size_t>()).hash(self));
 (((*this).id),((((*this).module))));
 }
 }
-public: TypeId(ids::ModuleId a_module, size_t a_id);
+public: TypeId(Jakt::ids::ModuleId a_module, size_t a_id);
 
 public: public: public: ByteString debug_description() const;
 };struct TraitId {
   public:
-public: ids::ModuleId module;public: size_t id;public: __attribute__((always_inline)) inline bool equals(ids::TraitId const other) const {
+public: Jakt::ids::ModuleId module;public: size_t id;public: __attribute__((always_inline)) inline bool equals(Jakt::ids::TraitId const other) const {
 {
 return (((((((*this).module)).id)) == (((((other).module)).id))) && ((((*this).id)) == (((other).id))));
 }
 }
-public: TraitId(ids::ModuleId a_module, size_t a_id);
+public: TraitId(Jakt::ids::ModuleId a_module, size_t a_id);
 
 public: ByteString debug_description() const;
 };struct ScopeId {
   public:
-public: ids::ModuleId module_id;public: size_t id;public: __attribute__((always_inline)) inline bool equals(ids::ScopeId const other) const {
+public: Jakt::ids::ModuleId module_id;public: size_t id;public: __attribute__((always_inline)) inline bool equals(Jakt::ids::ScopeId const other) const {
 {
 return (((((((*this).module_id)).id)) == (((((other).module_id)).id))) && ((((*this).id)) == (((other).id))));
 }
@@ -116,7 +126,7 @@ public: __attribute__((always_inline)) inline u32 hash() const {
 return pair_int_hash((infallible_integer_cast<u32>((((*this).id)))),(infallible_integer_cast<u32>((((((*this).module_id)).id)))));
 }
 }
-public: ScopeId(ids::ModuleId a_module_id, size_t a_id);
+public: ScopeId(Jakt::ids::ModuleId a_module_id, size_t a_id);
 
 public: public: public: ByteString debug_description() const;
 };}
