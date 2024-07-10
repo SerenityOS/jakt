@@ -19,7 +19,7 @@ rm -fr bootstrap/temp
 mkdir -p bootstrap/temp
 
 cp bootstrap/stage0/README.md bootstrap/temp/
-cp -r runtime bootstrap/temp/
+cp -rL runtime bootstrap/temp/
 cp selfhost_build/*.cpp bootstrap/temp
 cp selfhost_build/*.h bootstrap/temp
 
