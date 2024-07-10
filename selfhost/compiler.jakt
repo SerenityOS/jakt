@@ -5,6 +5,8 @@ import jakt::path { Path, get_path_separator }
 import jakt::platform { platform_module }
 import platform_module("jakt::platform::fs")
 
+comptime standard_module_name() -> String => "jakt"
+
 class Compiler {
     public files: [Path]
     public file_ids: [String: FileId]
@@ -167,10 +169,10 @@ class Compiler {
         }
 
         // Note: Checking this after the replacement!
-        let standard_module_name = "jakt"
+        let std_name = standard_module_name()
 
-        if module_name.starts_with(standard_module_name) {
-            let std_module_name_path = module_name.substring(start: standard_module_name.length() + 1, length: module_name.length() - (standard_module_name.length() + 1))
+        if module_name.starts_with(std_name) {
+            let std_module_name_path = module_name.substring(start: std_name.length() + 1, length: module_name.length() - (std_name.length() + 1))
             let candidate_path = Path::from_parts([.std_include_path.to_string(), std_module_name_path + ".jakt"])
             if candidate_path.exists() {
                 return candidate_path
