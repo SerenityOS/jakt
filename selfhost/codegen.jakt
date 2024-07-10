@@ -2097,7 +2097,7 @@ struct CodeGenerator {
         output.append(")")
     }
 
-    fn codegen_for_enum_variants(this, anon enum_: &CheckedEnum, anon stmt_fmt: &fn(accessor: String) -> String, index_expr: String, builder: &mut StringBuilder) {
+    fn codegen_for_enum_variants(this, anon enum_: &CheckedEnum, anon stmt_fmt: &fn(anon accessor: String) -> String, index_expr: String, builder: &mut StringBuilder) {
         // Adding to output here in a loop was causing a 30% slowdown, so using
         // a StringBuilder to mitigate it.
         builder.appendff("switch ({}) {{\n", index_expr)
@@ -2112,14 +2112,14 @@ struct CodeGenerator {
             match variant {
                 Untyped | WithValue => {}
                 Typed => {
-                    builder.append(stmt_fmt(accessor: format("as.{}.value", variant_name)))
+                    builder.append(stmt_fmt(format("as.{}.value", variant_name)))
                 }
                 StructLike(fields) => {
                     for field in fields[common_field_count..] {
                         let variable = .program.get_variable(field)
                         let name = variable.name_for_codegen().as_name_for_use()
 
-                        builder.append(stmt_fmt(accessor: format("as.{}.{}", variant_name, name)))
+                        builder.append(stmt_fmt(format("as.{}.{}", variant_name, name)))
                     }
                 }
             }
@@ -2137,7 +2137,7 @@ struct CodeGenerator {
         this
         enum_: CheckedEnum
         is_constructor: bool // whether it's a constructor. If false, it's an assignment operator.
-        use_move: bool // whether to use the "move()" function from AK lib.
+        use_move: bool // whether to use the `move()` function from AK lib.
     ) -> String {
         mut builder = StringBuilder::create()
         builder.append("{")
@@ -2159,7 +2159,7 @@ struct CodeGenerator {
             return format("this->{} = {};\n", accessor, rhs)
         }
 
-        let placement_new = fn[use_move](accessor: String) -> String {
+        let placement_new = fn[use_move](anon accessor: String) -> String {
             let rhs = match use_move {
                 true => format("move(rhs.{})", accessor)
                 false => format("rhs.{}", accessor)
@@ -2173,14 +2173,14 @@ struct CodeGenerator {
                 let variable = .program.get_variable(common.variable_id)
                 let name = variable.name_for_codegen().as_name_for_use()
 
-                builder.append(placement_new(accessor: format("common.init_common.{}", name)))
+                builder.append(placement_new(format("common.init_common.{}", name)))
             }
         } else {
             for common in enum_.fields {
                 let variable = .program.get_variable(common.variable_id)
                 let name = variable.name_for_codegen().as_name_for_use()
 
-                builder.append(assign(accessor: format("common.init_common.{}", name)))
+                builder.append(assign(format("common.init_common.{}", name)))
             }
         }
 
