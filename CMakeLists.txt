@@ -144,6 +144,9 @@ endif()
 
 message(STATUS "Building for target ${JAKT_TARGET_TRIPLE}")
 
+# As the bootstrap compiler can't make directories, create the "exports" dir here, if it doesn't exist
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/exports")
+
 set(SELFHOST_SOURCES
   selfhost/build.jakt
   selfhost/codegen.jakt
