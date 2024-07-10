@@ -1,7 +1,7 @@
 import utility { Span }
 import jakt::platform::utility { allocate, null }
 import jakt::libc::io { FILE, fgets, fclose, fopen }
-import repl_backend::common { LineResult, Style, Color, XTermColor }
+import relative parent::repl_backend::common { LineResult, Style, Color, XTermColor }
 
 struct Editor {
     standard_input_file: raw FILE

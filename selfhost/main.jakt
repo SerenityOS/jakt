@@ -13,7 +13,7 @@ import jakt::path { Path, get_path_separator }
 import jakt::platform { platform_fs, is_windows }
 
 import build { Builder }
-import compiler { Compiler, FileId }
+import compiler { Compiler }
 import codegen { CodeGenerator }
 import error { JaktError, print_error }
 import formatter { Formatter }
@@ -26,7 +26,7 @@ import project { Project }
 import repl { REPL, serialize_ast_node }
 import typechecker { Typechecker }
 import types { FunctionId, ResolvedNamespace, ScopeId, ModuleId, Value, ValueImpl }
-import utility { Queue, Span, escape_for_quotes, join, write_to_file }
+import utility { FileId, Queue, Span, escape_for_quotes, join, write_to_file }
 import git
 
 import platform_fs() { DirectoryIterator, make_directory }

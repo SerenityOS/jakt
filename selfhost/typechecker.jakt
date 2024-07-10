@@ -30,7 +30,7 @@ import types {
 import types
 import utility { FileId, Span, add_arrays, escape_for_quotes, join, panic, todo, map, write_to_file }
 import jakt::path { Path, get_path_separator }
-import compiler { Compiler }
+import compiler { Compiler, standard_module_name }
 import interpreter { Interpreter, InterpreterScope, ExecutionResult, value_to_checked_expression }
 
 import cpp_import::common { choose_processor, CppImportErrors }
@@ -1162,17 +1162,41 @@ struct Typechecker {
 
         let (module_name, module_span) = module_name_and_span!
 
-        let sanitized_module_name = module_name.replace(replace: ":", with: "_")
+        let maybe_file_name = .compiler.search_for_path(
+            input_module_name: module_name
+            relative_import: import_is_relative
+            parent_path_count: parent_path_count
+        )
+
+        let file_name = match maybe_file_name.has_value() {
+            true => maybe_file_name!
+            false => .get_root_path().parent().join(module_name).replace_extension("jakt")
+        }
+
+        let is_in_the_stdlib = file_name.absolute().to_string().starts_with(.compiler.std_include_path.absolute().to_string())
+        let sanitized_module_name = join(
+            map(
+                input: match is_in_the_stdlib {
+                    true => Path::from_string(format(
+                        "{}/{}"
+                        standard_module_name()
+                        file_name.absolute().relative_to(&.compiler.std_include_path.absolute()).to_string()
+                    ))
+                    false => file_name.absolute().relative_to(&.get_root_path().parent().absolute())
+                }.replace_extension("").components()
+                mapper: &fn(anon item: String) -> String {
+                    if item == ".." {
+                        return "parent"
+                    }
+                    return item
+                }
+            )
+            separator: "__"
+        )
 
         mut imported_module_id = ModuleId(id: 0)
         mut maybe_loaded_module = .program.get_loaded_module(sanitized_module_name)
         if not maybe_loaded_module.has_value() {
-            let maybe_file_name = .compiler.search_for_path(input_module_name: module_name, relative_import: import_is_relative, parent_path_count: parent_path_count)
-            let file_name = match maybe_file_name.has_value() {
-                true => maybe_file_name!
-                false => .get_root_path().parent().join(module_name).replace_extension("jakt")
-            }
-
             let file_id = .compiler.get_file_id_or_register(file_name)
 
             let old_file_state = .compiler.current_file_state()
