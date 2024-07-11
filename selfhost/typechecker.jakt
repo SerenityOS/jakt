@@ -8627,7 +8627,8 @@ struct Typechecker {
                 checked_lhs = .dereference_if_needed(original_checked_lhs!, span)
                 let hint = checked_lhs!.type()
 
-                original_checked_rhs = .typecheck_expression(rhs, scope_id, safety_mode, type_hint: TypeHint::MustBe(type_id: hint))
+                // rhs of a binary op doesn't necessarily needs to be the same type as the lhs is, ex. when lhs implements a BinaryOp trait.
+                original_checked_rhs = .typecheck_expression(rhs, scope_id, safety_mode, type_hint: TypeHint::CouldBe(type_id: hint))
                 checked_rhs = .dereference_if_needed(original_checked_rhs!, span)
             }
 

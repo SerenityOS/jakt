@@ -1,0 +1,25 @@
+/// Expect:
+/// - output: "2, 4, 6\n"
+
+struct vec3 {
+    public x: f32
+    public y: f32
+    public z: f32
+
+    public fn create(anon x: f32 = 0.0, anon y: f32 = 0.0, anon z: f32 = 0.0) -> vec3 {
+        return vec3(x, y, z)
+    }
+}
+
+type f32 implements(Multiply<vec3, vec3>) {
+    [[inline(always)]]
+    fn multiply(this, anon rhs: vec3) -> vec3 {
+        return vec3::create(rhs.x * this, rhs.y * this, rhs.z * this)
+    }
+}
+
+fn main() {
+    let test = 2.0f32 * vec3::create(x: 1.0f32, y: 2.0f32, z: 3.0f32)
+
+    println("{}, {}, {}", test.x, test.y, test.z)
+}
