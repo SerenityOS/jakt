@@ -5050,6 +5050,40 @@ struct Typechecker {
     fn check_types_for_compat(
         mut this
         lhs_type_id: TypeId
+        rhs_type_hint: TypeHint
+        generic_inferences: &mut GenericInferences
+        span: Span
+    ) throws -> bool {
+        let old_ignore_errors = .ignore_errors
+        defer .ignore_errors = old_ignore_errors
+
+        if rhs_type_hint is CouldBe {
+            .ignore_errors = true
+        }
+
+        return .check_types_for_compat(lhs_type_id, rhs_type_id: rhs_type_hint.type_id, generic_inferences, span)
+    }
+
+    fn check_types_for_compat(
+        mut this
+        lhs_type_hint: TypeHint
+        rhs_type_id: TypeId
+        generic_inferences: &mut GenericInferences
+        span: Span
+    ) throws -> bool {
+        let old_ignore_errors = .ignore_errors
+        defer .ignore_errors = old_ignore_errors
+
+        if lhs_type_hint is CouldBe {
+            .ignore_errors = true
+        }
+
+        return .check_types_for_compat(lhs_type_id: lhs_type_hint.type_id, rhs_type_id, generic_inferences, span)
+    }
+
+    fn check_types_for_compat(
+        mut this
+        lhs_type_id: TypeId
         rhs_type_id: TypeId
         generic_inferences: &mut GenericInferences
         span: Span
