@@ -8773,7 +8773,7 @@ struct Typechecker {
 
             if type_hint.has_value() {
                 .check_types_for_compat(
-                    lhs_type_id: type_hint!.type_id
+                    lhs_type_hint: type_hint!
                     rhs_type_id: type_id
                     generic_inferences: &mut .generic_inferences
                     span
@@ -9297,7 +9297,7 @@ struct Typechecker {
 
         if type_hint.has_value() {
             .check_types_for_compat(
-                lhs_type_id: type_hint!.type_id
+                lhs_type_hint: type_hint!
                 rhs_type_id: type_id
                 generic_inferences: &mut .generic_inferences
                 span
@@ -11066,7 +11066,7 @@ struct Typechecker {
                 .ignore_errors = true
                 .check_types_for_compat(
                     lhs_type_id: return_type
-                    rhs_type_id: type_hint!.type_id
+                    rhs_type_hint: type_hint!
                     generic_inferences: &mut .generic_inferences
                     span
                 )
@@ -11084,7 +11084,7 @@ struct Typechecker {
                     .ignore_errors = true
                 }
                 .check_types_for_compat(
-                    lhs_type_id: type_hint!.type_id
+                    lhs_type_hint: type_hint!
                     rhs_type_id: return_type
                     generic_inferences: &mut .generic_inferences
                     span
@@ -11111,7 +11111,7 @@ struct Typechecker {
             } else if callee.is_instantiated {
                 if type_hint.has_value() and not type_hint!.type_id.equals(unknown_type_id()) {
                     .check_types_for_compat(
-                        lhs_type_id: type_hint!.type_id
+                        lhs_type_hint: type_hint!
                         rhs_type_id: return_type
                         generic_inferences: &mut .generic_inferences
                         span
