@@ -10415,22 +10415,36 @@ struct Typechecker {
                 yield final_body!
             }
             Expression(expr) => {
-                mut type_hint: TypeHint? = None
+                mut result_type_hint: TypeHint? = None
                 if result_type.has_value() {
-                    type_hint = TypeHint::MustBe(type_id: result_type!)
+                    result_type_hint = TypeHint::CouldBe(type_id: result_type!)
                 }
 
-                let checked_expression = .typecheck_expression(expr, scope_id, safety_mode, type_hint)
+                let checked_expression = .typecheck_expression(expr, scope_id, safety_mode, type_hint: result_type_hint)
                 if result_type.has_value() {
-                    .check_types_for_compat(
-                        lhs_type_id: result_type!
+                    if not .check_types_for_compat(
+                        lhs_type_hint: result_type_hint!
                         rhs_type_id: checked_expression.type()
                         generic_inferences
                         span
-                    )
+                    ) and .check_types_for_compat(
+                        lhs_type_id: checked_expression.type()
+                        rhs_type_hint: result_type_hint!
+                        generic_inferences
+                        span
+                    ) {
+                        result_type = checked_expression.type()
+                    }
                 } else {
                     result_type = checked_expression.type()
                 }
+
+                .check_types_for_compat(
+                    lhs_type_id: result_type!
+                    rhs_type_id: checked_expression.type()
+                    generic_inferences
+                    span
+                )
 
                 yield CheckedMatchBody::Expression(checked_expression)
             }

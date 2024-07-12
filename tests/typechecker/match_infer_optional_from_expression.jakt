@@ -1,0 +1,22 @@
+/// Expect:
+/// - output: "PASS\n"
+
+enum Foo {
+    A
+    B
+}
+
+fn ret() -> Foo? {
+    return None
+}
+
+fn main() {
+    let val = match 1 {
+        1 => Foo::A()
+        else => ret()
+    }
+
+    if val.has_value() {
+        println("PASS")
+    }
+}

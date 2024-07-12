@@ -1,0 +1,19 @@
+/// Expect:
+/// - error: "Type mismatch: expected ‘Foo’, but got ‘i32’"
+
+enum Foo {
+    A
+    B
+}
+
+fn ret() -> Foo? {
+    return None
+}
+
+fn main() {
+    let val = match 1 {
+        1 => Foo::A()
+        2 => 5i32
+        else => ret()
+    }
+}
