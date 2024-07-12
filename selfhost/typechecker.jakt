@@ -160,6 +160,12 @@ struct Typechecker {
     had_an_error: bool = false
     cpp_import_cache: [String:ScopeId] = [:]
     cpp_import_processor: CppImportProcessor? = None
+    temp_var_count: u64 = 0
+    // The current statement block, available to typecheck_expression functions so that they can
+    // push temporary variables for `IsEnumVariant` checks.
+    // Note that this mechanism relies on Array being refcounted, so that the pushes that
+    // are done to `.current_block` are visible after the expression is checked.
+    current_block: [CheckedStatement] = []
 
     fn set_self_type_id(mut this, anon type_id: TypeId) {
         if .get_type(type_id) is Struct(struct_id) and .get_struct(struct_id).implements_type is Some(replacement_type_id) {
@@ -5643,6 +5649,9 @@ struct Typechecker {
             scope_id: block_scope_id
             control_flow: BlockControlFlow::MayReturn
         )
+        let old_block = .current_block
+        .current_block = checked_block.statements
+        defer .current_block = old_block
         for parsed_statement in parsed_block.stmts {
             if not checked_block.control_flow.is_reachable() {
                 .error("Unreachable code", parsed_statement.span())
@@ -6666,14 +6675,19 @@ struct Typechecker {
             .error("Else block of guard must either `return`, `break`, `continue`, or `throw`", span) // FIXME: better span?
         }
 
+        mut pre_condition: [ParsedStatement] = []
         let (new_condition, new_then_block, new_else_statement) = .expand_context_for_bindings(
             condition: expr
             acc: None
+            pre_condition: &mut pre_condition
             then_block: remaining_code
             else_statement: ParsedStatement::Block(block: else_block, span)
             scope_id
             span
         )
+
+        .add_pre_condition(unchecked: &pre_condition, scope_id, safety_mode, checked: &mut .current_block)
+
         let checked_condition = .typecheck_expression_and_dereference_if_needed(new_condition, scope_id, safety_mode, type_hint: None, span)
         if not checked_condition.type().equals(builtin(BuiltinType::Bool)) {
             .error("Condition must be a boolean expression", new_condition.span())
@@ -6930,6 +6944,7 @@ struct Typechecker {
         mut this
         condition: ParsedExpression
         acc: ParsedExpression?
+        pre_condition: &mut [ParsedStatement]
         then_block: ParsedBlock?
         else_statement: ParsedStatement?
         scope_id: ScopeId
@@ -6938,35 +6953,81 @@ struct Typechecker {
         match condition {
             BinaryOp(lhs, op, rhs) => {
                 if op is LogicalAnd {
+                    mut pre_rhs: [ParsedStatement] = []
                     let (rhs_condition, rhs_then_block, rhs_else_statement) = .expand_context_for_bindings(
                         condition: rhs
                         acc
+                        pre_condition: &mut pre_rhs
                         then_block
                         else_statement
                         scope_id
                         span
                     )
-                    mut accumulated_condition = rhs_condition
-                    return .expand_context_for_bindings(
-                        condition: lhs
-                        acc: accumulated_condition
-                        then_block: rhs_then_block
-                        else_statement: rhs_else_statement
-                        scope_id
-                        span
-                    )
+
+                    // If RHS has no preparation statements, it can be merged with an AND.
+                    if pre_rhs.is_empty() {
+                        return .expand_context_for_bindings(
+                            condition: lhs
+                            acc: rhs_condition
+                            pre_condition
+                            then_block: rhs_then_block
+                            else_statement: rhs_else_statement
+                            scope_id
+                            span
+                        )
+                    } else {
+                       // Otherwise, we have to first check LHS, then put the RHS prep statements, then make the `If` for
+                       // RHS. Note that here we'll end up duplicating `else_statement` since Jakt doesn't support "goto".
+                       mut then_block = ParsedBlock(stmts: pre_rhs)
+                       then_block.stmts.push(ParsedStatement::If(condition: rhs_condition, then_block: rhs_then_block ?? ParsedBlock(stmts: []), else_statement: rhs_else_statement, span: rhs.span()))
+
+                       return .expand_context_for_bindings(
+                            condition: lhs
+                            acc: None
+                            pre_condition
+                            then_block
+                            else_statement
+                            scope_id
+                            span: lhs.span()
+                       )
+                    }
                 }
             }
             UnaryOp(expr, op) => {
                 if op is IsEnumVariant(inner, bindings) {
-                    let unary_op_single_condition = ParsedExpression::UnaryOp(expr, op: UnaryOperator::Is(inner), span)
+                    let tmp_name = format("__jakt_tmp{}", .temp_var_count)
+                    .temp_var_count++
+                    let tmp_decl = ParsedVarDecl(
+                        name: tmp_name
+                        parsed_type: ParsedType::Empty
+                        // Declare all of these temps as mutable since they will
+                        // have better flexibility for moving in the C++ code.
+                        // Might want to tighten this if interpreter starts separating
+                        // between mutable/non-mutable variables for performance, or to 
+                        // debug issues with the typechecker.
+                        is_mutable: true
+                        inlay_span: None
+                        span: expr.span()
+                    )
+                    // NOTE: this statement is processed twice, once here with ignoring errors and once in
+                    // the .add_pre_condition function. It is needed as a ParsedStatement since it must be embeddable
+                    // in inner `if` statements from the LogicalAnd case.
+                    let var_decl_stmt = ParsedStatement::VarDecl(var: tmp_decl, init: expr, span: expr.span())
+                    pre_condition.push(var_decl_stmt)
+                    let unary_op_single_condition = ParsedExpression::UnaryOp(expr: ParsedExpression::Var(name: tmp_name, span: expr.span()), op: UnaryOperator::Is(inner), span)
                     mut outer_if_stmts: [ParsedStatement] = []
 
                     let ignore_errors_state = .ignore_errors
                     .ignore_errors = true
+                    // Make sure that we know what the temp is when accessing it, otherwise it's going
+                    // to have an unknown type at best. A separate child scope is used to avoid polluting
+                    // the namespace of the current scope, since the statements that we add will be processed
+                    // again.
+                    let wrapped_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: "hidden-temp-var-in-IsEnumVariant")
+                    .typecheck_statement(var_decl_stmt, scope_id: wrapped_scope_id, safety_mode: SafetyMode::Safe)
                     let pre_checked_unary_op = .typecheck_expression(
                         unary_op_single_condition,
-                        scope_id,
+                        scope_id: wrapped_scope_id,
                         safety_mode: SafetyMode::Safe,
                         type_hint: None
                     )
@@ -6980,11 +7041,12 @@ struct Typechecker {
                             inlay_span: None
                             span: binding.span
                         )
+                        let tmp_access = ParsedExpression::Var(name: tmp_name, span: binding.span)
                         if pre_checked_unary_op is UnaryOp(op) and op is IsSome {
-                            let init = ParsedExpression::ForcedUnwrap(expr, span)
+                            let init = ParsedExpression::ForcedUnwrap(expr: tmp_access, span)
                             outer_if_stmts.push(ParsedStatement::VarDecl(var, init, span))
                         } else {
-                            let enum_variant_arg = ParsedExpression::EnumVariantArg(expr, arg: binding, enum_variant: inner, span)
+                            let enum_variant_arg = ParsedExpression::EnumVariantArg(expr: tmp_access, arg: binding, enum_variant: inner, span)
                             outer_if_stmts.push(ParsedStatement::VarDecl(var, init: enum_variant_arg, span))
                         }
                     }
@@ -7004,6 +7066,7 @@ struct Typechecker {
                     return .expand_context_for_bindings(
                         condition: unary_op_single_condition
                         acc: None
+                        pre_condition
                         then_block: new_then_block
                         else_statement
                         scope_id
@@ -7020,15 +7083,29 @@ struct Typechecker {
         return (base_condition, then_block, else_statement)
     }
 
+    [[inline(always)]]
+    fn add_pre_condition(mut this, unchecked: &[ParsedStatement], scope_id: ScopeId, safety_mode: SafetyMode, checked: &mut [CheckedStatement]) throws {
+        guard not unchecked.is_empty() else { return }
+        checked.add_capacity(unchecked.size())
+        for stmt in unchecked {
+            checked.push(.typecheck_statement(stmt, scope_id, safety_mode))
+        }
+    }
+
     fn typecheck_if(mut this, condition: ParsedExpression, then_block: ParsedBlock, else_statement: ParsedStatement?, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
+        mut prev_unchecked: [ParsedStatement] = []
         let (new_condition, new_then_block, new_else_statement) = .expand_context_for_bindings(
             condition
             acc: None
+            pre_condition: &mut prev_unchecked
             then_block
             else_statement
             scope_id
             span
         )
+
+        .add_pre_condition(unchecked: &prev_unchecked, scope_id, safety_mode, checked: &mut .current_block)
+
         let checked_condition = .typecheck_expression_and_dereference_if_needed(new_condition, scope_id, safety_mode, type_hint: None, span)
 
         if not checked_condition.type().equals(builtin(BuiltinType::Bool)) {
@@ -7597,9 +7674,11 @@ struct Typechecker {
             type_hint_id = Some(.get_function(.current_function_id!).return_type_id)
         }
 
+        mut pre_condition: [ParsedStatement] = []
         let (new_condition, new_then_block, new_else_statement) = .expand_context_for_bindings(
             condition: expr!
             acc: None
+            pre_condition: &mut pre_condition
             then_block: None
             else_statement: None
             scope_id
@@ -7610,6 +7689,7 @@ struct Typechecker {
         if type_hint_id.has_value() {
             type_hint = TypeHint::MustBe(type_id: type_hint_id!)
         }
+        .add_pre_condition(unchecked: &pre_condition, scope_id, safety_mode, checked: &mut .current_block)
 
         let checked_expr = .typecheck_expression_and_dereference_if_needed(new_condition, scope_id, safety_mode, type_hint, span)
 
@@ -10190,14 +10270,17 @@ struct Typechecker {
                                     }
                                     is_value_match = true
 
-                                    let (new_condition, new_then_block, new_else_statement) = .expand_context_for_bindings(
+                                    mut pre_condition: [ParsedStatement] = []
+                                    let (new_condition, new_then_block, _should_be_none) = .expand_context_for_bindings(
                                         condition: expr
                                         acc: None
+                                        pre_condition: &mut pre_condition
                                         then_block: None
                                         else_statement: None
                                         scope_id
                                         span
                                     )
+                                    .add_pre_condition(unchecked: &pre_condition, scope_id, safety_mode, checked: &mut .current_block)
                                     let checked_expression = .typecheck_expression_and_dereference_if_needed(new_condition, scope_id, safety_mode, type_hint: TypeHint::MustBe(type_id: subject_type_id), span)
 
                                     if is_boolean_match and checked_expression is Boolean(val) {
