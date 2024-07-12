@@ -1,0 +1,28 @@
+/// Expect:
+/// - output: "dothing(false)\nOK\ndothing(true)\n"
+
+enum Foo {
+    Bar
+    Baz(i32)
+}
+
+fn dothing(is_other: bool) -> Foo {
+    // side effect that should be run only once per `if`
+    println("dothing({})", is_other)
+    if is_other {
+        return Foo::Bar
+    } else {
+        return Foo::Baz(1i32)
+    }
+}
+
+fn main() {
+    // This tests both that chained has its dependencies met and that
+    // `dothing` is not executed twice.
+    if dothing(is_other: false) is Baz(x) and x == 1i32 {
+        println("OK")
+    }
+    if dothing(is_other: true) is Bar {
+        // this is intentional, dothing() should be only called once.
+    }
+}
