@@ -1,0 +1,18 @@
+/// Expect:
+/// - error: "Type mismatch: expected ‘Foo’, but got ‘Foo?’"
+
+enum Foo {
+    A
+    B
+}
+
+fn ret() -> Foo? {
+    return None
+}
+
+fn main() {
+    let val: Foo = match 1 {
+        1 => Foo::A()
+        else => ret()
+    }
+}

@@ -1,0 +1,19 @@
+/// Expect:
+/// - output: "PASS\n"
+
+class A { }
+
+class B : A { }
+
+fn ret() -> B {
+    return B()
+}
+
+fn main() {
+    let val = match 1 {
+        1 => ret()
+        else => A()
+    }
+
+    println("PASS")
+}
