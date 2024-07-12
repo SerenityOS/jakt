@@ -5642,7 +5642,7 @@ struct Typechecker {
 
     fn substitute_typevars_in_type(mut this, type_id: TypeId , generic_inferences: GenericInferences) throws -> TypeId => .program.substitute_typevars_in_type(type_id, generic_inferences, module_id: .current_module_id)
 
-    fn typecheck_block(mut this, anon parsed_block: ParsedBlock, parent_scope_id: ScopeId, safety_mode: SafetyMode, yield_type_hint: TypeId? = None) throws -> CheckedBlock {
+    fn typecheck_block(mut this, anon parsed_block: ParsedBlock, parent_scope_id: ScopeId, safety_mode: SafetyMode, yield_type_hint: TypeHint? = None) throws -> CheckedBlock {
         let parent_throws = .get_scope(parent_scope_id).can_throw
         let block_scope_id = .create_scope(parent_scope_id, can_throw: parent_throws, debug_name: "block")
         mut checked_block = CheckedBlock(
@@ -5657,16 +5657,11 @@ struct Typechecker {
                 .error("Unreachable code", parsed_statement.span())
             }
 
-            mut type_hint: TypeHint? = None
-            if yield_type_hint.has_value() {
-                type_hint = TypeHint::MustBe(type_id: yield_type_hint!)
-            }
-
             let checked_statement = .typecheck_statement(
                 statement: parsed_statement
                 scope_id: block_scope_id
                 safety_mode
-                type_hint: type_hint
+                type_hint: yield_type_hint
             )
             checked_block.control_flow = checked_block.control_flow.updated(checked_statement.control_flow())
 
@@ -7190,7 +7185,12 @@ struct Typechecker {
                     .current_function_id = previous_function_id
                 }
 
-                return .typecheck_block(parsed_block, parent_scope_id, safety_mode, yield_type_hint)
+                mut type_hint: TypeHint? = None
+                if yield_type_hint.has_value() {
+                    type_hint = TypeHint::MustBe(type_id: yield_type_hint!)
+                }
+
+                return .typecheck_block(parsed_block, parent_scope_id, safety_mode, yield_type_hint: type_hint)
             }
 
             register_function: fn[this](
@@ -10383,22 +10383,42 @@ struct Typechecker {
         mut result_type = final_result_type
         let checked_match_body = match body {
             Block(block) => {
-                let checked_block = .typecheck_block(parsed_block: block, parent_scope_id: scope_id, safety_mode, yield_type_hint: final_result_type)
+                mut result_type_hint: TypeHint? = None
+
+                if result_type.has_value() {
+                    result_type_hint = TypeHint::CouldBe(type_id: result_type!)
+                }
+
+                let checked_block = .typecheck_block(parsed_block: block, parent_scope_id: scope_id, safety_mode, yield_type_hint: result_type_hint)
 
                 if checked_block.control_flow.may_return() or checked_block.yielded_type.has_value() {
                     let block_type_id = checked_block.yielded_type ?? void_type_id()
                     let yield_span = block.find_yield_span() ?? span
 
                     if result_type.has_value() {
-                        .check_types_for_compat(
-                            lhs_type_id: result_type!
+                        if not .check_types_for_compat(
+                            lhs_type_hint: result_type_hint!
                             rhs_type_id: block_type_id
                             generic_inferences
                             span: yield_span
-                        )
+                        ) and .check_types_for_compat(
+                            lhs_type_id: block_type_id
+                            rhs_type_hint: result_type_hint!
+                            generic_inferences
+                            span: yield_span
+                        ) {
+                            result_type = block_type_id
+                        }
                     } else {
                         result_type = block_type_id
                     }
+
+                    .check_types_for_compat(
+                        lhs_type_id: result_type!
+                        rhs_type_id: block_type_id
+                        generic_inferences
+                        span: yield_span
+                    )
                 }
 
                 mut final_body: CheckedMatchBody? = None
