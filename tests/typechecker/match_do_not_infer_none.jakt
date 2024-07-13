@@ -1,0 +1,23 @@
+/// Expect:
+/// - error: "Type mismatch: expected ‘Foo’, but got None"
+
+enum Foo {
+    A
+    B
+}
+
+fn main() {
+    let val = match 1 {
+        1 => {
+            yield Foo::A()
+        }
+        else => {
+            yield match 2 {
+                2 => Foo::B()
+                else => {
+                    yield None
+                }
+            }
+        }
+    }
+}
