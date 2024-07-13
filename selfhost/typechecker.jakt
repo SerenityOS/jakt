@@ -5469,7 +5469,7 @@ struct Typechecker {
                 }
             }
             Struct(lhs_struct_id) => {
-                if lhs_type_id.equals(rhs_type_id) or .is_subclass_of(ancestor_type_id: rhs_type_id, child_type_id: lhs_type_id) {
+                if lhs_type_id.equals(rhs_type_id) {
                     return true
                 }
 
