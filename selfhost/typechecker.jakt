@@ -9530,7 +9530,7 @@ struct Typechecker {
         arguments_span: Span
         scope_id: ScopeId
         safety_mode: SafetyMode
-    ) throws -> (String?, CheckedMatchCase, TypeId?) {
+    ) throws -> (String?, CheckedMatchCase, TypeId?, bool) {
         mut covered_name: String? = None
 
         let new_scope_id = .create_scope(
@@ -9657,7 +9657,7 @@ struct Typechecker {
             defaults.push(checked_var_decl)
         }
 
-        let (checked_body, result_type) = .typecheck_match_body(
+        let (checked_body, result_type, seen_none) = .typecheck_match_body(
             body: case_.body
             scope_id: new_scope_id
             safety_mode
@@ -9677,7 +9677,7 @@ struct Typechecker {
             marker_span: case_.marker_span
         )
 
-        return (covered_name, checked_match_case, result_type)
+        return (covered_name, checked_match_case, result_type, seen_none)
     }
 
     fn typecheck_match(
@@ -9714,6 +9714,8 @@ struct Typechecker {
                 }
             }
         }
+
+        mut yielded_none = false
 
         match type_to_match_on {
             Enum(enum_id) | GenericEnumInstance(id: enum_id) => {
@@ -9765,7 +9767,7 @@ struct Typechecker {
                                     return CheckedExpression::Match(expr: checked_expr, match_cases: [], span, type_id: unknown_type_id(), all_variants_constant: false)
                                 }
 
-                                let (covered_name, checked_match_case, result_type) = .typecheck_match_variant(
+                                let (covered_name, checked_match_case, result_type, seen_none) = .typecheck_match_variant(
                                     case_
                                     subject_type_id
                                     variant_index: variant_index!
@@ -9777,6 +9779,9 @@ struct Typechecker {
                                     scope_id
                                     safety_mode
                                 )
+
+                                yielded_none |= seen_none
+
                                 if covered_name.has_value() {
                                     covered_variants.add(covered_name!)
                                 }
@@ -9802,7 +9807,7 @@ struct Typechecker {
                                         if not covered_variants.contains(variant.name()) {
                                             expanded_catch_all = true
 
-                                            let (covered_name, checked_match_case, result_type) = .typecheck_match_variant(
+                                            let (covered_name, checked_match_case, result_type, seen_none) = .typecheck_match_variant(
                                                 case_
                                                 subject_type_id
                                                 variant_index
@@ -9814,6 +9819,9 @@ struct Typechecker {
                                                 scope_id
                                                 safety_mode
                                             )
+
+                                            yielded_none |= seen_none
+
                                             if covered_name.has_value() {
                                                 covered_variants.add(covered_name!)
                                             }
@@ -9843,7 +9851,7 @@ struct Typechecker {
                                         defaults.push(checked_var_decl)
                                     }
 
-                                    let (checked_body, result_type) = .typecheck_match_body(
+                                    let (checked_body, result_type, seen_none) = .typecheck_match_body(
                                         body: case_.body
                                         scope_id: new_scope_id
                                         safety_mode
@@ -9851,6 +9859,7 @@ struct Typechecker {
                                         final_result_type
                                         span: case_.marker_span
                                     )
+                                    yielded_none |= seen_none
                                     final_result_type = result_type
 
                                     let checked_match_case = CheckedMatchCase::CatchAll(
@@ -10059,7 +10068,7 @@ struct Typechecker {
                                         )
                                     }
 
-                                    let (checked_body, result_type) = .typecheck_match_body(
+                                    let (checked_body, result_type, seen_none) = .typecheck_match_body(
                                         body: case_.body
                                         scope_id: new_scope_id
                                         safety_mode
@@ -10067,6 +10076,7 @@ struct Typechecker {
                                         final_result_type
                                         span: case_.marker_span
                                     )
+                                    yielded_none |= seen_none
                                     final_result_type = result_type
 
                                     checked_cases.push(CheckedMatchCase::ClassInstance(
@@ -10097,7 +10107,7 @@ struct Typechecker {
                                             )
                                         }
 
-                                        let (checked_body, result_type) = .typecheck_match_body(
+                                        let (checked_body, result_type, seen_none) = .typecheck_match_body(
                                             body: case_.body
                                             scope_id: new_scope_id
                                             safety_mode
@@ -10105,6 +10115,7 @@ struct Typechecker {
                                             final_result_type
                                             span: case_.marker_span
                                         )
+                                        yielded_none |= seen_none
                                         final_result_type = result_type
 
                                         checked_cases.push(CheckedMatchCase::CatchAll(
@@ -10197,7 +10208,7 @@ struct Typechecker {
                                         defaults.push(checked_var_decl)
                                     }
 
-                                    let (checked_body, result_type) = .typecheck_match_body(
+                                    let (checked_body, result_type, seen_none) = .typecheck_match_body(
                                         body: case_.body
                                         scope_id: new_scope_id
                                         safety_mode
@@ -10205,6 +10216,7 @@ struct Typechecker {
                                         final_result_type
                                         span: case_.marker_span
                                     )
+                                    yielded_none |= seen_none
                                     final_result_type = result_type
 
                                     let checked_match_case = CheckedMatchCase::EnumVariant(
@@ -10253,7 +10265,7 @@ struct Typechecker {
                                         defaults.push(checked_var_decl)
                                     }
 
-                                    let (checked_body, result_type) = .typecheck_match_body(
+                                    let (checked_body, result_type, seen_none) = .typecheck_match_body(
                                         body: case_.body
                                         scope_id: new_scope_id
                                         safety_mode
@@ -10261,6 +10273,7 @@ struct Typechecker {
                                         final_result_type
                                         span: case_.marker_span
                                     )
+                                    yielded_none |= seen_none
                                     final_result_type = result_type
 
                                     let checked_match_case = CheckedMatchCase::CatchAll(
@@ -10337,7 +10350,7 @@ struct Typechecker {
                                     }
 
                                     let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: format("catch-expression({})", expr))
-                                    let (checked_body, result_type) = .typecheck_match_body(
+                                    let (checked_body, result_type, seen_none) = .typecheck_match_body(
                                         body: case_.body
                                         scope_id: new_scope_id
                                         safety_mode
@@ -10345,6 +10358,7 @@ struct Typechecker {
                                         final_result_type
                                         span: case_.marker_span
                                     )
+                                    yielded_none |= seen_none
                                     final_result_type = result_type
 
                                     let checked_match_case = CheckedMatchCase::Expression(
@@ -10376,11 +10390,29 @@ struct Typechecker {
             }
         }
 
+        // FIXME: These errors should probably point at the case that returns None, all maybe even all the cases that do (but that could be excessive).
+        if yielded_none and final_result_type.has_value() {
+            if .get_type(final_result_type!) is GenericInstance(id, args) {
+                if not id.equals(.find_struct_in_prelude("Optional")) and not id.equals(.find_struct_in_prelude("WeakPtr")) {
+                    .error(
+                        message: format("Type mismatch: expected ‘{}’, but got None", .type_name(final_result_type!))
+                        span: span
+                    )
+                }
+            } else {
+                .error(
+                    message: format("Type mismatch: expected ‘{}’, but got None", .type_name(final_result_type!))
+                    span: span
+                )
+            }
+        }
+
         return CheckedExpression::Match(expr: checked_expr, match_cases: checked_cases, span, type_id: final_result_type ?? void_type_id(), all_variants_constant: true)
     }
 
-    fn typecheck_match_body(mut this, body: ParsedMatchBody, scope_id: ScopeId, safety_mode: SafetyMode, generic_inferences: &mut GenericInferences, final_result_type: TypeId?, span: Span) throws -> (CheckedMatchBody, TypeId?) {
+    fn typecheck_match_body(mut this, body: ParsedMatchBody, scope_id: ScopeId, safety_mode: SafetyMode, generic_inferences: &mut GenericInferences, final_result_type: TypeId?, span: Span) throws -> (CheckedMatchBody, TypeId?, bool) {
         mut result_type = final_result_type
+        mut seen_none = false
         let checked_match_body = match body {
             Block(block) => {
                 mut result_type_hint: TypeHint? = None
@@ -10394,6 +10426,8 @@ struct Typechecker {
                 if checked_block.control_flow.may_return() or checked_block.yielded_type.has_value() {
                     let block_type_id = checked_block.yielded_type ?? void_type_id()
                     let yield_span = block.find_yield_span() ?? span
+
+                    seen_none = checked_block.yielded_none
 
                     if result_type.has_value() {
                         if not .check_types_for_compat(
@@ -10441,6 +10475,11 @@ struct Typechecker {
                 }
 
                 let checked_expression = .typecheck_expression(expr, scope_id, safety_mode, type_hint: result_type_hint)
+
+                if checked_expression is OptionalNone {
+                    seen_none = true
+                }
+
                 if result_type.has_value() {
                     if not .check_types_for_compat(
                         lhs_type_hint: result_type_hint!
@@ -10469,7 +10508,7 @@ struct Typechecker {
                 yield CheckedMatchBody::Expression(checked_expression)
             }
         }
-        return (checked_match_body, result_type)
+        return (checked_match_body, result_type, seen_none)
     }
 
     fn typecheck_dictionary(mut this, values: [(ParsedExpression, ParsedExpression)], span: Span, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeHint?) throws -> CheckedExpression {
