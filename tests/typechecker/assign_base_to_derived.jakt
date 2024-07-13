@@ -1,0 +1,17 @@
+/// Expect:
+/// - error: "Assignment between incompatible types (‘Derived’ and ‘Base’)"
+
+class Base {
+    public fn test(this) {
+        println("ERROR")
+    }
+}
+
+class Derived: Base {}
+
+fn main() {
+    mut derived = Derived()
+    mut base: Base = Base()
+    derived = base
+    base.test()
+}
