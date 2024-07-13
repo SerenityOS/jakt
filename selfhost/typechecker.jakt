@@ -6444,7 +6444,18 @@ struct Typechecker {
 
                 let effective_lhs_type_id = .find_or_add_type_id(lhs_type)
 
-                let result = .unify(lhs: rhs_type_id, lhs_span: rhs_span, rhs: effective_lhs_type_id, rhs_span: lhs_span)
+                let old_ignore_errors = .ignore_errors
+                .ignore_errors = true
+
+                mut result = .unify(lhs: lhs_type_id, lhs_span, rhs: rhs_type_id, rhs_span)
+
+                // If the lhs type is a generic optional type, we need to unify with an unwrapped type
+                if not result.has_value() {
+                    result = .unify(lhs: effective_lhs_type_id, lhs_span, rhs: rhs_type_id, rhs_span)
+                }
+
+                .ignore_errors = old_ignore_errors
+
                 if not result.has_value() {
                     .error(format("Assignment between incompatible types (‘{}’ and ‘{}’)", .type_name(lhs_type_id), .type_name(rhs_type_id)), span)
                 }
