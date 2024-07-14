@@ -1269,7 +1269,7 @@ struct Typechecker {
         if import_.import_list.is_empty() {
             // import everything into scope
             mut scope_imports = .get_scope(scope_id).imports
-            mut import_name = module_name
+            mut import_name = (module_name.split(c':') as! [String]).last()!
             if import_.alias_name.has_value() {
                 import_name = import_.alias_name!.literal_name()
             }
@@ -7009,7 +7009,7 @@ struct Typechecker {
                         // Declare all of these temps as mutable since they will
                         // have better flexibility for moving in the C++ code.
                         // Might want to tighten this if interpreter starts separating
-                        // between mutable/non-mutable variables for performance, or to 
+                        // between mutable/non-mutable variables for performance, or to
                         // debug issues with the typechecker.
                         is_mutable: true
                         inlay_span: None
