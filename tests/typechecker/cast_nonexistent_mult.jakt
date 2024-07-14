@@ -1,0 +1,6 @@
+/// Expect:
+/// - error: "Variable 'r' not found\n"
+
+fn main() {
+    (42.0f32 * r) as! f32
+}
