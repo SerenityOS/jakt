@@ -112,7 +112,7 @@ syntax region jaktCommentLine start="//" end="$"
 
 
 
-syntax region jaktString matchgroup=jaktStringDelimiter start=+"+ skip=+\\\\\|\\"+ end=+"+ oneline contains=jaktEscape
+syntax region jaktString matchgroup=jaktStringDelimiter start=+"+ skip=+\\"+ end=+"+ contains=jaktEscape
 syntax region jaktChar matchgroup=jaktCharDelimiter start=+'+ skip=+\\\\\|\\'+ end=+'+ oneline contains=jaktEscape
 syntax match jaktEscape        display contained /\\./
 
