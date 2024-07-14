@@ -1,0 +1,8 @@
+/// Expect:
+/// - output: "Hello World!\n"
+
+import sub::a
+
+fn main() {
+    a::test()
+}
