@@ -1,0 +1,16 @@
+/// Expect:
+/// - output: "PASS\n"
+
+class Base {
+    public fn test(this) {
+        println("PASS")
+    }
+}
+
+class Derived : Base { }
+
+fn main() {
+    mut test: Base? = None
+    test = Some(Derived())
+    test!.test()
+}

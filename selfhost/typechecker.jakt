@@ -8770,8 +8770,19 @@ struct Typechecker {
             yield CheckedExpression::OptionalNone(span, type_id: type_hint_unwrapped ?? unknown_type_id())
         }
         OptionalSome(expr, span) => {
-            let checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint: None)
-            let type_id = checked_expr.type()
+            let checked_expr = .typecheck_expression(expr, scope_id, safety_mode, type_hint)
+            mut type_id = checked_expr.type()
+
+            if type_hint.has_value() {
+                let type_hint_unwrapped_id = .unwrap_type_id_from_optional_if_needed(type_id: type_hint!.type_id)
+                type_id = .choose_broader_type_id(
+                    original_type_id: type_id
+                    potential_type_id: type_hint_unwrapped_id
+                    generic_inferences: &mut .generic_inferences
+                    span
+                )
+            }
+
             let optional_struct_id = .find_struct_in_prelude("Optional")
             let optional_type = Type::GenericInstance(id: optional_struct_id, args: [type_id])
             let optional_type_id = .find_or_add_type_id(optional_type)
