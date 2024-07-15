@@ -5053,6 +5053,32 @@ struct Typechecker {
         }
     }
 
+    // NOTE: This method does not error if the types are not compatible at all.
+    //       If the types are not compatible at all, original_type_id is chosen.
+    fn choose_broader_type_id(
+        mut this
+        original_type_id: TypeId
+        potential_type_id: TypeId
+        generic_inferences: &mut GenericInferences
+        span: Span
+    ) throws -> TypeId {
+        if not .check_types_for_compat(
+            lhs_type_hint: TypeHint::CouldBe(type_id: original_type_id)
+            rhs_type_id: potential_type_id
+            generic_inferences: &mut .generic_inferences
+            span
+        ) and .check_types_for_compat(
+            lhs_type_id: potential_type_id
+            rhs_type_hint: TypeHint::CouldBe(type_id: original_type_id)
+            generic_inferences: &mut .generic_inferences
+            span
+        ) {
+            return potential_type_id
+        }
+
+        return original_type_id
+    }
+
     fn check_types_for_compat(
         mut this
         lhs_type_id: TypeId
@@ -10420,19 +10446,12 @@ struct Typechecker {
                     seen_none = checked_block.yielded_none
 
                     if result_type.has_value() {
-                        if not .check_types_for_compat(
-                            lhs_type_hint: result_type_hint!
-                            rhs_type_id: block_type_id
+                        result_type = .choose_broader_type_id(
+                            original_type_id: result_type_hint!.type_id
+                            potential_type_id: block_type_id
                             generic_inferences
                             span: yield_span
-                        ) and .check_types_for_compat(
-                            lhs_type_id: block_type_id
-                            rhs_type_hint: result_type_hint!
-                            generic_inferences
-                            span: yield_span
-                        ) {
-                            result_type = block_type_id
-                        }
+                        )
                     } else {
                         result_type = block_type_id
                     }
@@ -10471,19 +10490,12 @@ struct Typechecker {
                 }
 
                 if result_type.has_value() {
-                    if not .check_types_for_compat(
-                        lhs_type_hint: result_type_hint!
-                        rhs_type_id: checked_expression.type()
+                    result_type = .choose_broader_type_id(
+                        original_type_id: result_type_hint!.type_id
+                        potential_type_id: checked_expression.type()
                         generic_inferences
                         span
-                    ) and .check_types_for_compat(
-                        lhs_type_id: checked_expression.type()
-                        rhs_type_hint: result_type_hint!
-                        generic_inferences
-                        span
-                    ) {
-                        result_type = checked_expression.type()
-                    }
+                    )
                 } else {
                     result_type = checked_expression.type()
                 }
