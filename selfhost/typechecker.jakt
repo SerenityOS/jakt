@@ -162,10 +162,9 @@ struct Typechecker {
     cpp_import_processor: CppImportProcessor? = None
     temp_var_count: u64 = 0
     // The current statement block, available to typecheck_expression functions so that they can
-    // push temporary variables for `IsEnumVariant` checks.
-    // Note that this mechanism relies on Array being refcounted, so that the pushes that
-    // are done to `.current_block` are visible after the expression is checked.
-    current_block: [CheckedStatement] = []
+    // push temporary variables for `IsEnumVariant` checks. `typecheck_block` will set the current block
+    // here so it can be modified by the aforementioned functions.
+    current_block: CheckedBlock = CheckedBlock(statements: [], scope_id: ScopeId(module_id: ModuleId(id: 0xFFFFFFFFFFFFFFFFuz), id: 0xFFFFFFFFFFFFFFFFuz) control_flow: BlockControlFlow::NeverReturns)
 
     fn set_self_type_id(mut this, anon type_id: TypeId) {
         if .get_type(type_id) is Struct(struct_id) and .get_struct(struct_id).implements_type is Some(replacement_type_id) {
@@ -5671,15 +5670,14 @@ struct Typechecker {
     fn typecheck_block(mut this, anon parsed_block: ParsedBlock, parent_scope_id: ScopeId, safety_mode: SafetyMode, yield_type_hint: TypeHint? = None) throws -> CheckedBlock {
         let parent_throws = .get_scope(parent_scope_id).can_throw
         let block_scope_id = .create_scope(parent_scope_id, can_throw: parent_throws, debug_name: "block")
-        mut checked_block = CheckedBlock(
+        let old_block = .current_block
+        .current_block = CheckedBlock(
             scope_id: block_scope_id
             control_flow: BlockControlFlow::MayReturn
         )
-        let old_block = .current_block
-        .current_block = checked_block.statements
         defer .current_block = old_block
         for parsed_statement in parsed_block.stmts {
-            if not checked_block.control_flow.is_reachable() {
+            if not .current_block.control_flow.is_reachable() {
                 .error("Unreachable code", parsed_statement.span())
             }
 
@@ -5689,7 +5687,7 @@ struct Typechecker {
                 safety_mode
                 type_hint: yield_type_hint
             )
-            checked_block.control_flow = checked_block.control_flow.updated(checked_statement.control_flow())
+            .current_block.control_flow = .current_block.control_flow.updated(checked_statement.control_flow())
 
             let yield_span: Span? = match parsed_statement {
                 ParsedStatement::Yield(expr) => match expr.has_value() {
@@ -5715,45 +5713,45 @@ struct Typechecker {
                     let type_ = .resolve_type_var(type_var_type_id , scope_id: block_scope_id)
 
                     if checked_yield_expression! is OptionalNone {
-                        checked_block.yielded_none = true
+                        .current_block.yielded_none = true
                     }
 
-                    if checked_block.yielded_type.has_value() {
+                    if .current_block.yielded_type.has_value() {
                         // TODO check types for compat
                         .check_types_for_compat(
-                            lhs_type_id: checked_block.yielded_type.value()
+                            lhs_type_id: .current_block.yielded_type.value()
                             rhs_type_id: type_
                             generic_inferences: &mut .generic_inferences
                             span: yield_span.value()
                         )
                     } else {
-                        checked_block.yielded_type = Some(type_)
+                        .current_block.yielded_type = Some(type_)
                     }
                 } else {
-                    if checked_block.yielded_type.has_value() {
+                    if .current_block.yielded_type.has_value() {
                         .check_types_for_compat(
-                            lhs_type_id: checked_block.yielded_type.value()
+                            lhs_type_id: .current_block.yielded_type.value()
                             rhs_type_id: void_type_id()
                             generic_inferences: &mut .generic_inferences
                             span: yield_span.value()
                         )
                     } else {
-                        checked_block.yielded_type = Some(void_type_id())
+                        .current_block.yielded_type = Some(void_type_id())
                     }
                 }
             }
 
-            checked_block.statements.push(checked_statement)
+            .current_block.statements.push(checked_statement)
         }
 
-        if checked_block.yielded_type.has_value() {
-            checked_block.yielded_type = Some(.substitute_typevars_in_type(
-                type_id: checked_block.yielded_type.value()
+        if .current_block.yielded_type.has_value() {
+            .current_block.yielded_type = Some(.substitute_typevars_in_type(
+                type_id: .current_block.yielded_type.value()
                 generic_inferences: .generic_inferences
             ))
         }
 
-        return checked_block
+        return .current_block
     }
 
     fn debug_description_of(this, anon scope_id: ScopeId) -> String {
@@ -6718,7 +6716,7 @@ struct Typechecker {
             span
         )
 
-        .add_pre_condition(unchecked: &pre_condition, scope_id, safety_mode, checked: &mut .current_block)
+        .add_pre_condition(unchecked: &pre_condition, scope_id, safety_mode, block: &mut .current_block)
 
         let checked_condition = .typecheck_expression_and_dereference_if_needed(new_condition, scope_id, safety_mode, type_hint: None, span)
         if not checked_condition.type().equals(builtin(BuiltinType::Bool)) {
@@ -7116,11 +7114,13 @@ struct Typechecker {
     }
 
     [[inline(always)]]
-    fn add_pre_condition(mut this, unchecked: &[ParsedStatement], scope_id: ScopeId, safety_mode: SafetyMode, checked: &mut [CheckedStatement]) throws {
+    fn add_pre_condition(mut this, unchecked: &[ParsedStatement], scope_id: ScopeId, safety_mode: SafetyMode, block: &mut CheckedBlock) throws {
         guard not unchecked.is_empty() else { return }
-        checked.add_capacity(unchecked.size())
+        block.statements.add_capacity(unchecked.size())
         for stmt in unchecked {
-            checked.push(.typecheck_statement(stmt, scope_id, safety_mode))
+            let checked_stmt = .typecheck_statement(stmt, scope_id, safety_mode)
+            block.control_flow = block.control_flow.updated(checked_stmt.control_flow())
+            block.statements.push(checked_stmt)
         }
     }
 
@@ -7136,7 +7136,7 @@ struct Typechecker {
             span
         )
 
-        .add_pre_condition(unchecked: &prev_unchecked, scope_id, safety_mode, checked: &mut .current_block)
+        .add_pre_condition(unchecked: &prev_unchecked, scope_id, safety_mode, block: &mut .current_block)
 
         let checked_condition = .typecheck_expression_and_dereference_if_needed(new_condition, scope_id, safety_mode, type_hint: None, span)
 
@@ -7726,7 +7726,7 @@ struct Typechecker {
         if type_hint_id.has_value() {
             type_hint = TypeHint::MustBe(type_id: type_hint_id!)
         }
-        .add_pre_condition(unchecked: &pre_condition, scope_id, safety_mode, checked: &mut .current_block)
+        .add_pre_condition(unchecked: &pre_condition, scope_id, safety_mode, block: &mut .current_block)
 
         let checked_expr = .typecheck_expression_and_dereference_if_needed(new_condition, scope_id, safety_mode, type_hint, span)
 
@@ -10331,7 +10331,7 @@ struct Typechecker {
                                         scope_id
                                         span
                                     )
-                                    .add_pre_condition(unchecked: &pre_condition, scope_id, safety_mode, checked: &mut .current_block)
+                                    .add_pre_condition(unchecked: &pre_condition, scope_id, safety_mode, block: &mut .current_block)
                                     let checked_expression = .typecheck_expression_and_dereference_if_needed(new_condition, scope_id, safety_mode, type_hint: TypeHint::MustBe(type_id: subject_type_id), span)
 
                                     if is_boolean_match and checked_expression is Boolean(val) {
