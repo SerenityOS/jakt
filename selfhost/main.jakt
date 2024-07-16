@@ -721,12 +721,12 @@ fn compiler_main(anon args: [String]) throws -> c_int {
     if interpret_run {
         mut interpreter = typechecker.interpreter()
 
-        // Find the main function
-        let prelude_scope_id = ScopeId(module_id: ModuleId(id: 0), id: 0)
+        // Find the main function in the main module
+        let main_module_scope_id = ScopeId(module_id: ModuleId(id: 1), id: 0)
         mut main_function_id: FunctionId? = None
         for module in checked_program.modules {
             for scope in module.scopes {
-                if not (scope.parent?.equals(prelude_scope_id) ?? false) {
+                if not (scope.parent?.equals(main_module_scope_id) ?? false) {
                     continue
                 }
 
@@ -773,7 +773,8 @@ fn compiler_main(anon args: [String]) throws -> c_int {
             namespace_
             this_argument: None
             arguments
-            call_span)
+            call_span
+            is_main: true)
 
         match main_result {
             Return(x) => match x.impl {
