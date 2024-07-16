@@ -1,0 +1,28 @@
+/// Expect:
+/// - output: "get_value()\ny = 3\nget_value()\n"
+
+enum Value {
+    NoExtra
+    WithExtra(i32)
+}
+
+fn get_value(anon first: bool) -> Value {
+    // This function should execute twice, since the loop tests the condition
+    // twice.
+    println("get_value()") 
+    if first { 
+        return Value::WithExtra(3i32) 
+    } else { 
+        return Value::NoExtra
+    }
+}
+
+fn main() {
+
+    mut first = true
+    while get_value(first) is WithExtra(y) {
+        println("y = {}", y)
+        first = false
+    }
+
+}

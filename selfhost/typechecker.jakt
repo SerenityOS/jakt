@@ -7518,17 +7518,52 @@ struct Typechecker {
         .break_continue_tracker = BreakContinueLegalityTracker::AnyLoop
         defer .break_continue_tracker = previous_break_continue_tracker
 
-        let checked_condition = .typecheck_expression_and_dereference_if_needed(condition, scope_id, safety_mode, type_hint: None, span)
+        mut pre_condition: [ParsedStatement] = []
+        let (new_condition, new_body, _break) = .expand_context_for_bindings(
+            condition
+            acc: None
+            &mut pre_condition
+            then_block: block
+            // if the condition fails, use a break to go out of the loop.
+            else_statement: ParsedStatement::Break(condition.span())
+            scope_id
+            span
+        )
+
+        let loop_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: "loop-condition-scope")
+        mut loop_pre = CheckedBlock(statements: [], scope_id: loop_scope_id, control_flow: BlockControlFlow::MayReturn)
+        .add_pre_condition(unchecked: &pre_condition, scope_id: loop_scope_id, safety_mode, block: &mut loop_pre)
+
+        let checked_condition = .typecheck_expression_and_dereference_if_needed(new_condition, scope_id: loop_scope_id, safety_mode, type_hint: None, span)
         if not checked_condition.type().equals(builtin(BuiltinType::Bool)) {
             .error("Condition must be a boolean expression", condition.span())
         }
 
-        let checked_block = .typecheck_block(block, parent_scope_id: scope_id, safety_mode)
+        let checked_block = .typecheck_block(new_body!, parent_scope_id: loop_scope_id, safety_mode)
         if checked_block.yielded_type.has_value() {
             .error("A ‘while’ block is not allowed to yield values", block.find_yield_span()!)
         }
 
-        return CheckedStatement::While(condition: checked_condition, block: checked_block, span)
+        if loop_pre.statements.is_empty() {
+            // The condition can be used directly in the header of a while
+            // loop, since there is no preparation required for it.
+            return CheckedStatement::While(condition: checked_condition, block: checked_block, span)
+        } else {
+            // The preparation statements must run in a loop too. They will
+            // run, then the body of the while will be run inside a conditional
+            // that breaks out of the loop otherwise.
+            let if_or_break = CheckedStatement::If(
+                condition: checked_condition
+                then_block: checked_block
+                else_statement: CheckedStatement::Break(checked_condition.span())
+                span)
+            // Make sure that the inner control flow of the loop body is passed through. The
+            // precondition statements were already processed by `.add_pre_condition`.
+            loop_pre.control_flow = loop_pre.control_flow.updated(if_or_break.control_flow())
+            loop_pre.statements.push(if_or_break)
+
+            return CheckedStatement::Loop(block: loop_pre, span)
+        }
     }
 
     fn typecheck_try_block(mut this, stmt: ParsedStatement, error_name: String, error_span: Span, catch_block: ParsedBlock, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedExpression {
