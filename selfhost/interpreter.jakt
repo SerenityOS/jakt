@@ -3382,6 +3382,7 @@ class Interpreter {
         arguments: [Value]
         call_span: Span
         invocation_scope: InterpreterScope? = None
+        is_main: bool = false
     ) throws -> ExecutionResult {
         let function_to_run = .program.get_function(function_to_run_id)
         .enter_span(call_span)
@@ -3568,7 +3569,7 @@ class Interpreter {
                 }
 
                 let blk = .execute_block(block: function_to_run.block, scope, call_span)
-                if blk is JustValue(x) and x.impl is Void {
+                if blk is JustValue(x) and x.impl is Void and not is_main {
                     eprintln("Comptime function returned void, scope: {}", .program.get_scope(function_to_run.function_scope_id).debug_name)
                     abort()
                 }
