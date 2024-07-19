@@ -247,7 +247,6 @@ fn find_type_definition_for_type_id(program: CheckedProgram, type_id: TypeId, sp
         Enum(id) => program.get_enum(id).name_span
         RawPtr(type_id) => find_type_definition_for_type_id(program, type_id, span)
         TypeVariable() => span
-        GenericResolvedType(id) => program.get_struct(id).name_span
         Reference(type_id) => find_type_definition_for_type_id(program, type_id, span)
         MutableReference(type_id) => find_type_definition_for_type_id(program, type_id, span)
     }
@@ -1097,19 +1096,6 @@ fn get_type_signature(program: CheckedProgram, type_id: TypeId) throws -> String
                     panic("unreachable: should've been struct")
                 }
             } + struct_.name
-        }
-        GenericResolvedType(id, args) => {
-            let record = program.get_struct(id)
-            mut output = record.name
-            output += "<"
-            if not args.is_empty() {
-                output += get_type_signature(program, type_id: args[0])
-                for i in 1..args.size() {
-                    output += ", "
-                    output += get_type_signature(program, type_id: args[i])
-                }
-            }
-            yield output + ">"
         }
         GenericEnumInstance(id, args) => {
             let enum_ = program.get_enum(id)

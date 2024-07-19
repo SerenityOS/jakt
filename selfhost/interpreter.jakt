@@ -79,8 +79,7 @@ fn align_of_impl(
     TypeVariable
     | Const
     | Dependent
-    | GenericTraitInstance
-    | GenericResolvedType => 0
+    | GenericTraitInstance => 0
     GenericInstance(id: struct_id, args)
     | Struct(struct_id) default(args: [TypeId] = []) => {
         let struct_ = interpreter.program.get_struct(struct_id)
@@ -192,8 +191,7 @@ fn size_of_impl(
     TypeVariable
     | Const
     | Dependent
-    | GenericTraitInstance
-    | GenericResolvedType => 0
+    | GenericTraitInstance => 0
 
     GenericInstance(id: struct_id, args)
     | Struct(struct_id) default(args: [TypeId] = []) => {

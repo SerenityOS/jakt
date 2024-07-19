@@ -256,7 +256,6 @@ boxed enum Type {
     GenericInstance(id: StructId, args: [TypeId])
     GenericEnumInstance(id: EnumId, args: [TypeId])
     GenericTraitInstance(id: TraitId, args: [TypeId])
-    GenericResolvedType(id: StructId, args: [TypeId])
     Struct(StructId)
     Enum(EnumId)
     RawPtr(TypeId)
@@ -268,7 +267,7 @@ boxed enum Type {
     Const(Value)
 
     fn generic_parameters(this, program: CheckedProgram) -> [CheckedGenericParameter]? => match this {
-        Struct(id) | GenericInstance(id) | GenericResolvedType(id) => Some(program.get_struct(id).generic_parameters)
+        Struct(id) | GenericInstance(id) => Some(program.get_struct(id).generic_parameters)
         Enum(id) | GenericEnumInstance(id) => Some(program.get_enum(id).generic_parameters)
         Trait(id) | GenericTraitInstance(id) => Some(program.get_trait(id).generic_parameters)
         else => None
@@ -298,14 +297,6 @@ boxed enum Type {
             yield specificity
         }
         GenericEnumInstance(args) => {
-            mut specificity = base_specificity / 2
-            for subtype_id in args.iterator() {
-                let subtype = program.get_type(subtype_id)
-                specificity += subtype.specificity(program, base_specificity: base_specificity/4)
-            }
-            yield specificity
-        }
-        GenericResolvedType(args) => {
             mut specificity = base_specificity / 2
             for subtype_id in args.iterator() {
                 let subtype = program.get_type(subtype_id)
@@ -348,7 +339,6 @@ boxed enum Type {
         GenericInstance => "GenericInstance"
         GenericEnumInstance => "GenericEnumInstance"
         GenericTraitInstance => "GenericTraitInstance"
-        GenericResolvedType => "GenericResolvedType"
         Struct => "Struct"
         Enum => "Enum"
         RawPtr => "RawPtr"
@@ -397,8 +387,7 @@ boxed enum Type {
             Const(rhs_value) => lhs_value.impl.equals(rhs_value.impl)
             else => false
         }
-        GenericResolvedType(id: lhs_id, args: lhs_args)
-        | GenericInstance(id: lhs_id, args: lhs_args) => {
+        GenericInstance(id: lhs_id, args: lhs_args) => {
             guard rhs is GenericInstance(id: rhs_id, args: rhs_args)
                 and lhs_id.equals(rhs_id)
                 and lhs_args.size() == rhs_args.size() else {
@@ -1956,7 +1945,6 @@ class CheckedProgram {
             GenericInstance(id, args) => Type::GenericInstance(qualifiers, id, args)
             GenericEnumInstance(id, args) => Type::GenericEnumInstance(qualifiers, id, args)
             GenericTraitInstance(id, args) => Type::GenericTraitInstance(qualifiers, id, args)
-            GenericResolvedType(id, args) => Type::GenericResolvedType(qualifiers, id, args)
             Struct(id) => Type::Struct(qualifiers, id)
             Enum(id) => Type::Enum(qualifiers, id)
             RawPtr(id) => Type::RawPtr(qualifiers, id)
@@ -2058,7 +2046,7 @@ class CheckedProgram {
                     let no_args: [TypeId] = []
 
                     let maybe_generics = match .get_type(type_id) {
-                        GenericInstance(id, args) | GenericResolvedType(id, args) => {
+                        GenericInstance(id, args) => {
                             let struct_ = .get_struct(id)
                             yield Some((struct_.generic_parameters, struct_.generic_parameter_defaults, args))
                         }
@@ -2891,22 +2879,6 @@ class CheckedProgram {
                     }
                     output += ">"
                 }
-
-                yield output
-            }
-            GenericResolvedType(id, args) => {
-                mut output = .get_struct(id).name
-                mut first = true
-                output += "<"
-                for arg in args {
-                    if not first {
-                        output += ", "
-                    } else {
-                        first = false
-                    }
-                    output += .type_name(type_id, debug_mode)
-                }
-                output += ">"
 
                 yield output
             }

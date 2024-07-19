@@ -2387,7 +2387,7 @@ struct CodeGenerator {
 
     fn destructor_name(this, anon id: TypeId) -> String? => match .program.get_type(id) {
         JaktString => "ByteString"
-        GenericInstance(id) | GenericResolvedType(id) | Struct(id) => {
+        GenericInstance(id) | Struct(id) => {
             let struct_ = .program.get_struct(id)
             yield match (struct_.record_type is Class) {
                 true => "NonnullRefPtr"
@@ -4839,7 +4839,7 @@ struct CodeGenerator {
             }
             Reference(type_id) => .codegen_type(type_id) + " const&"
             MutableReference(type_id) => .codegen_type(type_id) + "&"
-            GenericResolvedType(id, args) | GenericInstance(id, args) => .codegen_generic_type_instance(id, args, as_namespace)
+            GenericInstance(id, args) => .codegen_generic_type_instance(id, args, as_namespace)
             Struct(id) => {
                 let implements_type = .program.get_struct(id).implements_type
                 yield match implements_type.has_value() {
