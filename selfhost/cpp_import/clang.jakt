@@ -475,7 +475,7 @@ class CppImportProcessor {
                             } else {
                                 type_id = program.find_or_add_type_id(
                                     type: match program.get_type(base_type!) {
-                                        Struct(id) | GenericInstance(id) | GenericResolvedType(id) => Type::GenericInstance(id, args)
+                                        Struct(id) | GenericInstance(id) => Type::GenericInstance(id, args)
                                         Enum(id) | GenericEnumInstance(id) => Type::GenericEnumInstance(id, args)
                                         else => {
                                             eprintln("ICE: Elaborated type is not a struct or enum: {}", program.type_name(base_type!, debug_mode: true))
@@ -1974,7 +1974,7 @@ class CppImportProcessor {
                 module_id
             ))
             match type {
-                GenericInstance(id) | Struct(id) | GenericResolvedType(id) => { super_struct_ids.push(id) }
+                GenericInstance(id) | Struct(id) => { super_struct_ids.push(id) }
                 else => {
                     eprintln("[ICE] Base type of {} is not a struct or generic instance: {}", specialized_name, type)
                 }
