@@ -10685,6 +10685,15 @@ struct Typechecker {
             }
         }
 
+        if value_hint.has_value() {
+            value_type_id = .choose_broader_type_id(
+                original_type_id: value_type_id
+                potential_type_id: value_hint!
+                generic_inferences: &mut .generic_inferences
+                span
+            )
+        }
+
         if key_hint.has_value() {
             key_type_id = .choose_broader_type_id(
                 original_type_id: key_type_id
