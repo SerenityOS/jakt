@@ -9458,6 +9458,15 @@ struct Typechecker {
             )
         }
 
+        if inner_hint_id.has_value() {
+            inner_type_id = .choose_broader_type_id(
+                original_type_id: inner_type_id
+                potential_type_id: inner_hint_id!
+                generic_inferences: &mut .generic_inferences
+                span
+            )
+        }
+
         return CheckedExpression::JaktArray(vals, repeat, span, type_id, inner_type_id)
     }
 
