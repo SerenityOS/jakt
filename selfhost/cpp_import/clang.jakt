@@ -46,6 +46,31 @@ import extern c "stdlib.h" {
 
 import jakt::prelude::configuration { UserConfiguration }
 
+// FIXME: String has no split(String) :/
+trait StringSplit {
+    fn split(this, anon sep: Self) -> [Self]
+}
+
+type String implements(StringSplit) {
+    private extern fn view(this) -> StringView
+    [[inline(always)]]
+    fn split(this, anon sep: String) -> [String] {
+        let view = .view()
+        mut result: [String] = []
+        let parts = view.split(sep.view())
+        for part in parts {
+            result.push(String::from_string_literal(part))
+        }
+        return result
+    }
+}
+
+type StringView implements(StringSplit) {
+    [[name=split_view]]
+    restricted(String) extern fn split(this, anon sep: StringView) -> [StringView]
+}
+// FIXME end
+
 fn bitcast<D, S>(anon value: S) -> D {
     mut x = null<D>()
     let f = fn[&x, &value]() {
@@ -243,6 +268,11 @@ struct Cursor implements(Equal<Cursor>, Hashable) {
     fn equals(this, anon other: Cursor) -> bool => clang_equalCursors(.cursor, other.cursor)
 }
 
+enum SizeOrConstType {
+    Size(u64)
+    ConstType(TypeId)
+}
+
 class CppImportProcessor {
     index: CXIndex
     cpp_struct_cache: [String:StructId]
@@ -291,6 +321,29 @@ class CppImportProcessor {
         }
 
         let type = .type_from(program, scope_id, root_scope_id, module_id, clang_getCursorType(cursor))
+        .cpp_type_cache.set(key, type)
+        return type
+    }
+
+    fn cached_dependent_type_of_cursor(
+        mut this
+        anon cursor: CXCursor
+        program: &mut CheckedProgram
+        scope_id: ScopeId
+        root_scope_id: ScopeId
+        module_id: ModuleId
+    ) throws -> TypeId {
+        let key = HashableCursor(cursor, hash_value: clang_hashCursor(cursor))
+        let cached_type = .cpp_type_cache.get(key)
+        if cached_type.has_value() {
+            return cached_type!
+        }
+
+        let children = .extract_cursors_of_kinds(cursor, kinds: {})
+        let type = match children.is_empty() {
+            true => .cached_type_of_cursor(cursor, program, scope_id, root_scope_id, module_id)
+            false => .dependent_type_from(program, scope_id, root_scope_id, module_id, children)
+        }
         .cpp_type_cache.set(key, type)
         return type
     }
@@ -348,6 +401,162 @@ class CppImportProcessor {
     ) throws -> TypeId {
         let value = .const_value_from(program, scope_id, module_id, cursor)
         return program.find_or_add_type_id(type: Type::Const(value), module_id, only_in_current_module: true)
+    }
+
+    fn dependent_type_from(
+        mut this
+        program: &mut CheckedProgram
+        scope_id: ScopeId
+        root_scope_id: ScopeId
+        module_id: ModuleId
+        anon cursors: [CXCursor]
+    ) throws -> TypeId {
+        if cursors.is_empty() {
+            return unknown_type_id()
+        }
+
+        mut base: TypeId? = None
+        mut current_scope_id = scope_id
+        mut i = 0uz
+        while i < cursors.size() {
+            defer i += 1
+            let cursor = cursors[i]
+
+            let kind = clang_getCursorKind(cursor)
+            current_scope_id = match kind {
+                CXCursor_NamespaceRef | CXCursor_TypeRef => .dependent_add_ns1(
+                    name: string_from(clang_getCursorSpelling(cursor))
+                    &mut base
+                    program
+                    scope_id: current_scope_id
+                    root_scope_id
+                    module_id
+                )
+                CXCursor_TemplateRef => {
+                    let params = cursors[(i + 1)..].to_array()
+                    i += params.size()
+                    yield .dependent_add_ns1(
+                        name: string_from(clang_getCursorSpelling(cursor))
+                        &mut base
+                        program
+                        scope_id: current_scope_id
+                        root_scope_id
+                        module_id
+                        params
+                    )
+                }
+                else => {
+                    let kind_number = kind as! c_int
+                    if kind_number > CXCursorKind::CXCursor_FirstExpr as! c_int and
+                        kind_number < CXCursorKind::CXCursor_LastExpr as! c_int {
+
+                        let expr_val = .const_type_from(program, scope_id, module_id, cursor)
+                        if base.has_value() {
+                            // An array...probably?
+                            base = (try .static_array(
+                                program
+                                scope_id: current_scope_id
+                                root_scope_id
+                                module_id
+                                element_type_id: base!
+                                array_size: SizeOrConstType::ConstType(expr_val)
+                            )) ?? unknown_type_id()
+                        } else {
+                            base = expr_val
+                        }
+                    } else {
+                        eprintln("Unknown cursor kind in dependent type: {}", string_from(clang_getCursorKindSpelling(clang_getCursorKind(cursor))))
+                        return unknown_type_id()
+                    }
+                    yield current_scope_id
+                }
+            }
+        }
+
+        return base ?? unknown_type_id()
+    }
+
+    fn dependent_add_ns1(
+        mut this
+        name: String
+        base: &mut TypeId?
+        program: &mut CheckedProgram
+        scope_id: ScopeId
+        root_scope_id: ScopeId
+        module_id: ModuleId
+        anon cs: [CXCursor]? = None
+    ) throws -> ScopeId {
+        // clang "helpfully" joins all plain ns refs into one cursor, so we have to split them up first.
+        mut names = name.split("::")
+
+        let final_name = names.pop()!
+        mut new_scope_id = scope_id
+        for n in names {
+            new_scope_id = .dependent_add_ns(name: n, base, program, scope_id: new_scope_id, root_scope_id, module_id)
+        }
+
+        return .dependent_add_ns(name: final_name, base, program, scope_id: new_scope_id, root_scope_id, module_id, cs)
+    }
+
+    fn dependent_add_ns(
+        mut this
+        name: String
+        base: &mut TypeId?
+        program: &mut CheckedProgram
+        scope_id: ScopeId
+        root_scope_id: ScopeId
+        module_id: ModuleId
+        anon cs: [CXCursor]? = None
+    ) throws -> ScopeId {
+        mut args: [TypeId] = []
+        if cs.has_value() {
+            for c in cs! {
+                args.push(.cached_dependent_type_of_cursor(cursor: c, program, scope_id, root_scope_id, module_id))
+            }
+        }
+
+        mut new_scope_id = scope_id
+
+        if base.has_value() {
+            base = program.find_or_add_type_id(
+                Type::Dependent(
+                    namespace_type: base!
+                    name
+                    args
+                )
+                module_id
+                only_in_current_module: true
+            )
+        } else {
+            base = program.find_type_in_scope(
+                scope_id
+                name
+                ignore_mixin_scopes: false
+                root_scope: root_scope_id
+            )
+            if not base.has_value() {
+                let scope = program.find_namespace_in_scope(
+                    scope_id
+                    name
+                    ignore_mixin_scopes: false
+                    root_scope: root_scope_id
+                )
+                if scope.has_value() {
+                    new_scope_id = scope!.0
+                } else {
+                    base = program.find_or_add_type_id(Type::TypeVariable(name, trait_implementations: []), module_id, only_in_current_module: true)
+                }
+            } else if cs.has_value() {
+                base = program.specialize_type_id(
+                    type_id: base!
+                    new_args: args
+                    replace_args: true
+                    module_id
+                )
+            }
+        }
+
+        return new_scope_id
     }
 
     fn type_from(
@@ -589,33 +798,16 @@ class CppImportProcessor {
                 let element_type = clang_getArrayElementType(t)
                 let element_type_id = .type_from(program, scope_id, root_scope_id, module_id, element_type)
                 let array_size = clang_getArraySize(t)
-                let static_array_struct_id = try value_or_error(program.find_struct_in_scope(
-                    scope_id
-                    name: "StaticArray"
-                    ignore_mixin_scopes: true
-                    root_scope: root_scope_id
-                )) catch {
-                    return builtin(BuiltinType::Unknown)
-                }
-                let generic_arguments = [
+                yield try .static_array(
+                    program: program
+                    scope_id: scope_id
+                    root_scope_id: root_scope_id
+                    module_id: module_id
                     element_type_id
-                    program.find_or_add_type_id(
-                        Type::Const(Value(
-                            impl: ValueImpl::U64(array_size)
-                            span: empty_span()
-                        ))
-                        module_id
-                        only_in_current_module: true
-                    )
-                ]
-                yield program.find_or_add_type_id(
-                    type: Type::GenericInstance(
-                        id: static_array_struct_id
-                        args: generic_arguments
-                    )
-                    module_id
-                    only_in_current_module: true
-                )
+                    array_size: SizeOrConstType::Size(array_size)
+                ) catch {
+                    yield builtin(BuiltinType::Unknown)
+                }
             }
             else => {
                 let v = clang_getTypeSpelling(t)
@@ -626,6 +818,45 @@ class CppImportProcessor {
 
         let qualifiers = CheckedQualifiers(is_immutable: clang_isConstQualifiedType(t))
         return program.apply_qualifiers_to_type(qualifiers, type)
+    }
+
+    fn static_array(
+        mut this
+        program: &mut CheckedProgram
+        scope_id: ScopeId
+        root_scope_id: ScopeId
+        module_id: ModuleId
+        element_type_id: TypeId
+        array_size: SizeOrConstType
+    ) throws -> TypeId {
+        let static_array_struct_id = value_or_error(program.find_struct_in_scope(
+            scope_id
+            name: "StaticArray"
+            ignore_mixin_scopes: true
+            root_scope: root_scope_id
+        ))
+        let generic_arguments = [
+            element_type_id
+            match array_size {
+                Size(size) => program.find_or_add_type_id(
+                    Type::Const(Value(
+                        impl: ValueImpl::U64(size)
+                        span: empty_span()
+                    ))
+                    module_id
+                    only_in_current_module: true
+                )
+                ConstType(type_id) => type_id
+            }
+        ]
+        return program.find_or_add_type_id(
+            type: Type::GenericInstance(
+                id: static_array_struct_id
+                args: generic_arguments
+            )
+            module_id
+            only_in_current_module: true
+        )
     }
 
     fn process_namespace_contents(
@@ -1277,8 +1508,14 @@ class CppImportProcessor {
                 )
                 yield not resolved_type.has_value()
             }
-            // This is the fun `typedef decl <unnamed> {} name;` pattern, we don't need to produce a new typename.
-            else => string_from(clang_getTypeSpelling(type)).is_empty()
+            CXCursor_TypeAliasDecl | CXCursor_TypedefDecl => {
+                resolved_type = .cached_dependent_type_of_cursor(cursor, program, scope_id: parent_scope_id, root_scope_id, module_id)
+                yield false
+            }
+            else => {
+                eprintln("[ICE] Unsupported type alias kind: {}", string_from(clang_getCursorKindSpelling(clang_getCursorKind(cursor))))
+                abort()
+            }
         }
 
         if should_skip {
@@ -2187,7 +2424,7 @@ class CppImportProcessor {
             for_block: false
         )
 
-        let clang_runtime_dir = clang_runtime_include_dir()
+        let clang_runtime_dir : String? = clang_runtime_include_dir()
 
         let found_path = program.compiler.find_in_search_paths(import_path)
         if not found_path.has_value() {
@@ -2302,6 +2539,17 @@ class CppImportProcessor {
         // dump_scope(import_scope_id, &program)
 
         return import_scope_id
+    }
+
+    fn dump_cursor(this, anon cursor: CXCursor, indent: i64 = 0) throws {
+        eprintln("{:->{}} {} ({})", "", indent, name_from(cursor), string_from(clang_getCursorKindSpelling(clang_getCursorKind(cursor))))
+        visit(
+            cursor
+            fn[this, indent](c: CXCursor, parent: CXCursor) throws -> CXChildVisitResult {
+                .dump_cursor(cursor: c, indent: indent + 2)
+                return CXChildVisitResult::CXChildVisit_Continue
+            }
+        )
     }
 }
 
