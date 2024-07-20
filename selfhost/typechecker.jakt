@@ -9547,6 +9547,15 @@ struct Typechecker {
             )
         }
 
+        if inner_hint_id.has_value() {
+            inner_type_id = .choose_broader_type_id(
+                original_type_id: inner_type_id
+                potential_type_id: inner_hint_id!
+                generic_inferences: &mut .generic_inferences
+                span
+            )
+        }
+
         let type_id = .find_or_add_type_id(Type::GenericInstance(
             id: set_struct_id
             args: [inner_type_id]

@@ -1,0 +1,20 @@
+/// Expect:
+/// - output: "PASS\n"
+
+class Base implements(Hashable, Equal<Base>) {
+    public fn hash(this) => 42u32
+    public fn equals(this, anon other: Base) -> bool => true
+}
+
+class Derived implements(Hashable, Equal<Derived>) : Base {
+    public fn hash(this) => 42u32
+    public fn equals(this, anon other: Derived) -> bool => true
+}
+
+fn func(anon a: {Base}) {
+    println("PASS")
+}
+
+fn main() {
+    func({Derived()})
+}
