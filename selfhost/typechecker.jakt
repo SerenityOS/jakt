@@ -8449,6 +8449,10 @@ struct Typechecker {
     ) throws -> CheckedExpression => match expr {
         IndexedStruct(expr, field_name, span, is_optional) => .typecheck_indexed_struct(expr, field_name, scope_id, is_optional, safety_mode, span)
         ComptimeIndex(expr, index, span, is_optional) => .typecheck_comptime_index(expr, index, scope_id, is_optional, safety_mode, span)
+        ExpectedHintName(span) => {
+            .error("Invalid use of contextual type name", span)
+            yield CheckedExpression::Garbage(span, type_id: unknown_type_id())
+        }
         Boolean(val, span) => {
             if type_hint.has_value() {
                 .unify_with_type(found_type: builtin(BuiltinType::Bool), expected_type: type_hint!.type_id, span)
@@ -8661,7 +8665,26 @@ struct Typechecker {
         }
         UnaryOp(expr, op, span) => {
             let checked_expr = match op {
-                Dereference => .typecheck_expression(expr, scope_id, safety_mode, type_hint: None)
+                Dereference => .typecheck_expression(expr, scope_id, safety_mode, type_hint: match type_hint.has_value() {
+                    true => TypeHint::CouldBe(
+                        type_id: .find_or_add_type_id(Type::Reference(type_hint!.type_id))
+                    )
+                    false => None
+                })
+                Reference => .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint: match type_hint.has_value() {
+                    true => match .get_type(type_hint!.type_id) {
+                        Reference(inner) | MutableReference(inner) => TypeHint::CouldBe(type_id: inner)
+                        else => None
+                    }
+                    false => None
+                }, span)
+                MutableReference => .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint: match type_hint.has_value() {
+                    true => match .get_type(type_hint!.type_id) {
+                        MutableReference(inner) => TypeHint::CouldBe(type_id: inner)
+                        else => None
+                    }
+                    false => None
+                }, span)
                 Negate => .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint, span)
                 TypeCast(cast) => match cast {
                     Infallible => {
@@ -9000,7 +9023,20 @@ struct Typechecker {
         }
         IndexedTuple(expr, index, is_optional, span) => .typecheck_indexed_tuple(expr, index, scope_id, is_optional, safety_mode, span)
         Garbage(span) => CheckedExpression::Garbage(span, type_id: builtin(BuiltinType::Void))
-        NamespacedVar(name, namespace_, span) => .typecheck_namespaced_var_or_simple_enum_constructor_call(name, namespace_, scope_id, safety_mode, type_hint, span)
+        NamespacedVar(
+            name
+            namespace_
+            namespace_relative_to_type_hint
+            span
+        ) => .typecheck_namespaced_var_or_simple_enum_constructor_call(
+            name
+            namespace_
+            namespace_relative_to_type_hint
+            scope_id
+            safety_mode
+            type_hint
+            span
+        )
         Match(expr, cases, marker_span) => .typecheck_match(expr, cases, span: marker_span, scope_id, safety_mode, type_hint)
         EnumVariantArg(expr: inner_expr, arg, enum_variant, span) => {
             let checked_expr = .typecheck_expression_and_dereference_if_needed(inner_expr, scope_id, safety_mode, type_hint: None, span)
@@ -9341,6 +9377,7 @@ struct Typechecker {
         mut this
         name: String
         namespace_: [String]
+        namespace_relative_to_type_hint: bool
         scope_id: ScopeId
         safety_mode: SafetyMode
         type_hint: TypeHint?
@@ -9380,7 +9417,11 @@ struct Typechecker {
             return CheckedExpression::NamespacedVar(namespaces: checked_namespaces, var: var!, span)
         }
 
-        let implicit_constructor_call = ParsedCall(namespace_, name)
+        let implicit_constructor_call = ParsedCall(
+            namespace_
+            namespace_relative_to_type_hint
+            name
+        )
         let call_expression = .typecheck_call(call: implicit_constructor_call, caller_scope_id: scope_id, span, this_expr: None, parent_id: None, safety_mode, type_hint, must_be_enum_constructor: true)
         let type_id = call_expression.type()
         let call = match call_expression {
@@ -11140,6 +11181,66 @@ struct Typechecker {
         return builder.to_string()
     }
 
+    fn resolve_contextual_call(
+        mut this
+        call: ParsedCall
+        type_hint: TypeHint?
+        caller_scope_id: ScopeId
+        span: Span
+    ) throws -> (ParsedCall, ScopeId) {
+        guard type_hint.has_value() and call.namespace_relative_to_type_hint else {
+            return (call, caller_scope_id)
+        }
+
+        let type_id = type_hint!.type_id
+        mut copied_call = ParsedCall(
+            namespace_: call.namespace_
+            namespace_relative_to_type_hint: false
+            name: call.name
+            args: call.args
+        )
+
+        if call.name.is_empty() {
+            // This is just @(), @ refers to the ctor.
+            let (ctor_name, scope_id) = match .get_type(type_id) {
+                Struct(id) | GenericInstance(id) => {
+                    let struct_ = .get_struct(id)
+                    yield (struct_.name, struct_.scope_id)
+                }
+                else => {
+                    .error_with_hint(
+                        "The type referred to by '@' does not have the expected constructor"
+                        span
+                        format("The aforementioned type is '{}'", .type_name(type_id))
+                        span
+                    )
+                    yield ("", caller_scope_id)
+                }
+            }
+
+            copied_call.name = ctor_name
+            return (copied_call, scope_id)
+        }
+
+        // This is a call to some method somewhere down the scope chain, just resolve the scope.
+        let scope_id = match .get_type(.substitute_typevars_in_type(type_id, generic_inferences: .generic_inferences)) {
+            GenericInstance(id) | Struct(id) => .get_struct(id).scope_id
+            GenericEnumInstance(id) | Enum(id) => .get_enum(id).scope_id
+            GenericTraitInstance(id) | Trait(id) => .get_trait(id).scope_id
+            else => {
+                .error_with_hint(
+                    "The type referred to by '@' cannot be used as a namespace"
+                    span
+                    format("The aforementioned type is '{}'", .type_name(type_id))
+                    span
+                )
+                yield caller_scope_id
+            }
+        }
+
+        return (copied_call, scope_id)
+    }
+
     fn typecheck_call(
         mut this
         call: ParsedCall
@@ -11164,12 +11265,14 @@ struct Typechecker {
         let old_generic_inferences = .generic_inferences.perform_checkpoint(reset: false)
         defer .generic_inferences.restore(old_generic_inferences)
 
-        let is_print_like = call.namespace_.is_empty() and match call.name {
+        let (partially_resolved_call, effective_scope_id) = .resolve_contextual_call(call, type_hint, caller_scope_id, span)
+
+        let is_print_like = partially_resolved_call.namespace_.is_empty() and match partially_resolved_call.name {
             "print" | "println" | "eprintln" | "eprint" | "format" => true
             else => false
         }
 
-        for name in call.namespace_ {
+        for name in partially_resolved_call.namespace_ {
             resolved_namespaces.push(ResolvedNamespace(name, external_name: None, generic_parameters: None))
         }
 
@@ -11181,7 +11284,13 @@ struct Typechecker {
                     while resolved_function_id_candidates.is_empty() {
                         let old_ignore_errors = .ignore_errors
                         .ignore_errors = true
-                        resolved_function_id_candidates = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id, must_be_enum_constructor)
+                        resolved_function_id_candidates = .resolve_call(
+                            call: partially_resolved_call
+                            namespaces: resolved_namespaces
+                            span
+                            scope_id
+                            must_be_enum_constructor
+                        )
                         .ignore_errors = old_ignore_errors
                         .had_an_error = false
 
@@ -11193,7 +11302,7 @@ struct Typechecker {
                             struct_ = .get_struct(parent_struct_id)
                             scope_id = struct_.scope_id
                         } else {
-                            .error(format("Could not find ‘{}’", call.name), span)
+                            .error(format("Could not find ‘{}’", partially_resolved_call.name), span)
                             break
                         }
                     }
@@ -11201,20 +11310,38 @@ struct Typechecker {
                 }
                 Enum(id) => {
                     let scope_id = .get_enum(id).scope_id
-                    resolved_function_id_candidates = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id, must_be_enum_constructor)
+                    resolved_function_id_candidates = .resolve_call(
+                        call: partially_resolved_call
+                        namespaces: resolved_namespaces
+                        span
+                        scope_id
+                        must_be_enum_constructor
+                    )
                     yield scope_id
                 }
                 Trait(id) => {
                     let scope_id = .get_trait(id).scope_id
-                    resolved_function_id_candidates = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id, must_be_enum_constructor)
+                    resolved_function_id_candidates = .resolve_call(
+                        call: partially_resolved_call
+                        namespaces: resolved_namespaces
+                        span
+                        scope_id
+                        must_be_enum_constructor
+                    )
                     yield scope_id
                 }
             }
             else => {
                 if not is_print_like {
-                    resolved_function_id_candidates = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id: caller_scope_id, must_be_enum_constructor)
+                    resolved_function_id_candidates = .resolve_call(
+                        call: partially_resolved_call
+                        namespaces: resolved_namespaces
+                        span
+                        scope_id: effective_scope_id
+                        must_be_enum_constructor
+                    )
                 }
-                yield caller_scope_id
+                yield effective_scope_id
             }
         }
 
@@ -11231,7 +11358,7 @@ struct Typechecker {
 
         if is_print_like {
             mut first = true
-            for arg in call.args {
+            for arg in partially_resolved_call.args {
                 let type_hint = match first {
                     true => {
                         first = false
@@ -11242,10 +11369,10 @@ struct Typechecker {
 
                 let checked_arg = .typecheck_expression(expr: arg.2, scope_id: caller_scope_id, safety_mode, type_hint)
 
-                args.push((call.name, checked_arg))
+                args.push((partially_resolved_call.name, checked_arg))
             }
 
-            if call.name == "format" {
+            if partially_resolved_call.name == "format" {
                 return_type = .prelude_struct_type_named("String")
             }
         } else {
@@ -11254,7 +11381,14 @@ struct Typechecker {
             mut generic_inferences_for_best_match: [TypeId:TypeId] = [:]
             // find the best match i.e. the most specific implementation that matches the signature
             for candidate in resolved_function_id_candidates.iterator() {
-                match .match_function_and_resolve_args(call, caller_scope_id, candidate, safety_mode, span, this_expr) {
+                match .match_function_and_resolve_args(
+                    call: partially_resolved_call
+                    caller_scope_id
+                    candidate
+                    safety_mode
+                    span
+                    this_expr
+                ) {
                     MatchSuccess(
                         args: resolved_args
                         maybe_this_type_id: resolved_this_type_id
@@ -11269,7 +11403,7 @@ struct Typechecker {
 
                             args = []
                             for resolved_arg in resolved_args.iterator() {
-                                args.push((call.name, resolved_arg))
+                                args.push((partially_resolved_call.name, resolved_arg))
                             }
                         }
                     }
@@ -11301,20 +11435,20 @@ struct Typechecker {
                 }
 
                 mut checked_type_args: [TypeId] = []
-                for type_arg in call.type_args {
+                for type_arg in partially_resolved_call.type_args {
                     checked_type_args.push(.typecheck_typename(parsed_type: type_arg, scope_id: caller_scope_id, name: None))
                 }
 
-                for arg in call.args {
+                for arg in partially_resolved_call.args {
                     let checked_arg = .typecheck_expression(expr: arg.2, scope_id: caller_scope_id, safety_mode, type_hint: None)
-                    args.push((call.name, checked_arg))
+                    args.push((partially_resolved_call.name, checked_arg))
                 }
 
                 return CheckedExpression::Call(
                     generic_inferences: .generic_inferences.perform_checkpoint(reset: false),
                     call: CheckedCall(
                         namespace_: resolved_namespaces,
-                        name: call.name,
+                        name: partially_resolved_call.name,
                         args,
                         type_args: checked_type_args,
                         function_id: None,
@@ -11419,7 +11553,7 @@ struct Typechecker {
                 parent_scope_id: callee_scope_id,
                 this_type_id: maybe_this_type_id,
                 generic_substitutions: .generic_inferences
-                type_args: call.type_args,
+                type_args: partially_resolved_call.type_args,
                 call_span: span
                 args
             )
@@ -11480,7 +11614,7 @@ struct Typechecker {
         }
         let function_call = CheckedCall(
             namespace_: resolved_namespaces
-            name: call.name
+            name: partially_resolved_call.name
             args
             type_args: generic_arguments
             function_id: resolved_function_id

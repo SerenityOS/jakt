@@ -1128,14 +1128,15 @@ boxed enum ParsedExpression {
     ForcedUnwrap(expr: ParsedExpression, span: Span)
     Match(expr: ParsedExpression, cases: [ParsedMatchCase], span: Span, marker_span: Span)
     EnumVariantArg(expr: ParsedExpression, arg: EnumVariantPatternArgument, enum_variant: ParsedType, span: Span)
-    NamespacedVar(name: String, namespace_: [String], span: Span)
+    NamespacedVar(name: String, namespace_: [String], namespace_relative_to_type_hint: bool = false, span: Span)
     Function(captures: [ParsedCapture], params: [ParsedParameter], can_throw: bool, is_fat_arrow: bool, return_type: ParsedType, block: ParsedBlock, span: Span)
     Must(expr: ParsedExpression, span: Span)
     Try(expr: ParsedExpression, catch_block: ParsedBlock?, catch_span: Span?, catch_name: String?, span: Span)
     TryBlock(stmt: ParsedStatement, error_name: String, error_span: Span, catch_block: ParsedBlock, span: Span)
     Reflect(type: ParsedType, span: Span)
-    Garbage(Span)
     Unsafe(expr: ParsedExpression, span: Span)
+    ExpectedHintName(span: Span)
+    Garbage(Span)
 
     fn span(this) -> Span => match this {
         else(span) => span
@@ -1446,11 +1447,12 @@ boxed enum ParsedExpression {
             Reflect(type: rhs_type) => type.equals(rhs_type)
             else => false
         }
-        Garbage => rhs_expression is Garbage
         Unsafe(expr) => match rhs_expression {
             Unsafe(expr: rhs_expr) => expr.equals(rhs_expr)
             else => false
         }
+        ExpectedHintName => rhs_expression is ExpectedHintName
+        Garbage => rhs_expression is Garbage
     }
 }
 
@@ -1502,6 +1504,7 @@ struct ParsedVariable {
 
 struct ParsedCall {
     namespace_: [String] = []
+    namespace_relative_to_type_hint: bool = false
     name: String = ""
     args: [(String, Span, ParsedExpression)] = []
     type_args: [ParsedType] = []
@@ -5193,6 +5196,18 @@ struct Parser {
             let span = merge_spans(start, type.span())
             yield ParsedExpression::Reflect(type, span)
         }
+        AtSign => {
+            let span = .current().span()
+            .index++
+            yield match .current() {
+                LParen => {
+                    mut call = .parse_call(with_identifier: false)
+                    call!.namespace_relative_to_type_hint = true
+                    yield ParsedExpression::Call(call: call!, span)
+                }
+                else => ParsedExpression::ExpectedHintName(span)
+            }
+        }
         Identifier(name, span) => {
             if .peek(1) is LParen {
                 if name == "Some" {
@@ -5959,8 +5974,11 @@ struct Parser {
     fn parse_postfix_colon_colon(mut this, start: Span, expr: ParsedExpression) -> ParsedExpression {
         .index++
         mut namespace_: [String] = []
+        mut namespace_relative_to_type_hint = false
         if expr is Var(name) {
             namespace_.push(name)
+        } else if expr is ExpectedHintName {
+            namespace_relative_to_type_hint = true
         } else {
             .error("Expected namespace", expr.span())
         }
@@ -5976,6 +5994,7 @@ struct Parser {
                 .index--
                 mut call = .parse_call()
                 call!.namespace_ = namespace_
+                call!.namespace_relative_to_type_hint = namespace_relative_to_type_hint
                 return ParsedExpression::Call(call: call!, span: merge_spans(expr.span(), .current().span()))
             }
 
@@ -5986,6 +6005,7 @@ struct Parser {
                 if maybe_call.has_value() {
                     mut call = maybe_call!
                     call.namespace_ = namespace_
+                    call.namespace_relative_to_type_hint = namespace_relative_to_type_hint
                     return ParsedExpression::Call(call, span: merge_spans(expr.span(), .current().span()))
                 }
                 return ParsedExpression::Garbage(.current().span())
@@ -6002,6 +6022,7 @@ struct Parser {
                 return ParsedExpression::NamespacedVar(
                     name: current_name,
                     namespace_,
+                    namespace_relative_to_type_hint,
                     span: merge_spans(start, .current().span())
                 )
             }
@@ -6368,16 +6389,18 @@ struct Parser {
         return variant_arguments
     }
 
-    fn parse_call(mut this) -> ParsedCall? {
+    fn parse_call(mut this, with_identifier: bool = true) -> ParsedCall? {
         mut call = ParsedCall()
 
-        guard .current() is Identifier(name) else {
-            .error("Expected function call", .current().span())
-            return call
-        }
+        if with_identifier {
+            guard .current() is Identifier(name) else {
+                .error("Expected function call", .current().span())
+                return call
+            }
 
-        call.name = name
-        .index++
+            call.name = name
+            .index++
+        }
 
         // This is to allow the lookahead. Without it, we may see something like
         // foo < Bar, and think the start of a generic call when it actually isn't.
