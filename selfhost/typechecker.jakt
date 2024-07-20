@@ -5229,8 +5229,8 @@ struct Typechecker {
                     generic_inferences.set(key: lhs_type_id, value: rhs_type_id)
                 }
             }
-            Dependent(namespace_type, name) => {
-                if rhs_type is Dependent(namespace_type: rhs_namespace_type, name: rhs_name) {
+            Dependent(namespace_type, name, args) => {
+                if rhs_type is Dependent(namespace_type: rhs_namespace_type, name: rhs_name, args: rhs_args) {
                     .check_types_for_compat(
                         lhs_type_id: namespace_type
                         rhs_type_id: rhs_namespace_type
@@ -5244,6 +5244,25 @@ struct Typechecker {
                             span
                         )
                         return false
+                    }
+
+                    if args.size() != rhs_args.size() {
+                        .error(
+                            format("Type mismatch: mismatched number of generic parameters for dependent types: ‘{}’ and ‘{}’", name, rhs_name)
+                            span
+                        )
+                        return false
+                    }
+
+                    for i in 0..args.size() {
+                        if not .check_types_for_compat(
+                            lhs_type_id: args[i]
+                            rhs_type_id: rhs_args[i]
+                            generic_inferences
+                            span
+                        ) {
+                            return false
+                        }
                     }
                 }
 
@@ -5779,11 +5798,15 @@ struct Typechecker {
         )
     }
 
-    fn typecheck_typename(mut this, parsed_type: ParsedType, scope_id: ScopeId, name: String?) throws -> TypeId {
+    fn typecheck_typename(mut this, parsed_type: ParsedType, scope_id: ScopeId, name: String?, type_hint: TypeHint? = None) throws -> TypeId {
         let output = match parsed_type {
-            DependentType(base, name: dependent_name) => {
+            DependentType(base, name: dependent_name, generic_args) => {
                 let base_type = .typecheck_typename(parsed_type: base, scope_id, name)
-                let type_id = .find_or_add_type_id(Type::Dependent(namespace_type: base_type, name: dependent_name))
+                mut args: [TypeId] = []
+                for arg in generic_args {
+                    args.push(.typecheck_typename(parsed_type: arg, scope_id, name))
+                }
+                let type_id = .find_or_add_type_id(Type::Dependent(namespace_type: base_type, name: dependent_name, args))
                 yield .substitute_typevars_in_type(type_id, generic_inferences: .generic_inferences)
             }
             Const(expr) => {
@@ -6188,7 +6211,11 @@ struct Typechecker {
             let struct_ = .get_struct(struct_id!)
             mut effective_inner_types = checked_inner_types[..].to_array()
             if struct_.generic_parameter_defaults is Some(defaults) {
-                for i in effective_inner_types.size()..defaults.size() {
+                mut start = effective_inner_types.size()
+                if start > defaults.size() {
+                    start = defaults.size()
+                }
+                for i in start..defaults.size() {
                     if defaults[i] is Some(default_) {
                         effective_inner_types.push(default_)
                     } else {
