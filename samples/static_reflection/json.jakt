@@ -709,6 +709,9 @@ comptime make_json_decoder<T>() throws -> fn(anon x: &mut T, anon parser: &mut J
                         }
                     }
                 }
+                else => {
+                    throw error("NYI")
+                }
             }
         }
         else => {
