@@ -1,0 +1,13 @@
+/// Expect:
+/// - output: "PASS\n"
+
+class Base {}
+class Derived: Base {}
+
+fn func(anon a: [Base]) {
+    println("PASS")
+}
+
+fn main() {
+    func([Derived()])
+}
