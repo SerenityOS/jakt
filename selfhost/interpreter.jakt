@@ -3567,11 +3567,6 @@ class Interpreter {
                 }
 
                 let blk = .execute_block(block: function_to_run.block, scope, call_span)
-                if blk is JustValue(x) and x.impl is Void and not is_main {
-                    eprintln("Comptime function returned void, scope: {}", .program.get_scope(function_to_run.function_scope_id).debug_name)
-                    abort()
-                }
-
                 return match blk {
                     Return(value) | JustValue(value) => ExecutionResult::Return(cast_value_to_type(value, function_to_run.return_type_id, interpreter: this))
                     Throw(value) => ExecutionResult::Throw(value)
@@ -7528,6 +7523,25 @@ class Interpreter {
         return record_type_fields
     }
 
+    public fn reflect_value_enum_variants(mut this, subject_enum: CheckedEnum, span: Span, scope: InterpreterScope) throws -> [Value] {
+        // [String], names of the variants
+        let type = .array_type_of_struct(.program.find_struct_in_prelude("String"))
+        mut result_elements: [Value] = []
+        for entry in subject_enum.variants {
+            match entry {
+                Untyped(name) | WithValue(name) => {
+                    result_elements.push(.string_value(name, span))
+                }
+                else => {
+                    .error("Expected untyped or with-value variant", span)
+                    .compiler.panic("Invalid type")
+                }
+            }
+        }
+
+        return [.array_value_of_type(values: result_elements, type: type, span)]
+    }
+
     public fn reflect_sum_enum_variants(mut this, subject_enum: CheckedEnum, span: Span, scope: InterpreterScope) throws -> [Value] {
         let sum_enum_variant_enum_id = match .program.find_reflected_primitive("SumEnumVariant") {
             Enum(id) => id
@@ -7826,7 +7840,7 @@ class Interpreter {
                     true => .program.find_function_in_scope(
                         parent_scope_id: .program.get_enum(record_type_enum_id).scope_id
                         function_name: "ValueEnum")!
-                    else => .program.find_function_in_scope(
+                    false => .program.find_function_in_scope(
                         parent_scope_id: .program.get_enum(record_type_enum_id).scope_id
                         function_name: "SumEnum")!
                 }
@@ -7865,19 +7879,41 @@ class Interpreter {
                     type: tuple_type
                     span)
 
-                mut record_type_fields: [Value] = []
-                if is_value_enum {
-                    .error("Unimplemented reflected type: value enum", span)
-                    .compiler.panic("Not yet implemented")
-                } else {
-                    record_type_fields = .reflect_sum_enum_variants(subject_enum, span, scope)
-                }
-
                 let field_struct_id = match .program.find_reflected_primitive("Field") {
                     Struct(id) => id
                     else => {
                         panic("Expected Field to be a struct")
                     }
+                }
+                mut record_type_fields: [Value] = []
+                if is_value_enum {
+                    let variants = .reflect_value_enum_variants(subject_enum, span, scope)
+                    record_type_fields = [
+                        // underlying_type:
+                        .reflect_type(type_id: subject_enum.underlying_type_id, span, scope)
+                        // variants:
+                        Value(
+                            impl: ValueImpl::JaktArray(
+                                values: variants
+                                type_id: .array_type_of_struct(field_struct_id)
+                            )
+                            span
+                        )
+                    ]
+                } else {
+                    let variants = .reflect_sum_enum_variants(subject_enum, span, scope)
+                    record_type_fields = [
+                        // is_boxed:
+                        .bool_value(subject_enum.is_boxed, span),
+                        // variants:
+                        Value(
+                            impl: ValueImpl::JaktArray(
+                                values: variants
+                                type_id: .array_type_of_struct(field_struct_id)
+                            )
+                            span
+                        )
+                    ]
                 }
 
                 fields = [
@@ -7891,18 +7927,7 @@ class Interpreter {
                                 // record_type:
                                 Value(
                                     impl: ValueImpl::Enum(
-                                        fields: [
-                                            // is_boxed:
-                                            .bool_value(subject_enum.is_boxed, span)
-                                            // variants:
-                                            Value(
-                                                impl: ValueImpl::JaktArray(
-                                                    values: record_type_fields
-                                                    type_id: .array_type_of_struct(field_struct_id)
-                                                )
-                                                span
-                                            )
-                                        ]
+                                        fields: record_type_fields
                                         enum_id: record_type_enum_id
                                         constructor: record_type_struct_constructor
                                     )
@@ -7933,8 +7958,12 @@ class Interpreter {
                 yield constructor!
             }
             else => {
-                .error(format("Type reflection not implemented: {}", type), span)
-                .compiler.panic("Not yet implemented")
+                // FIXME: Implement these
+                let constructor = .program.find_function_in_scope(
+                    parent_scope_id: .program.get_enum(reflected_enum_id).scope_id
+                    function_name: "Unknown")!
+                fields = []
+                yield constructor
             }
         }
 

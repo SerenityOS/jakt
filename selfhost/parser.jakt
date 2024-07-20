@@ -1554,7 +1554,7 @@ boxed enum ParsedType {
     WeakPtr(inner: ParsedType, span: Span)
     Function(params: [ParsedParameter], can_throw: bool, return_type: ParsedType, span: Span)
     Const(expr: ParsedExpression, span: Span)
-    DependentType(base: ParsedType, name: String, span: Span)
+    DependentType(base: ParsedType, name: String, generic_args: [ParsedType], span: Span)
     Empty
 
     fn span(this) -> Span => match this {
@@ -1563,8 +1563,8 @@ boxed enum ParsedType {
     }
 
     fn equals(this, anon rhs_parsed_type: ParsedType) -> bool => match this {
-        DependentType(base, name) => match rhs_parsed_type {
-            DependentType(base: rhs_base, name: rhs_name) => base.equals(rhs_base) and name == rhs_name
+        DependentType(base, name, generic_args) => match rhs_parsed_type {
+            DependentType(base: rhs_base, name: rhs_name, generic_args: rhs_generic_args) => base.equals(rhs_base) and name == rhs_name and generic_args[..] == rhs_generic_args[..]
             else => false
         }
         Name(name: lhs_name) => match rhs_parsed_type {
@@ -4361,9 +4361,11 @@ struct Parser {
                     .index++
                     if .current() is Identifier(name) {
                         .index++
+                        let generic_args = .parse_type_parameter_list()
                         result = ParsedType::DependentType(
                             base: result
                             name
+                            generic_args
                             span: merge_spans(base.span(), .current().span())
                         )
                     } else {

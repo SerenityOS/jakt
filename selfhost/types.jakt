@@ -252,7 +252,7 @@ boxed enum Type {
     Unknown
     Never
     TypeVariable(name: String, trait_implementations: [TypeId], is_value: bool = false)
-    Dependent(namespace_type: TypeId, name: String)
+    Dependent(namespace_type: TypeId, name: String, args: [TypeId])
     GenericInstance(id: StructId, args: [TypeId])
     GenericEnumInstance(id: EnumId, args: [TypeId])
     GenericTraitInstance(id: TraitId, args: [TypeId])
@@ -286,7 +286,14 @@ boxed enum Type {
 
     fn specificity(this, program: CheckedProgram, base_specificity: i64 = 1<<31) -> i64 => match this {
         TypeVariable => 0
-        Dependent => 0
+        Dependent(args) => {
+            mut specificity = base_specificity / 2
+            for subtype_id in args.iterator() {
+                let subtype = program.get_type(subtype_id)
+                specificity += subtype.specificity(program, base_specificity: base_specificity/4)
+            }
+            yield specificity
+        }
         Const => base_specificity
         GenericInstance(args) => {
             mut specificity = base_specificity / 2
@@ -377,9 +384,20 @@ boxed enum Type {
             }
             yield false
         }
-        Dependent(namespace_type, name) => {
-            if rhs is Dependent(namespace_type: rhs_namespace_type, name: rhs_name) {
-                return namespace_type.equals(rhs_namespace_type) and name == rhs_name
+        Dependent(namespace_type, name, args) => {
+            if rhs is Dependent(namespace_type: rhs_namespace_type, name: rhs_name, args: rhs_args) {
+                guard namespace_type.equals(rhs_namespace_type) and name == rhs_name else {
+                    return false
+                }
+                guard args.size() == rhs_args.size() else {
+                    return false
+                }
+                for idx in 0..args.size() {
+                    if args[idx] != rhs_args[idx] {
+                        return false
+                    }
+                }
+                return true
             }
             yield false
         }
@@ -396,7 +414,7 @@ boxed enum Type {
             }
             mut idx = 0uz
             while idx < lhs_args.size() {
-                if not lhs_args[idx].equals(rhs_args[idx]) {
+                if lhs_args[idx] != rhs_args[idx] {
                     return false
                 }
                 idx++
@@ -1941,7 +1959,7 @@ class CheckedProgram {
             Unknown => Type::Unknown
             Never => Type::Never
             TypeVariable(name, trait_implementations, is_value) => Type::TypeVariable(qualifiers, name, trait_implementations, is_value)
-            Dependent(namespace_type, name) => Type::Dependent(qualifiers, namespace_type, name)
+            Dependent(namespace_type, name, args) => Type::Dependent(qualifiers, namespace_type, name, args)
             GenericInstance(id, args) => Type::GenericInstance(qualifiers, id, args)
             GenericEnumInstance(id, args) => Type::GenericEnumInstance(qualifiers, id, args)
             GenericTraitInstance(id, args) => Type::GenericTraitInstance(qualifiers, id, args)
@@ -2934,6 +2952,36 @@ class CheckedProgram {
         return result
     }
 
+    public fn specialize_type_id(
+        mut this
+        type_id: TypeId
+        new_args: [TypeId]
+        replace_args: bool = true
+        module_id: ModuleId
+    ) throws -> TypeId {
+        mut final_args: [TypeId] = []
+        let type = .get_type(type_id)
+        match type {
+            GenericInstance(args) | GenericEnumInstance(args) | GenericTraitInstance(args) => {
+                if not replace_args {
+                    final_args.ensure_capacity(args.size() + new_args.size())
+                    final_args.push_values(&args)
+                }
+                final_args.push_values(&new_args)
+            }
+            else => {
+                final_args.push_values(&new_args)
+            }
+        }
+
+        return match type {
+            GenericInstance(id) | Struct(id) => .find_or_add_type_id(Type::GenericInstance(id, args: final_args), module_id)
+            GenericEnumInstance(id) | Enum(id) => .find_or_add_type_id(Type::GenericEnumInstance(id, args: final_args), module_id)
+            GenericTraitInstance(id) | Trait(id) => .find_or_add_type_id(Type::GenericTraitInstance(id, args: final_args), module_id)
+            else => type_id
+        }
+    }
+
     fn substitute_typevars_in_type_helper(
         mut this
         type_id: TypeId
@@ -2949,17 +2997,24 @@ class CheckedProgram {
                     return replacement_type_id!
                 }
             }
-            Dependent(namespace_type, name) => {
+            Dependent(namespace_type, name, args) => {
                 let mapped_type_id = .substitute_typevars_in_type(type_id: namespace_type, generic_inferences, module_id)
                 let type = .get_type(mapped_type_id)
+                mut new_args: [TypeId] = []
+                new_args.ensure_capacity(args.size())
+                for arg in args {
+                    new_args.push(.substitute_typevars_in_type(type_id: arg, generic_inferences, module_id))
+                }
+
                 if type is TypeVariable {
                     return .find_or_add_type_id(
-                        type: Type::Dependent(namespace_type: mapped_type_id, name)
+                        type: Type::Dependent(namespace_type: mapped_type_id, name, args: new_args)
                         module_id
                     )
                 }
 
-                let struct_like_id = StructLikeId::from_type_id(mapped_type_id, &this)
+                let specialized_mapped_type_id = .specialize_type_id(type_id: mapped_type_id, new_args, module_id)
+                let struct_like_id = StructLikeId::from_type_id(specialized_mapped_type_id, &this)
                 guard struct_like_id.has_value() else {
                     return type_id
                 }
