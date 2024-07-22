@@ -169,7 +169,7 @@ struct REPL {
     root_interpreter_scope: InterpreterScope
     file_id: FileId
 
-    fn create(runtime_path: Path, target_triple: String? = None, user_configuration: [String:String]) throws -> REPL {
+    fn create(std_include_path: Path, prelude_path: Path, target_triple: String? = None, user_configuration: [String:String]) throws -> REPL {
         mut compiler = Compiler(
             files: []
             file_ids: [:]
@@ -180,7 +180,8 @@ struct REPL {
             dump_parser: false
             ignore_parser_errors: false
             debug_print: false
-            std_include_path: runtime_path
+            std_include_path
+            prelude_path
             include_paths: []
             json_errors: false
             dump_type_hints: false

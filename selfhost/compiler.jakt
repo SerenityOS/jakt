@@ -18,6 +18,7 @@ class Compiler {
     public ignore_parser_errors: bool
     public debug_print: bool
     public std_include_path: Path
+    public prelude_path: Path
     public include_paths: [String]
     public json_errors: bool
     public dump_type_hints: bool
