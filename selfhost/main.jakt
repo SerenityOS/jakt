@@ -564,7 +564,10 @@ fn compiler_main(anon args: [String]) throws -> c_int {
     } as! usize
 
     if args_parser.flag(["--repl"]) {
-        mut repl = REPL::create(runtime_path: Path::from_parts([runtime_path, "jaktlib"]), target_triple, user_configuration)
+        mut repl = REPL::create(
+            std_include_path: Path::from_parts([runtime_path, "jaktlib"])
+            prelude_path: Path::from_parts([runtime_path, "prelude.jakt"])
+            target_triple, user_configuration)
         repl.run()
         return 0
     }
@@ -638,6 +641,7 @@ fn compiler_main(anon args: [String]) throws -> c_int {
         debug_print: debug_print
         // FIXME: Case sensitivity on win/mac requires this path be named different than the jakt cpp lib
         std_include_path: Path::from_parts([runtime_path, "jaktlib"])
+        prelude_path: Path::from_parts([runtime_path, "prelude.jakt"])
         include_paths: extra_include_paths
         json_errors
         dump_type_hints

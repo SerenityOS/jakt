@@ -405,16 +405,15 @@ struct Typechecker {
         return module_id
     }
 
-    private comptime get_prelude_contents() throws -> [u8] {
-        // FIXME: Don't hardcode the relative runtime path.
-        mut file = File::open_for_reading("../runtime/prelude.jakt")
+    private fn get_prelude_contents(this) throws -> [u8] {
+        mut file = File::open_for_reading(.compiler.prelude_path.to_string())
         return file.read_all()
     }
 
     fn include_prelude(mut this) throws {
         let module_name = "__prelude__"
         let file_name = Path::from_string(module_name)
-        let file_contents = get_prelude_contents()
+        let file_contents = .get_prelude_contents()
 
         let old_file_id = .compiler.current_file
         let old_file_contents = .compiler.current_file_contents
