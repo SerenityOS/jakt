@@ -29,6 +29,7 @@ class Compiler {
     public binary_dir: Path
     public exports_dir: Path
     public assume_main_file_path: Path?
+    public files_used_in_build: {String}
 
     public fn panic(this, anon message: String) -> never {
         .print_errors()
