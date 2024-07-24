@@ -660,6 +660,7 @@ fn compiler_main(anon args: [String]) throws -> c_int {
             true => Some(Path::from_string(assume_main_file_path!))
             false => None
         }
+        files_used_in_build: {}
     )
 
     compiler.load_prelude()
@@ -940,6 +941,15 @@ fn compiler_main(anon args: [String]) throws -> c_int {
 
             depfile_builder.append(" \\\n  ")
             depfile_builder.append(escape_for_depfile(entry))
+        }
+        for path in compiler.files_used_in_build {
+            if seen_files.contains(path) {
+                continue
+            }
+
+            seen_files.add(path)
+            depfile_builder.append(" \\\n  ")
+            depfile_builder.append(escape_for_depfile(path))
         }
 
         depfile_builder.append("\n")

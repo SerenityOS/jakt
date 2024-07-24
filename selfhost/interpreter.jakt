@@ -1734,6 +1734,7 @@ class Interpreter {
                         impl: ValueImpl::JaktString(path.to_string())
                         span: call_span
                     )
+                    .compiler.files_used_in_build.add(path.to_string())
                     if not path.exists() {
                         return StatementResult::Throw(.error_value(format("Could not find file at path {}", path.to_string()), call_span))
                     }
@@ -1770,6 +1771,7 @@ class Interpreter {
                         impl: ValueImpl::JaktString(path.to_string())
                         span: call_span
                     )
+                    .compiler.files_used_in_build.add(path.to_string())
                     if not path.exists() {
                         return StatementResult::Throw(.error_value(format("Could not find file at path {}", path.to_string()), call_span))
                     }
@@ -1921,6 +1923,7 @@ class Interpreter {
                         }
                     }
                     let path = .program.compiler.get_file_path(call_span.file_id)!.parent().join(requested_path)
+                    .compiler.files_used_in_build.add(path.to_string())
                     yield StatementResult::JustValue(
                         Value(
                             impl: ValueImpl::Bool(path.exists())
