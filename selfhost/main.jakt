@@ -109,6 +109,7 @@ fn help() -> String {
     output += "  --compiler-lib-dir PATH\t\tSpecify a compiler library directory to use.\n"
     output += "  --install-root PATH\t\t\tSpecify the root directory to install to.\n"
     output += "  --only-support-libs\t\t\tOnly build and install support libraries for the target platform.\n"
+    output += "  --target-links-ak\t\t\t\tAssume AK will be provided by the target platform.\n"
     output += "  --runtime-lib-path PATH\t\tSpecify the path to the host runtime library.\n"
     return output
 }
@@ -242,6 +243,7 @@ fn selfhost_crosscompiler_main(args: [String]) throws -> c_int {
     mut source_file: String? = None
     mut output_filename: String? = None
     mut only_support_libs = false
+    mut target_links_ak = false
 
     mut args_to_process: Queue<String> = Queue()
     for arg in args[1..] {
@@ -270,6 +272,7 @@ fn selfhost_crosscompiler_main(args: [String]) throws -> c_int {
             "--runtime-path" => { runtime_path = Path::from_string(args_to_process.dequeue()) }
             "--source-file" => { source_file = args_to_process.dequeue() }
             "--output-filename" | "-o" => { output_filename = args_to_process.dequeue() }
+            "--target-links-ak" => { target_links_ak = true }
             "--only-support-libs" => { only_support_libs = true }
             else => { compiler_args.push(arg) }
         }
@@ -384,7 +387,9 @@ fn selfhost_crosscompiler_main(args: [String]) throws -> c_int {
     if not runtime_archive_path.exists() {
         eprintln("Building jakt runtime for target {}...", abbreviated_triple)
         mut sources: [Path] = [runtime_path!.join("IO/File.cpp")]
-        sources.push_values(&find_with_extension(path: runtime_path!.join("AK"), extension: "cpp"))
+        if not target_links_ak {
+            sources.push_values(&find_with_extension(path: runtime_path!.join("AK"), extension: "cpp"))
+        }
         sources.push_values(&find_with_extension(path: runtime_path!.join("Jakt"), extension: "cpp"))
 
         if build_archive(sources, runtime_archive_path) != 0 {
