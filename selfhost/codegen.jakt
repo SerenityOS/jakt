@@ -4837,7 +4837,11 @@ struct CodeGenerator {
                 true => .codegen_type_possibly_as_namespace(type_id, as_namespace: true) + "*"
                 false => .codegen_type(type_id) + "*"
             }
-            Reference(type_id) => .codegen_type(type_id) + " const&"
+            Reference(type_id) => match .program.get_type(type_id).qualifiers.is_immutable {
+                // Inner type is const, no need to add const to the reference
+                true => .codegen_type(type_id) + "&"
+                false => .codegen_type(type_id) + " const&"
+            }
             MutableReference(type_id) => .codegen_type(type_id) + "&"
             GenericInstance(id, args) => .codegen_generic_type_instance(id, args, as_namespace)
             Struct(id) => {
