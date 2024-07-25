@@ -1544,6 +1544,17 @@ struct Typechecker {
                 continue
             }
 
+            let entry = .compiler.find_in_search_paths(path: Path::from_string(path), relative_import: false, parent_path_count: 0)
+            if not entry.has_value() {
+                .error_with_hint(
+                    format("Could not find imported extern file '{}'", path)
+                    extern_import.assigned_namespace.name_span!
+                    "make sure the file exists and is in the include search paths"
+                    extern_import.assigned_namespace.name_span!
+                )
+                continue
+            }
+
             coalesced_imports.push(extern_import)
         }
 
@@ -1620,15 +1631,7 @@ struct Typechecker {
         ) catch e {
             // FIXME: StringView::equals()
             if String::from_string_literal(e.string()) == String::from_string_literal(CppImportErrors::path_not_found()) {
-                // FIXME: Which one?
-                for import_ in imports {
-                    .error_with_hint(
-                        format("Could not find imported extern file '{}'", import_.get_path())
-                        import_.assigned_namespace.name_span!
-                        "make sure the file exists and is in the include path"
-                        import_.assigned_namespace.name_span!
-                    )
-                }
+                eprintln("[ICE] File gone missing during typecheck: {}", output)
                 return
             } else {
                 throw e
