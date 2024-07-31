@@ -4955,11 +4955,11 @@ struct Parser {
         let range = .parse_expression(allow_assignments: false, allow_newlines: false)
         .can_have_trailing_closure = previous_can_have_trailing_closure
 
-        mut is_destructuring = false
         mut block = .parse_block();
 
-        if destructured_var_decls.size() > 0 {
-            is_destructuring = true
+        let is_destructuring = destructured_var_decls.size() > 0
+
+        if is_destructuring {
             mut tuple_var_name = "jakt__"
             tuple_var_name += iterator_name
             mut tuple_var_decl = ParsedVarDecl(

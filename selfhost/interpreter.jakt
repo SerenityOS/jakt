@@ -6065,6 +6065,17 @@ class Interpreter {
                             .compiler.panic("Invalid type")
                         }
                     }
+                    IsSome => StatementResult::JustValue(Value(
+                        impl: ValueImpl::Bool(match value.impl {
+                            OptionalSome => true
+                            OptionalNone => false
+                            else => {
+                                .error("Invalid value for unary operator 'IsSome'", span)
+                                .compiler.panic("Inavlid type")
+                            }
+                        })
+                        span
+                    ))
                     else => {
                         .error(
                             format("Unimplemented unary operator '{}'", op),

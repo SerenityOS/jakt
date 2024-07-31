@@ -789,8 +789,24 @@ struct Typechecker {
         parent_scope_id: ScopeId
         function_name: String
         trait_descriptor: &TraitImplementationDescriptor
+    ) throws -> FunctionId? => .find_function_matching_trait_implementation_in_scope(
+        self_type_id
+        parent_scope_id
+        function_name
+        trait_id: trait_descriptor.trait_id
+        implemented_type_args: trait_descriptor.implemented_type_args
+    )
+
+
+    fn find_function_matching_trait_implementation_in_scope(
+        mut this
+        self_type_id: TypeId
+        parent_scope_id: ScopeId
+        function_name: String
+        trait_id: TraitId
+        implemented_type_args: [TypeId]
     ) throws -> FunctionId? {
-        let trait_ = .get_trait(trait_descriptor.trait_id)
+        let trait_ = .get_trait(trait_id)
         guard trait_.requirements is Methods(methods) else {
             return None
         }
@@ -809,7 +825,7 @@ struct Typechecker {
             .generic_inferences.restore(old_generic_inferences)
         }
 
-        .generic_inferences.set_all(keys: trait_.generic_parameters, values: trait_descriptor.implemented_type_args)
+        .generic_inferences.set_all(keys: trait_.generic_parameters, values: implemented_type_args)
 
         let expected_function = .get_function(methods[function_name])
         for candidate_id in candidate_ids {
@@ -6795,9 +6811,6 @@ struct Typechecker {
         safety_mode: SafetyMode
         span: Span
     ) throws -> CheckedStatement {
-        let previous_break_continue_tracker = .break_continue_tracker
-        .break_continue_tracker = BreakContinueLegalityTracker::AnyLoop
-        defer .break_continue_tracker = previous_break_continue_tracker
 
         let maybe_span = block.find_yield_span()
         if maybe_span.has_value() {
@@ -6822,9 +6835,6 @@ struct Typechecker {
         // and use the result as our iterable.
 
         mut iterable_expr = .typecheck_expression_and_dereference_if_needed(range, scope_id, safety_mode, type_hint: None, span)
-        mut resolved_iterable_result_type = unknown_type_id()
-
-        mut expression_to_iterate = range
 
         let iterable_trait_implementation = .find_any_singular_trait_implementation(
             type_id: iterable_expr.type()
@@ -6832,16 +6842,18 @@ struct Typechecker {
             scope_id
             span: iterable_expr.span()
         )
+        // the trait for `Iterable`
+        mut trait_id = TraitId(module: ModuleId(id: 0), id: 0)
+        mut iterable_impl_type = unknown_type_id()
+
 
         if not iterable_trait_implementation.has_value() {
-            let into_iterator_trait_implementation = .find_any_singular_trait_implementation(
+            guard .find_any_singular_trait_implementation(
                 type_id: iterable_expr.type()
                 trait_names: ["IntoIterator", "IntoThrowingIterator"]
                 scope_id
                 span: iterable_expr.span()
-            )
-
-            if not into_iterator_trait_implementation.has_value() {
+            ) is Some(into_iterator_trait_implementation) else {
                 .error_with_hint(
                     "Iterable expression is not iterable", range.span(),
                     format(
@@ -6849,151 +6861,185 @@ struct Typechecker {
                         .type_name(iterable_expr.type())
                     ), range.span()
                 )
-            } else {
-                resolved_iterable_result_type = into_iterator_trait_implementation!.implemented_type_args[0]
-                // We need to call the `.iterator()` method on the iterable
-                expression_to_iterate = ParsedExpression::MethodCall(
-                    expr: range
-                    call: ParsedCall(name: "iterator")
-                    is_optional: false
-                    span: name_span
-                )
+                // Even though we're removing information about a `for` loop here, it's ok to emit a garbage statement without
+                // further processing. It allows us to correctly assume the types of the values that are emitted from .iterator()/.next(),
+                // and since everything is scoped, we are only hiding control flow information from the body, like `AlwaysReturns` or `NeverReturns`,
+                // which may produce false positive in already erroring cases, but those false positives are easy to prevent by cancelling the control
+                // flow analysis when `Garbage` arises.
+                return CheckedStatement::Garbage(range.span())
             }
+
+            // we know it's a trait, it should be the trait for Iterable/ThrowingIterable
+            guard .get_trait(into_iterator_trait_implementation.trait_id).requirements is Methods(methods)
+                and .get_type(.get_function(methods["iterator"]).return_type_id) is GenericTraitInstance(id)
+            else {
+                .compiler.panic("Into(Throwing)Iterator is suppposed to have an iterator() method that returns a (Throwing)Iterable<T>")
+            }
+            trait_id = id
+            iterable_impl_type = into_iterator_trait_implementation.implemented_type_args[0]
+
+            // make sure to call .iterator() first.
+
+            iterable_expr = .typecheck_method_call_known_this(
+                call: ParsedCall(name: "iterator")
+                this_expr: iterable_expr
+                is_optional: false
+                safety_mode
+                scope_id
+                type_hint: None
+                span: range.span()
+            )
         } else {
-            resolved_iterable_result_type = iterable_trait_implementation!.implemented_type_args[0]
+            trait_id = iterable_trait_implementation!.trait_id
+            iterable_impl_type = iterable_trait_implementation!.implemented_type_args[0]
         }
 
-        // let iterable_expr = .typecheck_expression(range, scope_id, safety_mode, type_hint: None)
-        // mut iterable_should_be_mutable = false
 
-        // let iterable_type = .program.get_type(iterable_expr.type())
+        // Create a loop scope id to put everything in. We need to ensure that the iterable variable
+        // is not leaked into the outer environment. We don't need to create further scopes, even
+        // for the hidden bindigs for the iterator and .next() optional, because the "else" case is
+        // just a `break` and the if statement that guards the loop body is the last statement in
+        // the loop block, so there are no bindings that could be leaked.
+        let loop_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: "for-loop")
 
-        // match iterable_type {
-        //     TypeVariable => {
-        //         // Since we're not sure, just make it mutable.
-        //         iterable_should_be_mutable = true
-        //     }
-        //     GenericInstance(id, args) | Struct(id) => {
-        //         let struct_ = .get_struct(id)
-        //         let next_method_function_id = .find_function_in_scope(
-        //             parent_scope_id: struct_.scope_id,
-        //             function_name: "next"
-        //             )
-        //         if not next_method_function_id.has_value() {
-        //             .error("Iterator must have a .next() method", range.span())
-        //         } else {
-        //             let next_method_function = .get_function(next_method_function_id!)
-        //             // Check whether we need to make the iteratar mutable
-        //             if next_method_function.is_mutating() {
-        //                 iterable_should_be_mutable = true
-        //             }
-        //         }
-        //     }
-        //     else => {
-        //         .error("Iterator must have a .next() method", name_span)
-        //     }
-        // }
+        let (iterable_var, iterable_var_id) = .create_variable(type_id: iterable_expr.type(), span: iterable_expr.span(), name: "_magic", is_mutable: true, scope_id: loop_scope_id)
+        let iterable_var_decl = CheckedStatement::VarDecl(var_id: iterable_var_id, init: iterable_expr, span: name_span)
 
-        let rewritten_statement = ParsedStatement::Block(
-            block: ParsedBlock(
-                stmts: [
-                    // let (mutable) _magic = expr
-                    ParsedStatement::VarDecl(
-                        var: ParsedVarDecl(
-                            name: "_magic",
-                            parsed_type: ParsedType::Empty,
-                            is_mutable: true,
-                            inlay_span: None,
-                            span: name_span
-                        ),
-                        init: expression_to_iterate
-                        span
-                    )
-                    // loop {
-                    ParsedStatement::Loop(
-                        block: ParsedBlock(
-                            stmts: [
-                                // let _magic_value = _magic.next()
-                                ParsedStatement::VarDecl(
-                                    var: ParsedVarDecl(
-                                        name: "_magic_value",
-                                        parsed_type: ParsedType::Empty,
-                                        // FIXME: Figure out whether the loop variable should be mutable
-                                        is_mutable: false,
-                                        inlay_span: None,
-                                        span: name_span
-                                    ),
-                                    init: ParsedExpression::MethodCall(
-                                        expr: ParsedExpression::Var(
-                                            name: "_magic",
-                                            span: name_span
-                                        ),
-                                        call: ParsedCall(name: "next")
-                                        is_optional: false
-                                        span: name_span
-                                    )
-                                    span
-                                ),
-                                // if not _magic_value.has_value() {
-                                ParsedStatement::If(
-                                    condition: ParsedExpression::UnaryOp(
-                                        expr: ParsedExpression::MethodCall(
-                                            expr: ParsedExpression::Var(
-                                                name: "_magic_value",
-                                                span: name_span
-                                            ),
-                                            call: ParsedCall(name: "has_value")
-                                            is_optional: false
-                                            span: name_span
-                                        ),
-                                        op: UnaryOperator::LogicalNot,
-                                        span: name_span
-                                    ),
-                                    then_block: ParsedBlock(
-                                        stmts: [
-                                            // break
-                                            ParsedStatement::Break(span)
-                                        ]
-                                    ),
-                                    else_statement: None
-                                    span
-                                ),
-                            // let iterator_name = _magic_value!
-                            ParsedStatement::VarDecl(
-                                var: ParsedVarDecl(
-                                    name: iterator_name,
-                                    parsed_type: ParsedType::Empty,
-                                    // FIXME: loop variable mutability should be independent
-                                    // of iterable mutability
-                                    is_mutable: true,
-                                    inlay_span: match is_destructuring {
-                                        // No need for a type hint on the tuple as a whole when destructuring,
-                                        // as each of its constituents already gets one.
-                                        true => None
-                                        false => name_span
-                                    },
-                                    span: name_span
-                                ),
-                                init: ParsedExpression::ForcedUnwrap(
-                                    expr: ParsedExpression::Var(
-                                        name: "_magic_value",
-                                        span: name_span
-                                    )
-                                    span: name_span
-                                )
-                                span
-                            ),
-                            ParsedStatement::Block(block, span)
-                            ]
-                        )
-                        span
-                    )
-                ]
+        // let <maybe_next_tmp> = <iterator>.next()
+        let iterable_access = CheckedExpression::Var(var: iterable_var, span: name_span)
+
+        let iterable_type_id = .final_type_resolution_form(iterable_var.type_id, scope_id)
+        guard .struct_like_id_from_type_id(
+            type_id: iterable_type_id
+            scope_id
+            span: name_span
+            for_optional_chain: false
+        ).0 is Some(parent_id) else {
+            // parent id always exists: either the type is an enum/struct/class/trait that can already hold a scope by itself,
+            // or it is a builtin, and for builtins we synthesize a struct so that it contains all the implemented methods.
+            .compiler.panic("trait implementation should always have a structlike id")
+        }
+
+        // make sure to forward any type arguments so that the item type is specialized correctly.
+        if parent_id.generic_arguments is Some(arguments) {
+            let params = parent_id.generic_parameters_as_checked(&.program)
+
+            for i in 0..arguments.size() {
+                if params[i].type_id == arguments[i] {
+                    continue
+                }
+
+                .generic_inferences.set(params[i].type_id, arguments[i])
+            }
+        }
+
+        guard .find_function_matching_trait_implementation_in_scope(
+            self_type_id: iterable_type_id 
+            parent_scope_id: parent_id.scope_id(&.program)
+            function_name: "next"
+            trait_id
+            implemented_type_args: [iterable_impl_type]
+        ) is Some(next_function_id) else {
+            .compiler.panic("Struct verified to implement (Throwing)Iterable does not have a next() method that implements said trait")
+        }
+
+        let next_func = .get_function(next_function_id)
+        let next_return_type = .substitute_typevars_in_type(type_id: next_func.return_type_id, generic_inferences: .generic_inferences)
+
+        let call_next = CheckedExpression::MethodCall(
+            expr: iterable_access
+            call: CheckedCall(
+                name: "next"
+                args: []
+                function_id: next_function_id
+                return_type: next_return_type
+                callee_throws: next_func.can_throw
+                force_inline: next_func.force_inline
             )
+            span: name_span
+            is_optional: false
+            type_id: next_return_type
+        )
+        // Declare the optional as mutable because we want it to be eligible for copy elision, as we will be only checking if it has a value and then referencing .value().
+        let (maybe_next_temp, maybe_next_var_id) = .create_variable(type_id: call_next.type(), span: name_span, name: "_magic_value", is_mutable: true, scope_id: loop_scope_id)
+        let maybe_next_decl = CheckedStatement::VarDecl(var_id: maybe_next_var_id, init: call_next, span: name_span)
+
+        // if (<maybe_next_temp>.has_value()) { <then_block> } else { break; }
+        let maybe_next_temp_access = CheckedExpression::Var(var: maybe_next_temp, span: name_span)
+
+        // using `IsSome` removes the need to search for .has_next(), we already know it's an optional.
+        let it_has_value = CheckedExpression::UnaryOp(
+            expr: maybe_next_temp_access,
+            op: CheckedUnaryOperator::IsSome
+            span: name_span
+            type_id: builtin(BuiltinType::Bool)
+        )
+
+        // let <loop_item> = <maybe_next_temp>!
+
+        // We cannot use `iterable_impl_type` because it may be generic (e.g `T` for
+        // `ArrayIterator<T>`. We would have to substitute the type, which we already have done
+        // for `.next()`.
+        let optional_struct_id = .find_struct_in_prelude("Optional")
+        guard .get_type(next_return_type) is GenericInstance(id: should_be_optional, args: opt_args)
+            and should_be_optional == optional_struct_id 
+        else {
+            .compiler.panic("next() result from Iterable is not an Optional.")
+        }
+
+        let loop_item_type_id = opt_args[0]
+
+        let get_loop_item = CheckedExpression::ForcedUnwrap(expr: maybe_next_temp_access, span: name_span, type_id: loop_item_type_id)
+
+        // FIXME: Find whether for loop item is mutable or not.
+        let loop_item_var_id = .create_variable(type_id: get_loop_item.type(), span: name_span, name: iterator_name, is_mutable: true, scope_id: loop_scope_id).1
+
+        // make sure to type hint the loop variable since we're skipping .typecheck_var_decl.
+        if .dump_type_hints and not is_destructuring {
+            .dump_type_hint(type_id: loop_item_type_id, span: name_span)
+        }
+
+        let loop_item_decl = CheckedStatement::VarDecl(var_id: loop_item_var_id, init: get_loop_item, span: name_span)
+
+
+        let previous_break_continue_tracker = .break_continue_tracker
+        .break_continue_tracker = BreakContinueLegalityTracker::AnyLoop
+        let inner_block = .typecheck_block(block, parent_scope_id: loop_scope_id, safety_mode, yield_type_hint: None)
+        .break_continue_tracker = previous_break_continue_tracker
+
+        let if_block = CheckedStatement::If(
+            condition: it_has_value
+            then_block: CheckedBlock(statements: [loop_item_decl, CheckedStatement::Block(block: inner_block, span)], scope_id: loop_scope_id, control_flow: inner_block.control_flow)
+            else_statement: CheckedStatement::Break(name_span)
             span
         )
 
-        return .typecheck_statement(rewritten_statement, scope_id, safety_mode)
+        // we set control flow directly because the other statements are variable declarations,
+        // which would do nothing when merged with MayReturn (the first thing we set).
+        let loop_block = CheckedBlock(statements: [maybe_next_decl, if_block], scope_id: loop_scope_id, control_flow: if_block.control_flow())
+        let loop_stmt = CheckedStatement::Loop(block: loop_block, span)
+
+        return CheckedStatement::Block(
+            block: CheckedBlock(statements: [iterable_var_decl, loop_stmt], scope_id: loop_scope_id, control_flow: loop_stmt.control_flow())
+            span
+        )
+    }
+
+    fn create_variable(mut this, type_id: TypeId, span: Span, name: String, is_mutable: bool, scope_id: ScopeId) -> (CheckedVariable, VarId) {
+        let checked_var = CheckedVariable(
+            name
+            type_id
+            is_mutable
+            definition_span: span
+            type_span: None
+            visibility: CheckedVisibility::Public
+        )
+
+        mut module = .program.get_module(scope_id.module_id)
+        let var_id = module.add_variable(checked_var)
+        .add_var_to_scope(scope_id, name: checked_var.name, var_id, span: checked_var.definition_span)
+
+        return (checked_var, var_id)
     }
 
     fn expand_context_for_bindings(
@@ -7519,22 +7565,11 @@ struct Typechecker {
             }
         }
 
-        let checked_var = CheckedVariable(
-            name: var.name
-            type_id: lhs_type_id
-            is_mutable: var.is_mutable
-            definition_span: var.span
-            type_span: None
-            visibility: CheckedVisibility::Public
-        )
-
         if .dump_type_hints and var.inlay_span.has_value() {
             .dump_type_hint(type_id: lhs_type_id, span: var.inlay_span!)
         }
 
-        mut module = .current_module()
-        let var_id = module.add_variable(checked_var)
-        .add_var_to_scope(scope_id, name: var.name, var_id, span: checked_var.definition_span)
+        let (checked_var, var_id) = .create_variable(type_id: lhs_type_id, span: var.span, name: var.name, is_mutable: var.is_mutable, scope_id)
 
         return CheckedStatement::VarDecl(var_id, init: checked_expr, span)
     }
@@ -8553,42 +8588,8 @@ struct Typechecker {
             yield .typecheck_call(call, caller_scope_id: scope_id, span, this_expr: None, parent_id: None, safety_mode, type_hint, must_be_enum_constructor: false)
         }
         MethodCall(expr, call, span, is_optional) => {
-            let checked_expr = .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint: None, span)
-            let checked_expr_type_id = checked_expr.type()
-
-            let final_type_id = .final_type_resolution_form(checked_expr_type_id, scope_id)
-            let type = .get_type(final_type_id)
-            let (parent_id, found_optional) = .struct_like_id_from_type_id(
-                type_id: final_type_id
-                scope_id
-                span
-                for_optional_chain: is_optional
-            )
-
-            if is_optional and not found_optional {
-                .error(message: format("Optional chain mismatch: expected optional chain, found {}", .type_name(type_id: checked_expr_type_id)), span: checked_expr.span())
-            }
-
-            let checked_call_expr = .typecheck_call(call, caller_scope_id: scope_id, span, this_expr: checked_expr, parent_id, safety_mode, type_hint, must_be_enum_constructor: false)
-            let type_id = checked_call_expr.type()
-            yield match checked_call_expr {
-                Call(call) => {
-                    mut result_type = call.return_type
-                    if is_optional {
-                        let optional_struct_id = .find_struct_in_prelude("Optional")
-                        result_type = .find_or_add_type_id(Type::GenericInstance(id: optional_struct_id, args: [result_type]))
-                    }
-                    yield CheckedExpression::MethodCall(
-                        expr: checked_expr
-                        call
-                        span
-                        is_optional
-                        type_id: result_type)
-                }
-                else => {
-                    .compiler.panic("typecheck_call should return `CheckedExpression::Call()`")
-                }
-            }
+            let this_expr = .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint: None, span)
+            yield .typecheck_method_call_known_this(call, this_expr, is_optional, safety_mode, scope_id, type_hint, span)
         }
         Range(from, to, span) => {
             mut checked_from: CheckedExpression? = None
@@ -11138,6 +11139,48 @@ struct Typechecker {
             builder.append(">]")
         }
         return builder.to_string()
+    }
+
+    fn typecheck_method_call_known_this(mut this, call: ParsedCall, this_expr: CheckedExpression, is_optional: bool, safety_mode: SafetyMode, scope_id: ScopeId, type_hint: TypeHint?, span: Span) throws -> CheckedExpression {
+        let this_expr_type_id = this_expr.type()
+
+        let final_type_id = .final_type_resolution_form(this_expr_type_id, scope_id)
+        let type = .get_type(final_type_id)
+        let (parent_id, found_optional) = .struct_like_id_from_type_id(
+            type_id: final_type_id
+            scope_id
+            span
+            for_optional_chain: is_optional
+        )
+
+        if is_optional and not found_optional {
+            .error(message: format("Optional chain mismatch: expected optional chain, found {}", .type_name(type_id: this_expr_type_id)), span: this_expr.span())
+        }
+
+        guard .typecheck_call(
+            call
+            caller_scope_id: scope_id
+            span
+            this_expr
+            parent_id
+            safety_mode
+            type_hint
+            must_be_enum_constructor: false
+        ) is Call(call: checked_call) else {
+            .compiler.panic("typecheck_call should return `CheckedExpression::Call()`")
+        }
+        mut result_type = checked_call.return_type
+        if is_optional {
+            let optional_struct_id = .find_struct_in_prelude("Optional")
+            result_type = .find_or_add_type_id(Type::GenericInstance(id: optional_struct_id, args: [result_type]))
+        }
+        return CheckedExpression::MethodCall(
+            expr: this_expr
+            call: checked_call
+            span
+            is_optional
+            type_id: result_type
+        )
     }
 
     fn typecheck_call(

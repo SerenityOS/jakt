@@ -665,7 +665,7 @@ fn compiler_main(anon args: [String]) throws -> c_int {
     compiler.load_prelude()
 
     if format or format_debug or format_inplace {
-        let directory_or_file_paths = RecursiveFileIterator::make(directory: file_path, extension: "jakt")
+        mut directory_or_file_paths = RecursiveFileIterator::make(directory: file_path, extension: "jakt")
         for directory_or_file_path in directory_or_file_paths {
             let file_id = compiler.get_file_id_or_register(directory_or_file_path)
             let file_is_set = compiler.set_current_file(file_id)
