@@ -406,6 +406,7 @@ enum FunctionType {
 
 enum ArgumentStoreLevel {
     InObject(argument_index: usize)
+    InReturnValue
     InStaticStorage
 }
 
@@ -2220,12 +2221,13 @@ struct Parser {
                     parsed_function.force_inline = inline_state
                 }
                 "stores_arguments" => {
-                    // [[stores_arguments(foo: this, bar)]] -> [(foo, InObject("this")), (bar, InStaticStorage)]
+                    // [[stores_arguments(foo: this, bar, baz: "return")]] -> [(foo, InObject("this")), (bar, InStaticStorage), (baz, InReturnValue)]
                     mut stores_arguments: [(usize, ArgumentStoreLevel)] = []
                     for argument in attribute.arguments {
                         let target = argument.assigned_value
 
                         mut target_index: usize? = None
+                        mut targets_return = false
                         mut name_index: usize? = None
                         mut index = 0uz
                         for param in parsed_function.params {
@@ -2237,6 +2239,11 @@ struct Parser {
                                 target_index = index
                             }
                         }
+                        if target.has_value() and not target_index.has_value() and target! == "return" {
+                            target_index = parsed_function.params.size()
+                            targets_return = true
+                        }
+
                         if not name_index.has_value() {
                             .error(
                                 format("Argument '{}' declared as stored here does not exist", argument.name)
@@ -2254,7 +2261,10 @@ struct Parser {
 
                         mut entry = (name_index!, ArgumentStoreLevel::InStaticStorage)
                         if target.has_value() {
-                            entry.1 = ArgumentStoreLevel::InObject(argument_index: target_index!)
+                            entry.1 = match targets_return {
+                                true => ArgumentStoreLevel::InReturnValue
+                                false => ArgumentStoreLevel::InObject(argument_index: target_index!)
+                            }
                         }
                         stores_arguments.push(entry)
                     }

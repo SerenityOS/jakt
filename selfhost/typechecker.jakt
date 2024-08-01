@@ -11465,6 +11465,7 @@ struct Typechecker {
                     let stored_scope_id = match level {
                         InStaticStorage => Some(.root_scope_id())
                         InObject(argument_index) => .required_scope_id_in_hierarchy_for(resolve_arg(argument_index), current_scope_id: caller_scope_id).0
+                        InReturnValue => caller_scope_id
                     }
 
                     if .scope_lifetime_subsumes(stored_scope_id, arg_scope_id) {
