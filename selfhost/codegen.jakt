@@ -2784,11 +2784,21 @@ struct CodeGenerator {
                     output.append(name)
                 }
             }
-            IndexedExpression(expr, index) => {
-                .codegen_expression(expr, &mut output, syntactically_self_contained: true)
-                output.append('[')
-                .codegen_expression(index, &mut output)
-                output.append(']')
+            IndexedExpression(expr, index, trait_implementation) => {
+                if trait_implementation is Some(implementation) {
+                    .codegen_method_call(
+                        expr: expr
+                        call: implementation.call_expression
+                        is_optional: false
+                        &mut output
+                        forward_error_with_try
+                    )
+                } else {
+                    .codegen_expression(expr, &mut output, syntactically_self_contained: true)
+                    output.append("[")
+                    .codegen_expression(index, &mut output)
+                    output.append("]")
+                }
             }
             IndexedDictionary(expr, index) => {
                 .codegen_expression(expr, &mut output, syntactically_self_contained: true)
