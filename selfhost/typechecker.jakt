@@ -9057,6 +9057,9 @@ struct Typechecker {
                     }
 
                     result = CheckedExpression::IndexedExpression(expr: checked_base, index: checked_index, trait_implementation, span, type_id: checked_base.type())
+                } else {
+                    .error(format("Type ‘{}’ does not implement the indexing operation", .type_name(checked_base.type())), span)
+                    result = CheckedExpression::Garbage(span, type_id: builtin(BuiltinType::Void))
                 }
             }
 
