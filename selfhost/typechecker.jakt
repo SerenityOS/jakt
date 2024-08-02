@@ -8966,13 +8966,14 @@ struct Typechecker {
             let checked_base = .typecheck_expression_and_dereference_if_needed(base, scope_id, safety_mode, type_hint: None, span)
             let checked_index = .typecheck_expression_and_dereference_if_needed(index, scope_id, safety_mode, type_hint: None, span)
 
-            yield match .get_type(checked_base.type()) {
-                GenericInstance(id, args) => {
-                    let array_struct_id = .find_struct_in_prelude("Array")
-                    let array_slice_struct_id = .find_struct_in_prelude("ArraySlice")
-                    let dictionary_struct_id = .find_struct_in_prelude("Dictionary")
+            mut result = CheckedExpression::Garbage(span, type_id: builtin(BuiltinType::Void))
+            mut trait_implementation: OperatorTraitImplementation? = None
 
-                    mut result = CheckedExpression::Garbage(span, type_id: builtin(BuiltinType::Void))
+            let array_struct_id = .find_struct_in_prelude("Array")
+            let array_slice_struct_id = .find_struct_in_prelude("ArraySlice")
+            let dictionary_struct_id = .find_struct_in_prelude("Dictionary")
+            if .get_type(checked_base.type()) is GenericInstance(id, args) and
+               (id.equals(array_struct_id) or id.equals(array_slice_struct_id) or id.equals(dictionary_struct_id)) {
                     if id.equals(array_struct_id) or id.equals(array_slice_struct_id) {
                         if .is_integer(checked_index.type()) or checked_index is Range {
                             let type_id = match checked_index {
@@ -8983,20 +8984,83 @@ struct Typechecker {
                                 } else => args[0]
                             }
 
-                            result = CheckedExpression::IndexedExpression(expr: checked_base, index: checked_index, span, type_id: type_id)
+                            result = CheckedExpression::IndexedExpression(expr: checked_base, index: checked_index, trait_implementation, span, type_id)
                         } else {
                             .error("Index must be an integer or a range", span)
                         }
                     } else if id.equals(dictionary_struct_id) {
                         result = CheckedExpression::IndexedDictionary(expr: checked_base, index: checked_index, span, type_id: args[1])
                     }
-                    yield result
-                }
-                else => {
-                    .error("Index used on value that cannot be indexed", span)
-                    yield CheckedExpression::Garbage(span, type_id: builtin(BuiltinType::Void))
+            } else {
+                let trait_names: [String] = ["Index", "ThrowingIndex"]
+                let function_name = "index"
+                let add_trait_implementation = .find_any_singular_trait_implementation(
+                    type_id: checked_base.type()
+                    trait_names
+                    scope_id
+                    span: span
+                    filter_for_generics: []
+                )
+
+                if add_trait_implementation is Some(implementation) {
+                    if implementation.trait_name.starts_with("Throwing") and not .get_scope(scope_id).can_throw {
+                        .error("Call to function that may throw needs to be in a try statement or a function marked as throws", span)
+                    }
+
+                    let (parent_id, _) = .struct_like_id_from_type_id(
+                        type_id: checked_base.type()
+                        scope_id
+                        span
+                        for_optional_chain: false
+                        treat_string_as_builtin: true
+                    )
+                    let implementation_function_id = .find_function_matching_trait_implementation_in_scope(
+                        self_type_id: checked_base.type()
+                        parent_scope_id: parent_id?.scope_id(&.program) ?? scope_id
+                        function_name
+                        trait_descriptor: &implementation
+                    )
+
+                    if implementation_function_id.has_value() {
+                        let implementation_function = .get_function(implementation_function_id!)
+                        // Make sure the mutability of the lhs matches `this' in the implementation.
+                        if implementation_function.is_mutating() and not checked_base.is_mutable(program: .program) {
+                            .error("Cannot call mutating function on an immutable object instance", span)
+                        }
+
+                        mut call_expression = CheckedCall(
+                            name: function_name
+                            args: [("", checked_index)]
+                            function_id: implementation_function_id
+                            return_type: implementation_function.return_type_id
+                            callee_throws: implementation_function.can_throw
+                            external_name: implementation_function.external_name
+                            force_inline: implementation_function.force_inline
+                        )
+
+                        trait_implementation = OperatorTraitImplementation(
+                            trait_id: implementation.trait_id
+                            trait_generic_arguments: implementation.implemented_type_args
+                            call_expression
+                        )
+                    } else {
+                        .error(
+                            format(
+                                "Failed to find an implementation of '{}' (trait {}) in type {} ({})",
+                                function_name
+                                implementation.trait_name
+                                .type_name(checked_base.type())
+                                .get_scope(parent_id!.scope_id(&.program)).debug_name
+                            ),
+                            span
+                        )
+                    }
+
+                    result = CheckedExpression::IndexedExpression(expr: checked_base, index: checked_index, trait_implementation, span, type_id: checked_base.type())
                 }
             }
+
+            yield result
         }
         IndexedTuple(expr, index, is_optional, span) => .typecheck_indexed_tuple(expr, index, scope_id, is_optional, safety_mode, span)
         Garbage(span) => CheckedExpression::Garbage(span, type_id: builtin(BuiltinType::Void))
