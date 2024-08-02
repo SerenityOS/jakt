@@ -1,0 +1,12 @@
+/// Expect:
+/// - error: "Type ‘Test<(i64, i64, i64)>’ does not implement the indexing operation"
+
+class Test<T> {
+    public x: T
+}
+
+fn main() {
+    let tuple = (1, 2, 3)
+    let test = Test(x: tuple)
+    println("{}", test[1])
+}
