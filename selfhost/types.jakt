@@ -1623,7 +1623,7 @@ boxed enum CheckedExpression {
     JaktArray(vals: [CheckedExpression], repeat: CheckedExpression?, span: Span, type_id: TypeId, inner_type_id: TypeId)
     JaktSet(vals: [CheckedExpression], span: Span, type_id: TypeId, inner_type_id: TypeId)
     JaktDictionary(vals: [(CheckedExpression, CheckedExpression)], span: Span, type_id: TypeId, key_type_id: TypeId, value_type_id: TypeId)
-    IndexedExpression(expr: CheckedExpression, index: CheckedExpression, span: Span, type_id: TypeId)
+    IndexedExpression(expr: CheckedExpression, index: CheckedExpression, trait_implementation: OperatorTraitImplementation?, span: Span, type_id: TypeId)
     IndexedDictionary(expr: CheckedExpression, index: CheckedExpression, span: Span, type_id: TypeId)
     IndexedTuple(expr: CheckedExpression, index: usize, span: Span, is_optional: bool, type_id: TypeId)
     IndexedStruct(expr: CheckedExpression, name: String, index: VarId?, span: Span, is_optional: bool, type_id: TypeId)
