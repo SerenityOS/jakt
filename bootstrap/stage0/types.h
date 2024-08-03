@@ -270,6 +270,7 @@ bool is_value;
 struct {
 Jakt::ids::TypeId namespace_type;
 ByteString name;
+JaktInternal::DynamicArray<Jakt::ids::TypeId> args;
 } Dependent;
 struct {
 Jakt::ids::StructId id;
@@ -283,10 +284,6 @@ struct {
 Jakt::ids::TraitId id;
 JaktInternal::DynamicArray<Jakt::ids::TypeId> args;
 } GenericTraitInstance;
-struct {
-Jakt::ids::StructId id;
-JaktInternal::DynamicArray<Jakt::ids::TypeId> args;
-} GenericResolvedType;
 struct {
 Jakt::ids::StructId value;
 } Struct;
@@ -337,11 +334,10 @@ constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 
 [[nodiscard]] static NonnullRefPtr<Type> Unknown(Jakt::parser::CheckedQualifiers qualifiers);
 [[nodiscard]] static NonnullRefPtr<Type> Never(Jakt::parser::CheckedQualifiers qualifiers);
 [[nodiscard]] static NonnullRefPtr<Type> TypeVariable(Jakt::parser::CheckedQualifiers qualifiers, ByteString name, JaktInternal::DynamicArray<Jakt::ids::TypeId> trait_implementations, bool is_value);
-[[nodiscard]] static NonnullRefPtr<Type> Dependent(Jakt::parser::CheckedQualifiers qualifiers, Jakt::ids::TypeId namespace_type, ByteString name);
+[[nodiscard]] static NonnullRefPtr<Type> Dependent(Jakt::parser::CheckedQualifiers qualifiers, Jakt::ids::TypeId namespace_type, ByteString name, JaktInternal::DynamicArray<Jakt::ids::TypeId> args);
 [[nodiscard]] static NonnullRefPtr<Type> GenericInstance(Jakt::parser::CheckedQualifiers qualifiers, Jakt::ids::StructId id, JaktInternal::DynamicArray<Jakt::ids::TypeId> args);
 [[nodiscard]] static NonnullRefPtr<Type> GenericEnumInstance(Jakt::parser::CheckedQualifiers qualifiers, Jakt::ids::EnumId id, JaktInternal::DynamicArray<Jakt::ids::TypeId> args);
 [[nodiscard]] static NonnullRefPtr<Type> GenericTraitInstance(Jakt::parser::CheckedQualifiers qualifiers, Jakt::ids::TraitId id, JaktInternal::DynamicArray<Jakt::ids::TypeId> args);
-[[nodiscard]] static NonnullRefPtr<Type> GenericResolvedType(Jakt::parser::CheckedQualifiers qualifiers, Jakt::ids::StructId id, JaktInternal::DynamicArray<Jakt::ids::TypeId> args);
 [[nodiscard]] static NonnullRefPtr<Type> Struct(Jakt::parser::CheckedQualifiers qualifiers, Jakt::ids::StructId value);
 [[nodiscard]] static NonnullRefPtr<Type> Enum(Jakt::parser::CheckedQualifiers qualifiers, Jakt::ids::EnumId value);
 [[nodiscard]] static NonnullRefPtr<Type> RawPtr(Jakt::parser::CheckedQualifiers qualifiers, Jakt::ids::TypeId value);
@@ -1505,6 +1501,7 @@ public: ErrorOr<JaktInternal::Optional<Jakt::ids::StructId>> check_and_extract_w
 public: ErrorOr<ByteString> type_name(Jakt::ids::TypeId const type_id, bool const debug_mode) const;
 public: Jakt::ids::TypeId find_or_add_type_id(NonnullRefPtr<typename Jakt::types::Type> const type, Jakt::ids::ModuleId const module_id, bool const only_in_current_module);
 public: ErrorOr<Jakt::ids::TypeId> substitute_typevars_in_type(Jakt::ids::TypeId const type_id, Jakt::types::GenericInferences const generic_inferences, Jakt::ids::ModuleId const module_id);
+public: ErrorOr<Jakt::ids::TypeId> specialize_type_id(Jakt::ids::TypeId const type_id, JaktInternal::DynamicArray<Jakt::ids::TypeId> const new_args, bool const replace_args, Jakt::ids::ModuleId const module_id);
 private: ErrorOr<Jakt::ids::TypeId> substitute_typevars_in_type_helper(Jakt::ids::TypeId const type_id, Jakt::types::GenericInferences const generic_inferences, Jakt::ids::ModuleId const module_id);
 public: template <typename T>
 ErrorOr<JaktInternal::Optional<T>> for_each_scope_accessible_unqualified_from_scope(Jakt::ids::ScopeId const scope_id, Function<ErrorOr<typename Jakt::utility::IterationDecision<T>>(Jakt::types::ResolutionMixin, JaktInternal::Optional<ByteString>, bool)> const& callback, bool const ignore_mixin_scopes, JaktInternal::Optional<Jakt::ids::ScopeId> const root_scope) const;

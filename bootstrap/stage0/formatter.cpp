@@ -475,7 +475,7 @@ ErrorOr<Jakt::formatter::Stage0> Jakt::formatter::Stage0::create(NonnullRefPtr<J
 {
 JaktInternal::DynamicArray<u8> const old_file_contents = ((compiler)->current_file_contents);
 (((compiler)->current_file_contents) = source);
-ScopeGuard __jakt_var_115([&] {
+ScopeGuard __jakt_var_118([&] {
 {
 (((compiler)->current_file_contents) = old_file_contents);
 }
@@ -1062,8 +1062,9 @@ ByteString output = (ByteString::from_utf8_without_validation(""sv));
 Jakt::utility::Span const span = ((token).span());
 Jakt::lexer::Token local_token = token;
 while ((!(((local_token).__jakt_init_index() == 10 /* RCurly */)))){
-if (((local_token).__jakt_init_index() == 3 /* Identifier */)){
-ByteString const name = (local_token).as.Identifier.name;
+Jakt::lexer::Token __jakt_tmp388 = local_token;
+if (((__jakt_tmp388).__jakt_init_index() == 3 /* Identifier */)){
+ByteString const name = (__jakt_tmp388).as.Identifier.name;
 ((collection).push(name));
 }
 (local_token = ((*this).consume()));
@@ -4411,7 +4412,7 @@ return (infallible_enum_cast<Jakt::jakt__prelude__operators::Ordering>((JaktInte
 }
 }
 }
-ScopeGuard __jakt_var_116([&] {
+ScopeGuard __jakt_var_119([&] {
 {
 if ([](i64 const& self, i64 rhs) -> bool {{
 return (((infallible_integer_cast<u8>(([](i64 const& self, i64 rhs) -> Jakt::jakt__prelude__operators::Ordering {{
