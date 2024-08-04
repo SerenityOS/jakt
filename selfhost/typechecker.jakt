@@ -8967,7 +8967,15 @@ struct Typechecker {
         }
         IndexedExpression(base, index, span) => {
             let checked_base = .typecheck_expression_and_dereference_if_needed(base, scope_id, safety_mode, type_hint: None, span)
-            let checked_index = .typecheck_expression_and_dereference_if_needed(index, scope_id, safety_mode, type_hint: None, span)
+            let dictionary_struct_id = .find_struct_in_prelude("Dictionary")
+            let checked_base_type = .get_type(checked_base.type())
+
+            mut index_type_hint: TypeHint? = None
+            if checked_base_type is GenericInstance(id, args) and id.equals(dictionary_struct_id) {
+                index_type_hint = TypeHint::MustBe(type_id: args[0])
+            }
+
+            let checked_index = .typecheck_expression_and_dereference_if_needed(index, scope_id, safety_mode, type_hint: index_type_hint, span)
 
             mut result = CheckedExpression::Garbage(span, type_id: builtin(BuiltinType::Void))
             mut trait_implementation: OperatorTraitImplementation? = None

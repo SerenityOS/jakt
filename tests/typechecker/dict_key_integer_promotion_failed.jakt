@@ -1,0 +1,7 @@
+/// Expect:
+/// - error: "Integer promotion failed"
+
+fn main() {
+    mut dict: [u8:String] = [:]
+    dict[10000] = "one"
+}
