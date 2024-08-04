@@ -2739,7 +2739,7 @@ struct CodeGenerator {
                     output.appendff(
                         "{}({}::{}(\"{}\"sv))"
                         error_handler
-                        .codegen_type(val.type_id)
+                        .codegen_type_possibly_as_namespace(type_id: val.type_id, as_namespace: true)
                         name
                         escaped_value
                     )
