@@ -467,6 +467,15 @@ import extern c "clang-c/Index.h" {
     extern struct CXPrintingPolicy {}
     extern struct CXSourceRange {}
 
+    extern enum CXTypeLayoutError : i64 {
+        CXTypeLayoutError_Invalid
+        CXTypeLayoutError_Incomplete
+        CXTypeLayoutError_Dependent
+        CXTypeLayoutError_NotConstantSize
+        CXTypeLayoutError_InvalidFieldName
+        CXTypeLayoutError_Undeduced
+    }
+
     extern fn clang_createIndex(excludeDeclarationsFromPCH: bool, displayDiagnostics: bool) -> CXIndex
     extern fn clang_disposeIndex(anon index: CXIndex)
     extern fn clang_parseTranslationUnit2(
@@ -519,6 +528,7 @@ import extern c "clang-c/Index.h" {
     extern fn clang_Type_getNamedType(anon type: CXType) -> CXType
     extern fn clang_Type_getNumTemplateArguments(anon type: CXType) -> c_int
     extern fn clang_Type_getTemplateArgumentAsType(anon type: CXType, anon i: u32) -> CXType
+    extern fn clang_Type_getSizeOf(anon type: CXType) -> i64
     extern fn clang_getTemplateCursorKind(anon cursor: CXCursor) -> CXCursorKind
     extern fn clang_getCursorPrettyPrinted(cursor: CXCursor, policy: CXPrintingPolicy) -> CXString
     extern fn clang_getCursorPrintingPolicy(cursor: CXCursor) -> CXPrintingPolicy

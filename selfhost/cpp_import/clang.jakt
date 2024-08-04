@@ -26,9 +26,9 @@ import cpp_import::clang_c {
     clang_EvalResult_getAsDouble, clang_EvalResult_getAsInt, clang_EvalResult_getAsLongLong
     clang_EvalResult_getAsStr, clang_EvalResult_getAsUnsigned, clang_EvalResult_getKind
     clang_EvalResult_isUnsignedInt, clang_Type_getNamedType, clang_Type_getNumTemplateArguments
-    clang_Type_getTemplateArgumentAsType, clang_createIndex, clang_createTranslationUnit, clang_disposeIndex
-    clang_disposeString, clang_disposeTokens, clang_disposeTranslationUnit, clang_equalCursors, clang_getArgType
-    clang_getArrayElementType, clang_getArraySize, clang_getCString, clang_getCanonicalCursor
+    clang_Type_getSizeOf, clang_Type_getTemplateArgumentAsType, clang_createIndex, clang_createTranslationUnit
+    clang_disposeIndex, clang_disposeString, clang_disposeTokens, clang_disposeTranslationUnit, clang_equalCursors
+    clang_getArgType, clang_getArrayElementType, clang_getArraySize, clang_getCString, clang_getCanonicalCursor
     clang_getCanonicalType, clang_getCursorDefinition, clang_getCursorExtent, clang_getCursorKind
     clang_getCursorKindSpelling, clang_getCursorLocation, clang_getCursorPrettyPrinted
     clang_getCursorPrintingPolicy, clang_getCursorResultType, clang_getCursorSemanticParent, clang_getCursorSpelling
@@ -570,20 +570,21 @@ class CppImportProcessor {
         let type = match t.kind {
             CXType_Void => builtin(BuiltinType::Void)
             CXType_Bool => builtin(BuiltinType::Bool)
-            CXType_Char_U => builtin(BuiltinType::U8)
-            CXType_UChar => builtin(BuiltinType::U8)
-            CXType_Char16 => builtin(BuiltinType::U16)
-            CXType_Char32 => builtin(BuiltinType::U32)
-            CXType_UShort => builtin(BuiltinType::U16)
-            CXType_UInt => builtin(BuiltinType::U32)
-            CXType_ULong => builtin(BuiltinType::U32)
-            CXType_ULongLong => builtin(BuiltinType::U64)
+            CXType_Char_U | CXType_UChar | CXType_UShort | CXType_UInt | CXType_ULongLong => match clang_Type_getSizeOf(t) {
+                1 => builtin(BuiltinType::U8)
+                2 => builtin(BuiltinType::U16)
+                4 => builtin(BuiltinType::U32)
+                8 => builtin(BuiltinType::U64)
+                else => builtin(BuiltinType::Unknown)
+            }
             CXType_Char_S => builtin(BuiltinType::CChar)
-            CXType_SChar => builtin(BuiltinType::I8)
-            CXType_Short => builtin(BuiltinType::I16)
-            CXType_Int => builtin(BuiltinType::CInt)
-            CXType_Long => builtin(BuiltinType::I32)
-            CXType_LongLong => builtin(BuiltinType::I64)
+            CXType_Char16 | CXType_Char32 | CXType_ULong | CXType_SChar | CXType_Short | CXType_Int | CXType_Long | CXType_LongLong => match clang_Type_getSizeOf(t) {
+                1 => builtin(BuiltinType::I8)
+                2 => builtin(BuiltinType::I16)
+                4 => builtin(BuiltinType::I32)
+                8 => builtin(BuiltinType::I64)
+                else => builtin(BuiltinType::Unknown)
+            }
             CXType_Float => builtin(BuiltinType::F32)
             CXType_Double => builtin(BuiltinType::F64)
             CXType_Typedef => {
