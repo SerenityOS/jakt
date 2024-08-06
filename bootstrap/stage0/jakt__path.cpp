@@ -264,7 +264,7 @@ Jakt::jakt__path::Path Jakt::jakt__path::Path::relative_to(Jakt::jakt__path::Pat
 JaktInternal::DynamicArray<ByteString> const base_parts = ((((base))).components());
 JaktInternal::DynamicArray<ByteString> const this_parts = ((*this).components());
 size_t common = static_cast<size_t>(0ULL);
-while ((([](size_t const& self, size_t rhs) -> bool {{
+while (([](size_t const& self, size_t rhs) -> bool {{
 return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> Jakt::jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<Jakt::jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
@@ -272,7 +272,7 @@ return (infallible_enum_cast<Jakt::jakt__prelude__operators::Ordering>((JaktInte
 (self,rhs))))) == (static_cast<u8>(0)));
 }
 }
-(common,((base_parts).size())) && [](size_t const& self, size_t rhs) -> bool {{
+(common,((base_parts).size())) && ([](size_t const& self, size_t rhs) -> bool {{
 return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> Jakt::jakt__prelude__operators::Ordering {{
 return (infallible_enum_cast<Jakt::jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
 }
@@ -280,7 +280,7 @@ return (infallible_enum_cast<Jakt::jakt__prelude__operators::Ordering>((JaktInte
 (self,rhs))))) == (static_cast<u8>(0)));
 }
 }
-(common,((this_parts).size()))) && ((((base_parts)[common])) == (((this_parts)[common]))))){
+(common,((this_parts).size())) && ((((base_parts)[common])) == (((this_parts)[common])))))){
 ((common) += (static_cast<size_t>(1ULL)));
 }
 JaktInternal::DynamicArray<ByteString> relative_parts = DynamicArray<ByteString>::create_with({});

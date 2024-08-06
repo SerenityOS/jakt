@@ -697,8 +697,9 @@ break;
 }
 NonnullRefPtr<typename Jakt::parser::ParsedStatement> stmt = (_magic_value.value());
 {
-if (((stmt)->__jakt_init_index() == 14 /* Yield */)){
-JaktInternal::Optional<NonnullRefPtr<typename Jakt::parser::ParsedExpression>> const expr = (stmt)->as.Yield.expr;
+NonnullRefPtr<typename Jakt::parser::ParsedStatement> __jakt_tmp1 = stmt;
+if (((__jakt_tmp1)->__jakt_init_index() == 14 /* Yield */)){
+JaktInternal::Optional<NonnullRefPtr<typename Jakt::parser::ParsedExpression>> const expr = (__jakt_tmp1)->as.Yield.expr;
 if (((expr).has_value())){
 return (((expr.value()))->span());
 }
@@ -724,8 +725,9 @@ break;
 }
 NonnullRefPtr<typename Jakt::parser::ParsedStatement> stmt = (_magic_value.value());
 {
-if (((stmt)->__jakt_init_index() == 14 /* Yield */)){
-JaktInternal::Optional<NonnullRefPtr<typename Jakt::parser::ParsedExpression>> const expr = (stmt)->as.Yield.expr;
+NonnullRefPtr<typename Jakt::parser::ParsedStatement> __jakt_tmp2 = stmt;
+if (((__jakt_tmp2)->__jakt_init_index() == 14 /* Yield */)){
+JaktInternal::Optional<NonnullRefPtr<typename Jakt::parser::ParsedExpression>> const expr = (__jakt_tmp2)->as.Yield.expr;
 return ((stmt)->span());
 }
 }
@@ -2212,7 +2214,7 @@ return JaktInternal::ExplicitValue<void>();
 
 void Jakt::parser::Parser::parse_attribute_list(JaktInternal::DynamicArray<Jakt::parser::ParsedAttribute>& active_attributes) {
 {
-while ((((!(((*this).eof()))) && (!(((((*this).current())).__jakt_init_index() == 12 /* RSquare */)))) && (!(((((*this).peek(static_cast<size_t>(1ULL)))).__jakt_init_index() == 12 /* RSquare */))))){
+while (((!(((*this).eof()))) && ((!(((((*this).current())).__jakt_init_index() == 12 /* RSquare */))) && (!(((((*this).peek(static_cast<size_t>(1ULL)))).__jakt_init_index() == 12 /* RSquare */)))))){
 JaktInternal::Optional<Jakt::parser::ParsedAttribute> const attribute = ((*this).parse_attribute());
 if (((attribute).has_value())){
 ((((active_attributes))).push((attribute.value())));
@@ -3421,8 +3423,9 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
     _jakt_value.release_value();
 });
 }
-if (((((*this).previous())).__jakt_init_index() == 6 /* ColonColon */)){
-Jakt::utility::Span const span = (((*this).previous())).as.ColonColon.value;
+Jakt::lexer::Token __jakt_tmp8 = ((*this).previous());
+if (((__jakt_tmp8).__jakt_init_index() == 6 /* ColonColon */)){
+Jakt::utility::Span const span = (__jakt_tmp8).as.ColonColon.value;
 ((*this).error((ByteString::from_utf8_without_validation("Expected alias target name"sv)),span));
 }
 if (((((*this).current())).__jakt_init_index() == 61 /* As */)){
@@ -4292,9 +4295,10 @@ return Jakt::parser::ParsedExternalTraitImplementation(type_name,(trait_list.val
 Jakt::parser::ParsedTrait Jakt::parser::Parser::parse_trait() {
 {
 Jakt::parser::ParsedTrait parsed_trait = Jakt::parser::ParsedTrait((ByteString::from_utf8_without_validation(""sv)),((*this).empty_span()),DynamicArray<Jakt::parser::ParsedGenericParameter>::create_with({}),Jakt::parser::ParsedTraitRequirements::Nothing());
-if (((((*this).current())).__jakt_init_index() == 3 /* Identifier */)){
-ByteString const name = (((*this).current())).as.Identifier.name;
-Jakt::utility::Span const name_span = (((*this).current())).as.Identifier.span;
+Jakt::lexer::Token __jakt_tmp9 = ((*this).current());
+if (((__jakt_tmp9).__jakt_init_index() == 3 /* Identifier */)){
+ByteString const name = (__jakt_tmp9).as.Identifier.name;
+Jakt::utility::Span const name_span = (__jakt_tmp9).as.Identifier.span;
 (((parsed_trait).name) = name);
 (((parsed_trait).name_span) = name_span);
 ((((*this).index)++));
@@ -5420,9 +5424,10 @@ return JaktInternal::ExplicitValue<void>();
 
 void Jakt::parser::Parser::parse_export(Jakt::parser::ParsedNamespace& parent) {
 {
-if (((((*this).current())).__jakt_init_index() == 1 /* QuotedString */)){
-ByteString const filename = (((*this).current())).as.QuotedString.quote;
-Jakt::utility::Span const filename_span = (((*this).current())).as.QuotedString.span;
+Jakt::lexer::Token __jakt_tmp10 = ((*this).current());
+if (((__jakt_tmp10).__jakt_init_index() == 1 /* QuotedString */)){
+ByteString const filename = (__jakt_tmp10).as.QuotedString.quote;
+Jakt::utility::Span const filename_span = (__jakt_tmp10).as.QuotedString.span;
 ((((*this).index)++));
 Jakt::parser::ParsedExport result = Jakt::parser::ParsedExport(Jakt::parser::ParsedName(filename,filename_span),DynamicArray<JaktInternal::DynamicArray<Jakt::parser::ParsedName>>::create_with({}));
 if (((((*this).current())).__jakt_init_index() == 9 /* LCurly */)){
@@ -6532,9 +6537,10 @@ else {
 Jakt::parser::ParsedExternImport Jakt::parser::Parser::parse_extern_import(Jakt::parser::ParsedNamespace& parent) {
 {
 Jakt::parser::ParsedExternImport parsed_import = Jakt::parser::ParsedExternImport(false,Jakt::parser::ParsedNamespace(JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),DynamicArray<Jakt::parser::ParsedFunction>::create_with({}),DynamicArray<Jakt::parser::ParsedRecord>::create_with({}),DynamicArray<Jakt::parser::ParsedTrait>::create_with({}),DynamicArray<Jakt::parser::ParsedExternalTraitImplementation>::create_with({}),DynamicArray<Jakt::parser::ParsedNamespace>::create_with({}),DynamicArray<Jakt::parser::ParsedAlias>::create_with({}),DynamicArray<Jakt::parser::ParsedModuleImport>::create_with({}),DynamicArray<Jakt::parser::ParsedExternImport>::create_with({}),DynamicArray<Jakt::parser::ParsedExport>::create_with({}),JaktInternal::OptionalNone(),DynamicArray<Jakt::parser::IncludeAction>::create_with({}),DynamicArray<Jakt::parser::IncludeAction>::create_with({}),DynamicArray<JaktInternal::Tuple<JaktInternal::DynamicArray<Jakt::parser::ParsedGenericParameter>,Jakt::parser::ParsedNamespace>>::create_with({}),false,false,Jakt::utility::Span(Jakt::utility::FileId(static_cast<size_t>(0ULL)),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL))),DynamicArray<Jakt::parser::IncludeAction>::create_with({}),DynamicArray<Jakt::parser::IncludeAction>::create_with({}),false);
-if (((((*this).current())).__jakt_init_index() == 3 /* Identifier */)){
-ByteString const name = (((*this).current())).as.Identifier.name;
-Jakt::utility::Span const span = (((*this).current())).as.Identifier.span;
+Jakt::lexer::Token __jakt_tmp11 = ((*this).current());
+if (((__jakt_tmp11).__jakt_init_index() == 3 /* Identifier */)){
+ByteString const name = (__jakt_tmp11).as.Identifier.name;
+Jakt::utility::Span const span = (__jakt_tmp11).as.Identifier.span;
 ((((*this).index)++));
 if ((((name) == ((ByteString::from_utf8_without_validation("c"sv)))) || ((name) == ((ByteString::from_utf8_without_validation("C"sv)))))){
 (((parsed_import).is_c) = true);
@@ -6573,9 +6579,10 @@ VERIFY_NOT_REACHED();
 });
 if (((((*this).current())).__jakt_init_index() == 61 /* As */)){
 ((((*this).index)++));
-if (((((*this).current())).__jakt_init_index() == 3 /* Identifier */)){
-ByteString const name = (((*this).current())).as.Identifier.name;
-Jakt::utility::Span const span = (((*this).current())).as.Identifier.span;
+Jakt::lexer::Token __jakt_tmp12 = ((*this).current());
+if (((__jakt_tmp12).__jakt_init_index() == 3 /* Identifier */)){
+ByteString const name = (__jakt_tmp12).as.Identifier.name;
+Jakt::utility::Span const span = (__jakt_tmp12).as.Identifier.span;
 ((((*this).index)++));
 (((((parsed_import).assigned_namespace)).name) = name);
 (((((parsed_import).assigned_namespace)).name_span) = span);
@@ -6609,8 +6616,9 @@ else {
 
 ((((parent))).add_child_namespace(((parsed_import).assigned_namespace)));
 for (;;){
-if (((((*this).current())).__jakt_init_index() == 3 /* Identifier */)){
-ByteString const name = (((*this).current())).as.Identifier.name;
+Jakt::lexer::Token __jakt_tmp13 = ((*this).current());
+if (((__jakt_tmp13).__jakt_init_index() == 3 /* Identifier */)){
+ByteString const name = (__jakt_tmp13).as.Identifier.name;
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,Jakt::parser::ParsedExternImport> {
 auto __jakt_enum_value = (name);
@@ -6663,8 +6671,9 @@ return parsed_import;
 JaktInternal::Optional<JaktInternal::DynamicArray<Jakt::parser::IncludeAction>> Jakt::parser::Parser::parse_include_action() {
 {
 ((*this).skip_newlines());
-if (((((*this).current())).__jakt_init_index() == 3 /* Identifier */)){
-ByteString const name = (((*this).current())).as.Identifier.name;
+Jakt::lexer::Token __jakt_tmp14 = ((*this).current());
+if (((__jakt_tmp14).__jakt_init_index() == 3 /* Identifier */)){
+ByteString const name = (__jakt_tmp14).as.Identifier.name;
 ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,JaktInternal::Optional<JaktInternal::DynamicArray<Jakt::parser::IncludeAction>>> {
 auto __jakt_enum_value = (name);
@@ -6683,8 +6692,9 @@ return JaktInternal::OptionalNone();
 
 JaktInternal::DynamicArray<Jakt::parser::IncludeAction> defines = DynamicArray<Jakt::parser::IncludeAction>::create_with({});
 for (;;){
-if (((((*this).current())).__jakt_init_index() == 3 /* Identifier */)){
-ByteString const name = (((*this).current())).as.Identifier.name;
+Jakt::lexer::Token __jakt_tmp15 = ((*this).current());
+if (((__jakt_tmp15).__jakt_init_index() == 3 /* Identifier */)){
+ByteString const name = (__jakt_tmp15).as.Identifier.name;
 Jakt::utility::Span const span = ((((*this).current())).span());
 ((((*this).index)++));
 ((*this).skip_newlines());
@@ -6764,8 +6774,9 @@ return JaktInternal::OptionalNone();
 
 JaktInternal::DynamicArray<Jakt::parser::IncludeAction> defines = DynamicArray<Jakt::parser::IncludeAction>::create_with({});
 for (;;){
-if (((((*this).current())).__jakt_init_index() == 3 /* Identifier */)){
-ByteString const name = (((*this).current())).as.Identifier.name;
+Jakt::lexer::Token __jakt_tmp16 = ((*this).current());
+if (((__jakt_tmp16).__jakt_init_index() == 3 /* Identifier */)){
+ByteString const name = (__jakt_tmp16).as.Identifier.name;
 Jakt::utility::Span const span = ((((*this).current())).span());
 ((((*this).index)++));
 ((defines).push(Jakt::parser::IncludeAction::Undefine(name,span)));
@@ -6819,8 +6830,9 @@ Jakt::parser::ParsedModuleImport parsed_import = Jakt::parser::ParsedModuleImpor
 if (((((*this).current())).__jakt_init_index() == 80 /* Relative */)){
 (((parsed_import).relative_path) = true);
 ((((*this).index)++));
-if (((((*this).current())).__jakt_init_index() == 3 /* Identifier */)){
-ByteString const name = (((*this).current())).as.Identifier.name;
+Jakt::lexer::Token __jakt_tmp17 = ((*this).current());
+if (((__jakt_tmp17).__jakt_init_index() == 3 /* Identifier */)){
+ByteString const name = (__jakt_tmp17).as.Identifier.name;
 if (((name) == ((ByteString::from_utf8_without_validation("parent"sv))))){
 ((((*this).index)++));
 ((((parsed_import).parent_path_count)++));
@@ -6884,8 +6896,9 @@ Jakt::lexer::LiteralSuffix const& suffix = __jakt_match_value.suffix;
 Jakt::utility::Span const& span = __jakt_match_value.span;
 {
 NonnullRefPtr<typename Jakt::parser::ParsedExpression> const numeric_constant = ((*this).parse_number(prefix,number,suffix,span));
-if (((numeric_constant)->__jakt_init_index() == 1 /* NumericConstant */)){
-Jakt::parser::NumericConstant const val = (numeric_constant)->as.NumericConstant.val;
+NonnullRefPtr<typename Jakt::parser::ParsedExpression> __jakt_tmp18 = numeric_constant;
+if (((__jakt_tmp18)->__jakt_init_index() == 1 /* NumericConstant */)){
+Jakt::parser::NumericConstant const val = (__jakt_tmp18)->as.NumericConstant.val;
 (((parsed_import).parent_path_count) = ((val).to_usize()));
 }
 else {
@@ -7040,9 +7053,10 @@ return JaktInternal::ExplicitValue<void>();
 }
 if (((((*this).current())).__jakt_init_index() == 61 /* As */)){
 ((((*this).index)++));
-if (((((*this).current())).__jakt_init_index() == 3 /* Identifier */)){
-ByteString const name = (((*this).current())).as.Identifier.name;
-Jakt::utility::Span const span = (((*this).current())).as.Identifier.span;
+Jakt::lexer::Token __jakt_tmp19 = ((*this).current());
+if (((__jakt_tmp19).__jakt_init_index() == 3 /* Identifier */)){
+ByteString const name = (__jakt_tmp19).as.Identifier.name;
+Jakt::utility::Span const span = (__jakt_tmp19).as.Identifier.span;
 ((((*this).index)++));
 (((parsed_import).alias_name) = Jakt::parser::ImportName::Literal(name,span));
 }
@@ -7068,8 +7082,9 @@ case 3 /* Identifier */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Identifier;ByteString const& name = __jakt_match_value.name;
 Jakt::utility::Span const& span = __jakt_match_value.span;
 {
-if (((((parsed_import).import_list)).__jakt_init_index() == 0 /* List */)){
-JaktInternal::DynamicArray<Jakt::parser::ImportName> const names = (((parsed_import).import_list)).as.List.value;
+Jakt::parser::ImportList __jakt_tmp20 = ((parsed_import).import_list);
+if (((__jakt_tmp20).__jakt_init_index() == 0 /* List */)){
+JaktInternal::DynamicArray<Jakt::parser::ImportName> const names = (__jakt_tmp20).as.List.value;
 JaktInternal::DynamicArray<Jakt::parser::ImportName> mutable_names = names;
 ((mutable_names).push(Jakt::parser::ImportName::Literal(name,span)));
 }
@@ -7083,8 +7098,9 @@ return JaktInternal::ExplicitValue<void>();
 };/*case end*/
 case 36 /* Asterisk */: {
 {
-if (((((parsed_import).import_list)).__jakt_init_index() == 0 /* List */)){
-JaktInternal::DynamicArray<Jakt::parser::ImportName> const names = (((parsed_import).import_list)).as.List.value;
+Jakt::parser::ImportList __jakt_tmp21 = ((parsed_import).import_list);
+if (((__jakt_tmp21).__jakt_init_index() == 0 /* List */)){
+JaktInternal::DynamicArray<Jakt::parser::ImportName> const names = (__jakt_tmp21).as.List.value;
 if (((names).is_empty())){
 (((parsed_import).import_list) = Jakt::parser::ImportList::All());
 }
@@ -7412,9 +7428,10 @@ while ((!(((*this).eof())))){
 if (((((*this).peek(static_cast<size_t>(1ULL)))).__jakt_init_index() == 5 /* Colon */)){
 if (((((*this).current())).__jakt_init_index() == 3 /* Identifier */)){
 Jakt::parser::ParsedVarDecl var_decl = ((*this).parse_variable_declaration(false));
-if (((((var_decl).parsed_type))->__jakt_init_index() == 0 /* Name */)){
-ByteString const name = (((var_decl).parsed_type))->as.Name.name;
-Jakt::utility::Span const span = (((var_decl).parsed_type))->as.Name.span;
+NonnullRefPtr<typename Jakt::parser::ParsedType> __jakt_tmp22 = ((var_decl).parsed_type);
+if (((__jakt_tmp22)->__jakt_init_index() == 0 /* Name */)){
+ByteString const name = (__jakt_tmp22)->as.Name.name;
+Jakt::utility::Span const span = (__jakt_tmp22)->as.Name.span;
 (((var_decl).inlay_span) = span);
 if ((((name) == (((partial_enum).name))) && (!(is_boxed)))){
 ((*this).error((ByteString::from_utf8_without_validation("use 'boxed enum' to make the enum recursive"sv)),((var_decl).span)));
@@ -7880,9 +7897,10 @@ if (((*this).eof())){
 ((*this).error((ByteString::from_utf8_without_validation("Incomplete enum definition, expected name"sv)),((((*this).current())).span())));
 return parsed_enum;
 }
-if (((((*this).current())).__jakt_init_index() == 3 /* Identifier */)){
-ByteString const name = (((*this).current())).as.Identifier.name;
-Jakt::utility::Span const span = (((*this).current())).as.Identifier.span;
+Jakt::lexer::Token __jakt_tmp23 = ((*this).current());
+if (((__jakt_tmp23).__jakt_init_index() == 3 /* Identifier */)){
+ByteString const name = (__jakt_tmp23).as.Identifier.name;
+Jakt::utility::Span const span = (__jakt_tmp23).as.Identifier.span;
 (((parsed_enum).name) = name);
 (((parsed_enum).name_span) = span);
 ((((*this).index)++));
@@ -8459,9 +8477,10 @@ if (((*this).eof())){
 ((*this).error((ByteString::from_utf8_without_validation("Incomplete struct definition, expected name"sv)),((((*this).current())).span())));
 return parsed_struct;
 }
-if (((((*this).current())).__jakt_init_index() == 3 /* Identifier */)){
-ByteString const name = (((*this).current())).as.Identifier.name;
-Jakt::utility::Span const span = (((*this).current())).as.Identifier.span;
+Jakt::lexer::Token __jakt_tmp24 = ((*this).current());
+if (((__jakt_tmp24).__jakt_init_index() == 3 /* Identifier */)){
+ByteString const name = (__jakt_tmp24).as.Identifier.name;
+Jakt::utility::Span const span = (__jakt_tmp24).as.Identifier.span;
 ((((*this).index)++));
 (((parsed_struct).name) = name);
 (((parsed_struct).name_span) = span);
@@ -8517,9 +8536,10 @@ if (((*this).eof())){
 ((*this).error((ByteString::from_utf8_without_validation("Incomplete class definition, expected name"sv)),((((*this).current())).span())));
 return parsed_class;
 }
-if (((((*this).current())).__jakt_init_index() == 3 /* Identifier */)){
-ByteString const name = (((*this).current())).as.Identifier.name;
-Jakt::utility::Span const span = (((*this).current())).as.Identifier.span;
+Jakt::lexer::Token __jakt_tmp25 = ((*this).current());
+if (((__jakt_tmp25).__jakt_init_index() == 3 /* Identifier */)){
+ByteString const name = (__jakt_tmp25).as.Identifier.name;
+Jakt::utility::Span const span = (__jakt_tmp25).as.Identifier.span;
 ((((*this).index)++));
 (((parsed_class).name) = name);
 (((parsed_class).name_span) = span);
@@ -8793,8 +8813,9 @@ if (is_destructor){
 (((parsed_function).name_span) = ((((*this).previous())).span()));
 }
 else {
-if (((((*this).current())).__jakt_init_index() == 3 /* Identifier */)){
-ByteString const name = (((*this).current())).as.Identifier.name;
+Jakt::lexer::Token __jakt_tmp26 = ((*this).current());
+if (((__jakt_tmp26).__jakt_init_index() == 3 /* Identifier */)){
+ByteString const name = (__jakt_tmp26).as.Identifier.name;
 (((parsed_function).name) = name);
 (((parsed_function).name_span) = ((((*this).current())).span()));
 }
@@ -8977,10 +8998,12 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 6 /* ColonColon */: {
 {
 ((((*this).index)++));
-if (((((*this).current())).__jakt_init_index() == 3 /* Identifier */)){
-ByteString const name = (((*this).current())).as.Identifier.name;
+Jakt::lexer::Token __jakt_tmp27 = ((*this).current());
+if (((__jakt_tmp27).__jakt_init_index() == 3 /* Identifier */)){
+ByteString const name = (__jakt_tmp27).as.Identifier.name;
 ((((*this).index)++));
-(result = Jakt::parser::ParsedType::DependentType(JaktInternal::OptionalNone(),result,name,Jakt::parser::merge_spans(((base)->span()),((((*this).current())).span()))));
+JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::parser::ParsedType>> const generic_args = ((*this).parse_type_parameter_list());
+(result = Jakt::parser::ParsedType::DependentType(JaktInternal::OptionalNone(),result,name,generic_args,Jakt::parser::merge_spans(((base)->span()),((((*this).current())).span()))));
 }
 else {
 ((*this).error((ByteString::from_utf8_without_validation("Expected identifier after `::`"sv)),((((*this).current())).span())));
@@ -9031,8 +9054,9 @@ if (((((*this).current())).__jakt_init_index() == 87 /* Mut */)){
 ((((*this).index)++));
 }
 }
-if (((((*this).current())).__jakt_init_index() == 3 /* Identifier */)){
-ByteString const name = (((*this).current())).as.Identifier.name;
+Jakt::lexer::Token __jakt_tmp28 = ((*this).current());
+if (((__jakt_tmp28).__jakt_init_index() == 3 /* Identifier */)){
+ByteString const name = (__jakt_tmp28).as.Identifier.name;
 if (((name) == ((ByteString::from_utf8_without_validation("const"sv))))){
 (((qualifiers).is_immutable) = true);
 ((((*this).index)++));
@@ -9282,8 +9306,9 @@ return Jakt::parser::ParsedVarDeclTuple(var_declarations,Jakt::parser::merge_spa
 Jakt::parser::ParsedVarDecl Jakt::parser::Parser::parse_variable_declaration(bool const is_mutable) {
 {
 Jakt::utility::Span const span = ((((*this).current())).span());
-if (((((*this).current())).__jakt_init_index() == 3 /* Identifier */)){
-ByteString const name = (((*this).current())).as.Identifier.name;
+Jakt::lexer::Token __jakt_tmp29 = ((*this).current());
+if (((__jakt_tmp29).__jakt_init_index() == 3 /* Identifier */)){
+ByteString const name = (__jakt_tmp29).as.Identifier.name;
 ((((*this).index)++));
 if (((((*this).current())).__jakt_init_index() == 5 /* Colon */)){
 ((((*this).index)++));
@@ -9892,8 +9917,9 @@ ByteString error_name = (ByteString::from_utf8_without_validation(""sv));
 Jakt::utility::Span error_span = ((((*this).current())).span());
 if (((((*this).current())).__jakt_init_index() == 64 /* Catch */)){
 ((((*this).index)++));
-if (((((*this).current())).__jakt_init_index() == 3 /* Identifier */)){
-ByteString const name = (((*this).current())).as.Identifier.name;
+Jakt::lexer::Token __jakt_tmp30 = ((*this).current());
+if (((__jakt_tmp30).__jakt_init_index() == 3 /* Identifier */)){
+ByteString const name = (__jakt_tmp30).as.Identifier.name;
 (error_span = ((((*this).current())).span()));
 (error_name = name);
 ((((*this).index)++));
@@ -10260,8 +10286,9 @@ JaktInternal::Optional<Jakt::utility::Span> catch_span = JaktInternal::OptionalN
 if (((((*this).current())).__jakt_init_index() == 64 /* Catch */)){
 (catch_span = ((((*this).current())).span()));
 ((((*this).index)++));
-if (((((*this).current())).__jakt_init_index() == 3 /* Identifier */)){
-ByteString const name = (((*this).current())).as.Identifier.name;
+Jakt::lexer::Token __jakt_tmp31 = ((*this).current());
+if (((__jakt_tmp31).__jakt_init_index() == 3 /* Identifier */)){
+ByteString const name = (__jakt_tmp31).as.Identifier.name;
 (catch_name = name);
 ((((*this).index)++));
 }
@@ -11117,8 +11144,9 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 87 /* Mut */: {
 {
 ((((*this).index)++));
-if (((((*this).current())).__jakt_init_index() == 3 /* Identifier */)){
-ByteString const name = (((*this).current())).as.Identifier.name;
+Jakt::lexer::Token __jakt_tmp32 = ((*this).current());
+if (((__jakt_tmp32).__jakt_init_index() == 3 /* Identifier */)){
+ByteString const name = (__jakt_tmp32).as.Identifier.name;
 ((captures).push(Jakt::parser::ParsedCapture::ByMutableReference(name,((((*this).current())).span()))));
 ((((*this).index)++));
 }
@@ -11162,8 +11190,9 @@ return JaktInternal::ExplicitValue<void>();
 case 77 /* Comptime */: {
 {
 ((((*this).index)++));
-if (((((*this).current())).__jakt_init_index() == 3 /* Identifier */)){
-ByteString const name = (((*this).current())).as.Identifier.name;
+Jakt::lexer::Token __jakt_tmp33 = ((*this).current());
+if (((__jakt_tmp33).__jakt_init_index() == 3 /* Identifier */)){
+ByteString const name = (__jakt_tmp33).as.Identifier.name;
 ((captures).push(Jakt::parser::ParsedCapture::ByComptimeDependency(name,((((*this).current())).span()))));
 ((((*this).index)++));
 }
@@ -11625,12 +11654,13 @@ Jakt::lexer::LiteralSuffix const& suffix = __jakt_match_value.suffix;
 Jakt::utility::Span const& span = __jakt_match_value.span;
 {
 NonnullRefPtr<typename Jakt::parser::ParsedExpression> const numeric_constant = ((*this).parse_number(prefix,number,suffix,span));
+NonnullRefPtr<typename Jakt::parser::ParsedExpression> __jakt_tmp34 = numeric_constant;
 return JaktInternal::ExplicitValue<NonnullRefPtr<typename Jakt::parser::ParsedExpression>>(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename Jakt::parser::ParsedExpression>,NonnullRefPtr<typename Jakt::parser::ParsedExpression>> {
-auto __jakt_enum_value = (((numeric_constant)->__jakt_init_index() == 1 /* NumericConstant */));
+auto __jakt_enum_value = (((__jakt_tmp34)->__jakt_init_index() == 1 /* NumericConstant */));
 if (__jakt_enum_value == true) {
 {
-Jakt::parser::NumericConstant const val = (numeric_constant)->as.NumericConstant.val;
+Jakt::parser::NumericConstant const val = (__jakt_tmp34)->as.NumericConstant.val;
 size_t const num = ((val).to_usize());
 return JaktInternal::ExplicitValue<NonnullRefPtr<typename Jakt::parser::ParsedExpression>>(Jakt::parser::ParsedExpression::IndexedTuple(result,num,is_optional,Jakt::parser::merge_spans(start,((((*this).previous())).span()))));
 }
@@ -11774,12 +11804,13 @@ Jakt::lexer::LiteralSuffix const& suffix = __jakt_match_value.suffix;
 Jakt::utility::Span const& span = __jakt_match_value.span;
 {
 NonnullRefPtr<typename Jakt::parser::ParsedExpression> const numeric_constant = ((*this).parse_number(prefix,number,suffix,span));
+NonnullRefPtr<typename Jakt::parser::ParsedExpression> __jakt_tmp35 = numeric_constant;
 return JaktInternal::ExplicitValue<NonnullRefPtr<typename Jakt::parser::ParsedExpression>>(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<NonnullRefPtr<typename Jakt::parser::ParsedExpression>,NonnullRefPtr<typename Jakt::parser::ParsedExpression>> {
-auto __jakt_enum_value = (((numeric_constant)->__jakt_init_index() == 1 /* NumericConstant */));
+auto __jakt_enum_value = (((__jakt_tmp35)->__jakt_init_index() == 1 /* NumericConstant */));
 if (__jakt_enum_value == true) {
 {
-Jakt::parser::NumericConstant const val = (numeric_constant)->as.NumericConstant.val;
+Jakt::parser::NumericConstant const val = (__jakt_tmp35)->as.NumericConstant.val;
 size_t const num = ((val).to_usize());
 return JaktInternal::ExplicitValue<NonnullRefPtr<typename Jakt::parser::ParsedExpression>>(Jakt::parser::ParsedExpression::IndexedTuple(result,num,is_optional,Jakt::parser::merge_spans(start,((((*this).previous())).span()))));
 }
@@ -11943,8 +11974,9 @@ NonnullRefPtr<typename Jakt::parser::ParsedExpression> Jakt::parser::Parser::par
 {
 ((((*this).index)++));
 JaktInternal::DynamicArray<ByteString> namespace_ = DynamicArray<ByteString>::create_with({});
-if (((expr)->__jakt_init_index() == 9 /* Var */)){
-ByteString const name = (expr)->as.Var.name;
+NonnullRefPtr<typename Jakt::parser::ParsedExpression> __jakt_tmp36 = expr;
+if (((__jakt_tmp36)->__jakt_init_index() == 9 /* Var */)){
+ByteString const name = (__jakt_tmp36)->as.Var.name;
 ((namespace_).push(name));
 }
 else {
@@ -11952,8 +11984,9 @@ else {
 }
 
 while ((!(((*this).eof())))){
-if (((((*this).current())).__jakt_init_index() == 3 /* Identifier */)){
-ByteString const current_name = (((*this).current())).as.Identifier.name;
+Jakt::lexer::Token __jakt_tmp37 = ((*this).current());
+if (((__jakt_tmp37).__jakt_init_index() == 3 /* Identifier */)){
+ByteString const current_name = (__jakt_tmp37).as.Identifier.name;
 ((((*this).index)++));
 if (((((*this).current())).__jakt_init_index() == 7 /* LParen */)){
 ((((*this).index)--));
@@ -11972,8 +12005,9 @@ return Jakt::parser::ParsedExpression::Call(call,Jakt::parser::merge_spans(((exp
 return Jakt::parser::ParsedExpression::Garbage(((((*this).current())).span()));
 }
 if (((((*this).current())).__jakt_init_index() == 6 /* ColonColon */)){
-if (((((*this).previous())).__jakt_init_index() == 3 /* Identifier */)){
-ByteString const name = (((*this).previous())).as.Identifier.name;
+Jakt::lexer::Token __jakt_tmp38 = ((*this).previous());
+if (((__jakt_tmp38).__jakt_init_index() == 3 /* Identifier */)){
+ByteString const name = (__jakt_tmp38).as.Identifier.name;
 ((namespace_).push(name));
 }
 else {
@@ -12280,8 +12314,9 @@ ScopeGuard __jakt_var_5([&] {
 });
 JaktInternal::Dictionary<ByteString,Jakt::parser::ParsedPatternDefault> defaults = ((pattern).common.init_common.defaults);
 ((*this).skip_newlines());
-if (((((*this).current())).__jakt_init_index() == 3 /* Identifier */)){
-ByteString const name = (((*this).current())).as.Identifier.name;
+Jakt::lexer::Token __jakt_tmp39 = ((*this).current());
+if (((__jakt_tmp39).__jakt_init_index() == 3 /* Identifier */)){
+ByteString const name = (__jakt_tmp39).as.Identifier.name;
 if (((name) == ((ByteString::from_utf8_without_validation("default"sv))))){
 JaktInternal::Dictionary<ByteString,Jakt::parser::ParsedPatternDefault> defaults = ((pattern).common.init_common.defaults);
 ((((*this).index)) += (static_cast<size_t>(1ULL)));
@@ -12489,8 +12524,9 @@ auto&& __jakt_match_value = __jakt_match_variant.as.Identifier;ByteString const&
 Jakt::utility::Span const arg_name_span = ((((*this).current())).span());
 if (((((*this).peek(static_cast<size_t>(1ULL)))).__jakt_init_index() == 5 /* Colon */)){
 ((((*this).index)) += (static_cast<size_t>(2ULL)));
-if (((((*this).current())).__jakt_init_index() == 3 /* Identifier */)){
-ByteString const arg_binding = (((*this).current())).as.Identifier.name;
+Jakt::lexer::Token __jakt_tmp40 = ((*this).current());
+if (((__jakt_tmp40).__jakt_init_index() == 3 /* Identifier */)){
+ByteString const arg_binding = (__jakt_tmp40).as.Identifier.name;
 Jakt::utility::Span const span = ((((*this).current())).span());
 ((((*this).index)++));
 ((variant_arguments).push(Jakt::parser::EnumVariantPatternArgument(static_cast<JaktInternal::Optional<ByteString>>(arg_name),static_cast<JaktInternal::Optional<Jakt::utility::Span>>(arg_name_span),arg_binding,span,is_reference,is_mutable)));
@@ -12550,8 +12586,9 @@ return variant_arguments;
 JaktInternal::Optional<Jakt::parser::ParsedCall> Jakt::parser::Parser::parse_call() {
 {
 Jakt::parser::ParsedCall call = Jakt::parser::ParsedCall(DynamicArray<ByteString>::create_with({}),(ByteString::from_utf8_without_validation(""sv)),DynamicArray<JaktInternal::Tuple<ByteString,Jakt::utility::Span,NonnullRefPtr<typename Jakt::parser::ParsedExpression>>>::create_with({}),DynamicArray<NonnullRefPtr<typename Jakt::parser::ParsedType>>::create_with({}));
-if (((((*this).current())).__jakt_init_index() == 3 /* Identifier */)){
-ByteString const name = (((*this).current())).as.Identifier.name;
+Jakt::lexer::Token __jakt_tmp41 = ((*this).current());
+if (((__jakt_tmp41).__jakt_init_index() == 3 /* Identifier */)){
+ByteString const name = (__jakt_tmp41).as.Identifier.name;
 (((call).name) = name);
 ((((*this).index)++));
 size_t const index_reset = ((*this).index);
@@ -13797,10 +13834,13 @@ return generic_parameters;
 
 ByteString Jakt::parser::Parser::parse_argument_label() {
 {
-if ((((((*this).peek(static_cast<size_t>(1ULL)))).__jakt_init_index() == 5 /* Colon */) && ((((*this).current())).__jakt_init_index() == 3 /* Identifier */))){
-ByteString const name = (((*this).current())).as.Identifier.name;
+if (((((*this).peek(static_cast<size_t>(1ULL)))).__jakt_init_index() == 5 /* Colon */)){
+Jakt::lexer::Token __jakt_tmp42 = ((*this).current());
+if (((__jakt_tmp42).__jakt_init_index() == 3 /* Identifier */)){
+ByteString const name = (__jakt_tmp42).as.Identifier.name;
 ((((*this).index)) += (static_cast<size_t>(2ULL)));
 return name;
+}
 }
 return (ByteString::from_utf8_without_validation(""sv));
 }
@@ -13861,8 +13901,9 @@ if (expect_comma){
 ((*this).skip_newlines());
 JaktInternal::DynamicArray<ByteString> names = DynamicArray<ByteString>::create_with({});
 for (;;){
-if (((((*this).current())).__jakt_init_index() == 3 /* Identifier */)){
-ByteString const name = (((*this).current())).as.Identifier.name;
+Jakt::lexer::Token __jakt_tmp43 = ((*this).current());
+if (((__jakt_tmp43).__jakt_init_index() == 3 /* Identifier */)){
+ByteString const name = (__jakt_tmp43).as.Identifier.name;
 ((names).push(name));
 ((((*this).index)++));
 if (((((*this).current())).__jakt_init_index() == 6 /* ColonColon */)){
@@ -15088,8 +15129,9 @@ default: VERIFY_NOT_REACHED();}/*switch end*/
 
 ByteString Jakt::parser::ImportName::literal_name() const {
 {
-if (((*this).__jakt_init_index() == 0 /* Literal */)){
-ByteString const name = (*this).as.Literal.name;
+Jakt::parser::ImportName __jakt_tmp0 = *this;
+if (((__jakt_tmp0).__jakt_init_index() == 0 /* Literal */)){
+ByteString const name = (__jakt_tmp0).as.Literal.name;
 return name;
 }
 else {
@@ -19708,8 +19750,9 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* EnumVariant */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.EnumVariant;JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,Jakt::utility::Span>> const& lhs_variant_names = __jakt_match_value.variant_names;
 {
-if (((rhs_parsed_match_pattern).__jakt_init_index() == 0 /* EnumVariant */)){
-JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,Jakt::utility::Span>> const rhs_variant_names = (rhs_parsed_match_pattern).as.EnumVariant.variant_names;
+Jakt::parser::ParsedMatchPattern __jakt_tmp3 = rhs_parsed_match_pattern;
+if (((__jakt_tmp3).__jakt_init_index() == 0 /* EnumVariant */)){
+JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,Jakt::utility::Span>> const rhs_variant_names = (__jakt_tmp3).as.EnumVariant.variant_names;
 size_t namespace_count = ((lhs_variant_names).size());
 if ([](size_t const& self, size_t rhs) -> bool {{
 return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> Jakt::jakt__prelude__operators::Ordering {{
@@ -19793,10 +19836,12 @@ bool Jakt::parser::ParsedMatchPattern::equals(Jakt::parser::ParsedMatchPattern c
 {
 if (((*this).is_equal_pattern(rhs_parsed_match_pattern))){
 if (((*this).defaults_equal(((rhs_parsed_match_pattern).common.init_common.defaults)))){
-if (((*this).__jakt_init_index() == 0 /* EnumVariant */)){
-JaktInternal::DynamicArray<Jakt::parser::EnumVariantPatternArgument> const lhs_variant_arguments = (*this).as.EnumVariant.variant_arguments;
-if (((rhs_parsed_match_pattern).__jakt_init_index() == 0 /* EnumVariant */)){
-JaktInternal::DynamicArray<Jakt::parser::EnumVariantPatternArgument> const rhs_variant_arguments = (rhs_parsed_match_pattern).as.EnumVariant.variant_arguments;
+Jakt::parser::ParsedMatchPattern __jakt_tmp4 = *this;
+if (((__jakt_tmp4).__jakt_init_index() == 0 /* EnumVariant */)){
+JaktInternal::DynamicArray<Jakt::parser::EnumVariantPatternArgument> const lhs_variant_arguments = (__jakt_tmp4).as.EnumVariant.variant_arguments;
+Jakt::parser::ParsedMatchPattern __jakt_tmp5 = rhs_parsed_match_pattern;
+if (((__jakt_tmp5).__jakt_init_index() == 0 /* EnumVariant */)){
+JaktInternal::DynamicArray<Jakt::parser::EnumVariantPatternArgument> const rhs_variant_arguments = (__jakt_tmp5).as.EnumVariant.variant_arguments;
 if (((((lhs_variant_arguments).size())) == (((rhs_variant_arguments).size())))){
 {
 JaktInternal::Range<size_t> _magic = (JaktInternal::Range<size_t>{static_cast<size_t>(0LL),static_cast<size_t>(((lhs_variant_arguments).size()))});
@@ -19962,12 +20007,13 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Expression */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Expression;NonnullRefPtr<typename Jakt::parser::ParsedExpression> const& lhs_expr = __jakt_match_value.value;
 {
+Jakt::parser::ParsedMatchBody __jakt_tmp6 = rhs_match_body;
 return JaktInternal::ExplicitValue<bool>(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool,bool> {
-auto __jakt_enum_value = (((rhs_match_body).__jakt_init_index() == 0 /* Expression */));
+auto __jakt_enum_value = (((__jakt_tmp6).__jakt_init_index() == 0 /* Expression */));
 if (__jakt_enum_value == true) {
 {
-NonnullRefPtr<typename Jakt::parser::ParsedExpression> const rhs_expr = (rhs_match_body).as.Expression.value;
+NonnullRefPtr<typename Jakt::parser::ParsedExpression> const rhs_expr = (__jakt_tmp6).as.Expression.value;
 return JaktInternal::ExplicitValue<bool>(((lhs_expr)->equals(rhs_expr)));
 }
 VERIFY_NOT_REACHED();
@@ -19988,12 +20034,13 @@ VERIFY_NOT_REACHED();
 case 1 /* Block */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Block;Jakt::parser::ParsedBlock const& lhs_block = __jakt_match_value.value;
 {
+Jakt::parser::ParsedMatchBody __jakt_tmp7 = rhs_match_body;
 return JaktInternal::ExplicitValue<bool>(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool,bool> {
-auto __jakt_enum_value = (((rhs_match_body).__jakt_init_index() == 1 /* Block */));
+auto __jakt_enum_value = (((__jakt_tmp7).__jakt_init_index() == 1 /* Block */));
 if (__jakt_enum_value == true) {
 {
-Jakt::parser::ParsedBlock const rhs_block = (rhs_match_body).as.Block.value;
+Jakt::parser::ParsedBlock const rhs_block = (__jakt_tmp7).as.Block.value;
 return JaktInternal::ExplicitValue<bool>(((lhs_block).equals(rhs_block)));
 }
 VERIFY_NOT_REACHED();
@@ -23560,6 +23607,8 @@ builder.appendff("base: {}, ", that.base);
 JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("name: \"{}\", ", that.name);
 JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("generic_args: {}, ", that.generic_args);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("span: {}", that.span);
 }
 builder.append(")"sv);
@@ -23688,12 +23737,13 @@ new (&__jakt_uninit_enum->as.Const.expr) (decltype(expr))(move(expr));
 new (&__jakt_uninit_enum->as.Const.span) (decltype(span))(move(span));
 return __jakt_uninit_enum;
 }
-[[nodiscard]] NonnullRefPtr<ParsedType> ParsedType::DependentType(JaktInternal::Optional<Jakt::parser::ParsedTypeQualifiers> qualifiers, NonnullRefPtr<typename Jakt::parser::ParsedType> base, ByteString name, Jakt::utility::Span span){
+[[nodiscard]] NonnullRefPtr<ParsedType> ParsedType::DependentType(JaktInternal::Optional<Jakt::parser::ParsedTypeQualifiers> qualifiers, NonnullRefPtr<typename Jakt::parser::ParsedType> base, ByteString name, JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::parser::ParsedType>> generic_args, Jakt::utility::Span span){
 NonnullRefPtr<ParsedType> __jakt_uninit_enum = adopt_ref(*new ParsedType);
 __jakt_uninit_enum->__jakt_variant_index = 15;
 new (&__jakt_uninit_enum->common.init_common.qualifiers) (decltype(qualifiers))(move(qualifiers));
 new (&__jakt_uninit_enum->as.DependentType.base) (decltype(base))(move(base));
 new (&__jakt_uninit_enum->as.DependentType.name) (decltype(name))(move(name));
+new (&__jakt_uninit_enum->as.DependentType.generic_args) (decltype(generic_args))(move(generic_args));
 new (&__jakt_uninit_enum->as.DependentType.span) (decltype(span))(move(span));
 return __jakt_uninit_enum;
 }
@@ -23774,6 +23824,7 @@ break;
 case 14 /* DependentType */:
 new (&this->as.DependentType.base) (decltype(this->as.DependentType.base))(rhs.as.DependentType.base);
 new (&this->as.DependentType.name) (decltype(this->as.DependentType.name))(rhs.as.DependentType.name);
+new (&this->as.DependentType.generic_args) (decltype(this->as.DependentType.generic_args))(rhs.as.DependentType.generic_args);
 new (&this->as.DependentType.span) (decltype(this->as.DependentType.span))(rhs.as.DependentType.span);
 break;
 case 15 /* Empty */:
@@ -23846,6 +23897,7 @@ break;
 case 14 /* DependentType */:
 this->as.DependentType.base = rhs.as.DependentType.base;
 this->as.DependentType.name = rhs.as.DependentType.name;
+this->as.DependentType.generic_args = rhs.as.DependentType.generic_args;
 this->as.DependentType.span = rhs.as.DependentType.span;
 break;
 case 15 /* Empty */:
@@ -23924,6 +23976,7 @@ break;
 case 14 /* DependentType */:
 new (&this->as.DependentType.base) (decltype(this->as.DependentType.base))(rhs.as.DependentType.base);
 new (&this->as.DependentType.name) (decltype(this->as.DependentType.name))(rhs.as.DependentType.name);
+new (&this->as.DependentType.generic_args) (decltype(this->as.DependentType.generic_args))(rhs.as.DependentType.generic_args);
 new (&this->as.DependentType.span) (decltype(this->as.DependentType.span))(rhs.as.DependentType.span);
 break;
 case 15 /* Empty */:
@@ -24002,6 +24055,7 @@ break;
 case 14 /* DependentType */:
 new (&this->as.DependentType.base) (decltype(this->as.DependentType.base))(move(rhs.as.DependentType.base));
 new (&this->as.DependentType.name) (decltype(this->as.DependentType.name))(move(rhs.as.DependentType.name));
+new (&this->as.DependentType.generic_args) (decltype(this->as.DependentType.generic_args))(move(rhs.as.DependentType.generic_args));
 new (&this->as.DependentType.span) (decltype(this->as.DependentType.span))(move(rhs.as.DependentType.span));
 break;
 case 15 /* Empty */:
@@ -24074,6 +24128,7 @@ break;
 case 14 /* DependentType */:
 this->as.DependentType.base = move(rhs.as.DependentType.base);
 this->as.DependentType.name = move(rhs.as.DependentType.name);
+this->as.DependentType.generic_args = move(rhs.as.DependentType.generic_args);
 this->as.DependentType.span = move(rhs.as.DependentType.span);
 break;
 case 15 /* Empty */:
@@ -24153,6 +24208,7 @@ break;
 case 14 /* DependentType */:
 new (&this->as.DependentType.base) (decltype(this->as.DependentType.base))(move(rhs.as.DependentType.base));
 new (&this->as.DependentType.name) (decltype(this->as.DependentType.name))(move(rhs.as.DependentType.name));
+new (&this->as.DependentType.generic_args) (decltype(this->as.DependentType.generic_args))(move(rhs.as.DependentType.generic_args));
 new (&this->as.DependentType.span) (decltype(this->as.DependentType.span))(move(rhs.as.DependentType.span));
 break;
 case 15 /* Empty */:
@@ -24215,6 +24271,7 @@ this->as.Const.span.~Span();
 break;
 case 14 /* DependentType */:this->as.DependentType.base.~NonnullRefPtr();
 this->as.DependentType.name.~ByteString();
+this->as.DependentType.generic_args.~DynamicArray();
 this->as.DependentType.span.~Span();
 break;
 case 15 /* Empty */:break;
@@ -24308,6 +24365,7 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 14 /* DependentType */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.DependentType;NonnullRefPtr<typename Jakt::parser::ParsedType> const& base = __jakt_match_value.base;
 ByteString const& name = __jakt_match_value.name;
+JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::parser::ParsedType>> const& generic_args = __jakt_match_value.generic_args;
 return JaktInternal::ExplicitValue(({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
 auto&& __jakt_match_variant = *rhs_parsed_type;
@@ -24315,7 +24373,8 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 14 /* DependentType */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.DependentType;NonnullRefPtr<typename Jakt::parser::ParsedType> const& rhs_base = __jakt_match_value.base;
 ByteString const& rhs_name = __jakt_match_value.name;
-return JaktInternal::ExplicitValue((((base)->equals(rhs_base)) && ((name) == (rhs_name))));
+JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::parser::ParsedType>> const& rhs_generic_args = __jakt_match_value.generic_args;
+return JaktInternal::ExplicitValue(((((base)->equals(rhs_base)) && ((name) == (rhs_name))) && ((((generic_args)[(JaktInternal::Range<i64>{static_cast<i64>(0LL),static_cast<i64>(9223372036854775807LL)})])) == (((rhs_generic_args)[(JaktInternal::Range<i64>{static_cast<i64>(0LL),static_cast<i64>(9223372036854775807LL)})])))));
 };/*case end*/
 default: {
 return JaktInternal::ExplicitValue(false);

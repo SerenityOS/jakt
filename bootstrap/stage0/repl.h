@@ -24,7 +24,7 @@ ErrorOr<ByteString> serialize_ast_node(NonnullRefPtr<typename Jakt::types::Check
 namespace repl {
 struct REPL {
   public:
-public: NonnullRefPtr<Jakt::compiler::Compiler> compiler;public: Jakt::typechecker::Typechecker typechecker;public: Jakt::ids::ScopeId root_scope_id;public: NonnullRefPtr<Jakt::interpreter::InterpreterScope> root_interpreter_scope;public: Jakt::utility::FileId file_id;public: static ErrorOr<Jakt::repl::REPL> create(Jakt::jakt__path::Path const runtime_path, JaktInternal::Optional<ByteString> const target_triple, JaktInternal::Dictionary<ByteString,ByteString> const user_configuration);
+public: NonnullRefPtr<Jakt::compiler::Compiler> compiler;public: Jakt::typechecker::Typechecker typechecker;public: Jakt::ids::ScopeId root_scope_id;public: NonnullRefPtr<Jakt::interpreter::InterpreterScope> root_interpreter_scope;public: Jakt::utility::FileId file_id;public: static ErrorOr<Jakt::repl::REPL> create(Jakt::jakt__path::Path const std_include_path, Jakt::jakt__path::Path const prelude_path, JaktInternal::Optional<ByteString> const target_triple, JaktInternal::Dictionary<ByteString,ByteString> const user_configuration);
 public: ErrorOr<bool> handle_possible_error();
 public: static JaktInternal::DynamicArray<u8> line_to_bytes(ByteString const line);
 public: static bool check_parens(JaktInternal::DynamicArray<Jakt::lexer::Token> const tokens);

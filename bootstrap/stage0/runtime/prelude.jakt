@@ -231,7 +231,8 @@ namespace Reflect {
     enum RecordType {
         Struct(fields: [Reflect::Field])
         Class(fields: [Reflect::Field])
-        // ValueEnum(underlying_type: Reflect::Type, variants: [Reflect::ValueEnumVariant])
+        // FIXME: Variants should map to a value.
+        ValueEnum(underlying_type: Reflect::Type, variants: [String])
         SumEnum(is_boxed: bool, variants: [Reflect::SumEnumVariant])
     }
     struct Record {
