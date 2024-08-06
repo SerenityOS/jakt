@@ -127,6 +127,7 @@ struct FormattedToken {
         QuotedString(quote) => format("\"{}\"", quote)
         Number(prefix, number, suffix) => format("{}{}{}", prefix.to_string(), number, suffix.to_string())
         Identifier(name) => name
+        AtSign => "@"
         Semicolon => ";"
         Colon => ":"
         ColonColon => "::"

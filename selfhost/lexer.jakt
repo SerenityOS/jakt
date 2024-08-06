@@ -68,6 +68,7 @@ enum Token {
     Eof(Span)
     FatArrow(Span)
     Arrow(Span)
+    AtSign(Span)
 
     // Keywords
     And(Span)
@@ -711,6 +712,11 @@ struct Lexer implements(Iterable<Token>) {
         }
     }
 
+    fn lex_at_sign(mut this) -> Token {
+        let start = .index++
+        return Token::AtSign(.span(start: .index - 1, end: .index))
+    }
+
     fn lex_ampersand(mut this) -> Token {
         let start = .index++
         return match .peek() {
@@ -854,6 +860,7 @@ struct Lexer implements(Iterable<Token>) {
             b'|' => .lex_pipe()
             b'%' => .lex_percent_sign()
             b'!' => .lex_exclamation_point()
+            b'@' => .lex_at_sign()
             b'&' => .lex_ampersand()
             b'$' => Token::Dollar(.span(start, end: ++.index))
             b'=' => .lex_equals()
