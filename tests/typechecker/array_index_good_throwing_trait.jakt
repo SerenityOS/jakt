@@ -1,0 +1,25 @@
+/// Expect:
+/// - output: "Result: 2\n"
+
+struct Vector3 {
+    private values: [f32]
+
+    public fn create(anon x: f32, anon y: f32, anon z: f32) -> Vector3 {
+        return Vector3(values: [x, y, z])
+    }
+
+    public fn test() throws {
+    }
+}
+
+type Vector3 implements(ThrowingIndex<f32>) {
+    fn index(this, anon rhs: usize) throws -> f32 {
+        test()
+        return .values[rhs]
+    }
+}
+
+fn main() {
+    let test = Vector3::create(1.0f32, 2.0f32, 3.0f32)
+    println("Result: {}", test[1])
+}

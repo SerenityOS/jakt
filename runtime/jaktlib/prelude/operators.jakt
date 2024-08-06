@@ -39,6 +39,14 @@ trait ThrowingDivide<Rhs, Output> {
     fn divide(this, anon rhs: Rhs) throws -> Output
 }
 
+trait Index<Output> {
+    fn index(this, anon index: usize) -> Output
+}
+
+trait ThrowingIndex<Output> {
+    fn index(this, anon index: usize) throws -> Output
+}
+
 trait Modulo<Rhs, Output> {
     fn modulo(this, anon rhs: Rhs) -> Output
 }

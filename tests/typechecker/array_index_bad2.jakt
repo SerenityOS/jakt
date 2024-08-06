@@ -1,0 +1,7 @@
+/// Expect:
+/// - error: "Type ‘(i64, i64, i64)’ does not implement the indexing operation"
+
+fn main() {
+    let tuple = (1, 2, 3)
+    println("{}", tuple[1])
+}
