@@ -101,6 +101,15 @@ struct InternalDictionaryProduct<K, V> implements(Iterable<[K:V]>) {
     current_index: [K:usize]
     done: bool = false
 
+    fn create(dict: [K:[V]]) -> InternalDictionaryProduct<K, V> {
+        mut current_index: [K:usize] = [:]
+        for (key, _) in dict {
+            current_index[key] = 0
+        }
+        let current: [K:V] = [:]
+        return InternalDictionaryProduct(dict, current, current_index)
+    }
+
     fn next(mut this) -> [K:V]? {
         if .done {
             return None
@@ -126,19 +135,6 @@ struct InternalDictionaryProduct<K, V> implements(Iterable<[K:V]>) {
         .done = true
         return next
     }
-}
-
-// FIXME: Can't put this inside the struct, this function being generic causes
-//        the compiler to emit no generic parameters for the struct, which makes C++ angry
-//        and making it *not* generic makes the compiler emit no generic parameters at all.
-//        This is a compiler bug.
-fn create_internal_dictionary_product<R, S>(dict: [R:[S]]) -> InternalDictionaryProduct<R, S> {
-    mut current_index: [R:usize] = [:]
-    for (key, _) in dict {
-        current_index[key] = 0
-    }
-    let current: [R:S] = [:]
-    return InternalDictionaryProduct(dict, current, current_index)
 }
 
 struct Typechecker {
@@ -955,7 +951,7 @@ struct Typechecker {
         // Check the forall chunks
         if .get_scope(scope_id).resolved_forall_chunks is Some(chunks) {
             for chunk in chunks {
-                mut all_types = create_internal_dictionary_product(dict: chunk.parameters)
+                mut all_types = InternalDictionaryProduct::create(dict: chunk.parameters)
                 mut i = 0uz
                 for stuff in all_types {
                     defer i += 1
@@ -1654,7 +1650,7 @@ struct Typechecker {
         // Check the forall chunks
         if .get_scope(scope_id).resolved_forall_chunks is Some(chunks) {
             for chunk in chunks {
-                mut all_types = create_internal_dictionary_product(dict: chunk.parameters)
+                mut all_types = InternalDictionaryProduct::create(dict: chunk.parameters)
                 mut i = 0uz
                 for stuff in all_types {
                     defer i += 1
@@ -1713,7 +1709,7 @@ struct Typechecker {
         // Check the forall chunks
         if .get_scope(scope_id).resolved_forall_chunks is Some(chunks) {
             for chunk in chunks {
-                mut all_types = create_internal_dictionary_product(dict: chunk.parameters)
+                mut all_types = InternalDictionaryProduct::create(dict: chunk.parameters)
                 mut i = 0uz
                 for stuff in all_types {
                     defer i += 1
@@ -1906,7 +1902,7 @@ struct Typechecker {
         // Check the forall chunks
         if .get_scope(scope_id).resolved_forall_chunks is Some(chunks) {
             for chunk in chunks {
-                mut all_types = create_internal_dictionary_product(dict: chunk.parameters)
+                mut all_types = InternalDictionaryProduct::create(dict: chunk.parameters)
                 mut i = 0uz
                 for stuff in all_types {
                     defer i += 1
@@ -2132,7 +2128,7 @@ struct Typechecker {
                 generated_scopes: []
             )
 
-            mut all_types = create_internal_dictionary_product(dict: resolved_parameters)
+            mut all_types = InternalDictionaryProduct::create(dict: resolved_parameters)
             for parameters in all_types {
                 mut debug_name_builder = StringBuilder::create()
                 debug_name_builder.append("forall<")
@@ -2302,7 +2298,7 @@ struct Typechecker {
 
         if .get_scope(scope_id).resolved_forall_chunks is Some(chunks) {
             for chunk in chunks {
-                mut all_types = create_internal_dictionary_product(dict: chunk.parameters)
+                mut all_types = InternalDictionaryProduct::create(dict: chunk.parameters)
                 mut i = 0uz
                 for stuff in all_types {
                     defer i += 1
@@ -3642,7 +3638,7 @@ struct Typechecker {
         // Check the forall chunks
         if .get_scope(scope_id).resolved_forall_chunks is Some(chunks) {
             for chunk in chunks {
-                mut all_types = create_internal_dictionary_product(dict: chunk.parameters)
+                mut all_types = InternalDictionaryProduct::create(dict: chunk.parameters)
                 mut i = 0uz
                 for stuff in all_types {
                     defer i += 1
