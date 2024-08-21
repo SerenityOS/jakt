@@ -2736,14 +2736,18 @@ struct CodeGenerator {
                     }
 
                     let name = .program.get_function(ids![0]).name_for_codegen().as_name_for_use()
+
                     let error_handler = match val.may_throw { true => .current_error_handler(forward_error_with_try), else => "" }
+
+                    output.append(error_handler)
+                    if not error_handler.is_empty() { output.append('(') }
                     output.appendff(
-                        "{}({}::{}(\"{}\"sv))"
-                        error_handler
+                        "{}::{}(\"{}\"sv)"
                         .codegen_type_possibly_as_namespace(type_id: val.type_id, as_namespace: true)
                         name
                         escaped_value
                     )
+                    if not error_handler.is_empty() { output.append(')') }
                 }
             }
             ByteConstant(val) => {
@@ -3409,14 +3413,9 @@ struct CodeGenerator {
                     .control_flow_state = last_control_flow
                 }
 
-                // FIXME: This could use smarter codegen that disables error
-                // propagation for the expression codegen, instead of wrapping
-                // it inside an IIFE and a macro.
-                output.append("MUST(([&]() -> ErrorOr<")
-                output.append(.codegen_type(type_id))
-                output.append("> { return ")
-                .codegen_expression(expr, &mut output)
-                output.append("; })())")
+                output.append("MUST((")
+                .codegen_expression(expr, &mut output, forward_error_with_try: false)
+                output.append("))")
             }
             Garbage(span) => {
                 todo(format("codegen_expression of bad AST node in {} at {}..{}", this.compiler.get_file_path(span.file_id), span.start, span.end))
@@ -4209,11 +4208,24 @@ struct CodeGenerator {
         forward_error_with_try: bool = true
         syntactically_self_contained: bool
     ) throws {
-        if call.callee_throws {
-            output.append(.current_error_handler(forward_error_with_try))
-            output.append("((")
+        let error_handler = match call.callee_throws { true => .current_error_handler(forward_error_with_try), false => "" }
+        if not error_handler.is_empty() {
+            output.appendff("{}((", error_handler)
         }
+        .codegen_method_call_unwrapped(expr, call, is_optional, output, syntactically_self_contained: syntactically_self_contained and error_handler.is_empty())
+        if not error_handler.is_empty() {
+            output.append("))")
+        }
+    }
 
+    fn codegen_method_call_unwrapped(
+        mut this
+        expr: CheckedExpression
+        call: CheckedCall
+        is_optional: bool
+        output: &mut StringBuilder
+        syntactically_self_contained: bool
+    ) throws {
         let generate_object = fn[this, &expr](output: &mut StringBuilder, syntactically_self_contained: bool) throws {
             .codegen_expression_and_deref_if_generic_and_needed(expr, output, syntactically_self_contained)
         }
@@ -4280,9 +4292,6 @@ struct CodeGenerator {
                 .codegen_expression(arg, &mut output)
             }
             output.append(")")
-            if call.callee_throws {
-                output.append("))")
-            }
             return
         }
 
@@ -4385,13 +4394,20 @@ struct CodeGenerator {
         if is_optional {
             output.append("; })")
         }
+    }
 
-        if call.callee_throws {
+    fn codegen_call(mut this, call: CheckedCall, output: &mut StringBuilder, forward_error_with_try: bool = true) throws {
+        let error_handler = match call.callee_throws { true => .current_error_handler(forward_error_with_try), false => "" }
+        if not error_handler.is_empty() {
+            output.appendff("{}((", error_handler)
+        }
+        .codegen_call_unwrapped(call, output)
+        if not error_handler.is_empty() {
             output.append("))")
         }
     }
 
-    fn codegen_call(mut this, call: CheckedCall, output: &mut StringBuilder, forward_error_with_try: bool = true) throws {
+    fn codegen_call_unwrapped(mut this, call: CheckedCall, output: &mut StringBuilder) throws {
         if call.function_id.has_value() and .program.get_function(call.function_id!).is_comptime {
             output.appendff(
                 "fail_comptime_call<{}, \"Comptime function {} called outside Jakt compiler\">()"
@@ -4401,10 +4417,6 @@ struct CodeGenerator {
             return
         }
 
-        if call.callee_throws {
-            output.append(.current_error_handler(forward_error_with_try))
-            output.append("((")
-        }
         match call.name {
             "print" | "println" | "eprintln" | "eprint" | "format" => {
                 let helper = match call.name {
@@ -4530,10 +4542,6 @@ struct CodeGenerator {
 
                 output.appendff("({})", join(arguments, separator: ","))
             }
-        }
-
-        if call.callee_throws {
-            output.append("))")
         }
     }
 
