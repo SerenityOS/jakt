@@ -2650,6 +2650,7 @@ struct CodeGenerator {
         mut this
         anon expression: CheckedExpression
         output: &mut StringBuilder
+        syntactically_self_contained: bool
     ) throws {
         if .program.get_type(expression.type()) is TypeVariable {
             output.append("(*([]<typename V>(V&& value) {{ if constexpr (IsSpecializationOf<V, NonnullRefPtr>) return &*value; else return &value; }})(")
@@ -2657,15 +2658,17 @@ struct CodeGenerator {
             output.append("))")
             return
         }
-        .codegen_expression(expression, &mut output)
+        .codegen_expression(expression, &mut output, syntactically_self_contained: true)
     }
 
     // `forward_error_with_try` controls whether errors are handled through the TRY() macro or through an external mechanism put by the caller.
+    // `syntactically_self_contained` will wrap the expression in parentheses if it's not by default.
     fn codegen_expression(
         mut this
         anon expression: CheckedExpression
         output: &mut StringBuilder
         forward_error_with_try: bool = true
+        syntactically_self_contained: bool = false
     ) throws {
         .generic_inferences = expression.generic_inferences ?? .generic_inferences
         defer .generic_inferences = None
@@ -2682,7 +2685,6 @@ struct CodeGenerator {
                         panic("Internal error: range expression doesn't have Range type")
                     }
                 }
-                output.append("(")
                 output.append(.codegen_type(type_id))
                 output.append("{")
                 output.append("static_cast<")
@@ -2701,7 +2703,7 @@ struct CodeGenerator {
                 } else {
                     output.append("9223372036854775807LL")
                 }
-                output.append(")})")
+                output.append(")}")
             }
             OptionalNone => {
                 output.append("JaktInternal::OptionalNone()")
@@ -2714,9 +2716,8 @@ struct CodeGenerator {
                 output.append(")")
             }
             ForcedUnwrap(expr, type_id) => {
-                output.append("(")
-                .codegen_expression(expr, &mut output)
-                output.append(".value())")
+                .codegen_expression(expr, &mut output, syntactically_self_contained: true)
+                output.append(".value()")
             }
             QuotedString(val) => {
                 let original_string = val.to_string()
@@ -2762,41 +2763,45 @@ struct CodeGenerator {
             }
             Var(var) => {
                 let name = var.name_for_codegen().as_name_for_use()
-                output.append(match name {
-                    "this" => .this_replacement ?? "*this"
-                    else => name
-                })
+
+                if name == "this" {
+                    if .this_replacement is Some(replacement) {
+                        // the replacement is always a variable name, which never needs
+                        // parentheses.
+                        output.append(replacement)
+                    } else {
+                        if syntactically_self_contained {
+                            output.append("(*this)")
+                        } else {
+                            output.append("*this")
+                        }
+                    }
+                } else {
+                    output.append(name)
+                }
             }
             IndexedExpression(expr, index) => {
-                output.append("((")
-                .codegen_expression(expr, &mut output)
-                output.append(")[")
+                .codegen_expression(expr, &mut output, syntactically_self_contained: true)
+                output.append('[')
                 .codegen_expression(index, &mut output)
-                output.append("])")
+                output.append(']')
             }
             IndexedDictionary(expr, index) => {
-                output.append("((")
-                .codegen_expression(expr, &mut output)
-                output.append(")[")
+                .codegen_expression(expr, &mut output, syntactically_self_contained: true)
+                output.append('[')
                 .codegen_expression(index, &mut output)
-                output.append("])")
+                output.append(']')
             }
             IndexedTuple(expr, index, is_optional) => {
-                output.append("((")
-                .codegen_expression(expr, &mut output)
+                .codegen_expression(expr, &mut output, syntactically_self_contained: true)
                 if is_optional {
-                    output.appendff(").map([](auto& _value) {{ return _value.template get<{}>(); }}))", index)
+                    output.appendff(".map([](auto& _value) {{ return _value.template get<{}>(); }})", index)
                 } else {
-                    output.appendff(").template get<{}>())", index)
+                    output.appendff(".template get<{}>()", index)
                 }
             }
             IndexedStruct(expr, name, index, is_optional) => {
-                mut object_builder = StringBuilder::create()
-                .codegen_expression(expression: expr, output: &mut object_builder)
-                let object = object_builder.to_string()
-                output.append("((")
-                output.append(object)
-                output.append(")")
+                .codegen_expression(expression: expr, output, syntactically_self_contained: true)
 
                 let var_name = match index.has_value() {
                     true => .program.get_variable(index!).name_for_codegen().as_name_for_use()
@@ -2809,8 +2814,9 @@ struct CodeGenerator {
                         output.append("->")
                     }
                     Struct(id) | GenericInstance(id) => {
+
                         let structure = .program.get_struct(id)
-                        if structure.record_type is Class and object != "*this" {
+                        if structure.record_type is Class and not .expr_codegens_to_this_pointer(expr) {
                             output.append("->")
                         } else {
                             output.append(".")
@@ -2839,15 +2845,9 @@ struct CodeGenerator {
                 } else {
                     output.append(var_name)
                 }
-                output.append(")")
             }
             IndexedCommonEnumMember(expr, index, is_optional) => {
-                mut object_builder = StringBuilder::create()
-                .codegen_expression(expression: expr, output: &mut object_builder)
-                let object = object_builder.to_string()
-                output.append("((")
-                output.append(object)
-                output.append(")")
+                .codegen_expression(expression: expr, output, syntactically_self_contained: true)
 
                 match .program.get_type(expr.type()) {
                     RawPtr => {
@@ -2855,7 +2855,7 @@ struct CodeGenerator {
                     }
                     Enum(id) | GenericEnumInstance(id) => {
                         let structure = .program.get_enum(id)
-                        if structure.record_type is SumEnum(is_boxed) and is_boxed and object != "*this" {
+                        if structure.record_type is SumEnum(is_boxed) and is_boxed and not .expr_codegens_to_this_pointer(expr) {
                             output.append("->common.init_common.")
                         } else {
                             output.append(".common.init_common.")
@@ -2872,7 +2872,6 @@ struct CodeGenerator {
                 } else {
                     output.append(index)
                 }
-                output.append(")")
             }
             ComptimeIndex() => {
                 panic("Internal error: ComptimeIndex should have been replaced by now")
@@ -2884,7 +2883,7 @@ struct CodeGenerator {
                 .codegen_call(call, &mut output, forward_error_with_try)
             }
             MethodCall(expr, call, is_optional) => {
-                .codegen_method_call(expr, call, is_optional, &mut output, forward_error_with_try)
+                .codegen_method_call(expr, call, is_optional, &mut output, forward_error_with_try, syntactically_self_contained)
             }
             Boolean(val) => {
                 output.append(match val {
@@ -2893,23 +2892,38 @@ struct CodeGenerator {
                 })
             }
             UnaryOp(expr, op, type_id) => {
-                output.append("(")
-                output.append(match op {
-                    PreIncrement => "++"
-                    PreDecrement => "--"
-                    Negate => "-"
+
+
+                match op {
+                    PreIncrement    => .codegen_prefix_unary(expr, cpp_operator: "++", output, syntactically_self_contained)
+                    PreDecrement    => .codegen_prefix_unary(expr, cpp_operator: "--", output, syntactically_self_contained)
+                    Negate          => .codegen_prefix_unary(expr, cpp_operator: "-",  output, syntactically_self_contained)
+                    LogicalNot      => .codegen_prefix_unary(expr, cpp_operator: "!",  output, syntactically_self_contained)
+                    BitwiseNot      => .codegen_prefix_unary(expr, cpp_operator: "~",  output, syntactically_self_contained)
+
+                    PostIncrement   => .codegen_postfix_unary(expr, cpp_operator: "++", output, syntactically_self_contained)
+                    PostDecrement   => .codegen_postfix_unary(expr, cpp_operator: "--", output, syntactically_self_contained)
+
                     Dereference => match .program.get_type(expr.type()) {
-                        RawPtr => "*"
-                        else => ""
+                        RawPtr  => .codegen_prefix_unary(expr, cpp_operator: "*", output, syntactically_self_contained)
+                        else    => .codegen_expression(expr, output, syntactically_self_contained)
                     }
+
+                    Reference | MutableReference => .codegen_expression(expr, output, syntactically_self_contained)
+
                     // FIXME: Remove this once we have proper type mutability support
-                    RawAddress => match .program.get_type(expr.type()).is_boxed(program: .program) {
-                        true => "const_cast<" + .codegen_type_possibly_as_namespace(type_id, as_namespace: true) + ">(" + "&*"
-                        false => "const_cast<" + .codegen_type(type_id) + ">(" + "&"
+                    RawAddress => {
+                        let is_boxed = .program.get_type(expr.type()).is_boxed(program: .program)
+                        output.appendff("const_cast<{}>(&", .codegen_type_possibly_as_namespace(type_id, as_namespace: is_boxed))
+                        if is_boxed {
+                            output.append('*')
+                        }
+                        .codegen_expression(expr, output, syntactically_self_contained: true)
+                        output.append(')')
                     }
-                    LogicalNot => "!"
-                    BitwiseNot => "~"
-                    Sizeof => "sizeof"
+
+                    Sizeof(type_id) => output.appendff("sizeof({})", .codegen_type(type_id))
+
                     Is(type_id) => {
                         let is_type = match .program.get_type(type_id) {
                             Struct(id) => {
@@ -2918,9 +2932,22 @@ struct CodeGenerator {
                             }
                             else => .codegen_type(type_id)
                         }
-                        yield "is<" + is_type + ">("
+                        output.appendff("is<{}>(", is_type)
+                        .codegen_expression(expr, output)
+                        output.append(')')
                     }
-                    IsNone => "!"
+
+                    IsNone => {
+                        output.append('!')
+                        .codegen_expression(expr, output, syntactically_self_contained: true)
+                        output.append(".has_value()")
+                    }
+
+                    IsSome => {
+                        .codegen_expression(expr, output, syntactically_self_contained: true)
+                        output.append(".has_value()")
+                    }
+
                     TypeCast(cast) => {
                         mut final_type_id = cast.type_id()
                         let type = .program.get_type(final_type_id)
@@ -2969,32 +2996,19 @@ struct CodeGenerator {
                             }
                             Identity => "static_cast"
                         }
-                        yield cast_type + "<" + .codegen_type(final_type_id) + ">("
+                        output.appendff("{}<{}>(", cast_type , .codegen_type(final_type_id))
+                        .codegen_expression(expr, output)
+                        output.append(')')
                     }
-                    else => ""
-                })
-                output.append("(")
-                mut object_builder = StringBuilder::create()
-                if op is Sizeof(type_id) {
-                    object_builder.append(.codegen_type(type_id))
-                } else {
-                    .codegen_expression(expr, output: &mut object_builder)
-                }
-                let object = object_builder.to_string()
-                output.append(object)
-                match op {
-                    PostIncrement => {
-                        output.append("++)")
-                    }
-                    PostDecrement => {
-                        output.append("--)")
-                    }
-                    TypeCast | Is => {
-                        output.append("))")
-                    }
+
                     IsEnumVariant(enum_variant, type_id: enum_type_id) => {
+
+                        if syntactically_self_contained { output.append('(') }
+                        defer if syntactically_self_contained { output.append(')') }
+
+                        .codegen_expression(expr, output, syntactically_self_contained: true)
+
                         let name = enum_variant.name()
-                        output.append(")")
                         let enum_id = match .program.get_type(enum_type_id) {
                             Enum(enum_id) => enum_id
                             GenericEnumInstance(id) => id
@@ -3006,7 +3020,8 @@ struct CodeGenerator {
                         match enum_.record_type {
                             SumEnum => {
                                 let is_boxed = enum_.is_boxed
-                                if is_boxed and object != "*this"{
+
+                                if is_boxed and not .expr_codegens_to_this_pointer(expr) {
                                     output.append("->")
                                 } else {
                                     output.append(".")
@@ -3030,20 +3045,12 @@ struct CodeGenerator {
                             }
                         }
                     }
-                    IsSome | IsNone => {
-                        output.append(").has_value()")
-                    }
-                    RawAddress => {
-                        output.append("))")
-                    }
-                    else => {
-                        output.append(")")
-                    }
+
                 }
-                output.append(")")
+
             }
             BinaryOp(lhs, rhs, op, type_id) => {
-                .codegen_binary_expression(expression, type_id, lhs, rhs, op, &mut output, forward_error_with_try)
+                .codegen_binary_expression(expression, type_id, lhs, rhs, op, &mut output, forward_error_with_try, syntactically_self_contained)
             }
             NumericConstant(val, type_id) => {
                 let suffix = match val {
@@ -3120,9 +3127,7 @@ struct CodeGenerator {
                     field_name = "value"
                 }
 
-                output.append("(")
-                .codegen_expression(expr, &mut output)
-                output.append(")")
+                .codegen_expression(expr, &mut output, syntactically_self_contained: true)
                 output.append(cpp_deref_operator)
                 output.append(section)
                 output.append(".")
@@ -3191,7 +3196,7 @@ struct CodeGenerator {
                 output.append("})")
             }
             JaktTuple(vals, span, type_id) => {
-                output.append("(Tuple{")
+                output.append("Tuple{")
                 mut first = true
                 for val in vals {
                     if not first {
@@ -3202,7 +3207,7 @@ struct CodeGenerator {
 
                     .codegen_expression(val, &mut output)
                 }
-                output.append("})")
+                output.append("}")
             }
             DependentFunction => {
                 .compiler.panic("Dependent functions should have been resolved by now")
@@ -3419,6 +3424,29 @@ struct CodeGenerator {
         }
     }
 
+    fn expr_codegens_to_this_pointer(this, anon expr: CheckedExpression) -> bool {
+        guard expr is Var(var) else { return false }
+        return var.name == "this" and .this_replacement is None
+    }
+
+    fn codegen_prefix_unary(mut this, expr: CheckedExpression, cpp_operator: StringView, output: &mut StringBuilder, syntactically_self_contained: bool) throws {
+        if syntactically_self_contained { output.append('(') }
+
+        output.append(cpp_operator)
+        .codegen_expression(expr, output, syntactically_self_contained: true)
+
+        if syntactically_self_contained { output.append(')') }
+    }
+
+    fn codegen_postfix_unary(mut this, expr: CheckedExpression, cpp_operator: StringView, output: &mut StringBuilder, syntactically_self_contained: bool) throws {
+        if syntactically_self_contained { output.append('(') }
+
+        .codegen_expression(expr, output, syntactically_self_contained: true)
+        output.append(cpp_operator)
+
+        if syntactically_self_contained { output.append(')') }
+    }
+
     fn codegen_match(
         mut this
         expr: CheckedExpression
@@ -3606,7 +3634,7 @@ struct CodeGenerator {
                         output.append("if (__jakt_enum_value")
                         if from.has_value() {
                             output.append(" >= ")
-                            .codegen_expression(from!, &mut output)
+                            .codegen_expression(from!, &mut output, syntactically_self_contained: true)
                         }
 
                         if to.has_value() {
@@ -3614,7 +3642,7 @@ struct CodeGenerator {
                                 output.append("&& __jakt_enum_value ")
                             }
                             output.append("< ")
-                            .codegen_expression(to!, &mut output)
+                            .codegen_expression(to!, &mut output, syntactically_self_contained: true)
                         }
                     } else {
                         output.append("if (__jakt_enum_value == ")
@@ -3626,7 +3654,7 @@ struct CodeGenerator {
                             output.append(escaped_value)
                             output.append("\"sv")
                         } else {
-                            .codegen_expression(expression, &mut output)
+                            .codegen_expression(expression, &mut output, syntactically_self_contained: true)
                         }
                     }
                     output.append(") {\n")
@@ -3885,7 +3913,8 @@ struct CodeGenerator {
         rhs: CheckedExpression
         op: CheckedBinaryOperator
         output: &mut StringBuilder
-        forward_error_with_try: bool = true
+        forward_error_with_try: bool
+        syntactically_self_contained: bool
     ) throws {
         if op.trait_implementation is Some(implementation) {
             // Since the binary op is done through a call, then TRY() forwarding
@@ -3896,6 +3925,7 @@ struct CodeGenerator {
                 is_optional: false
                 &mut output
                 forward_error_with_try
+                syntactically_self_contained
             )
             return
         }
@@ -3914,7 +3944,7 @@ struct CodeGenerator {
                 output.append("((")
             }
 
-            .codegen_expression(lhs, &mut output)
+            .codegen_expression(lhs, &mut output, syntactically_self_contained: true)
             if rhs_type is GenericInstance(id) and .program.get_struct(id).name_for_codegen().as_name_for_definition() == "Optional" {
                 if rhs_can_throw {
                     output.append(".try_value_or_lazy_evaluated_optional")
@@ -3975,7 +4005,7 @@ struct CodeGenerator {
         }
 
         if op.op is Assign and lhs is IndexedDictionary(expr, index) {
-            .codegen_expression(expr, &mut output)
+            .codegen_expression(expr, &mut output, syntactically_self_contained: true)
             output.append(".set(")
             .codegen_expression(index, &mut output)
             output.append(", ")
@@ -3988,31 +4018,31 @@ struct CodeGenerator {
             // Integer arithmetic is checked by default.
             match op.op {
                 Add | Subtract | Multiply | Divide | Modulo => {
-                    output.append("(")
                     if .compiler.optimize {
+                        if syntactically_self_contained { output.append('(') }
                         .codegen_unchecked_binary_op(lhs, rhs, op.op, type_id, &mut output)
+                        if syntactically_self_contained { output.append(')') }
                     } else {
                         .codegen_checked_binary_op(lhs, rhs, op.op, type_id, &mut output)
                     }
-                    output.append(")")
                     return
                 }
                 AddAssign | SubtractAssign | MultiplyAssign | DivideAssign | ModuloAssign => {
-                    output.append("(")
                     if .compiler.optimize {
+                        if syntactically_self_contained { output.append('(') }
                         .codegen_unchecked_binary_op_assignment(lhs, rhs, op.op, type_id, &mut output)
+                        if syntactically_self_contained { output.append(')') }
                     } else {
                         .codegen_checked_binary_op_assignment(lhs, rhs, op.op, type_id, &mut output)
                     }
-                    output.append(")")
                 }
                 else => { }
             }
         }
 
-        output.append("(")
+        if syntactically_self_contained { output.append('(') }
 
-        .codegen_expression(lhs, &mut output)
+        .codegen_expression(lhs, &mut output, syntactically_self_contained: true)
         output.append(match op.op {
             Add => " + "
             Subtract => " - "
@@ -4048,9 +4078,9 @@ struct CodeGenerator {
                 todo(format("codegen_binary_expression {}", op))
             }
         })
-        .codegen_expression(rhs, &mut output)
+        .codegen_expression(rhs, &mut output, syntactically_self_contained: true)
 
-        output.append(")")
+        if syntactically_self_contained { output.append(')') }
     }
 
     fn codegen_unchecked_binary_op(
@@ -4177,15 +4207,16 @@ struct CodeGenerator {
         is_optional: bool
         output: &mut StringBuilder
         forward_error_with_try: bool = true
+        syntactically_self_contained: bool
     ) throws {
         if call.callee_throws {
             output.append(.current_error_handler(forward_error_with_try))
             output.append("((")
         }
 
-        mut object_builder = StringBuilder::create()
-        .codegen_expression_and_deref_if_generic_and_needed(expr, output: &mut object_builder)
-        let object = object_builder.to_string()
+        let generate_object = fn[this, &expr](output: &mut StringBuilder, syntactically_self_contained: bool) throws {
+            .codegen_expression_and_deref_if_generic_and_needed(expr, output, syntactically_self_contained)
+        }
 
         if call.function_id.has_value() and (call.force_inline is ForceInline) {
             let function = .program.get_function(call.function_id!)
@@ -4243,7 +4274,7 @@ struct CodeGenerator {
             .this_replacement = old_this_replacement
 
             output.append("(")
-            output.append(object)
+            generate_object(output, syntactically_self_contained: false)
             for (_, arg) in call.args {
                 output.append(",")
                 .codegen_expression(arg, &mut output)
@@ -4258,15 +4289,17 @@ struct CodeGenerator {
         let expression_type = .program.get_type(expr.type())
         let name = call.name_for_codegen()
 
+        let object_is_this = .expr_codegens_to_this_pointer(expr)
+
         let field_accessor = match name {
             Operator => ""
             else => match expression_type {
                 RawPtr => "->"
-                Struct(id) | GenericInstance(id) => match .program.get_struct(id).record_type is Class and object != "*this" {
+                Struct(id) | GenericInstance(id) => match .program.get_struct(id).record_type is Class and not object_is_this {
                     true => "->"
                     false => "."
                 }
-                Enum(id) => match .program.get_enum(id).is_boxed and object != "*this" {
+                Enum(id) => match .program.get_enum(id).is_boxed and not object_is_this {
                     true => "->"
                     false => "."
                 }
@@ -4278,11 +4311,6 @@ struct CodeGenerator {
         }
 
         let generate_method_name = fn[this, &call, &name, &output]() throws {
-            if name is Operator {
-                output.append(name.as_name_for_use())
-                return
-            }
-
             let generic_parameters = call.type_args
             if not generic_parameters.is_empty() {
                 output.append("template ")
@@ -4301,16 +4329,19 @@ struct CodeGenerator {
 
         let is_called_as_method = not name.is_prefix() and (not field_accessor.is_empty() or (not is_optional and name is Operator))
 
+        let needs_wrapping_parens = syntactically_self_contained and name is Operator and not is_optional and not call.callee_throws
+
+        if needs_wrapping_parens { output.append('(') }
+        defer if needs_wrapping_parens { output.append(')') }
+
         if is_called_as_method {
-            output.append("((")
-            output.append(object)
-            output.append(")")
+            generate_object(output, syntactically_self_contained: true)
             output.append(field_accessor)
         } else {
             // object.method(...) -> method(object, ...)
             generate_method_name()
             output.append("(")
-            output.append(object)
+            generate_object(output, syntactically_self_contained: true)
         }
 
         if is_optional {
@@ -4332,7 +4363,9 @@ struct CodeGenerator {
 
         if is_called_as_method {
             generate_method_name()
-            output.append("(")
+            if not name is Operator {
+                output.append("(")
+            }
         }
 
         mut first = is_called_as_method
@@ -4342,17 +4375,16 @@ struct CodeGenerator {
             } else {
                 output.append(",")
             }
-            .codegen_expression(expr, &mut output)
+            .codegen_expression(expr, &mut output, syntactically_self_contained: first and name is Operator)
         }
 
-        if is_called_as_method {
-            output.append(")")
+        if not name is Operator {
+            output.append(')')
         }
 
         if is_optional {
             output.append("; })")
         }
-        output.append(")")
 
         if call.callee_throws {
             output.append("))")
@@ -5631,4 +5663,3 @@ struct CodeGenerator {
         output.append("}\n")
     }
 }
-
