@@ -192,6 +192,18 @@ type T implements(
         return .compare_impl(rhs) as! Ordering
     }
 
+    [[name="operator(<)"]]
+    extern fn less_than(this, anon rhs: T) -> bool
+
+    [[name="operator(<=)"]]
+    extern fn less_than_or_equal(this, anon rhs: T) -> bool
+
+    [[name="operator(>)"]]
+    extern fn greater_than(this, anon rhs: T) -> bool
+
+    [[name="operator(>=)"]]
+    extern fn greater_than_or_equal(this, anon rhs: T) -> bool
+
     [[name="operator(+=)"]]
     extern fn add_assign(mut this, anon rhs: T) -> void
 
