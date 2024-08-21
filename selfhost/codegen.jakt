@@ -2797,15 +2797,20 @@ struct CodeGenerator {
                 output.append(']')
             }
             IndexedTuple(expr, index, is_optional) => {
-                .codegen_expression(expr, &mut output, syntactically_self_contained: true)
                 if is_optional {
+                    .codegen_expression(expr, &mut output, syntactically_self_contained: true)
                     output.appendff(".map([](auto& _value) {{ return _value.template get<{}>(); }})", index)
                 } else {
-                    output.appendff(".template get<{}>()", index)
+                    if .expr_codegens_to_this_pointer(expr) {
+                        output.append("this->")
+                    } else {
+                        .codegen_expression(expr, output, syntactically_self_contained: true)
+                        output.append('.')
+                    }
+                    output.appendff("template get<{}>()", index)
                 }
             }
             IndexedStruct(expr, name, index, is_optional) => {
-                .codegen_expression(expression: expr, output, syntactically_self_contained: true)
 
                 let var_name = match index.has_value() {
                     true => .program.get_variable(index!).name_for_codegen().as_name_for_use()
@@ -2815,19 +2820,31 @@ struct CodeGenerator {
                 let expression_type = .program.get_type(expr.type())
                 match expression_type {
                     RawPtr => {
+                        .codegen_expression(expr, output, syntactically_self_contained: true)
                         output.append("->")
                     }
                     Struct(id) | GenericInstance(id) => {
 
-                        let structure = .program.get_struct(id)
-                        if structure.record_type is Class and not .expr_codegens_to_this_pointer(expr) {
-                            output.append("->")
+                        let expr_is_thisptr = .expr_codegens_to_this_pointer(expr)
+                        if not is_optional and expr_is_thisptr {
+                            output.append("this->")
                         } else {
-                            output.append(".")
+                            .codegen_expression(expr, output, syntactically_self_contained: true)
+                            let structure = .program.get_struct(id)
+                            if structure.record_type is Class and not expr_is_thisptr {
+                                output.append("->")
+                            } else {
+                                output.append(".")
+                            }
                         }
                     }
                     else => {
-                        output.append(".")
+                        if not is_optional and .expr_codegens_to_this_pointer(expr) {
+                            output.append("this->")
+                        } else {
+                            .codegen_expression(expr, output, syntactically_self_contained: true)
+                            output.append(".")
+                        }
                     }
                 }
                 if is_optional {
@@ -2851,22 +2868,33 @@ struct CodeGenerator {
                 }
             }
             IndexedCommonEnumMember(expr, index, is_optional) => {
-                .codegen_expression(expression: expr, output, syntactically_self_contained: true)
 
                 match .program.get_type(expr.type()) {
                     RawPtr => {
+                        .codegen_expression(expr, output, syntactically_self_contained: true)
                         output.append("->")
                     }
                     Enum(id) | GenericEnumInstance(id) => {
-                        let structure = .program.get_enum(id)
-                        if structure.record_type is SumEnum(is_boxed) and is_boxed and not .expr_codegens_to_this_pointer(expr) {
-                            output.append("->common.init_common.")
+                        let expr_is_thisptr = .expr_codegens_to_this_pointer(expr)
+                        if not is_optional and expr_is_thisptr {
+                            output.append("this->common.init_common.")
                         } else {
-                            output.append(".common.init_common.")
+                            .codegen_expression(expr, output, syntactically_self_contained: true)
+                            let structure = .program.get_enum(id)
+                            if structure.record_type is SumEnum(is_boxed) and is_boxed and not .expr_codegens_to_this_pointer(expr) {
+                                output.append("->common.init_common.")
+                            } else {
+                                output.append(".common.init_common.")
+                            }
                         }
                     }
                     else => {
-                        output.append(".")
+                        if not is_optional and .expr_codegens_to_this_pointer(expr) {
+                            output.append("this->")
+                        } else {
+                            .codegen_expression(expr, output, syntactically_self_contained: true)
+                            output.append(".")
+                        }
                     }
                 }
                 if is_optional {
@@ -3010,7 +3038,6 @@ struct CodeGenerator {
                         if syntactically_self_contained { output.append('(') }
                         defer if syntactically_self_contained { output.append(')') }
 
-                        .codegen_expression(expr, output, syntactically_self_contained: true)
 
                         let name = enum_variant.name()
                         let enum_id = match .program.get_type(enum_type_id) {
@@ -3025,10 +3052,15 @@ struct CodeGenerator {
                             SumEnum => {
                                 let is_boxed = enum_.is_boxed
 
-                                if is_boxed and not .expr_codegens_to_this_pointer(expr) {
-                                    output.append("->")
+                                if .expr_codegens_to_this_pointer(expr) {
+                                    output.append("this->")
                                 } else {
-                                    output.append(".")
+                                    .codegen_expression(expr, output, syntactically_self_contained: true)
+                                    if is_boxed {
+                                        output.append("->")
+                                    } else {
+                                        output.append(".")
+                                    }
                                 }
 
                                 // FIXME: This should be a call to find(), but we do not yet provide the needed operator== for that
@@ -3042,6 +3074,7 @@ struct CodeGenerator {
                                 output.appendff("__jakt_init_index() == {} /* {} */", variant_index, name)
                             }
                             ValueEnum => {
+                                .codegen_expression(expr, output, syntactically_self_contained: true)
                                 output.appendff("== {}{}::{}", .codegen_namespace_qualifier(scope_id: enum_.scope_id, is_prelude: .program.get_module(enum_id.module).is_prelude()), enum_.name, name)
                             }
                             else => {
@@ -4344,8 +4377,15 @@ struct CodeGenerator {
         defer if needs_wrapping_parens { output.append(')') }
 
         if is_called_as_method {
-            generate_object(output, syntactically_self_contained: true)
-            output.append(field_accessor)
+            if object_is_this
+                and not name is Operator
+                and match expression_type { Struct | GenericInstance | Enum | GenericEnumInstance => true, else => false }
+            {
+                output.append("this->")
+            } else {
+                generate_object(output, syntactically_self_contained: true)
+                output.append(field_accessor)
+            }
         } else {
             // object.method(...) -> method(object, ...)
             generate_method_name()
