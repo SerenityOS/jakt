@@ -9,9 +9,9 @@ struct Vector3 {
     }
 }
 
-type Vector3 implements(Index<f32>) {
-    fn index(this, anon rhs: usize) -> f32 {
-        return .values[rhs]
+type Vector3 implements(Index<usize, f32>) {
+    fn index(this, anon index: usize) -> f32 {
+        return .values[index]
     }
 }
 

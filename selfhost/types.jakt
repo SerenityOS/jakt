@@ -100,6 +100,10 @@ struct GenericInferences {
 
     fn set_all(mut this, keys: [CheckedGenericParameter], values: [TypeId]) {
         for i in 0..(keys.size()) {
+            if i >= values.size() {
+                break
+            }
+
             let key = keys[i].type_id
             let value = values[i]
             .set(key, value)
@@ -118,6 +122,20 @@ struct GenericInferences {
             mapped = .values.get(mapped!)
         }
         return final_mapped_result ?? type
+    }
+
+    fn map(this, anon types: [TypeId]) throws -> [TypeId] {
+        mut result: [TypeId] = []
+        for type in types {
+            mut mapped = .values.get(type)
+            mut final_mapped_result = mapped
+            while mapped.has_value() {
+                final_mapped_result = mapped
+                mapped = .values.get(mapped!)
+            }
+            result.push(final_mapped_result ?? type)
+        }
+        return result
     }
 
     fn find_and_map(this, anon name: String, anon program: &CheckedProgram) -> TypeId? {
@@ -285,7 +303,7 @@ boxed enum Type {
     }
 
     fn is_concrete(this) -> bool => match this {
-        TypeVariable | Self | Dependent | Unknown => false
+        TypeVariable | Self | Dependent | Trait | GenericTraitInstance | Unknown => false
         else => true
     }
 
@@ -525,6 +543,18 @@ boxed enum Type {
         Void | Bool | U8 | U16 | U32 | U64 | I8 | I16 | I32 | I64 | F32 | F64 | Usize | JaktString | CChar | CInt => true
         else => false
     }
+
+    fn is_integer(this) -> bool => match this {
+        U8 | U16 | U32 | U64 | I8 | I16 | I32 | I64 | CChar | CInt | Usize => true
+        else => false
+    }
+
+    fn is_floating(this) -> bool => match this {
+        F32 | F64 => true
+        else => false
+    }
+
+    fn is_numeric(this) -> bool => .is_integer() or .is_floating()
 
     fn as_builtin_type(this) -> BuiltinType => match this {
         Void => BuiltinType::Void
@@ -1624,7 +1654,7 @@ boxed enum CheckedExpression {
     JaktSet(vals: [CheckedExpression], span: Span, type_id: TypeId, inner_type_id: TypeId)
     JaktDictionary(vals: [(CheckedExpression, CheckedExpression)], span: Span, type_id: TypeId, key_type_id: TypeId, value_type_id: TypeId)
     IndexedExpression(expr: CheckedExpression, index: CheckedExpression, trait_implementation: OperatorTraitImplementation?, span: Span, type_id: TypeId)
-    IndexedDictionary(expr: CheckedExpression, index: CheckedExpression, span: Span, type_id: TypeId)
+    IndexedDictionary(expr: CheckedExpression, index: CheckedExpression, trait_implementation: OperatorTraitImplementation?, span: Span, type_id: TypeId)
     IndexedTuple(expr: CheckedExpression, index: usize, span: Span, is_optional: bool, type_id: TypeId)
     IndexedStruct(expr: CheckedExpression, name: String, index: VarId?, span: Span, is_optional: bool, type_id: TypeId)
     IndexedCommonEnumMember(expr: CheckedExpression, index: String, span: Span, is_optional: bool, type_id: TypeId)
@@ -2126,7 +2156,7 @@ class CheckedProgram {
         ignore_mixin_scopes: bool = false
         root_scope: ScopeId? = None
     ) throws -> CheckedVariable? {
-        return .for_each_scope_accessible_unqualified_from_scope(
+        return .for_each_scope_accessible_unqualified_from_scope<CheckedVariable>(
             scope_id
             &fn[var, this](mixin: ResolutionMixin, name_override: String?, is_alias: bool) throws -> IterationDecision<CheckedVariable> {
                 if not mixin.mixin_vars {
@@ -2152,7 +2182,7 @@ class CheckedProgram {
         ignore_mixin_scopes: bool = false
         root_scope: ScopeId? = None
     ) throws -> Value? {
-        return .for_each_scope_accessible_unqualified_from_scope(
+        return .for_each_scope_accessible_unqualified_from_scope<Value>(
             scope_id
             &fn[name, this](mixin: ResolutionMixin, name_override: String?, is_alias: bool) throws -> IterationDecision<Value> {
                 if not mixin.mixin_bindings {
@@ -2178,7 +2208,7 @@ class CheckedProgram {
         ignore_mixin_scopes: bool = false
         root_scope: ScopeId? = None
     ) throws -> (TypeId, ScopeId)? {
-        return .for_each_scope_accessible_unqualified_from_scope(
+        return .for_each_scope_accessible_unqualified_from_scope<(TypeId, ScopeId)>(
             scope_id
             &fn[name, this](mixin: ResolutionMixin, name_override: String?, is_alias: bool) throws -> IterationDecision<(TypeId, ScopeId)> {
                 if not mixin.mixin_types {
@@ -2213,7 +2243,7 @@ class CheckedProgram {
         ignore_mixin_scopes: bool = false
         root_scope: ScopeId? = None
     ) throws -> EnumId? {
-        return .for_each_scope_accessible_unqualified_from_scope(
+        return .for_each_scope_accessible_unqualified_from_scope<EnumId>(
             scope_id
             &fn[name, this](mixin: ResolutionMixin, name_override: String?, is_alias: bool) throws -> IterationDecision<EnumId> {
                 if not mixin.mixin_enums {
@@ -2239,7 +2269,7 @@ class CheckedProgram {
         ignore_mixin_scopes: bool = false
         root_scope: ScopeId? = None
     ) throws -> TraitId? {
-        return .for_each_scope_accessible_unqualified_from_scope(
+        return .for_each_scope_accessible_unqualified_from_scope<TraitId>(
             scope_id
             &fn[name, this](mixin: ResolutionMixin, name_override: String?, is_alias: bool) throws -> IterationDecision<TraitId> {
                 if not mixin.mixin_traits {
@@ -2259,21 +2289,11 @@ class CheckedProgram {
     }
 
     public fn is_integer(this, anon type_id: TypeId) -> bool {
-        let type = .get_type(type_id)
-
-        return match type {
-            I8 | I16 | I32 | I64 | U8 | U16 | U32 | U64 | Usize | CInt | CChar => true
-            else => false
-        }
+        return .get_type(type_id).is_integer()
     }
 
     public fn is_floating(this, anon type_id: TypeId) -> bool {
-        let type = .get_type(type_id)
-
-        return match type {
-            F32 | F64 => true
-            else => false
-        }
+        return .get_type(type_id).is_floating()
     }
 
     public fn is_numeric(this, anon type_id: TypeId) -> bool {

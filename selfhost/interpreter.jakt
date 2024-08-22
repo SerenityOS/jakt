@@ -7678,6 +7678,20 @@ class Interpreter {
 
                 yield constructor!
             }
+            Trait | GenericTraitInstance => {
+                // FIXME: Actually implement this.
+                let constructor = .program.find_function_in_scope(
+                    parent_scope_id: .program.get_enum(reflected_enum_id).scope_id
+                    function_name: "TypeVariable")
+
+                if not constructor.has_value() {
+                    .error("Attempted to access a variant that does not exist", span)
+                    .compiler.panic("Invalid type")
+                }
+
+                fields = [.string_value("anon$trait_impl", span)]
+                yield constructor!
+            }
             TypeVariable(name) => {
                 let constructor = .program.find_function_in_scope(
                     parent_scope_id: .program.get_enum(reflected_enum_id).scope_id

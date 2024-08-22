@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Type ‘(i64, i64, i64)’ does not implement the indexing operation"
+/// - error: "Type ‘(i64, i64, i64)’ cannot be indexed by an expression of type ‘i64’"
 
 fn main() {
     let tuple = (1, 2, 3)

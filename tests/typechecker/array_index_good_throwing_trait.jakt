@@ -9,7 +9,7 @@ struct Vector3 {
     }
 }
 
-type Vector3 implements(ThrowingIndex<f32>) {
+type Vector3 implements(ThrowingIndex<usize, f32>) {
     fn index(this, anon rhs: usize) throws -> f32 {
         return .values[rhs]
     }

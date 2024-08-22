@@ -2792,19 +2792,25 @@ struct CodeGenerator {
                         is_optional: false
                         &mut output
                         forward_error_with_try
+                        syntactically_self_contained
                     )
                 } else {
-                    .codegen_expression(expr, &mut output, syntactically_self_contained: true)
-                    output.append("[")
-                    .codegen_expression(index, &mut output)
-                    output.append("]")
+                    panic("Internal error: array indexing without trait implementation")
                 }
             }
-            IndexedDictionary(expr, index) => {
-                .codegen_expression(expr, &mut output, syntactically_self_contained: true)
-                output.append('[')
-                .codegen_expression(index, &mut output)
-                output.append(']')
+            IndexedDictionary(expr, index, trait_implementation) => {
+                if trait_implementation is Some(implementation) {
+                    .codegen_method_call(
+                        expr: expr
+                        call: implementation.call_expression
+                        is_optional: false
+                        &mut output
+                        forward_error_with_try
+                        syntactically_self_contained
+                    )
+                } else {
+                    panic("Internal error: dictionary indexing without trait implementation")
+                }
             }
             IndexedTuple(expr, index, is_optional) => {
                 if is_optional {

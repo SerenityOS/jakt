@@ -39,12 +39,12 @@ trait ThrowingDivide<Rhs, Output> {
     fn divide(this, anon rhs: Rhs) throws -> Output
 }
 
-trait Index<Output> {
-    fn index(this, anon index: usize) -> Output
+trait Index<Key, Output> {
+    fn index(this, anon index: Key) -> Output
 }
 
-trait ThrowingIndex<Output> {
-    fn index(this, anon index: usize) throws -> Output
+trait ThrowingIndex<Key, Output> {
+    fn index(this, anon index: Key) throws -> Output
 }
 
 trait Modulo<Rhs, Output> {
@@ -371,4 +371,18 @@ type Array implements(Equal<Array<T>>) {
 type ArraySlice implements(Equal<ArraySlice<T>>) {
     [[name="operator(==)"]]
     extern fn equals(this, anon rhs: ArraySlice<T>) -> bool
+}
+
+type Array implements(Index<Range<Integral>, ArraySlice<T>>, Index<Integral, T>) {
+    [[name="operator[]"]] extern fn index(this, anon index: Range<Integral>) -> ArraySlice<T>
+    [[name="operator[]"]] extern fn index(this, anon index: Integral) -> T
+}
+
+type ArraySlice implements(Index<Range<Integral>, ArraySlice<T>>, Index<Integral, T>) {
+    [[name="operator[]"]] extern fn index(this, anon index: Range<Integral>) -> ArraySlice<T>
+    [[name="operator[]"]] extern fn index(this, anon index: Integral) -> T
+}
+
+type Dictionary implements(Index<K, V>) {
+    [[name="operator[]"]] extern fn index(this, anon index: K) -> V
 }
