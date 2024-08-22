@@ -20117,6 +20117,19 @@ return JaktInternal::ExplicitValue<Jakt::ids::FunctionId>((constructor.value()))
 }
 VERIFY_NOT_REACHED();
 };/*case end*/
+case 27 /* Trait */: 
+case 22 /* GenericTraitInstance */: {
+{
+JaktInternal::Optional<Jakt::ids::FunctionId> const constructor = TRY((((((*this).program))->find_function_in_scope(((((((*this).program))->get_enum(reflected_enum_id))).scope_id),(ByteString::from_utf8_without_validation("TypeVariable"sv)),JaktInternal::OptionalNone()))));
+if ((!(((constructor).has_value())))){
+TRY((((*this).error((ByteString::from_utf8_without_validation("Attempted to access a variant that does not exist"sv)),span))));
+((((*this).compiler))->panic((ByteString::from_utf8_without_validation("Invalid type"sv))));
+}
+(fields = DynamicArray<Jakt::types::Value>::create_with({TRY((((*this).string_value(ByteString::from_utf8_without_validation("anon$trait_impl"sv),span))))}));
+return JaktInternal::ExplicitValue<Jakt::ids::FunctionId>((constructor.value()));
+}
+VERIFY_NOT_REACHED();
+};/*case end*/
 case 18 /* TypeVariable */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.TypeVariable;ByteString const& name = __jakt_match_value.name;
 {

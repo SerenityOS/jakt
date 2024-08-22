@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Index must be an integer or a range"
+/// - error: "Type ‘[i64]’ cannot be indexed by an expression of type ‘String’"
 
 fn main() {
     let x = [1, 2, 3]

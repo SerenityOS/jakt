@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Type ‘Test<(i64, i64, i64)>’ does not implement the indexing operation"
+/// - error: "Type ‘Test<(i64, i64, i64)>’ cannot be indexed by an expression of type ‘i64’"
 
 class Test<T> {
     public x: T

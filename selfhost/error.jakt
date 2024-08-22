@@ -13,6 +13,8 @@ enum JaktError {
         Message(span) => span
         MessageWithHint(span) => span
     }
+
+    fn message(this) -> String => match this { else(message) => message }
 }
 
 
