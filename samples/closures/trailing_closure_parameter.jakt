@@ -10,6 +10,6 @@ fn wrapped(anon action: &fn() -> void) {
 fn main() {
     let message = "Well, hello friends!"
     wrapped() {
-        println(message)
+        println("{}", message)
     }
 }

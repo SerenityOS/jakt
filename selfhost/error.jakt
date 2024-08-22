@@ -152,11 +152,23 @@ fn print_source_line(severity: MessageSeverity, file_contents: [u8], file_span: 
     eprint(" │ ")
 
     while index <= file_span.1 {
-        mut c = b' '
-        if index < file_span.1 {
-            c = file_contents[index]
-        } else if error_span.start == error_span.end and index == error_span.start {
-            c = b'_'
+        mut builder = StringBuilder::create()
+
+        loop {
+            mut c = b' '
+            if index < file_span.1 {
+                c = file_contents[index]
+            } else if error_span.start == error_span.end and index == error_span.start {
+                c = b'_'
+            }
+
+            builder.append(c)
+
+            if c > 127 {
+                index += 1
+                continue
+            }
+            break
         }
 
         if (index == error_span.start) {
@@ -166,7 +178,7 @@ fn print_source_line(severity: MessageSeverity, file_contents: [u8], file_span: 
             eprint("\u001b[0m")
         }
 
-        eprint("{:c}", c)
+        eprint("{}", builder.to_string())
 
         ++index
     }

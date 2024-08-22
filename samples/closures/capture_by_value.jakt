@@ -7,5 +7,5 @@ fn test(cb: fn() -> void) {
 
 fn main() {
     let pass = "PASS"
-    test(cb: fn[pass]() => println(pass))
+    test(cb: fn[pass]() => println("{}", pass))
 }

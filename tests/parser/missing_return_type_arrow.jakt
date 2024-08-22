@@ -1,5 +1,5 @@
 /// Expect:
-/// - error: "Expected ‘throws’, ‘->’, ‘=>’ or ‘{’"
+/// - error: "Expected '{'\n"
 fn foo() i64 {
     return 5
 }

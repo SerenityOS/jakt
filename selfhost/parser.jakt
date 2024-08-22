@@ -80,7 +80,7 @@ enum NumericConstant {
 // to be either f32 or f64.
 // FIXME: Remove when a more general conversion is in place
 fn u64_to_float<T>(anon number: u64) -> T {
-    mut float_value: T = 0
+    mut float_value: T = 0f64
 
     unsafe {
         cpp {
@@ -93,7 +93,7 @@ fn u64_to_float<T>(anon number: u64) -> T {
 
 // FIXME: Remove when a more general conversion is in place
 fn f64_to_f32(anon number: f64) -> f32 {
-    mut f32_value: f32 = 0
+    mut f32_value: f32 = 0f32
 
     unsafe {
         cpp {
