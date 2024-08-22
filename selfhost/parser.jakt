@@ -6146,9 +6146,7 @@ struct Parser {
                 else => ParsedMatchBody::Expression(.parse_expression(allow_assignments: false, allow_newlines: true))
             }
 
-            for pattern in patterns {
-                cases.push(ParsedMatchCase(patterns: [pattern], marker_span, body))
-            }
+            cases.push(ParsedMatchCase(patterns, marker_span, body))
 
             if .index == pattern_start_index {
                 // Parser didn't advance, bail.
