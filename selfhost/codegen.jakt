@@ -8,7 +8,7 @@
 import parser { BinaryOperator, FunctionLinkage, ParsedBlock }
 import typechecker {
     BuiltinType, CheckedBinaryOperator, CheckedBlock, CheckedCall, CheckedEnum, CheckedExpression, CheckedFunction
-    CheckedMatchBody, CheckedMatchCase, CheckedProgram, CheckedStatement, CheckedStruct, CheckedVariable
+    CheckedMatchBody, CheckedMatchCase, CheckedMatchPattern, CheckedProgram, CheckedStatement, CheckedStruct, CheckedVariable
     CheckedVisibility, EnumId, FunctionId, Module, ModuleId, Scope, ScopeId, StructId, Type, TypeId, VarId, builtin
     never_type_id, unknown_type_id, void_type_id
 }
@@ -3567,15 +3567,64 @@ struct CodeGenerator {
         .codegen_expression(expr, &mut output)
         output.append(");\n")
 
-        mut has_default = false
         mut first = true
-        for case_ in cases {
+
+        mut cases_with_bindings: [CheckedMatchCase] = []
+        mut deferred_catch_all: ([CheckedStatement], CheckedMatchBody)? = None // (defaults, body)?
+
+        for case_index in 0..cases.size() {
+            let match_case = cases[case_index]
+
+            if match_case.patterns.size() == 1 and match_case.patterns[0] is CatchAll(has_arguments) {
+                // as an exception to the rule, CatchAll is deferred to the
+                // last thing because it must be the last prong.
+                guard not has_arguments else {
+                    panic("Bindings should not be present in a generic else")
+                }
+                deferred_catch_all = (match_case.patterns[0].defaults, match_case.body)
+                continue
+            }
+
+            guard not case_has_bindings(&match_case) else {
+                cases_with_bindings.push(match_case)
+                continue
+            }
+
+            if not first {
+                output.append("else ")
+            }
+            first = false
+            output.append("if (")
+            mut first_pat = true
+            for pattern in match_case.patterns {
+                defer first_pat = false
+                if not first_pat {
+                    output.append("||")
+                }
+
+                .codegen_generic_pattern_condition(&pattern, is_parenthesized: match_case.patterns.size() == 1, output)
+            }
+            output.append(") {")
+            .codegen_match_body(body: match_case.body, return_type_id, &mut output)
+            output.append('}')
+        }
+
+        for case_ in cases_with_bindings {
             let body = case_.body
             for pattern in case_.patterns {
                 let defaults = pattern.defaults
 
+                defer first = false
+                if not first { output.append("else ") }
+
+
+                output.append("if (")
+                .codegen_generic_pattern_condition(&pattern, is_parenthesized: true, &mut output)
+                output.append(") {")
+                defer output.append('}')
+
                 match pattern {
-                    EnumVariant(name, args, subject_type_id, scope_id) => {
+                    EnumVariant(name, args, subject_type_id, index: variant_index, scope_id) => {
                         let enum_ = .program.get_enum(match .program.get_type(subject_type_id) {
                             Enum(enum_id) => enum_id
                             GenericEnumInstance(id) => id
@@ -3583,25 +3632,6 @@ struct CodeGenerator {
                                 panic(format("Unexpected type in IsEnumVariant: {}", .program.get_type(subject_type_id)))
                             }
                         })
-                        // FIXME: This should be a call to find(), but we do not yet provide the needed operator== for that
-                        mut variant_index = 0;
-                        for variant in enum_.variants {
-                            if variant.name() == name {
-                                break
-                            }
-                            variant_index++
-                        }
-
-                        output.appendff("if (__jakt_enum_value.__jakt_init_index() == {} /* {} */) {{\n", variant_index, name)
-
-                        mut variant_type_name = ""
-                        let qualifier = .codegen_type_possibly_as_namespace(type_id: subject_type_id, as_namespace: true)
-                        if not qualifier.is_empty() {
-                            variant_type_name += "typename JaktInternal::RemoveRefPtr<"
-                            variant_type_name += qualifier
-                            variant_type_name += ">::"
-                        }
-                        variant_type_name += name
 
                         if not args.is_empty() {
                             output.append("auto& __jakt_match_value = __jakt_enum_value.as.")
@@ -3633,98 +3663,85 @@ struct CodeGenerator {
                                 output.append(";\n")
                             }
                         }
-
-                        for default_ in defaults {
-                            .codegen_statement(statement: default_, &mut output)
-                        }
-
-                        .codegen_match_body(body, return_type_id, &mut output)
-                        output.append("}\n")
                     }
-                    CatchAll(has_arguments, marker_span) => {
-                        if has_arguments {
-                            panic("Bindings should not be present in a generic else")
-                        }
-
-                        // TODO: Use default statement if all values are constant
-                        has_default = true
-
-                        if first {
-                            output.append("{")
-                        } else {
-                            output.append("else {\n")
-                        }
-
-                        for default_ in defaults {
-                            .codegen_statement(statement: default_, &mut output)
-                        }
-
-                        .codegen_match_body(body, return_type_id, &mut output)
-                        output.append("}\n")
-                    }
-                    Expression(expression, marker_span) => {
-                        // TODO: Use case statement if all values are constant
-                        if not first {
-                            output.append("else ")
-                        }
-                        if expression is Range(from, to) {
-                            output.append("if (__jakt_enum_value")
-                            if from.has_value() {
-                                output.append(" >= ")
-                                .codegen_expression(from!, &mut output, syntactically_self_contained: true)
-                            }
-
-                            if to.has_value() {
-                                if from.has_value() {
-                                    output.append("&& __jakt_enum_value ")
-                                }
-                                output.append("< ")
-                                .codegen_expression(to!, &mut output, syntactically_self_contained: true)
-                            }
-                        } else {
-                            output.append("if (__jakt_enum_value == ")
-                            if expression is QuotedString(val)
-                                and (val.type_id == byte_string_type_id or val.type_id == builtin(BuiltinType::JaktString)) {
-                                let original_string = val.to_string()
-                                let escaped_value = escape_for_quotes(original_string)
-                                output.append("\"")
-                                output.append(escaped_value)
-                                output.append("\"sv")
-                            } else {
-                                .codegen_expression(expression, &mut output, syntactically_self_contained: true)
-                            }
-                        }
-                        output.append(") {\n")
-                        .codegen_match_body(body, return_type_id, &mut output)
-                        output.append("}\n")
-                    }
+                    CatchAll => { panic("unreachable") }
+                    Expression => { }
                     ClassInstance(type, rebind_name, marker_span) => {
-                        let type_name = .codegen_type_possibly_as_namespace(type_id: type, as_namespace: true)
-                        output.appendff("if (is<{}>(__jakt_enum_value.ptr())) {{\n", type_name)
-                        output.appendff(
-                            "auto {} = NonnullRefPtr {{ *static_cast<RawPtr<{}>>(__jakt_enum_value.ptr()) }};\n"
-                            (rebind_name?.name ?? "__jakt_match_value")
-                            type_name
-                        )
-
-                        for default_ in defaults {
-                            .codegen_statement(statement: default_, &mut output)
+                        if rebind_name is Some(rebind) {
+                            output.appendff(
+                                "auto {} = NonnullRefPtr {{ *static_cast<RawPtr<{}>>(__jakt_enum_value.ptr()) }};\n"
+                                rebind.name
+                                .codegen_type_possibly_as_namespace(type_id: type, as_namespace: true)
+                            )
                         }
-
-                        .codegen_match_body(body, return_type_id, &mut output)
-                        output.append("}\n")
                     }
                 }
-                first = false
+                for default_ in defaults {
+                    .codegen_statement(statement: default_, &mut output)
+                }
+                .codegen_match_body(body, return_type_id, &mut output)
             }
+        }
+
+        if deferred_catch_all is Some(catch_all_case) {
+            let (defaults, body) = catch_all_case
+
+            if not first { output.append("else ") }
+
+            output.append('{')
+
+            for default_ in defaults {
+                .codegen_statement(statement: default_, &mut output)
+            }
+
+            .codegen_match_body(body, return_type_id, &mut output)
+            output.append('}')
         }
         if return_type_id == void_type_id() or return_type_id == unknown_type_id() {
             output.append("return JaktInternal::ExplicitValue<void>();\n")
-        } else if not has_default {
+        } else if deferred_catch_all is None {
             output.append("VERIFY_NOT_REACHED();\n")
         }
 
         output.append("}())")
+    }
+
+    fn codegen_generic_pattern_condition(mut this, pattern: &CheckedMatchPattern, is_parenthesized: bool, output: &mut StringBuilder) throws {
+        match pattern {
+            EnumVariant(name, index: variant_index) => {
+                output.appendff("__jakt_enum_value.__jakt_init_index() == {} /* {} */", variant_index, name)
+            }
+            Expression(expression: expr) => match expr {
+                Range(from, to) => {
+                    let has_and = from is Some and to is Some
+                    if has_and and not is_parenthesized { output.append('(') }
+                    if from is Some(expr) {
+                        output.append("__jakt_enum_value >= ")
+                        .codegen_expression(expr, output, syntactically_self_contained: true)
+                    }
+                    if has_and { output.append("&&") }
+                    if to is Some(expr) {
+                        output.append("__jakt_enum_value < ")
+                        .codegen_expression(expr, output, syntactically_self_contained: true)
+                    }
+                    if has_and and not is_parenthesized { output.append(')') }
+                }
+                Boolean(val) => {
+                    if not val { output.append('!') }
+                    output.append("__jakt_enum_value")
+                }
+                else => {
+                    if not is_parenthesized { output.append('(') }
+                    output.append("__jakt_enum_value == ")
+                    .codegen_expression(expr, output, syntactically_self_contained: true)
+                    if not is_parenthesized { output.append(')') }
+                }
+            }
+            ClassInstance(type: type_id) => {
+                output.appendff("is<{}>(__jakt_enum_value.ptr())", .codegen_type_possibly_as_namespace(type_id, as_namespace: true))
+            }
+            CatchAll => { .compiler.panic("catch all has no condition, should be emitted separately") }
+        }
     }
 
     fn codegen_enum_match(
@@ -3759,7 +3776,14 @@ struct CodeGenerator {
             mut has_default = false
             for match_case in match_cases {
                 let body = match_case.body
+
+                mut patterns_without_bindings: [CheckedMatchPattern] = []
+
                 for pattern in match_case.patterns {
+                    if not pattern_has_bindings(&pattern) {
+                        patterns_without_bindings.push(pattern)
+                        continue
+                    }
                     match pattern {
                         EnumVariant(name, args, subject_type_id, index, scope_id) => {
                             let enum_type = .program.get_type(subject_type_id)
@@ -3858,6 +3882,22 @@ struct CodeGenerator {
                         }
                     }
                 }
+
+                if not patterns_without_bindings.is_empty() {
+                    for pattern in patterns_without_bindings {
+                        match pattern {
+                            EnumVariant(name, index) => { output.appendff("case {} /* {} */:", index, name) }
+                            CatchAll => {
+                                has_default = true
+                                output.append("default:")
+                            }
+                            else => {
+                                panic("Matching enum subject with non-enum value")
+                            }
+                        }
+                    }
+                    .codegen_match_body(body, return_type_id: type_id, &mut output)
+                }
             }
             if not has_default {
                 if enum_.variants.size() != count_match_cases(&match_cases) {
@@ -3878,24 +3918,20 @@ struct CodeGenerator {
             output.append(") {\n")
 
             for match_case in match_cases {
-                let body = match_case.body
                 for pattern in match_case.patterns {
                     match pattern {
                         EnumVariant(name) => {
-                            output.append("case " + enum_.name + "::" + name + ": {\n")
-                            .codegen_match_body(body, return_type_id: type_id, &mut output)
-                            output.append("}\n")
+                            output.appendff("case {}::{}:", enum_.name, name)
                         }
                         CatchAll => {
-                            output.append("default: {\n")
-                            .codegen_match_body(body, return_type_id: type_id, &mut output)
-                            output.append("}\n")
+                            output.append("default:")
                         }
                         else => {
                             todo(format("underlying type enum match, match_case: {}", match_case))
                         }
                     }
                 }
+                .codegen_match_body(body: match_case.body, return_type_id: type_id, &mut output)
             }
             output.append("}/*switch end*/\n")
             output.append("}()\n)")
@@ -5722,6 +5758,25 @@ struct CodeGenerator {
 
         output.append("}\n")
     }
+}
+
+fn pattern_has_bindings(anon pattern: &CheckedMatchPattern) -> bool {
+    if not pattern.defaults.is_empty() { return true }
+    return match pattern {
+        EnumVariant(args) => not args.is_empty()
+        ClassInstance(rebind_name) => rebind_name is Some
+        CatchAll | Expression => false
+    }
+}
+
+fn case_has_bindings(anon match_case: &CheckedMatchCase) -> bool {
+    for pattern in match_case.patterns {
+        if pattern_has_bindings(&pattern) {
+            return true
+        }
+    }
+
+    return false
 }
 
 fn count_match_cases(anon cases: &[CheckedMatchCase]) -> usize {
