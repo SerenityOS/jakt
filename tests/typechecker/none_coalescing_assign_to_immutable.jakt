@@ -4,5 +4,5 @@
 fn main() {
     let i: String? = None
     i ??= "mayb"
-    println(i ?? "hello")
+    println("{}", i ?? "hello")
 }

@@ -2,7 +2,7 @@
 /// - output: "hello\nworld"
 
 fn main() {
-    let str_c: c_char = '\n'
+    let str_c: c_char = c'\n'
     print("hello{}", str_c)
     print("world")
 }
