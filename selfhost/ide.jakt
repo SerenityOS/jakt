@@ -743,84 +743,89 @@ fn find_span_in_expression(program: CheckedProgram, expr: CheckedExpression, spa
         }
         Match(expr, match_cases, span: match_span, type_id) => {
             for match_case in match_cases {
-                let found = match match_case {
-                    EnumVariant(name, args, subject_type_id, index, scope_id, body, marker_span) => {
-                        if marker_span.contains(span) {
-                            // FIXME: return Some(get_enum_variant_usage_from_type_id_and_name(program, type_id: subject_type_id, variant_index))
-                            return Some(get_enum_variant_usage_from_type_id_and_name(
-                                    program
-                                    type_id: subject_type_id
-                                    name))
-                        }
+                let body = match_case.body
+                for pattern in match_case.patterns {
+                    let found = match pattern {
+                        EnumVariant(name, args, subject_type_id, index, scope_id, marker_span) => {
+                            if marker_span.contains(span) {
+                                // FIXME: return Some(get_enum_variant_usage_from_type_id_and_name(program, type_id: subject_type_id, variant_index))
+                                return Some(get_enum_variant_usage_from_type_id_and_name(
+                                        program
+                                        type_id: subject_type_id
+                                        name))
+                            }
 
-                        yield match body {
-                            Block(block) => find_span_in_block(program, block, span)
-                            Expression(expr) => find_span_in_expression(program, expr, span)
+                            yield match body {
+                                Block(block) => find_span_in_block(program, block, span)
+                                Expression(expr) => find_span_in_expression(program, expr, span)
+                            }
                         }
-                    }
-                    Expression(expression: expr, body) => {
-                        let found = find_span_in_expression(program, expr, span)
-                        if found.has_value() {
-                            return found
+                        Expression(expression: expr) => {
+                            let found = find_span_in_expression(program, expr, span)
+                            if found.has_value() {
+                                return found
+                            }
+                            yield match body {
+                                Block(block) => find_span_in_block(program, block, span)
+                                Expression(expr) => find_span_in_expression(program, expr, span)
+                            }
                         }
-                        yield match body {
-                            Block(block) => find_span_in_block(program, block, span)
-                            Expression(expr) => find_span_in_expression(program, expr, span)
-                        }
-                    }
-                    CatchAll(body, marker_span) => match marker_span.contains(span) {
-                        true => {
-                            let all_cases = match program.get_type(type_id) {
-                                Enum(enum_id) | GenericEnumInstance(id: enum_id) => {
-                                    // NOTE: not sure why would we need a hashset if enum variants
-                                    // can't be duplicate, but I'll leave previous implementation from Rust based
-                                    mut names: {String} = {}
-                                    let enum_ = program.get_enum(enum_id)
-                                    for variant in enum_.variants {
-                                        names.add(variant.name())
+                        CatchAll(marker_span) => match marker_span.contains(span) {
+                            true => {
+                                let all_cases = match program.get_type(type_id) {
+                                    Enum(enum_id) | GenericEnumInstance(id: enum_id) => {
+                                        // NOTE: not sure why would we need a hashset if enum variants
+                                        // can't be duplicate, but I'll leave previous implementation from Rust based
+                                        mut names: {String} = {}
+                                        let enum_ = program.get_enum(enum_id)
+                                        for variant in enum_.variants {
+                                            names.add(variant.name())
+                                        }
+                                        yield names
                                     }
-                                    yield names
-                                }
-                                else => {
-                                    yield {format("else ({})", program.type_name(type_id))}
-                                }
-                            }
-
-                            mut remaining_cases = all_cases
-
-                            for other_case in match_cases {
-                                if other_case is EnumVariant(name) {
-                                    remaining_cases.remove(name)
-                                }
-                            }
-
-                            yield match remaining_cases.is_empty() {
-                                false => {
-                                    mut cases_array: [String] = []
-                                    cases_array.ensure_capacity(remaining_cases.size())
-                                    for name in remaining_cases {
-                                        cases_array.push(name)
+                                    else => {
+                                        yield {format("else ({})", program.type_name(type_id))}
                                     }
-                                    yield Some(Usage::NameSet(cases_array))
                                 }
-                                true => None
+
+                                mut remaining_cases = all_cases
+
+                                for other_case in match_cases {
+                                    for pattern in other_case.patterns {
+                                        if pattern is EnumVariant(name) {
+                                            remaining_cases.remove(name)
+                                        }
+                                    }
+                                }
+
+                                yield match remaining_cases.is_empty() {
+                                    false => {
+                                        mut cases_array: [String] = []
+                                        cases_array.ensure_capacity(remaining_cases.size())
+                                        for name in remaining_cases {
+                                            cases_array.push(name)
+                                        }
+                                        yield Some(Usage::NameSet(cases_array))
+                                    }
+                                    true => None
+                                }
+                            }
+                            else => match body {
+                                Block(block) => find_span_in_block(program, block, span)
+                                Expression(expr) => find_span_in_expression(program, expr, span)
                             }
                         }
-                        else => match body {
-                            Block(block) => find_span_in_block(program, block, span)
-                            Expression(expr) => find_span_in_expression(program, expr, span)
+                        ClassInstance(marker_span) => match marker_span.contains(span) {
+                            true => None // FIXME: Implement this
+                            else => match body {
+                                Block(block) => find_span_in_block(program, block, span)
+                                Expression(expr) => find_span_in_expression(program, expr, span)
+                            }
                         }
                     }
-                    ClassInstance(body, marker_span) => match marker_span.contains(span) {
-                        true => None // FIXME: Implement this
-                        else => match body {
-                            Block(block) => find_span_in_block(program, block, span)
-                            Expression(expr) => find_span_in_expression(program, expr, span)
-                        }
+                    if found.has_value() {
+                        return found
                     }
-                }
-                if found.has_value() {
-                    return found
                 }
             }
             yield find_span_in_expression(program, expr, span)
