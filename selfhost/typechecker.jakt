@@ -1613,7 +1613,7 @@ struct Typechecker {
         }
     }
 
-    fn typecheck_auto_extern_imports(mut this, anon imports: [ParsedExternImport], anon child_scope_id) throws {
+    fn typecheck_auto_extern_imports(mut this, anon imports: [ParsedExternImport], anon child_scope_id: ScopeId) throws {
         if imports.is_empty() {
             return
         }
@@ -5003,6 +5003,35 @@ struct Typechecker {
                 .error("Control reaches end of never-returning function", parsed_function.name_span)
             } else if not block.control_flow.never_returns() and not parsed_function.is_jakt_main {
                 .error("Control reaches end of non-void function", parsed_function.name_span)
+            }
+        }
+
+        if not function_linkage is External {
+            if match .get_type(function_return_type_id) { Trait | GenericTraitInstance => true, else => false } {
+                .error_with_hint(
+                    format("Invalid use of trait in return type ‘{}’", .type_name(function_return_type_id))
+                    parsed_function.return_type_span
+                    "Return type must either be a concrete type, or be explicitly generic"
+                    parsed_function.return_type_span
+                )
+            }
+
+            for param in checked_function.params {
+                let type_id = param.variable.type_id
+                if match .get_type(type_id) { Trait | GenericTraitInstance => true, else => false } {
+                    .error_with_hint(
+                        format("Invalid use of trait in parameter type ‘{}’", .type_name(type_id))
+                        param.variable.type_span ?? param.variable.definition_span
+                        "Parameter type must either be a concrete type, or be explicitly generic"
+                        param.variable.type_span ?? param.variable.definition_span
+                    )
+                }
+                if .get_type(type_id) is Unknown {
+                    .error(
+                        "Cannot infer type of parameter, and no type was specified"
+                        param.variable.type_span ?? param.variable.definition_span
+                    )
+                }
             }
         }
 
@@ -12189,7 +12218,9 @@ struct Typechecker {
     }
 
     fn implements_trait(mut this, type_id: TypeId, trait_id: TraitId, generic_arguments: [TypeId]? = None) throws -> bool {
-        let has_matching_trait = fn[type_id](
+        let empty_span = Span(file_id: FileId(id: 0), start: 0, end: 0) // NOTE: This won't show up anywhere (as the errors are ignored)
+
+        let has_matching_trait = fn[type_id, empty_span](
             trait_implementations: [[TypeId]]
             trait_id: TraitId
             passed_generic_arguments: [TypeId]
@@ -12210,7 +12241,7 @@ struct Typechecker {
                         lhs_type_id: implemented_generic_arguments[i]
                         rhs_type_id: passed_generic_arguments[i]
                         generic_inferences: &mut typechecker.generic_inferences
-                        span: Span(file_id: FileId(id: 0), start: 0, end: 0) // NOTE: This won't show up anywhere (as the errors are ignored)
+                        span: empty_span
                     )
 
                     if not ok { break }
@@ -12223,6 +12254,16 @@ struct Typechecker {
             }
 
             return found
+        }
+
+        match .get_trait(trait_id).requirements {
+            ComptimeExpression => {
+                let snapshot = .enter_ignore_error_mode()
+                defer .exit_ignore_error_mode(snapshot)
+                .check_type_argument_requirements(generic_argument: type_id, constraints: [trait_id], arg_span: empty_span, scope_id: ScopeId(module_id: .current_module_id, id: 1))
+                return not .had_an_error
+            }
+            else => {}
         }
 
         let empty: [TypeId] = []

@@ -4981,8 +4981,7 @@ struct CodeGenerator {
                 panic("Generic trait instance in codegen")
             }
             else => {
-                // The RBC uses 'auto' here but we probably want to improve in the future
-                yield "auto"
+                panic(format("Invalid type in codegen_type({})", .program.type_name(type_id, debug_mode: true)))
             }
         } + qualifiers
     }
