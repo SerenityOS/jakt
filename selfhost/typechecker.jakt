@@ -343,6 +343,7 @@ struct Typechecker {
     }
     fn prelude_scope_id(this) -> ScopeId => .program.prelude_scope_id()
     fn root_scope_id(this) -> ScopeId => ScopeId(module_id: ModuleId(id: 1), id: 0)
+    fn main_scope_id(this) -> ScopeId => ScopeId(module_id: ModuleId(id: 1), id: 1)
 
     fn current_module(this) -> Module => .program.get_module(.current_module_id)
 
@@ -4933,7 +4934,7 @@ struct Typechecker {
 
         .current_function_id = function_id!
 
-        if parsed_function.name == "main" {
+        if parsed_function.name == "main" and parent_scope_id == .main_scope_id() {
             .typecheck_jakt_main(parsed_function, parent_scope_id)
         }
 
