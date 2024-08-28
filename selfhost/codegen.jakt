@@ -4417,6 +4417,11 @@ struct CodeGenerator {
         }
 
         let generate_method_name = fn[this, &call, &name, &output]() throws {
+            if name.is_prefix() {
+                output.append(name.as_name_for_use())
+                return
+            }
+
             let generic_parameters = call.type_args
             if not generic_parameters.is_empty() {
                 output.append("template ")
@@ -4453,7 +4458,9 @@ struct CodeGenerator {
         } else {
             // object.method(...) -> method(object, ...)
             generate_method_name()
-            output.append("(")
+            if not name is Operator {
+                output.append("(")
+            }
             generate_object(output, syntactically_self_contained: true)
         }
 
@@ -4553,7 +4560,10 @@ struct CodeGenerator {
                     if function.type is ImplicitConstructor or function.type is ExternalClassConstructor {
                         let type_id = call.return_type
                         let type = .program.get_type(type_id)
-                        output.append(.codegen_namespace_path(call))
+                        let name = call.name_for_codegen()
+                        if not name.is_prefix() and name.is_scopable() {
+                            output.append(.codegen_namespace_path(call))
+                        }
 
                         match type {
                             Struct(struct_id) => {
@@ -4619,11 +4629,17 @@ struct CodeGenerator {
                             }
                         }
                     } else {
-                        output.append(.codegen_namespace_path(call))
+                        let name = call.name_for_codegen()
+                        if not name.is_prefix() and name.is_scopable() {
+                            output.append(.codegen_namespace_path(call))
+                        }
                         output.append(call.name_for_codegen().as_name_for_use())
                     }
                 } else {
-                    output.append(.codegen_namespace_path(call))
+                    let name = call.name_for_codegen()
+                    if not name.is_prefix() and name.is_scopable() {
+                        output.append(.codegen_namespace_path(call))
+                    }
                     output.append(call.name_for_codegen().as_name_for_use())
                 }
 
