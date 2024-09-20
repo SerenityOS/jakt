@@ -9594,6 +9594,8 @@ struct Typechecker {
             }
 
             if return_type_updated {
+                mut f = .get_function(pseudo_function_id)
+                f.return_type_id = return_type_id
                 type_id = match .get_type(type_id) {
                     Function(params, can_throw, pseudo_function_id) => .find_or_add_type_id(Type::Function(
                         params
