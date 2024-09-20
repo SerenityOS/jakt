@@ -1,0 +1,13 @@
+/// Expect:
+/// - output: "hello\n"
+
+fn main() {
+    let f = fn() => match 53 {
+        42 => ""
+        else => {
+            return "hello"
+        }
+    }
+
+    println("{}", f())
+}
