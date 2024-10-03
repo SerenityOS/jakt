@@ -8,7 +8,7 @@ ByteString Jakt::cpp_import__none::CppImportProcessor::debug_description() const
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 }
 builder.append(")"sv);return builder.to_string(); }
-Jakt::cpp_import__none::CppImportProcessor Jakt::cpp_import__none::CppImportProcessor::create() {
+Jakt::cpp_import__none::CppImportProcessor Jakt::cpp_import__none::CppImportProcessor::create(bool const debug_print) {
 {
 return Jakt::cpp_import__none::CppImportProcessor();
 }
@@ -16,7 +16,7 @@ return Jakt::cpp_import__none::CppImportProcessor();
 
 ErrorOr<Jakt::ids::ScopeId> Jakt::cpp_import__none::CppImportProcessor::process_cpp_import(NonnullRefPtr<Jakt::types::CheckedProgram>& program,Jakt::jakt__path::Path const import_path,Jakt::ids::ScopeId const scope_id,bool const is_c,JaktInternal::Dictionary<ByteString,ByteString> const defines) {
 {
-return Error::__jakt_from_string_literal((StringView::from_string_literal("Not implemented"sv)));
+return Error::__jakt_from_string_literal(StringView::from_string_literal("Not implemented"sv));
 }
 }
 

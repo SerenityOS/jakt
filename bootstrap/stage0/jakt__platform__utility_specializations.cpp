@@ -55,7 +55,7 @@ ptr = static_cast<RemoveReference<decltype(ptr)>>(calloc(count, sizeof(*ptr)));
 }
 ;
 char* ptr = Jakt::jakt__platform__utility::null<char*>();
-alloc_impl(((ptr)));
+alloc_impl(ptr);
 return ptr;
 }
 }

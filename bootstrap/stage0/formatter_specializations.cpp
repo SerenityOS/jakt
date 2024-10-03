@@ -9,14 +9,10 @@ JaktInternal::Optional<Jakt::lexer::Token> collapse<Jakt::lexer::Token>(JaktInte
 {
 return ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<Jakt::lexer::Token>,JaktInternal::Optional<Jakt::lexer::Token>> {
-auto __jakt_enum_value = (((x).has_value()));
-if (__jakt_enum_value == true) {
-return JaktInternal::ExplicitValue((x.value()));
-}
-else if (__jakt_enum_value == false) {
-return JaktInternal::ExplicitValue(JaktInternal::OptionalNone());
-}
-VERIFY_NOT_REACHED();
+auto __jakt_enum_value = (x.has_value());
+if (__jakt_enum_value) {return JaktInternal::ExplicitValue(x.value());
+}else if (!__jakt_enum_value) {return JaktInternal::ExplicitValue(JaktInternal::OptionalNone());
+}VERIFY_NOT_REACHED();
 }());
     if (_jakt_value.is_return())
         return _jakt_value.release_return();

@@ -51,6 +51,7 @@ JaktError(JaktError &&);
 private: void __jakt_destroy_variant();
 public:
 Jakt::utility::Span span() const;
+ByteString message() const;
 private:
 JaktError() {};
 };

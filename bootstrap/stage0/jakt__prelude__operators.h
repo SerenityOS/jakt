@@ -6,9 +6,9 @@ enum class Ordering: u8;
 }
 namespace jakt__prelude__operators {
 enum class Ordering : u8 {
-Less = (infallible_integer_cast<u8>((static_cast<u64>(0ULL)))),
-Equal = (infallible_integer_cast<u8>((static_cast<u64>(1ULL)))),
-Greater = (infallible_integer_cast<u8>((static_cast<u64>(2ULL)))),
+Less = static_cast<u8>(static_cast<u8>(0)),
+Equal = static_cast<u8>(static_cast<u8>(1)),
+Greater = static_cast<u8>(static_cast<u8>(2)),
 };
 }
 } // namespace Jakt

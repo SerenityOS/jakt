@@ -395,6 +395,16 @@ T fail_comptime_call()
     return declval<T>();
 }
 
+template<typename T, typename U>
+constexpr static bool lenient_is(U value)
+{
+    using NonRef = RemoveCVReference<U>;
+    if constexpr (IsSame<NonRef, T> || IsSame<NonRef, NonnullRefPtr<T>> || IsSame<NonRef, RefPtr<T>>)
+        return true;
+    else
+        return Jakt::is<T>(forward<U>(value));
+}
+
 template<typename T>
 using UnderlyingClassTypeOf = typename Detail::UnderlyingClassTypeOf<RemoveCVReference<T>>::Type;
 }

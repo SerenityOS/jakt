@@ -18,15 +18,15 @@ JaktInternal::DynamicArray<ByteString> map<ByteString, ByteString>(JaktInternal:
 {
 JaktInternal::DynamicArray<ByteString> us = DynamicArray<ByteString>::create_with({});
 {
-JaktInternal::ArrayIterator<ByteString> _magic = ((input).iterator());
+JaktInternal::ArrayIterator<ByteString> _magic = input.iterator();
 for (;;){
-JaktInternal::Optional<ByteString> const _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
+JaktInternal::Optional<ByteString> const _magic_value = _magic.next();
+if (!_magic_value.has_value()){
 break;
 }
-ByteString t = (_magic_value.value());
+ByteString t = _magic_value.value();
 {
-((us).push(mapper(t)));
+us.push(mapper(t));
 }
 
 }
@@ -40,15 +40,15 @@ JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,Jakt::utility::Span>> 
 {
 JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,Jakt::utility::Span>> us = DynamicArray<JaktInternal::Tuple<ByteString,Jakt::utility::Span>>::create_with({});
 {
-JaktInternal::ArrayIterator<Jakt::parser::ParsedField> _magic = ((input).iterator());
+JaktInternal::ArrayIterator<Jakt::parser::ParsedField> _magic = input.iterator();
 for (;;){
-JaktInternal::Optional<Jakt::parser::ParsedField> const _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
+JaktInternal::Optional<Jakt::parser::ParsedField> const _magic_value = _magic.next();
+if (!_magic_value.has_value()){
 break;
 }
-Jakt::parser::ParsedField t = (_magic_value.value());
+Jakt::parser::ParsedField t = _magic_value.value();
 {
-((us).push(mapper(t)));
+us.push(mapper(t));
 }
 
 }
@@ -62,15 +62,15 @@ JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,Jakt::utility::Span>> 
 {
 JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,Jakt::utility::Span>> us = DynamicArray<JaktInternal::Tuple<ByteString,Jakt::utility::Span>>::create_with({});
 {
-JaktInternal::ArrayIterator<Jakt::parser::ParsedMethod> _magic = ((input).iterator());
+JaktInternal::ArrayIterator<Jakt::parser::ParsedMethod> _magic = input.iterator();
 for (;;){
-JaktInternal::Optional<Jakt::parser::ParsedMethod> const _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
+JaktInternal::Optional<Jakt::parser::ParsedMethod> const _magic_value = _magic.next();
+if (!_magic_value.has_value()){
 break;
 }
-Jakt::parser::ParsedMethod t = (_magic_value.value());
+Jakt::parser::ParsedMethod t = _magic_value.value();
 {
-((us).push(mapper(t)));
+us.push(mapper(t));
 }
 
 }

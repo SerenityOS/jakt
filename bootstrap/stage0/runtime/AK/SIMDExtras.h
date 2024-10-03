@@ -10,13 +10,6 @@
 #include <AK/Concepts.h>
 #include <AK/SIMD.h>
 
-// Functions returning vectors or accepting vector arguments have different calling conventions
-// depending on whether the target architecture supports SSE or not. GCC generates warning "psabi"
-// when compiling for non-SSE architectures. We disable this warning because these functions
-// are static and should never be visible from outside the translation unit that includes this header.
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpsabi"
-
 namespace AK::SIMD {
 
 // SIMD Vector Expansion
@@ -34,38 +27,6 @@ ALWAYS_INLINE static constexpr i32x4 expand4(i32 i)
 ALWAYS_INLINE static constexpr u32x4 expand4(u32 u)
 {
     return u32x4 { u, u, u, u };
-}
-
-// Casting
-
-template<typename TSrc>
-ALWAYS_INLINE static u8x4 to_u8x4(TSrc v)
-{
-    return __builtin_convertvector(v, u8x4);
-}
-
-template<typename TSrc>
-ALWAYS_INLINE static u16x4 to_u16x4(TSrc v)
-{
-    return __builtin_convertvector(v, u16x4);
-}
-
-template<typename TSrc>
-ALWAYS_INLINE static u32x4 to_u32x4(TSrc v)
-{
-    return __builtin_convertvector(v, u32x4);
-}
-
-template<typename TSrc>
-ALWAYS_INLINE static i32x4 to_i32x4(TSrc v)
-{
-    return __builtin_convertvector(v, i32x4);
-}
-
-template<typename TSrc>
-ALWAYS_INLINE static f32x4 to_f32x4(TSrc v)
-{
-    return __builtin_convertvector(v, f32x4);
 }
 
 // Masking
@@ -218,15 +179,15 @@ ALWAYS_INLINE static T shuffle_or_0_impl(T a, Control control, IndexSequence<Idx
     using E = ElementOf<T>;
 
     if constexpr (__has_builtin(__builtin_shuffle)) {
-        // GCC does a very bad job at optimizing the masking, while not recognizing the shuffle idiom
-        // So we jinx its __builtin_shuffle to work with out of bounds indices
-        auto mask = (control >= 0) | (control < N);
-        return __builtin_shuffle(a, control & mask) & ~mask;
+        auto vector = __builtin_shuffle(a, control);
+        for (size_t i = 0; i < N; ++i)
+            vector[i] = control[i] < 0 || control[i] >= N ? 0 : vector[i];
+        return vector;
     }
     // 1. Set all out of bounds values to ~0
     // Note: This is done so that  the optimization mentioned down below works
     // Note: Vector compares result in bitmasks, aka all 1s or all 0s per element
-    control |= ~((control > 0) | (control < N));
+    control |= ~((control >= 0) & (control < N));
     // 2. Selectively set out of bounds values to 0
     // Note: Clang successfully optimizes this to a few instructions on x86-ssse3, GCC does not
     //       Vector Optimizations/Instruction-Selection on ArmV8 seem to not be as powerful as of Clang18
@@ -261,12 +222,11 @@ ALWAYS_INLINE static T byte_reverse_impl(T a, IndexSequence<Idx...>)
     //        Hence this giant conditional
     using BytesVector = Conditional<sizeof(T) == 2, u8x2, Conditional<sizeof(T) == 4, u8x4, Conditional<sizeof(T) == 8, u8x8, Conditional<sizeof(T) == 16, u8x16, Conditional<sizeof(T) == 32, u8x32, void>>>>>;
     static_assert(sizeof(BytesVector) == sizeof(T));
-    // Note: Using __builtin_bit_cast instead of bit_cast to avoid a psabi warning from bit_cast
-    auto tmp = __builtin_shufflevector(
-        __builtin_bit_cast(BytesVector, a),
-        __builtin_bit_cast(BytesVector, a),
-        N - 1 - Idx...);
-    return __builtin_bit_cast(T, tmp);
+    return bit_cast<T>(
+        __builtin_shufflevector(
+            bit_cast<BytesVector>(a),
+            bit_cast<BytesVector>(a),
+            N - 1 - Idx...));
 }
 
 template<SIMDVector T, size_t... Idx>
@@ -327,5 +287,3 @@ ALWAYS_INLINE static T elementwise_byte_reverse(T a)
 }
 
 }
-
-#pragma GCC diagnostic pop

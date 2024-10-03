@@ -7,7 +7,7 @@ template<> f64 u64_to_float<f64>(u64 const number);
 template<>
 f64 u64_to_float<f64>(u64 const number) {
 {
-f64 float_value = static_cast<i64>(0LL);
+f64 float_value = static_cast<f64>(0);
 {
 float_value = number;
 }

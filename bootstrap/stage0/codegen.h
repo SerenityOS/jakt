@@ -25,6 +25,12 @@ bool are_loop_exits_allowed(Jakt::codegen::AllowedControlExits const allowed_con
 
 bool is_return_allowed(Jakt::codegen::AllowedControlExits const allowed_control_exits);
 
+bool pattern_has_bindings(Jakt::types::CheckedMatchPattern const& pattern);
+
+bool case_has_bindings(Jakt::types::CheckedMatchCase const& match_case);
+
+size_t count_match_cases(JaktInternal::DynamicArray<Jakt::types::CheckedMatchCase> const& cases);
+
 }
 namespace codegen {
 struct AllowedControlExits {
@@ -141,20 +147,26 @@ public: void codegen_enum_destructor_body(Jakt::types::CheckedEnum const enum_, 
 public: ErrorOr<void> codegen_debug_description_getter(Jakt::types::CheckedStruct const struct_, bool const is_inline, ByteStringBuilder& output);
 public: ErrorOr<void> codegen_enum_debug_description_getter(Jakt::types::CheckedEnum const enum_, bool const is_inline, ByteStringBuilder& output);
 public: void codegen_ak_formatter(ByteString const name, JaktInternal::DynamicArray<ByteString> const generic_parameter_names, ByteString const template_args, ByteStringBuilder& output);
-public: ErrorOr<void> codegen_expression_and_deref_if_generic_and_needed(NonnullRefPtr<typename Jakt::types::CheckedExpression> const expression, ByteStringBuilder& output);
-public: ErrorOr<void> codegen_expression(NonnullRefPtr<typename Jakt::types::CheckedExpression> const expression, ByteStringBuilder& output, bool const forward_error_with_try);
+public: ErrorOr<void> codegen_expression_and_deref_if_generic_and_needed(NonnullRefPtr<typename Jakt::types::CheckedExpression> const expression, ByteStringBuilder& output, bool const syntactically_self_contained);
+public: ErrorOr<void> codegen_expression(NonnullRefPtr<typename Jakt::types::CheckedExpression> const expression, ByteStringBuilder& output, bool const forward_error_with_try, bool const syntactically_self_contained);
+public: bool expr_codegens_to_this_pointer(NonnullRefPtr<typename Jakt::types::CheckedExpression> const expr) const;
+public: ErrorOr<void> codegen_prefix_unary(NonnullRefPtr<typename Jakt::types::CheckedExpression> const expr, StringView const cpp_operator, ByteStringBuilder& output, bool const syntactically_self_contained);
+public: ErrorOr<void> codegen_postfix_unary(NonnullRefPtr<typename Jakt::types::CheckedExpression> const expr, StringView const cpp_operator, ByteStringBuilder& output, bool const syntactically_self_contained);
 public: ErrorOr<void> codegen_match(NonnullRefPtr<typename Jakt::types::CheckedExpression> const expr, JaktInternal::DynamicArray<Jakt::types::CheckedMatchCase> const match_cases, Jakt::ids::TypeId const type_id, bool const all_variants_constant, ByteStringBuilder& output);
 public: ErrorOr<void> codegen_generic_match(NonnullRefPtr<typename Jakt::types::CheckedExpression> const expr, JaktInternal::DynamicArray<Jakt::types::CheckedMatchCase> const cases, Jakt::ids::TypeId const return_type_id, ByteString const cpp_match_result_type, bool const all_variants_constant, ByteStringBuilder& output);
+public: ErrorOr<void> codegen_generic_pattern_condition(Jakt::types::CheckedMatchPattern const& pattern, bool const is_parenthesized, ByteStringBuilder& output);
 public: ErrorOr<void> codegen_enum_match(Jakt::types::CheckedEnum const enum_, NonnullRefPtr<typename Jakt::types::CheckedExpression> const expr, JaktInternal::DynamicArray<Jakt::types::CheckedMatchCase> const match_cases, Jakt::ids::TypeId const type_id, ByteString const cpp_match_result_type, bool const all_variants_constant, ByteStringBuilder& output);
 public: ErrorOr<void> codegen_match_body(Jakt::types::CheckedMatchBody const body, Jakt::ids::TypeId const return_type_id, ByteStringBuilder& output);
 public: ErrorOr<ByteString> codegen_function_return_type(NonnullRefPtr<Jakt::types::CheckedFunction> const function);
-public: ErrorOr<void> codegen_binary_expression(NonnullRefPtr<typename Jakt::types::CheckedExpression> const expression, Jakt::ids::TypeId const type_id, NonnullRefPtr<typename Jakt::types::CheckedExpression> const lhs, NonnullRefPtr<typename Jakt::types::CheckedExpression> const rhs, Jakt::types::CheckedBinaryOperator const op, ByteStringBuilder& output, bool const forward_error_with_try);
+public: ErrorOr<void> codegen_binary_expression(NonnullRefPtr<typename Jakt::types::CheckedExpression> const expression, Jakt::ids::TypeId const type_id, NonnullRefPtr<typename Jakt::types::CheckedExpression> const lhs, NonnullRefPtr<typename Jakt::types::CheckedExpression> const rhs, Jakt::types::CheckedBinaryOperator const op, ByteStringBuilder& output, bool const forward_error_with_try, bool const syntactically_self_contained);
 public: ErrorOr<void> codegen_unchecked_binary_op(NonnullRefPtr<typename Jakt::types::CheckedExpression> const lhs, NonnullRefPtr<typename Jakt::types::CheckedExpression> const rhs, Jakt::parser::BinaryOperator const op, Jakt::ids::TypeId const type_id, ByteStringBuilder& output);
 public: ErrorOr<void> codegen_checked_binary_op(NonnullRefPtr<typename Jakt::types::CheckedExpression> const lhs, NonnullRefPtr<typename Jakt::types::CheckedExpression> const rhs, Jakt::parser::BinaryOperator const op, Jakt::ids::TypeId const type_id, ByteStringBuilder& output);
 public: ErrorOr<void> codegen_unchecked_binary_op_assignment(NonnullRefPtr<typename Jakt::types::CheckedExpression> const lhs, NonnullRefPtr<typename Jakt::types::CheckedExpression> const rhs, Jakt::parser::BinaryOperator const op, Jakt::ids::TypeId const type_id, ByteStringBuilder& output);
 public: ErrorOr<void> codegen_checked_binary_op_assignment(NonnullRefPtr<typename Jakt::types::CheckedExpression> const lhs, NonnullRefPtr<typename Jakt::types::CheckedExpression> const rhs, Jakt::parser::BinaryOperator const op, Jakt::ids::TypeId const type_id, ByteStringBuilder& output);
-public: ErrorOr<void> codegen_method_call(NonnullRefPtr<typename Jakt::types::CheckedExpression> const expr, Jakt::types::CheckedCall const call, bool const is_optional, ByteStringBuilder& output, bool const forward_error_with_try);
+public: ErrorOr<void> codegen_method_call(NonnullRefPtr<typename Jakt::types::CheckedExpression> const expr, Jakt::types::CheckedCall const call, bool const is_optional, ByteStringBuilder& output, bool const forward_error_with_try, bool const syntactically_self_contained);
+public: ErrorOr<void> codegen_method_call_unwrapped(NonnullRefPtr<typename Jakt::types::CheckedExpression> const expr, Jakt::types::CheckedCall const call, bool const is_optional, ByteStringBuilder& output, bool const syntactically_self_contained);
 public: ErrorOr<void> codegen_call(Jakt::types::CheckedCall const call, ByteStringBuilder& output, bool const forward_error_with_try);
+public: ErrorOr<void> codegen_call_unwrapped(Jakt::types::CheckedCall const call, ByteStringBuilder& output);
 public: ErrorOr<ByteString> codegen_namespace_path(Jakt::types::CheckedCall const call);
 public: ErrorOr<void> codegen_block(Jakt::types::CheckedBlock const block, ByteStringBuilder& output);
 public: ErrorOr<void> codegen_statement(NonnullRefPtr<typename Jakt::types::CheckedStatement> const statement, ByteStringBuilder& output);

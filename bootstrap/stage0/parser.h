@@ -441,6 +441,7 @@ constexpr VariantData() {}
 } as;
 constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ByteString debug_description() const;
 [[nodiscard]] static ArgumentStoreLevel InObject(size_t argument_index);
+[[nodiscard]] static ArgumentStoreLevel InReturnValue();
 [[nodiscard]] static ArgumentStoreLevel InStaticStorage();
 ~ArgumentStoreLevel();
 ArgumentStoreLevel& operator=(ArgumentStoreLevel const &);
@@ -1287,6 +1288,7 @@ Jakt::utility::Span span;
 struct {
 NonnullRefPtr<typename Jakt::parser::ParsedType> base;
 ByteString name;
+JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::parser::ParsedType>> generic_args;
 Jakt::utility::Span span;
 } DependentType;
 constexpr VariantData() {}
@@ -1307,7 +1309,7 @@ constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 
 [[nodiscard]] static NonnullRefPtr<ParsedType> WeakPtr(JaktInternal::Optional<Jakt::parser::ParsedTypeQualifiers> qualifiers, NonnullRefPtr<typename Jakt::parser::ParsedType> inner, Jakt::utility::Span span);
 [[nodiscard]] static NonnullRefPtr<ParsedType> Function(JaktInternal::Optional<Jakt::parser::ParsedTypeQualifiers> qualifiers, JaktInternal::DynamicArray<Jakt::parser::ParsedParameter> params, bool can_throw, NonnullRefPtr<typename Jakt::parser::ParsedType> return_type, Jakt::utility::Span span);
 [[nodiscard]] static NonnullRefPtr<ParsedType> Const(JaktInternal::Optional<Jakt::parser::ParsedTypeQualifiers> qualifiers, NonnullRefPtr<typename Jakt::parser::ParsedExpression> expr, Jakt::utility::Span span);
-[[nodiscard]] static NonnullRefPtr<ParsedType> DependentType(JaktInternal::Optional<Jakt::parser::ParsedTypeQualifiers> qualifiers, NonnullRefPtr<typename Jakt::parser::ParsedType> base, ByteString name, Jakt::utility::Span span);
+[[nodiscard]] static NonnullRefPtr<ParsedType> DependentType(JaktInternal::Optional<Jakt::parser::ParsedTypeQualifiers> qualifiers, NonnullRefPtr<typename Jakt::parser::ParsedType> base, ByteString name, JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::parser::ParsedType>> generic_args, Jakt::utility::Span span);
 [[nodiscard]] static NonnullRefPtr<ParsedType> Empty(JaktInternal::Optional<Jakt::parser::ParsedTypeQualifiers> qualifiers);
 ~ParsedType();
 ParsedType& operator=(ParsedType const &);
