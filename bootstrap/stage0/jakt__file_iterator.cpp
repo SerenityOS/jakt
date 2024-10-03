@@ -2,7 +2,6 @@
 extern "C" __cdecl int SetConsoleOutputCP(unsigned int code_page);
 #endif
 #include "jakt__file_iterator.h"
-#include "jakt__prelude__operators.h"
 namespace Jakt {
 namespace jakt__file_iterator {
 ByteString Jakt::jakt__file_iterator::RecursiveFileIterator::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("RecursiveFileIterator("sv);{
@@ -23,19 +22,11 @@ return Jakt::jakt__file_iterator::RecursiveFileIterator::__jakt_create(extension
 
 ErrorOr<JaktInternal::Optional<Jakt::jakt__path::Path>> Jakt::jakt__file_iterator::RecursiveFileIterator::next() {
 {
-if ((!(((((*this).current_directory)).has_value())))){
-if ([](size_t const& self, size_t rhs) -> bool {{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> Jakt::jakt__prelude__operators::Ordering {{
-return (infallible_enum_cast<Jakt::jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
-}
-}
-(self,rhs))))) == (static_cast<u8>(2)));
-}
-}
-(((((*this).directory_list)).size()),static_cast<size_t>(0ULL))){
-Jakt::jakt__path::Path const path = (((((*this).directory_list)).pop()).value());
-(((*this).current_directory) = TRY((Jakt::jakt__platform__unknown_fs::DirectoryIterator::from_path(path))));
-if ((!(((((*this).current_directory)).has_value())))){
+if (!this->current_directory.has_value()){
+if (this->directory_list.size() > static_cast<size_t>(0ULL)){
+Jakt::jakt__path::Path const path = this->directory_list.pop().value();
+this->current_directory = TRY((Jakt::jakt__platform__unknown_fs::DirectoryIterator::from_path(path)));
+if (!this->current_directory.has_value()){
 return path;
 }
 }
@@ -44,24 +35,24 @@ return JaktInternal::OptionalNone();
 }
 
 }
-JaktInternal::Optional<JaktInternal::Tuple<Jakt::jakt__path::Path,bool>> const next = TRY(((((((*this).current_directory).value()))->next())));
-if (((next).has_value())){
-Jakt::jakt__path::Path new_path = ((TRY(((((((*this).current_directory).value()))->get_path())))).join((((((next.value())).template get<0>())).to_string())));
-if ((((next.value())).template get<1>())){
-((((*this).directory_list)).push(new_path));
-return ((((*this).next())));
+JaktInternal::Optional<JaktInternal::Tuple<Jakt::jakt__path::Path,bool>> const next = TRY((this->current_directory.value()->next()));
+if (next.has_value()){
+Jakt::jakt__path::Path new_path = TRY((this->current_directory.value()->get_path())).join(next.value().template get<0>().to_string());
+if (next.value().template get<1>()){
+this->directory_list.push(new_path);
+return this->next();
 }
-if (((((new_path).extension())) == (((*this).extension)))){
+if (new_path.extension() == this->extension){
 return new_path;
 }
 else {
-return ((((*this).next())));
+return this->next();
 }
 
 }
-else if ((!(((((*this).directory_list)).is_empty())))){
-(((*this).current_directory) = TRY((Jakt::jakt__platform__unknown_fs::DirectoryIterator::from_path((((((*this).directory_list)).pop()).value())))));
-return ((((*this).next())));
+else if (!this->directory_list.is_empty()){
+this->current_directory = TRY((Jakt::jakt__platform__unknown_fs::DirectoryIterator::from_path(this->directory_list.pop().value())));
+return this->next();
 }
 return JaktInternal::OptionalNone();
 }

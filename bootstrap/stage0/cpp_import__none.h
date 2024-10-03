@@ -11,7 +11,7 @@ struct CppImportProcessor;
 namespace cpp_import__none {
 struct CppImportProcessor {
   public:
-public: static Jakt::cpp_import__none::CppImportProcessor create();
+public: static Jakt::cpp_import__none::CppImportProcessor create(bool const debug_print);
 public: ErrorOr<Jakt::ids::ScopeId> process_cpp_import(NonnullRefPtr<Jakt::types::CheckedProgram>& program, Jakt::jakt__path::Path const import_path, Jakt::ids::ScopeId const scope_id, bool const is_c, JaktInternal::Dictionary<ByteString,ByteString> const defines);
 public: CppImportProcessor();
 

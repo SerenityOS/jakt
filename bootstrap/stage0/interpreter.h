@@ -29,15 +29,15 @@ ErrorOr<NonnullRefPtr<typename Jakt::types::CheckedExpression>> value_to_checked
 }
 namespace interpreter {
 enum class InterpretError : i32 {
-CallToExternalFunction = (static_cast<i32>((static_cast<i32>(42)))),
-MismatchingArguments = (infallible_integer_cast<i32>((static_cast<u64>(43ULL)))),
-InvalidThisArgument = (infallible_integer_cast<i32>((static_cast<u64>(44ULL)))),
-InvalidOperation = (infallible_integer_cast<i32>((static_cast<u64>(45ULL)))),
-InvalidType = (infallible_integer_cast<i32>((static_cast<u64>(46ULL)))),
-UnknownVariable = (infallible_integer_cast<i32>((static_cast<u64>(47ULL)))),
-Unimplemented = (infallible_integer_cast<i32>((static_cast<u64>(48ULL)))),
-UnwrapOptionalNone = (infallible_integer_cast<i32>((static_cast<u64>(49ULL)))),
-InvalidCharacterConstant = (infallible_integer_cast<i32>((static_cast<u64>(50ULL)))),
+CallToExternalFunction = static_cast<i32>(static_cast<i32>(42)),
+MismatchingArguments = static_cast<i32>(static_cast<i32>(43)),
+InvalidThisArgument = static_cast<i32>(static_cast<i32>(44)),
+InvalidOperation = static_cast<i32>(static_cast<i32>(45)),
+InvalidType = static_cast<i32>(static_cast<i32>(46)),
+UnknownVariable = static_cast<i32>(static_cast<i32>(47)),
+Unimplemented = static_cast<i32>(static_cast<i32>(48)),
+UnwrapOptionalNone = static_cast<i32>(static_cast<i32>(49)),
+InvalidCharacterConstant = static_cast<i32>(static_cast<i32>(50)),
 };
 struct Deferred {
 u8 __jakt_variant_index = 0;
@@ -163,7 +163,7 @@ public: bool get_prelude_function(Jakt::ids::ScopeId const scope_id) const;
 public: Jakt::ids::TypeId find_or_add_type_id(NonnullRefPtr<typename Jakt::types::Type> const type);
 public: ErrorOr<Jakt::interpreter::StatementResult> call_prelude_function(ByteString const prelude_function, JaktInternal::DynamicArray<Jakt::types::ResolvedNamespace> const namespace_, JaktInternal::Optional<Jakt::types::Value> const this_argument, JaktInternal::DynamicArray<Jakt::types::Value> const arguments, Jakt::utility::Span const call_span, JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId> const type_bindings, JaktInternal::Optional<Jakt::ids::ScopeId> const runtime_scope_id);
 private: ErrorOr<Jakt::interpreter::StatementResult> call_compiler_interface_function(NonnullRefPtr<Jakt::types::CheckedFunction> const function, JaktInternal::DynamicArray<Jakt::types::Value> const arguments, Jakt::utility::Span const call_span, JaktInternal::Optional<Jakt::ids::ScopeId> const scope_id);
-public: ErrorOr<Jakt::interpreter::ExecutionResult> execute(Jakt::ids::FunctionId const function_to_run_id, JaktInternal::Optional<JaktInternal::DynamicArray<Jakt::types::ResolvedNamespace>> namespace_, JaktInternal::Optional<Jakt::types::Value> const this_argument, JaktInternal::DynamicArray<Jakt::types::Value> const arguments, Jakt::utility::Span const call_span, JaktInternal::Optional<NonnullRefPtr<Jakt::interpreter::InterpreterScope>> const invocation_scope);
+public: ErrorOr<Jakt::interpreter::ExecutionResult> execute(Jakt::ids::FunctionId const function_to_run_id, JaktInternal::Optional<JaktInternal::DynamicArray<Jakt::types::ResolvedNamespace>> namespace_, JaktInternal::Optional<Jakt::types::Value> const this_argument, JaktInternal::DynamicArray<Jakt::types::Value> const arguments, Jakt::utility::Span const call_span, JaktInternal::Optional<NonnullRefPtr<Jakt::interpreter::InterpreterScope>> const invocation_scope, bool const is_main);
 public: ErrorOr<Jakt::interpreter::StatementResult> execute_statement(NonnullRefPtr<typename Jakt::types::CheckedStatement> const statement, NonnullRefPtr<Jakt::interpreter::InterpreterScope> scope, Jakt::utility::Span const call_span);
 public: ErrorOr<Jakt::interpreter::StatementResult> execute_block(Jakt::types::CheckedBlock const block, NonnullRefPtr<Jakt::interpreter::InterpreterScope> scope, Jakt::utility::Span const call_span);
 public: ErrorOr<void> error(ByteString const message, Jakt::utility::Span const span);
@@ -183,6 +183,7 @@ public: ErrorOr<Jakt::types::Value> string_value(ByteString const string, Jakt::
 public: ErrorOr<ByteString> string_from_value(Jakt::types::Value const value);
 public: ErrorOr<Jakt::types::Value> reflect_methods(Jakt::ids::ScopeId const scope_id, Jakt::utility::Span const span, NonnullRefPtr<Jakt::interpreter::InterpreterScope> const interpreter_scope);
 public: ErrorOr<JaktInternal::DynamicArray<Jakt::types::Value>> reflect_fields(JaktInternal::DynamicArray<Jakt::ids::VarId> const fields, Jakt::utility::Span const span, NonnullRefPtr<Jakt::interpreter::InterpreterScope> const scope);
+public: ErrorOr<JaktInternal::DynamicArray<Jakt::types::Value>> reflect_value_enum_variants(Jakt::types::CheckedEnum const subject_enum, Jakt::utility::Span const span, NonnullRefPtr<Jakt::interpreter::InterpreterScope> const scope);
 public: ErrorOr<JaktInternal::DynamicArray<Jakt::types::Value>> reflect_sum_enum_variants(Jakt::types::CheckedEnum const subject_enum, Jakt::utility::Span const span, NonnullRefPtr<Jakt::interpreter::InterpreterScope> const scope);
 public: ErrorOr<Jakt::types::Value> reflect_type(Jakt::ids::TypeId const type_id, Jakt::utility::Span const span, NonnullRefPtr<Jakt::interpreter::InterpreterScope> const scope);
 public: protected:

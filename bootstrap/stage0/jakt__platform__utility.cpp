@@ -3,43 +3,34 @@ extern "C" __cdecl int SetConsoleOutputCP(unsigned int code_page);
 #endif
 #include "jakt__platform__utility.h"
 #include "jakt__arguments.h"
-#include "jakt__prelude__operators.h"
 namespace Jakt {
 namespace jakt__platform__utility {
 ErrorOr<ByteString> join(JaktInternal::DynamicArray<ByteString> const strings,ByteString const separator) {
 {
-ByteString output = (ByteString::from_utf8_without_validation(""sv));
+ByteString output = ByteString::from_utf8_without_validation(""sv);
 size_t i = static_cast<size_t>(0ULL);
 {
-JaktInternal::ArrayIterator<ByteString> _magic = ((strings).iterator());
+JaktInternal::ArrayIterator<ByteString> _magic = strings.iterator();
 for (;;){
-JaktInternal::Optional<ByteString> const _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
+JaktInternal::Optional<ByteString> const _magic_value = _magic.next();
+if (!_magic_value.has_value()){
 break;
 }
-ByteString s = (_magic_value.value());
+ByteString s = _magic_value.value();
 {
 [](ByteString& self, ByteString rhs) -> void {{
-(self = ((self) + (rhs)));
+self = (self + rhs);
 }
 }
 (output,s);
-if ([](size_t const& self, size_t rhs) -> bool {{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> Jakt::jakt__prelude__operators::Ordering {{
-return (infallible_enum_cast<Jakt::jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
-}
-}
-(self,rhs))))) == (static_cast<u8>(0)));
-}
-}
-(i,JaktInternal::checked_sub(((strings).size()),static_cast<size_t>(1ULL)))){
+if (i < JaktInternal::checked_sub(strings.size(),static_cast<size_t>(1ULL))){
 [](ByteString& self, ByteString rhs) -> void {{
-(self = ((self) + (rhs)));
+self = (self + rhs);
 }
 }
 (output,separator);
 }
-((i++));
+i++;
 }
 
 }

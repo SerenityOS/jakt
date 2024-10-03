@@ -3,7 +3,6 @@ extern "C" __cdecl int SetConsoleOutputCP(unsigned int code_page);
 #endif
 #include "build.h"
 #include "jakt__arguments.h"
-#include "jakt__prelude__operators.h"
 #include "jakt__prelude__static_array.h"
 namespace Jakt {
 namespace build {
@@ -27,28 +26,20 @@ return Jakt::build::ParallelExecutionPool(Dictionary<size_t, Jakt::jakt__platfor
 
 ErrorOr<size_t> Jakt::build::ParallelExecutionPool::run(JaktInternal::DynamicArray<ByteString> const args) {
 {
-if ([](size_t const& self, size_t rhs) -> bool {{
-return (((infallible_integer_cast<u8>(([](size_t const& self, size_t rhs) -> Jakt::jakt__prelude__operators::Ordering {{
-return (infallible_enum_cast<Jakt::jakt__prelude__operators::Ordering>((JaktInternal::compare(self,rhs))));
-}
-}
-(self,rhs))))) != (static_cast<u8>(0)));
-}
-}
-(((((*this).pids)).size()),((*this).max_concurrent))){
-TRY((((*this).wait_for_any_job_to_complete())));
+if (this->pids.size() >= this->max_concurrent){
+TRY((this->wait_for_any_job_to_complete()));
 }
 Jakt::jakt__platform__unknown_process::Process const process = TRY((Jakt::jakt__platform__unknown_process::start_background_process(args)));
-size_t const id = ((((*this).pid_index)++));
-((((*this).pids)).set(id,process));
+size_t const id = this->pid_index++;
+this->pids.set(id,process);
 return id;
 }
 }
 
 JaktInternal::Optional<Jakt::jakt__platform__unknown_process::ExitPollResult> Jakt::build::ParallelExecutionPool::status(size_t const id) const {
 {
-if (((((*this).completed)).contains(id))){
-return ((((*this).completed))[id]);
+if (this->completed.contains(id)){
+return this->completed.operator[](id);
 }
 return JaktInternal::OptionalNone();
 }
@@ -56,38 +47,38 @@ return JaktInternal::OptionalNone();
 
 ErrorOr<void> Jakt::build::ParallelExecutionPool::wait_for_any_job_to_complete() {
 {
-JaktInternal::Tuple<JaktInternal::Optional<size_t>,Jakt::jakt__platform__unknown_process::ExitPollResult> const finished_pid_finished_status_ = TRY((Jakt::jakt__platform__unknown_process::wait_for_some_set_of_processes_that_at_least_includes(((((*this).pids))))));
-JaktInternal::Optional<size_t> const finished_pid = ((finished_pid_finished_status_).template get<0>());
-Jakt::jakt__platform__unknown_process::ExitPollResult const finished_status = ((finished_pid_finished_status_).template get<1>());
+JaktInternal::Tuple<JaktInternal::Optional<size_t>,Jakt::jakt__platform__unknown_process::ExitPollResult> const finished_pid_finished_status_ = TRY((Jakt::jakt__platform__unknown_process::wait_for_some_set_of_processes_that_at_least_includes(this->pids)));
+JaktInternal::Optional<size_t> const finished_pid = finished_pid_finished_status_.template get<0>();
+Jakt::jakt__platform__unknown_process::ExitPollResult const finished_status = finished_pid_finished_status_.template get<1>();
 
 JaktInternal::Dictionary<size_t,Jakt::jakt__platform__unknown_process::ExitPollResult> pids_to_remove = Dictionary<size_t, Jakt::jakt__platform__unknown_process::ExitPollResult>::create_with_entries({});
-if (((finished_pid).has_value())){
-((pids_to_remove).set((finished_pid.value()),finished_status));
+if (finished_pid.has_value()){
+pids_to_remove.set(finished_pid.value(),finished_status);
 }
 {
-JaktInternal::DictionaryIterator<size_t,Jakt::jakt__platform__unknown_process::Process> _magic = ((((*this).pids)).iterator());
+JaktInternal::DictionaryIterator<size_t,Jakt::jakt__platform__unknown_process::Process> _magic = this->pids.iterator();
 for (;;){
-JaktInternal::Optional<JaktInternal::Tuple<size_t,Jakt::jakt__platform__unknown_process::Process>> const _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
+JaktInternal::Optional<JaktInternal::Tuple<size_t,Jakt::jakt__platform__unknown_process::Process>> const _magic_value = _magic.next();
+if (!_magic_value.has_value()){
 break;
 }
-JaktInternal::Tuple<size_t,Jakt::jakt__platform__unknown_process::Process> index__process__ = (_magic_value.value());
+JaktInternal::Tuple<size_t,Jakt::jakt__platform__unknown_process::Process> index__process__ = _magic_value.value();
 {
 JaktInternal::Tuple<size_t,Jakt::jakt__platform__unknown_process::Process> const jakt__index__process__ = index__process__;
-size_t const index = ((jakt__index__process__).template get<0>());
-Jakt::jakt__platform__unknown_process::Process const process = ((jakt__index__process__).template get<1>());
+size_t const index = jakt__index__process__.template get<0>();
+Jakt::jakt__platform__unknown_process::Process const process = jakt__index__process__.template get<1>();
 
 JaktInternal::Optional<Jakt::jakt__platform__unknown_process::ExitPollResult> const status = ({ Optional<JaktInternal::Optional<Jakt::jakt__platform__unknown_process::ExitPollResult>> __jakt_var_0;
-auto __jakt_var_1 = [&]() -> ErrorOr<JaktInternal::Optional<Jakt::jakt__platform__unknown_process::ExitPollResult>> { return ((Jakt::jakt__platform__unknown_process::poll_process_exit(((process))))); }();
+auto __jakt_var_1 = [&]() -> ErrorOr<JaktInternal::Optional<Jakt::jakt__platform__unknown_process::ExitPollResult>> { return Jakt::jakt__platform__unknown_process::poll_process_exit(process); }();
 if (__jakt_var_1.is_error()) {{
-((pids_to_remove).set(index,finished_status));
+pids_to_remove.set(index,finished_status);
 continue;
 }
 } else {__jakt_var_0 = __jakt_var_1.release_value();
 }
 __jakt_var_0.release_value(); });
-if (((status).has_value())){
-((pids_to_remove).set(index,(status.value())));
+if (status.has_value()){
+pids_to_remove.set(index,status.value());
 }
 }
 
@@ -95,20 +86,20 @@ if (((status).has_value())){
 }
 
 {
-JaktInternal::DictionaryIterator<size_t,Jakt::jakt__platform__unknown_process::ExitPollResult> _magic = ((pids_to_remove).iterator());
+JaktInternal::DictionaryIterator<size_t,Jakt::jakt__platform__unknown_process::ExitPollResult> _magic = pids_to_remove.iterator();
 for (;;){
-JaktInternal::Optional<JaktInternal::Tuple<size_t,Jakt::jakt__platform__unknown_process::ExitPollResult>> const _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
+JaktInternal::Optional<JaktInternal::Tuple<size_t,Jakt::jakt__platform__unknown_process::ExitPollResult>> const _magic_value = _magic.next();
+if (!_magic_value.has_value()){
 break;
 }
-JaktInternal::Tuple<size_t,Jakt::jakt__platform__unknown_process::ExitPollResult> index__status__ = (_magic_value.value());
+JaktInternal::Tuple<size_t,Jakt::jakt__platform__unknown_process::ExitPollResult> index__status__ = _magic_value.value();
 {
 JaktInternal::Tuple<size_t,Jakt::jakt__platform__unknown_process::ExitPollResult> const jakt__index__status__ = index__status__;
-size_t const index = ((jakt__index__status__).template get<0>());
-Jakt::jakt__platform__unknown_process::ExitPollResult const status = ((jakt__index__status__).template get<1>());
+size_t const index = jakt__index__status__.template get<0>();
+Jakt::jakt__platform__unknown_process::ExitPollResult const status = jakt__index__status__.template get<1>();
 
-((((*this).pids)).remove(index));
-((((*this).completed)).set(index,status));
+this->pids.remove(index);
+this->completed.set(index,status);
 }
 
 }
@@ -120,8 +111,8 @@ return {};
 
 ErrorOr<void> Jakt::build::ParallelExecutionPool::wait_for_all_jobs_to_complete() {
 {
-while ((!(((((*this).pids)).is_empty())))){
-TRY((((*this).wait_for_any_job_to_complete())));
+while (!this->pids.is_empty()){
+TRY((this->wait_for_any_job_to_complete()));
 }
 }
 return {};
@@ -130,19 +121,19 @@ return {};
 ErrorOr<void> Jakt::build::ParallelExecutionPool::kill_all() {
 {
 {
-JaktInternal::DictionaryIterator<size_t,Jakt::jakt__platform__unknown_process::Process> _magic = ((((*this).pids)).iterator());
+JaktInternal::DictionaryIterator<size_t,Jakt::jakt__platform__unknown_process::Process> _magic = this->pids.iterator();
 for (;;){
-JaktInternal::Optional<JaktInternal::Tuple<size_t,Jakt::jakt__platform__unknown_process::Process>> const _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
+JaktInternal::Optional<JaktInternal::Tuple<size_t,Jakt::jakt__platform__unknown_process::Process>> const _magic_value = _magic.next();
+if (!_magic_value.has_value()){
 break;
 }
-JaktInternal::Tuple<size_t,Jakt::jakt__platform__unknown_process::Process> ___process__ = (_magic_value.value());
+JaktInternal::Tuple<size_t,Jakt::jakt__platform__unknown_process::Process> ___process__ = _magic_value.value();
 {
 JaktInternal::Tuple<size_t,Jakt::jakt__platform__unknown_process::Process> const jakt_____process__ = ___process__;
-size_t const _ = ((jakt_____process__).template get<0>());
-Jakt::jakt__platform__unknown_process::Process const process = ((jakt_____process__).template get<1>());
+size_t const _ = jakt_____process__.template get<0>();
+Jakt::jakt__platform__unknown_process::Process const process = jakt_____process__.template get<1>();
 
-TRY((Jakt::jakt__platform__unknown_process::forcefully_kill_process(((process)))));
+TRY((Jakt::jakt__platform__unknown_process::forcefully_kill_process(process)));
 }
 
 }
@@ -174,30 +165,30 @@ ErrorOr<void> Jakt::build::Builder::build_all(Jakt::jakt__path::Path const binar
 {
 JaktInternal::Set<size_t> ids = Set<size_t>::create_with_values({});
 {
-JaktInternal::ArrayIterator<ByteString> _magic = ((((*this).files_to_compile)).iterator());
+JaktInternal::ArrayIterator<ByteString> _magic = this->files_to_compile.iterator();
 for (;;){
-JaktInternal::Optional<ByteString> const _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
+JaktInternal::Optional<ByteString> const _magic_value = _magic.next();
+if (!_magic_value.has_value()){
 break;
 }
-ByteString file_name = (_magic_value.value());
+ByteString file_name = _magic_value.value();
 {
 {
-JaktInternal::DictionaryIterator<size_t,Jakt::jakt__platform__unknown_process::ExitPollResult> _magic = ((((((*this).pool)).completed)).iterator());
+JaktInternal::DictionaryIterator<size_t,Jakt::jakt__platform__unknown_process::ExitPollResult> _magic = this->pool.completed.iterator();
 for (;;){
-JaktInternal::Optional<JaktInternal::Tuple<size_t,Jakt::jakt__platform__unknown_process::ExitPollResult>> const _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
+JaktInternal::Optional<JaktInternal::Tuple<size_t,Jakt::jakt__platform__unknown_process::ExitPollResult>> const _magic_value = _magic.next();
+if (!_magic_value.has_value()){
 break;
 }
-JaktInternal::Tuple<size_t,Jakt::jakt__platform__unknown_process::ExitPollResult> id__exit_result__ = (_magic_value.value());
+JaktInternal::Tuple<size_t,Jakt::jakt__platform__unknown_process::ExitPollResult> id__exit_result__ = _magic_value.value();
 {
 JaktInternal::Tuple<size_t,Jakt::jakt__platform__unknown_process::ExitPollResult> const jakt__id__exit_result__ = id__exit_result__;
-size_t const id = ((jakt__id__exit_result__).template get<0>());
-Jakt::jakt__platform__unknown_process::ExitPollResult const exit_result = ((jakt__id__exit_result__).template get<1>());
+size_t const id = jakt__id__exit_result__.template get<0>();
+Jakt::jakt__platform__unknown_process::ExitPollResult const exit_result = jakt__id__exit_result__.template get<1>();
 
-if (((((exit_result).exit_code)) != (static_cast<i32>(0)))){
-warnln((StringView::from_string_literal("Error: Compilation failed"sv)));
-TRY((((((*this).pool)).kill_all())));
+if (exit_result.exit_code != static_cast<i32>(0)){
+warnln(StringView::from_string_literal("Error: Compilation failed"sv));
+TRY((this->pool.kill_all()));
 return Error::from_errno(static_cast<i32>(1));
 }
 }
@@ -205,33 +196,33 @@ return Error::from_errno(static_cast<i32>(1));
 }
 }
 
-ByteString const built_object = ((((binary_dir).join(((TRY((((Jakt::jakt__path::Path::from_string(file_name)).replace_extension((ByteString::from_utf8_without_validation("o"sv))))))).to_string())))).to_string());
-((((*this).linked_files)).push(built_object));
-JaktInternal::DynamicArray<ByteString> const args = TRY((compiler_invocation(((((binary_dir).join(file_name))).to_string()),built_object)));
-size_t const id = TRY((((((*this).pool)).run(args))));
-((ids).add(id));
-warnln((StringView::from_string_literal("{:c}[2LBuilding: {}/{} ({})"sv)),static_cast<i64>(27LL),((ids).size()),((((*this).files_to_compile)).size()),file_name);
+ByteString const built_object = binary_dir.join(TRY((Jakt::jakt__path::Path::from_string(file_name).replace_extension(ByteString::from_utf8_without_validation("o"sv)))).to_string()).to_string();
+this->linked_files.push(built_object);
+JaktInternal::DynamicArray<ByteString> const args = TRY((compiler_invocation(binary_dir.join(file_name).to_string(),built_object)));
+size_t const id = TRY((this->pool.run(args)));
+ids.add(id);
+warnln(StringView::from_string_literal("{:c}[2LBuilding: {}/{} ({})"sv),static_cast<i64>(27LL),ids.size(),this->files_to_compile.size(),file_name);
 }
 
 }
 }
 
-TRY((((((*this).pool)).wait_for_all_jobs_to_complete())));
+TRY((this->pool.wait_for_all_jobs_to_complete()));
 {
-JaktInternal::DictionaryIterator<size_t,Jakt::jakt__platform__unknown_process::ExitPollResult> _magic = ((((((*this).pool)).completed)).iterator());
+JaktInternal::DictionaryIterator<size_t,Jakt::jakt__platform__unknown_process::ExitPollResult> _magic = this->pool.completed.iterator();
 for (;;){
-JaktInternal::Optional<JaktInternal::Tuple<size_t,Jakt::jakt__platform__unknown_process::ExitPollResult>> const _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
+JaktInternal::Optional<JaktInternal::Tuple<size_t,Jakt::jakt__platform__unknown_process::ExitPollResult>> const _magic_value = _magic.next();
+if (!_magic_value.has_value()){
 break;
 }
-JaktInternal::Tuple<size_t,Jakt::jakt__platform__unknown_process::ExitPollResult> id__exit_result__ = (_magic_value.value());
+JaktInternal::Tuple<size_t,Jakt::jakt__platform__unknown_process::ExitPollResult> id__exit_result__ = _magic_value.value();
 {
 JaktInternal::Tuple<size_t,Jakt::jakt__platform__unknown_process::ExitPollResult> const jakt__id__exit_result__ = id__exit_result__;
-size_t const id = ((jakt__id__exit_result__).template get<0>());
-Jakt::jakt__platform__unknown_process::ExitPollResult const exit_result = ((jakt__id__exit_result__).template get<1>());
+size_t const id = jakt__id__exit_result__.template get<0>();
+Jakt::jakt__platform__unknown_process::ExitPollResult const exit_result = jakt__id__exit_result__.template get<1>();
 
-if (((((exit_result).exit_code)) != (static_cast<i32>(0)))){
-warnln((StringView::from_string_literal("Error: Compilation failed"sv)));
+if (exit_result.exit_code != static_cast<i32>(0)){
+warnln(StringView::from_string_literal("Error: Compilation failed"sv));
 return Error::from_errno(static_cast<i32>(1));
 }
 }
@@ -239,7 +230,7 @@ return Error::from_errno(static_cast<i32>(1));
 }
 }
 
-(((*this).files_to_compile) = DynamicArray<ByteString>::create_with({}));
+this->files_to_compile = DynamicArray<ByteString>::create_with({});
 }
 return {};
 }
@@ -248,38 +239,34 @@ ErrorOr<void> Jakt::build::Builder::link_into_archive(ByteString const archiver,
 {
 JaktInternal::DynamicArray<ByteString> args = DynamicArray<ByteString>::create_with({archiver, ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<void>> {
-auto __jakt_enum_value = (((extra_arguments).size()));
-if (__jakt_enum_value == static_cast<size_t>(0ULL)) {
-return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("cr"sv)));
-}
-else {
-return JaktInternal::ExplicitValue((ByteString::from_utf8_without_validation("crT"sv)));
-}
-}());
+auto __jakt_enum_value = (extra_arguments.size());
+if (__jakt_enum_value == static_cast<size_t>(0ULL)) {return JaktInternal::ExplicitValue(ByteString::from_utf8_without_validation("cr"sv));
+}else {return JaktInternal::ExplicitValue(ByteString::from_utf8_without_validation("crT"sv));
+}}());
     if (_jakt_value.is_return())
         return _jakt_value.release_return();
     _jakt_value.release_value();
 }), archive_filename});
 {
-JaktInternal::ArrayIterator<ByteString> _magic = ((((*this).linked_files)).iterator());
+JaktInternal::ArrayIterator<ByteString> _magic = this->linked_files.iterator();
 for (;;){
-JaktInternal::Optional<ByteString> const _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
+JaktInternal::Optional<ByteString> const _magic_value = _magic.next();
+if (!_magic_value.has_value()){
 break;
 }
-ByteString file = (_magic_value.value());
+ByteString file = _magic_value.value();
 {
-((args).push(file));
+args.push(file);
 }
 
 }
 }
 
-((args).push_values(((extra_arguments))));
-size_t const id = TRY((((((*this).pool)).run(args))));
-TRY((((((*this).pool)).wait_for_all_jobs_to_complete())));
-if ((((((((((*this).pool)).status(id)).value())).exit_code)) != (static_cast<i32>(0)))){
-warnln((StringView::from_string_literal("Error: Linking failed"sv)));
+args.push_values(extra_arguments);
+size_t const id = TRY((this->pool.run(args)));
+TRY((this->pool.wait_for_all_jobs_to_complete()));
+if (this->pool.status(id).value().exit_code != static_cast<i32>(0)){
+warnln(StringView::from_string_literal("Error: Linking failed"sv));
 return Error::from_errno(static_cast<i32>(1));
 }
 }
@@ -288,41 +275,41 @@ return {};
 
 ErrorOr<void> Jakt::build::Builder::link_into_executable(ByteString const cxx_compiler_path,ByteString const output_filename,JaktInternal::DynamicArray<ByteString> const extra_arguments) {
 {
-JaktInternal::DynamicArray<ByteString> args = DynamicArray<ByteString>::create_with({cxx_compiler_path, (ByteString::from_utf8_without_validation("-o"sv)), output_filename});
+JaktInternal::DynamicArray<ByteString> args = DynamicArray<ByteString>::create_with({cxx_compiler_path, ByteString::from_utf8_without_validation("-o"sv), output_filename});
 {
-JaktInternal::ArrayIterator<ByteString> _magic = ((((*this).linked_files)).iterator());
+JaktInternal::ArrayIterator<ByteString> _magic = this->linked_files.iterator();
 for (;;){
-JaktInternal::Optional<ByteString> const _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
+JaktInternal::Optional<ByteString> const _magic_value = _magic.next();
+if (!_magic_value.has_value()){
 break;
 }
-ByteString file = (_magic_value.value());
+ByteString file = _magic_value.value();
 {
-((args).push(file));
+args.push(file);
 }
 
 }
 }
 
 {
-JaktInternal::ArrayIterator<ByteString> _magic = ((extra_arguments).iterator());
+JaktInternal::ArrayIterator<ByteString> _magic = extra_arguments.iterator();
 for (;;){
-JaktInternal::Optional<ByteString> const _magic_value = ((_magic).next());
-if ((!(((_magic_value).has_value())))){
+JaktInternal::Optional<ByteString> const _magic_value = _magic.next();
+if (!_magic_value.has_value()){
 break;
 }
-ByteString arg = (_magic_value.value());
+ByteString arg = _magic_value.value();
 {
-((args).push(arg));
+args.push(arg);
 }
 
 }
 }
 
-size_t const id = TRY((((((*this).pool)).run(args))));
-TRY((((((*this).pool)).wait_for_all_jobs_to_complete())));
-if ((((((((((*this).pool)).status(id)).value())).exit_code)) != (static_cast<i32>(0)))){
-warnln((StringView::from_string_literal("Error: Linking failed"sv)));
+size_t const id = TRY((this->pool.run(args)));
+TRY((this->pool.wait_for_all_jobs_to_complete()));
+if (this->pool.status(id).value().exit_code != static_cast<i32>(0)){
+warnln(StringView::from_string_literal("Error: Linking failed"sv));
 return Error::from_errno(static_cast<i32>(1));
 }
 }

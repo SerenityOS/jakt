@@ -148,6 +148,8 @@ private:
             return { m_awaiter };
         }
 
+        void unhandled_exception() = delete;
+
         std::coroutine_handle<> m_awaiter;
         Coroutine* m_coroutine { nullptr };
     };
@@ -190,7 +192,8 @@ T must_sync(Coroutine<ErrorOr<T>>&& coroutine)
     VERIFY(coroutine.await_ready());
     auto&& object = coroutine.await_resume();
     VERIFY(!object.is_error());
-    return object.release_value();
+    if constexpr (!IsSame<T, void>)
+        return object.release_value();
 }
 
 #ifndef AK_COROUTINE_DESTRUCTION_BROKEN
