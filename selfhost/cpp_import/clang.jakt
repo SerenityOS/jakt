@@ -277,12 +277,14 @@ class CppImportProcessor {
     index: CXIndex
     cpp_struct_cache: [String:StructId]
     cpp_type_cache: [HashableCursor:TypeId]
+    debug_print: bool
 
-    public fn create() throws -> CppImportProcessor {
+    public fn create(debug_print: bool) throws -> CppImportProcessor {
         return CppImportProcessor(
             index: clang_createIndex(excludeDeclarationsFromPCH: false, displayDiagnostics: true)
             cpp_struct_cache: [:]
             cpp_type_cache: [:]
+            debug_print
         )
     }
 
@@ -356,11 +358,13 @@ class CppImportProcessor {
         anon cursor: CXCursor
     ) throws -> Value {
         if not clang_isExpression(clang_getCursorKind(cursor)) {
-            eprintln(
-                "[ICE] Const type input '{}' is not an expression, it's a {}"
-                name_from(cursor)
-                string_from(clang_getCursorKindSpelling(clang_getCursorKind(cursor)))
-            )
+            if .debug_print {
+                eprintln(
+                    "[ICE] Const type input '{}' is not an expression, it's a {}"
+                    name_from(cursor)
+                    string_from(clang_getCursorKindSpelling(clang_getCursorKind(cursor)))
+                )
+            }
             return Value(
                 impl: ValueImpl::Void,
                 span: empty_span()
@@ -381,7 +385,7 @@ class CppImportProcessor {
             | CXEval_ObjCStrLiteral
             | CXEval_CFStr
             | CXEval_Other => {
-                eprintln("Const value input kind {} not supported", clang_EvalResult_getKind(eval_result) as! c_int)
+                if .debug_print { eprintln("Const value input kind {} not supported", clang_EvalResult_getKind(eval_result) as! c_int) }
                 return Value(
                     impl: ValueImpl::Void,
                     span: empty_span()
@@ -465,7 +469,7 @@ class CppImportProcessor {
                             base = expr_val
                         }
                     } else {
-                        eprintln("Unknown cursor kind in dependent type: {}", string_from(clang_getCursorKindSpelling(clang_getCursorKind(cursor))))
+                        if .debug_print { eprintln("Unknown cursor kind in dependent type: {}", string_from(clang_getCursorKindSpelling(clang_getCursorKind(cursor)))) }
                         return unknown_type_id()
                     }
                     yield current_scope_id
@@ -688,7 +692,7 @@ class CppImportProcessor {
                                         Struct(id) | GenericInstance(id) => Type::GenericInstance(id, args)
                                         Enum(id) | GenericEnumInstance(id) => Type::GenericEnumInstance(id, args)
                                         else => {
-                                            eprintln("ICE: Elaborated type is not a struct or enum: {}", program.type_name(base_type!, debug_mode: true))
+                                            if .debug_print { eprintln("ICE: Elaborated type is not a struct or enum: {}", program.type_name(base_type!, debug_mode: true)) }
                                             yield Type::Unknown
                                         }
                                     }
@@ -812,7 +816,7 @@ class CppImportProcessor {
             }
             else => {
                 let v = clang_getTypeSpelling(t)
-                eprintln("Unknown type kind: {} ({})", string_from(v), t.kind as! c_int)
+                if .debug_print { eprintln("Unknown type kind: {} ({})", string_from(v), t.kind as! c_int) }
                 yield builtin(BuiltinType::Unknown)
             }
         }
@@ -1107,7 +1111,7 @@ class CppImportProcessor {
             root_scope: root_scope_id
         )
         if not struct_id.has_value() {
-            eprintln("[ICE] Couldn't find struct for partial specialization named {}", name)
+            if .debug_print { eprintln("[ICE] Couldn't find struct for partial specialization named {}", name) }
             return
         }
 
@@ -1401,9 +1405,11 @@ class CppImportProcessor {
                 )
             }
             else => {
-                let k = clang_getCursorKind(cursor)
-                let v = clang_getCursorKindSpelling(k)
-                eprintln("Unsupported template cursor kind: {}", string_from(v))
+                if .debug_print { 
+                    let k = clang_getCursorKind(cursor)
+                    let v = clang_getCursorKindSpelling(k)
+                    eprintln("Unsupported template cursor kind: {}", string_from(v))
+                }
             }
         }
     }
@@ -1637,7 +1643,7 @@ class CppImportProcessor {
         ) or not is_method
 
         if not this_type.has_value() and (kind is Constructor or kind is Destructor) {
-            eprintln("[ICE] Constructor or destructor ({}) without a this type", name_from(cursor))
+            if .debug_print { eprintln("[ICE] Constructor or destructor ({}) without a this type", name_from(cursor)) }
             return
         }
 
@@ -2214,7 +2220,7 @@ class CppImportProcessor {
             match type {
                 GenericInstance(id) | Struct(id) => { super_struct_ids.push(id) }
                 else => {
-                    eprintln("[ICE] Base type of {} is not a struct or generic instance: {}", specialized_name, type)
+                    if .debug_print { eprintln("[ICE] Base type of {} is not a struct or generic instance: {}", specialized_name, type) }
                 }
             }
         }

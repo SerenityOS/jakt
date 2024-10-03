@@ -180,6 +180,7 @@ struct REPL {
             dump_parser: false
             ignore_parser_errors: false
             debug_print: false
+            debug_print_cpp_import: false
             std_include_path
             prelude_path
             include_paths: []

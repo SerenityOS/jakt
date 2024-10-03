@@ -17,6 +17,7 @@ class Compiler {
     public dump_parser: bool
     public ignore_parser_errors: bool
     public debug_print: bool
+    public debug_print_cpp_import: bool
     public std_include_path: Path
     public prelude_path: Path
     public include_paths: [String]

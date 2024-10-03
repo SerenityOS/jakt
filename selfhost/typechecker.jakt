@@ -1501,7 +1501,9 @@ struct Typechecker {
         defines: [String:String]
     ) throws -> ScopeId {
         if not .cpp_import_processor.has_value() {
-            .cpp_import_processor = CppImportProcessor::create()
+            .cpp_import_processor = CppImportProcessor::create(
+                debug_print: .compiler.debug_print_cpp_import
+            )
         }
 
         mut module = .program.get_module(scope_id.module_id)
