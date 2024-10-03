@@ -230,6 +230,11 @@ add_jakt_executable(jakt_stage1
 
 if (JAKT_USING_CLANG)
   target_link_libraries(jakt_stage1 PRIVATE libclang)
+  target_include_directories(jakt_stage1
+    PRIVATE
+      ${CLANG_INCLUDE_DIRS}
+      ${LLVM_INCLUDE_DIRS} # CLANG_INCLUDE_DIRS is more often than not incorrect on distros that ship clang as clangN, but LLVM_INCLUDE_DIRS seems to be correct everywhere.
+  )
 endif()
 
 target_include_directories(jakt_stage1
@@ -237,8 +242,6 @@ target_include_directories(jakt_stage1
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/runtime>
   PUBLIC
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/runtime>
-  PRIVATE
-    ${CLANG_INCLUDE_DIRS}
 )
 add_executable(Jakt::jakt_stage1 ALIAS jakt_stage1)
 apply_output_rules(jakt_stage1)
@@ -260,11 +263,14 @@ if (FINAL_STAGE GREATER_EQUAL 2)
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/runtime>
     PUBLIC
       $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/runtime>
-    PRIVATE
-      ${CLANG_INCLUDE_DIRS}
   )
   if (JAKT_USING_CLANG)
     target_link_libraries(jakt_stage2 PRIVATE libclang)
+    target_include_directories(jakt_stage2
+      PRIVATE
+        ${CLANG_INCLUDE_DIRS}
+        ${LLVM_INCLUDE_DIRS} # CLANG_INCLUDE_DIRS is more often than not incorrect on distros that ship clang as clangN, but LLVM_INCLUDE_DIRS seems to be correct everywhere.
+    )
   endif()
   add_executable(Jakt::jakt_stage2 ALIAS jakt_stage2)
   apply_output_rules(jakt_stage2)
