@@ -570,14 +570,14 @@ class CppImportProcessor {
         let type = match t.kind {
             CXType_Void => builtin(BuiltinType::Void)
             CXType_Bool => builtin(BuiltinType::Bool)
-            CXType_Char_U | CXType_UChar | CXType_UShort | CXType_UInt | CXType_ULongLong => match clang_Type_getSizeOf(t) {
+            CXType_Char_S | CXType_Char_U => builtin(BuiltinType::CChar)
+            CXType_UChar | CXType_UShort | CXType_UInt | CXType_ULongLong => match clang_Type_getSizeOf(t) {
                 1 => builtin(BuiltinType::U8)
                 2 => builtin(BuiltinType::U16)
                 4 => builtin(BuiltinType::U32)
                 8 => builtin(BuiltinType::U64)
                 else => builtin(BuiltinType::Unknown)
             }
-            CXType_Char_S => builtin(BuiltinType::CChar)
             CXType_Char16 | CXType_Char32 | CXType_ULong | CXType_SChar | CXType_Short | CXType_Int | CXType_Long | CXType_LongLong => match clang_Type_getSizeOf(t) {
                 1 => builtin(BuiltinType::I8)
                 2 => builtin(BuiltinType::I16)
