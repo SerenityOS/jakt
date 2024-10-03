@@ -79,6 +79,7 @@ fn help() -> String {
     output += "  -D,--dot-clang-format-path PATH\tPath to the .clang-format file to use.\n\t\t\t\t\tDefaults to none, invoking clangs default .clang-format file handling.\n"
     output += "  -F,--clang-format-path PATH\t\tPath to clang-format executable.\n\t\t\t\t\tDefaults to clang-format\n"
     output += "  --debug-print\t\t\t\tOutput debug print.\n"
+    output += "  --debug-print-cpp-import\t\t\t\tOutput debug print for the c++ import processor.\n"
     output += "= Formatting:\n"
     output += "  -f,--format\t\t\t\tFormat a file or directory and output the result.\n"
     output += "  -fi,--format-inplace\t\t\tFormat a file or directory and save the result inplace.\n"
@@ -494,6 +495,7 @@ fn compiler_main(anon args: [String]) throws -> c_int {
     let run_executable = args_parser.flag(["-cr", "--compile-run"])
     let codegen_debug = args_parser.flag(["-d"])
     let debug_print = args_parser.flag(["--debug-print"])
+    let debug_print_cpp_import = args_parser.flag(["--debug-print-cpp-import"])
     let prettify_cpp_source = args_parser.flag(["-p", "--prettify-cpp-source"])
     let json_errors = args_parser.flag(["-j","--json-errors"])
     let dump_type_hints = args_parser.flag(["-H", "--type-hints"])
@@ -644,6 +646,7 @@ fn compiler_main(anon args: [String]) throws -> c_int {
         dump_parser: parser_debug
         ignore_parser_errors: false
         debug_print: debug_print
+        debug_print_cpp_import: debug_print_cpp_import
         // FIXME: Case sensitivity on win/mac requires this path be named different than the jakt cpp lib
         std_include_path: Path::from_parts([runtime_path, "jaktlib"])
         prelude_path: Path::from_parts([runtime_path, "prelude.jakt"])

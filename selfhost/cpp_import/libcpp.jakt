@@ -484,7 +484,7 @@ fn process_cpp_declaration(
 }
 
 struct CppImportProcessor {
-    fn create() -> CppImportProcessor {
+    fn create(debug_print: bool) -> CppImportProcessor {
         return CppImportProcessor()
     }
 
