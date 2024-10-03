@@ -2940,8 +2940,6 @@ struct CodeGenerator {
                 })
             }
             UnaryOp(expr, op, type_id) => {
-
-
                 match op {
                     PreIncrement    => .codegen_prefix_unary(expr, cpp_operator: "++", output, syntactically_self_contained)
                     PreDecrement    => .codegen_prefix_unary(expr, cpp_operator: "--", output, syntactically_self_contained)
@@ -2980,7 +2978,7 @@ struct CodeGenerator {
                             }
                             else => .codegen_type(type_id)
                         }
-                        output.appendff("is<{}>(", is_type)
+                        output.appendff("JaktInternal::lenient_is<{}>(", is_type)
                         .codegen_expression(expr, output)
                         output.append(')')
                     }
@@ -3754,7 +3752,7 @@ struct CodeGenerator {
                 }
             }
             ClassInstance(type: type_id) => {
-                output.appendff("is<{}>(__jakt_enum_value.ptr())", .codegen_type_possibly_as_namespace(type_id, as_namespace: true))
+                output.appendff("JaktInternal::lenient_is<{}>(__jakt_enum_value.ptr())", .codegen_type_possibly_as_namespace(type_id, as_namespace: true))
             }
             CatchAll => { .compiler.panic("catch all has no condition, should be emitted separately") }
         }
