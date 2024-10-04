@@ -3512,14 +3512,18 @@ struct CodeGenerator {
         .yield_method = YieldMethod::ReturnExplicitValue(ctor: format("JaktInternal::ExplicitValue<{}>", cpp_match_result_type))
         defer .yield_method = old_yield_method
 
+        builder.append("([&]() -> JaktInternal::ExplicitValueOrControlFlow<")
+        builder.append(cpp_match_result_type)
+        builder.append(", ")
+        builder.append(.codegen_function_return_type(function: .current_function!))
+        builder.append(">{\n")
+
         if expr_type is Enum(enum_id) {
             .codegen_enum_match(
                 enum_: .program.get_enum(enum_id)
                 expr
                 match_cases
                 type_id
-                cpp_match_result_type
-                all_variants_constant
                 output: &mut builder
             )
         } else {
@@ -3527,11 +3531,11 @@ struct CodeGenerator {
                 expr
                 cases: match_cases
                 return_type_id: type_id
-                cpp_match_result_type
-                all_variants_constant
                 output: &mut builder
             )
         }
+        builder.append("}()\n)")
+
         .control_flow_state = last_control_flow
         output.append(.control_flow_state.apply_control_flow_macro(
             builder.to_string()
@@ -3545,8 +3549,6 @@ struct CodeGenerator {
         expr: CheckedExpression
         cases: [CheckedMatchCase]
         return_type_id: TypeId
-        cpp_match_result_type: String
-        all_variants_constant: bool
         output: &mut StringBuilder
     ) throws {
         mut is_generic_enum: bool = false
@@ -3559,7 +3561,6 @@ struct CodeGenerator {
             }
             if is_generic_enum { break }
         }
-        let match_values_all_constant = all_variants_constant and not is_generic_enum
 
         let byte_string_type_id = .program.find_or_add_type_id(
             type: Type::Struct(.program.find_struct_in_prelude("String"))
@@ -3567,11 +3568,6 @@ struct CodeGenerator {
         )
 
         // TODO: Use switch statement if all values are constant
-        output.appendff(
-            "([&]() -> JaktInternal::ExplicitValueOrControlFlow<{},{}> {{\n"
-            cpp_match_result_type,
-            .codegen_function_return_type(function: .current_function!)
-        )
 
         if is_generic_enum {
             output.append("auto&& __jakt_enum_value = JaktInternal::deref_if_ref_pointer(")
@@ -3716,8 +3712,6 @@ struct CodeGenerator {
         } else if deferred_catch_all is None {
             output.append("VERIFY_NOT_REACHED();\n")
         }
-
-        output.append("}())")
     }
 
     fn codegen_generic_pattern_condition(mut this, pattern: &CheckedMatchPattern, is_parenthesized: bool, output: &mut StringBuilder) throws {
@@ -3764,8 +3758,6 @@ struct CodeGenerator {
         expr: CheckedExpression
         match_cases: [CheckedMatchCase]
         type_id: TypeId
-        cpp_match_result_type: String
-        all_variants_constant: bool
         output: &mut StringBuilder
     ) throws {
         mut subject_builder = StringBuilder::create()
@@ -3774,11 +3766,6 @@ struct CodeGenerator {
         let needs_deref = enum_.is_boxed and subject != "*this"
 
         if enum_.underlying_type_id == void_type_id() {
-            output.append("([&]() -> JaktInternal::ExplicitValueOrControlFlow<")
-            output.append(cpp_match_result_type)
-            output.append(", ")
-            output.append(.codegen_function_return_type(function: .current_function!))
-            output.append(">{\n")
             output.append("auto&& __jakt_match_variant = ")
             if needs_deref {
                 output.append("*")
@@ -3920,13 +3907,7 @@ struct CodeGenerator {
                 output.append("default: VERIFY_NOT_REACHED();")
             }
             output.append("}/*switch end*/\n")
-            output.append("}()\n)")
         } else {
-            output.append("([&]() -> JaktInternal::ExplicitValueOrControlFlow<")
-            output.append(cpp_match_result_type)
-            output.append(", ")
-            output.append(.codegen_function_return_type(function: .current_function!))
-            output.append(">{\n")
             output.append("switch (")
             .codegen_expression(expr, &mut output)
             output.append(") {\n")
@@ -3948,7 +3929,6 @@ struct CodeGenerator {
                 .codegen_match_body(body: match_case.body, return_type_id: type_id, &mut output)
             }
             output.append("}/*switch end*/\n")
-            output.append("}()\n)")
         }
     }
 
