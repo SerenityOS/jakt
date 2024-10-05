@@ -204,6 +204,8 @@ enum YieldMethod {
     // the template is for JaktInternal::Explicit
     ReturnExplicitValue(ctor: String)
     AssignAndGoto(name: String, label: String)
+    // act as if `yield` == `return`
+    Return
 }
 
 
@@ -3518,25 +3520,7 @@ struct CodeGenerator {
         builder.append(.codegen_function_return_type(function: .current_function!))
         builder.append(">{\n")
 
-        match expr_type {
-            Enum(enum_id) | GenericEnumInstance(id: enum_id) => {
-                .codegen_enum_match(
-                    enum_: .program.get_enum(enum_id)
-                    expr
-                    match_cases
-                    type_id
-                    output: &mut builder
-                )
-            }
-            else => {
-                .codegen_generic_match(
-                    expr
-                    cases: match_cases
-                    return_type_id: type_id
-                    output: &mut builder
-                )
-            }
-        }
+        .codegen_inner_match(expr, match_cases, type_id, output: &mut builder)
         builder.append("}()\n)")
 
         .control_flow_state = last_control_flow
@@ -3545,6 +3529,48 @@ struct CodeGenerator {
             func_return_type: .current_function!.return_type_id
             func_can_throw: .current_function!.can_throw
         ))
+    }
+
+    fn codegen_inner_match(
+        mut this
+        expr: CheckedExpression
+        match_cases: [CheckedMatchCase]
+        type_id: TypeId
+        output: &mut StringBuilder
+    ) throws -> void => match .program.get_type(expr.type()) {
+        Enum(enum_id) | GenericEnumInstance(id: enum_id) => {
+            .codegen_enum_match(
+                enum_: .program.get_enum(enum_id)
+                expr
+                match_cases
+                type_id
+                &mut output
+            )
+        }
+        else => {
+            .codegen_generic_match(
+                expr
+                cases: match_cases
+                return_type_id: type_id
+                &mut output
+            )
+        }
+    }
+
+    fn codegen_returned_match(
+        mut this
+        expr: CheckedExpression
+        match_cases: [CheckedMatchCase]
+        type_id: TypeId
+        output: &mut StringBuilder
+    ) throws {
+        let old_yield_method = .yield_method
+        defer .yield_method = old_yield_method
+        .yield_method = YieldMethod::Return
+
+        output.append('{')
+        .codegen_inner_match(expr, match_cases, type_id, output)
+        output.append('}')
     }
 
     fn codegen_generic_match(
@@ -3695,7 +3721,7 @@ struct CodeGenerator {
             .codegen_match_body(body, return_type_id, &mut output)
             output.append('}')
         }
-        if return_type_id == void_type_id() or return_type_id == unknown_type_id() {
+        if not has_cpp_value(return_type_id) and .yield_method! is ReturnExplicitValue {
             output.append("return JaktInternal::ExplicitValue<void>();\n")
         } else if deferred_catch_all is None {
             output.append("VERIFY_NOT_REACHED();\n")
@@ -3918,6 +3944,13 @@ struct CodeGenerator {
             }
             output.append("}/*switch end*/\n")
         }
+
+        if .yield_method! is Return and are_loop_exits_allowed(.control_flow_state.allowed_exits) {
+            // Any `break` statements inside the switch will go here. This
+            // enables any `break` inside any nested `switch` to eventually
+            // find its way to break the loop it refers to.
+            output.append(.break_statement())
+        }
     }
 
     fn codegen_match_body(
@@ -3930,7 +3963,7 @@ struct CodeGenerator {
             Block(block) => {
                 .codegen_block(block, output)
 
-                if return_type_id == void_type_id() or return_type_id == unknown_type_id() {
+                if not has_cpp_value(return_type_id) and .yield_method! is ReturnExplicitValue {
                     output.append("return JaktInternal::ExplicitValue<void>();\n")
                 }
             }
@@ -3940,17 +3973,28 @@ struct CodeGenerator {
                     .codegen_block(block, output)
                     // NOTE: should not need any guarding
                     output.append("VERIFY_NOT_REACHED();\n")
-                } else if expr.type() == void_type_id() or expr.type() == never_type_id() or (
-                    expr.type() == unknown_type_id() and
-                    not expr is OptionalNone
-                ) {
-                    output.append("return ({")
-                    .codegen_expression(expr, &mut output)
-                    output.append(";}), JaktInternal::ExplicitValue<void>();\n")
                 } else {
-                    output.append("return JaktInternal::ExplicitValue(")
-                    .codegen_expression(expr, &mut output)
-                    output.append(");\n")
+
+                    match .yield_method! {
+                        Return => .codegen_value_return(expr, &mut output)
+                        ReturnExplicitValue => {
+                            if expr.type() == void_type_id() or expr.type() == never_type_id() or (
+                                expr.type() == unknown_type_id() and
+                                not expr is OptionalNone
+                            ) {
+                                output.append("return ({")
+                                .codegen_expression(expr, &mut output)
+                                output.append(";}), JaktInternal::ExplicitValue<void>();\n")
+                            } else {
+                                output.append("return JaktInternal::ExplicitValue(")
+                                .codegen_expression(expr, &mut output)
+                                output.append(");\n")
+                            }
+                        }
+                        else => {
+                            panic("yield method inside match is expected to be one of ReturnExplicitValue or Return")
+                        }
+                    }
                 }
             }
         }
@@ -4699,6 +4743,11 @@ struct CodeGenerator {
         output.append("}\n")
     }
 
+    fn break_statement(this) -> StringView => match .control_flow_state.directly_inside_match {
+        true => "return JaktInternal::LoopBreak{};"
+        false => "break;"
+    }
+
     fn codegen_statement(
         mut this
         statement: CheckedStatement
@@ -4722,10 +4771,7 @@ struct CodeGenerator {
                 })
             }
             Break => {
-                output.append(match .control_flow_state.directly_inside_match {
-                    true => "return JaktInternal::LoopBreak{};"
-                    false => "break;"
-                })
+                output.append(.break_statement())
             }
             Expression(expr) => {
                 .codegen_expression(expr, &mut output)
@@ -4748,35 +4794,7 @@ struct CodeGenerator {
                 .control_flow_state = last_control_flow
                 .inside_defer = old_inside_defer
             }
-            Return(val) => match val.has_value() {
-                true => match .current_function!.can_throw {
-                    true => {
-                        let type = .program.get_type(val!.type())
-                        mut result = ""
-                        if type is Void or type is Never {
-                            .codegen_expression(val!, &mut output)
-                            output.append("; return {}")
-                        } else {
-                            // Disable forwarding with TRY because we're returning an ErrorOr<Ret> too!
-                            output.append("return ")
-                            .codegen_expression(val!, &mut output, forward_error_with_try: false)
-                        }
-
-                        output.append(";")
-                    }
-                    false => {
-                        output.append("return ")
-                        .codegen_expression(val!, &mut output)
-                        output.append(";")
-                    }
-                }
-                false => {
-                    output.append(match .current_function!.can_throw or .control_flow_state.indirectly_inside_match {
-                        true => "return {};"
-                        false => "return;"
-                    })
-                }
-            }
+            Return(val) => .codegen_return(val, &mut output)
             Loop(block) => {
                 if .debug_info.statement_span_comments and statement.span().has_value() {
                     output.appendff("\n#line {}\n", .debug_info.span_to_source_location(statement.span()!))
@@ -4858,6 +4876,9 @@ struct CodeGenerator {
             Yield(expr, span) => {
                 let is_void = expr.has_value() and expr!.type() == void_type_id()
                 match .yield_method! {
+                    Return => {
+                        .codegen_return(expr, &mut output)
+                    }
                     ReturnExplicitValue(ctor) => {
                         if is_void {
                             .codegen_statement(statement: CheckedStatement::Expression(expr: expr!, span), &mut output)
@@ -4890,6 +4911,40 @@ struct CodeGenerator {
         }
     }
 
+    fn codegen_return(mut this, anon val: CheckedExpression?, output: &mut StringBuilder) throws -> void => match val.has_value() {
+        true => .codegen_value_return(val!, &mut output)
+        false => {
+            output.append(match .current_function!.can_throw or .control_flow_state.indirectly_inside_match {
+                true => "return {};"
+                false => "return;"
+            })
+        }
+    }
+
+    fn codegen_value_return(mut this, anon val: CheckedExpression, output: &mut StringBuilder) throws -> void => match val {
+        Match(expr, match_cases, type_id) => .codegen_returned_match(expr, match_cases, type_id, &mut output)
+        else => match .current_function!.can_throw {
+            true => {
+                let type = .program.get_type(val.type())
+                mut result = ""
+                if type is Void or type is Never {
+                    .codegen_expression(val, &mut output)
+                    output.append("; return {}")
+                } else {
+                    // Disable forwarding with TRY because we're returning an ErrorOr<Ret> too!
+                    output.append("return ")
+                    .codegen_expression(val, &mut output, forward_error_with_try: false)
+                }
+
+                output.append(";")
+            }
+            false => {
+                output.append("return ")
+                .codegen_expression(val, &mut output)
+                output.append(";")
+            }
+        }
+    }
 
     fn codegen_type(mut this, anon type_id: TypeId) throws -> String {
         return .codegen_type_possibly_as_namespace(type_id, as_namespace: false)
@@ -5783,3 +5838,5 @@ fn count_match_cases(anon cases: &[CheckedMatchCase]) -> usize {
     }
     return count
 }
+
+fn has_cpp_value(anon type_id: TypeId) -> bool => type_id != void_type_id() and type_id != never_type_id()
