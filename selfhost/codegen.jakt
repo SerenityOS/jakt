@@ -3503,6 +3503,11 @@ struct CodeGenerator {
         all_variants_constant: bool
         output: &mut StringBuilder
     ) throws {
+
+        if not has_cpp_value(type_id) {
+            return .codegen_void_match(expr, match_cases, type_id, output)
+        }
+
         mut builder = StringBuilder::create()
         let last_control_flow = .control_flow_state
         .control_flow_state = .control_flow_state.enter_match()
@@ -3555,6 +3560,28 @@ struct CodeGenerator {
                 &mut output
             )
         }
+    }
+
+
+    fn codegen_void_match(
+        mut this
+        expr: CheckedExpression
+        match_cases: [CheckedMatchCase]
+        type_id: TypeId
+        output: &mut StringBuilder
+    ) throws {
+        let old_yield_method = .yield_method
+        let label = .fresh_label()
+        defer .yield_method = old_yield_method
+        .yield_method = YieldMethod::AssignAndGoto(name: "__VOID_MATCH_HAS_NO_VALUE", label)
+
+        output.append('{')
+        .codegen_inner_match(expr, match_cases, type_id, output)
+        output.append('}')
+
+        // This `goto` is here so that the label is used at least once.
+        // We could be smarter here and track goto usage.
+        output.appendff("goto {0}; {0}:;", label)
     }
 
     fn codegen_returned_match(
@@ -3721,9 +3748,8 @@ struct CodeGenerator {
             .codegen_match_body(body, return_type_id, &mut output)
             output.append('}')
         }
-        if not has_cpp_value(return_type_id) and .yield_method! is ReturnExplicitValue {
-            output.append("return JaktInternal::ExplicitValue<void>();\n")
-        } else if deferred_catch_all is None {
+
+        if (has_cpp_value(return_type_id) or not .yield_method! is ReturnExplicitValue) and deferred_catch_all is None {
             output.append("VERIFY_NOT_REACHED();\n")
         }
     }
@@ -3945,11 +3971,15 @@ struct CodeGenerator {
             output.append("}/*switch end*/\n")
         }
 
-        if .yield_method! is Return and are_loop_exits_allowed(.control_flow_state.allowed_exits) {
-            // Any `break` statements inside the switch will go here. This
-            // enables any `break` inside any nested `switch` to eventually
-            // find its way to break the loop it refers to.
-            output.append(.break_statement())
+        if are_loop_exits_allowed(.control_flow_state.allowed_exits) {
+            match .yield_method! {
+                // Any `break` statements inside the switch will go here. This
+                // enables any `break` inside any nested `switch` to eventually
+                // find its way to break the loop it refers to.
+                Return | AssignAndGoto => output.append(.break_statement())
+                // Here all `break`s and `continue`s should have used `LoopBreak` and `LoopContinue` from EVOCF.
+                ReturnExplicitValue => {}
+            }
         }
     }
 
@@ -3963,8 +3993,12 @@ struct CodeGenerator {
             Block(block) => {
                 .codegen_block(block, output)
 
-                if not has_cpp_value(return_type_id) and .yield_method! is ReturnExplicitValue {
-                    output.append("return JaktInternal::ExplicitValue<void>();\n")
+                if not has_cpp_value(return_type_id) {
+                    match .yield_method! {
+                        Return => .codegen_return(None, &mut output)
+                        ReturnExplicitValue => { panic("Void match should not be using ExplicitValue") }
+                        AssignAndGoto(label) => output.appendff("goto {};", label)
+                    }
                 }
             }
             Expression(expr) => {
@@ -3982,17 +4016,19 @@ struct CodeGenerator {
                                 expr.type() == unknown_type_id() and
                                 not expr is OptionalNone
                             ) {
-                                output.append("return ({")
-                                .codegen_expression(expr, &mut output)
-                                output.append(";}), JaktInternal::ExplicitValue<void>();\n")
+                                panic("Void match should not be using ExplicitValue")
                             } else {
                                 output.append("return JaktInternal::ExplicitValue(")
                                 .codegen_expression(expr, &mut output)
                                 output.append(");\n")
                             }
                         }
-                        else => {
-                            panic("yield method inside match is expected to be one of ReturnExplicitValue or Return")
+                        AssignAndGoto(label) => {
+                            guard not has_cpp_value(expr.type()) else {
+                                panic("Only matches yielding void can use AssignAndGoto")
+                            }
+                            .codegen_expression(expr, &mut output)
+                            output.appendff(";goto {};", label)
                         }
                     }
                 }
@@ -4892,11 +4928,15 @@ struct CodeGenerator {
                         output.append(");")
                     }
                     AssignAndGoto(name, label) => {
-                        if not is_void and expr.has_value() {
-                            output.append(name)
-                            output.append(" = ")
-                            .codegen_expression(expr!, &mut output)
-                            output.append("; ")
+                        if expr is Some(val) {
+                            if is_void {
+                                .codegen_expression(val, &mut output)
+                                output.append(';')
+                            } else {
+                                output.appendff("{}.emplace(", name)
+                                .codegen_expression(val, &mut output)
+                                output.append(");")
+                            }
                         }
                         output.append("goto ")
                         output.append(label)
