@@ -204,7 +204,7 @@ enum YieldMethod {
     // the template is for JaktInternal::Explicit
     ReturnExplicitValue(ctor: String)
     AssignAndGoto(name: String, label: String)
-    // act as if `yield` == `return`
+    // act as if `yield` == `return`.
     Return
 }
 
@@ -228,10 +228,12 @@ struct CodeGenerator {
     // Modules that this generation depends on, detected from type definitions
     used_modules: {ModuleId} = {}
     yield_method: YieldMethod? = None
+    // Whether the latest output needs to use ErrorOr as return value.
+    restricted(codegen_value_match, current_error_handler, codegen_statement) yields_erroror: bool = false
 
     // `forward_error_with_try` controls whether errors are handled through the TRY() macro or through an external mechanism put by the caller.
     // noreturn functions may not throw, so let them crash instead.
-    fn current_error_handler(this, forward_error_with_try: bool = true) -> String {
+    fn current_error_handler(mut this, forward_error_with_try: bool = true) -> String {
         if .inside_defer or (
             .current_function.has_value() and
             .current_function!.return_type_id == never_type_id() and
@@ -241,6 +243,7 @@ struct CodeGenerator {
             return "MUST"
         }
 
+        .yields_erroror = true
         if forward_error_with_try {
             if .control_flow_state.indirectly_inside_try_block {
                 // We can't use TRY() as that would return errors instead of forwarding them to the corresponding catch block.
@@ -3150,7 +3153,7 @@ struct CodeGenerator {
                 output.append(var.name_for_codegen().as_name_for_use())
             }
             Match(expr, match_cases, type_id, all_variants_constant) => {
-                .codegen_match(expr, match_cases, type_id, all_variants_constant, &mut output)
+                .codegen_match(expr, match_cases, type_id, all_variants_constant, forward_error_with_try, &mut output)
             }
             EnumVariantArg(expr, arg, enum_variant) => {
                 let variant_name = enum_variant.name()
@@ -3501,11 +3504,16 @@ struct CodeGenerator {
         match_cases: [CheckedMatchCase]
         type_id: TypeId
         all_variants_constant: bool
+        forward_error_with_try: bool
         output: &mut StringBuilder
     ) throws {
 
         if not has_cpp_value(type_id) {
             return .codegen_void_match(expr, match_cases, type_id, output)
+        }
+
+        if not has_control_flow(match_cases) {
+            return .codegen_value_match(expr, match_cases, type_id, forward_error_with_try, output)
         }
 
         mut builder = StringBuilder::create()
@@ -3534,6 +3542,46 @@ struct CodeGenerator {
             func_return_type: .current_function!.return_type_id
             func_can_throw: .current_function!.can_throw
         ))
+    }
+
+    fn codegen_value_match(
+        mut this
+        expr: CheckedExpression
+        match_cases: [CheckedMatchCase]
+        type_id: TypeId
+        forward_error_with_try: bool
+        output: &mut StringBuilder
+    ) throws {
+        let old_yields_erroror = .yields_erroror
+        .yields_erroror = false
+
+
+        mut inner = StringBuilder::create()
+        {
+            let old_yield_method = .yield_method
+            let old_cf = .control_flow_state
+            defer .yield_method = old_yield_method
+            defer .control_flow_state = old_cf
+            .control_flow_state = .control_flow_state.enter_match()
+            // we know that there is no control flow inside this match so inside the IIFE it should just be able to return.
+            .control_flow_state.allowed_exits = AllowedControlExits::JustReturn
+            .yield_method = YieldMethod::Return
+
+            .codegen_inner_match(expr, match_cases, type_id, output: &mut inner)
+        }
+
+
+        let handler = match .yields_erroror { true => .current_error_handler(forward_error_with_try), false => "" }
+        .yields_erroror |= old_yields_erroror
+
+
+        // The newlines in between help clang-format disambiguate and prevent
+        // it from bailing out and leaving things unformatted.
+        if not handler.is_empty() {
+            output.appendff("{}(([&]() -> ErrorOr<{}> {{ {} \n}}()))", handler, .codegen_type(type_id), inner.to_string())
+        } else {
+            output.appendff("[&]() -> {} {{ {} \n}}()", .codegen_type(type_id), inner.to_string())
+        }
     }
 
     fn codegen_inner_match(
@@ -4796,6 +4844,7 @@ struct CodeGenerator {
 
         match statement {
             Throw(expr) => {
+                .yields_erroror = true
                 output.append("return ")
                 .codegen_expression(expr, &mut output)
                 output.append(";")
@@ -5880,3 +5929,81 @@ fn count_match_cases(anon cases: &[CheckedMatchCase]) -> usize {
 }
 
 fn has_cpp_value(anon type_id: TypeId) -> bool => type_id != void_type_id() and type_id != never_type_id()
+
+fn has_control_flow<T>(anon any_of: [T], include_loop_control_flow: bool = true) -> bool {
+    for t in any_of {
+        if has_control_flow(t, include_loop_control_flow) { return true }
+    }
+    return false
+}
+
+fn has_control_flow<T>(anon maybe_v: T?, include_loop_control_flow: bool = true) -> bool => maybe_v is Some and has_control_flow(maybe_v!, include_loop_control_flow)
+
+fn has_control_flow(anon match_case: CheckedMatchCase, include_loop_control_flow: bool = true) -> bool => match match_case.body {
+    Block(t) | Expression(t) => has_control_flow(t, include_loop_control_flow)
+}
+
+fn has_control_flow(anon block: CheckedBlock, include_loop_control_flow: bool = true) -> bool => has_control_flow(block.statements, include_loop_control_flow)
+
+fn has_control_flow(anon stmt: CheckedStatement, include_loop_control_flow: bool = true) -> bool => match stmt {
+    Expression(expr) => has_control_flow(expr, include_loop_control_flow)
+    // throw is not considered control flow because it uses the return value to forward errors, which is declared by the surrounding IIFE.
+    Defer | Throw | Yield | Garbage => false
+    DestructuringAssignment(var_decl) => has_control_flow(var_decl, include_loop_control_flow)
+    VarDecl(init) => has_control_flow(init, include_loop_control_flow)
+    If(condition, then_block, else_statement) => has_control_flow(condition, include_loop_control_flow) or has_control_flow(then_block, include_loop_control_flow) or has_control_flow(else_statement, include_loop_control_flow)
+    Block(block) => has_control_flow(block, include_loop_control_flow)
+    Loop(block) => has_control_flow(block, include_loop_control_flow: false)
+    While(condition, block) => has_control_flow(condition, include_loop_control_flow) or has_control_flow(block, include_loop_control_flow: false)
+    // we want to keep `InlineCpp` as flexible as possible, so we'll assume that it could have control flow. As long as it knows that it's inside a match
+    // and it has to forward things through EVOCF it can get the behavior it wants.
+    Return | InlineCpp => true
+    Break | Continue => include_loop_control_flow
+}
+fn has_control_flow(anon expr: CheckedExpression, include_loop_control_flow: bool = true) -> bool => match expr {
+    Boolean
+        | NumericConstant
+        | QuotedString
+        | ByteConstant
+        | CharacterConstant
+        | CCharacterConstant
+        | NamespacedVar
+        | Var
+        | OptionalNone
+        | Function
+        | DependentFunction
+        | Reflect
+        | Garbage
+        => false
+
+    UnaryOp(expr)
+        | IndexedTuple(expr)
+        | IndexedStruct(expr)
+        | IndexedCommonEnumMember(expr)
+        | EnumVariantArg(expr)
+        | OptionalSome(expr)
+        | ForcedUnwrap(expr)
+        | Must(expr)
+        => has_control_flow(expr, include_loop_control_flow)
+
+    BinaryOp(lhs, rhs)
+        | IndexedExpression(expr: lhs, index: rhs)
+        | IndexedDictionary(expr: lhs, index: rhs)
+        | ComptimeIndex(expr: lhs, index: rhs)
+        => has_control_flow(lhs, include_loop_control_flow) or has_control_flow(rhs, include_loop_control_flow)
+
+    JaktTuple(vals) | JaktArray(vals) | JaktSet(vals) => has_control_flow(vals, include_loop_control_flow)
+    Range(from, to) => has_control_flow(from, include_loop_control_flow) or has_control_flow(to, include_loop_control_flow)
+    JaktDictionary(vals) => has_control_flow(vals, include_loop_control_flow)
+    // We want to force loop control flow checks on inner matches because that means that they will use EVOCF, which use `return` to forward a possible
+    // request to return from the Jakt function, independent of what control flow the inner IIFE actually produces.
+    Match(expr, match_cases) => has_control_flow(expr, include_loop_control_flow) or has_control_flow(match_cases, include_loop_control_flow: true)
+    Call(call) => has_control_flow(call.args, include_loop_control_flow)
+    MethodCall(expr, call) => has_control_flow(expr, include_loop_control_flow) or has_control_flow(call.args, include_loop_control_flow)
+    Block(block) => has_control_flow(block, include_loop_control_flow)
+    Try(expr, catch_block) => has_control_flow(expr, include_loop_control_flow) or has_control_flow(catch_block, include_loop_control_flow)
+    TryBlock(stmt, catch_block) => has_control_flow(stmt, include_loop_control_flow) or has_control_flow(catch_block, include_loop_control_flow)
+}
+
+fn has_control_flow(anon dict_pair: (CheckedExpression, CheckedExpression), include_loop_control_flow: bool = true) -> bool => has_control_flow(dict_pair.0, include_loop_control_flow) or has_control_flow(dict_pair.1, include_loop_control_flow)
+fn has_control_flow(anon call_arg: (String, CheckedExpression), include_loop_control_flow: bool = true) -> bool => has_control_flow(call_arg.1, include_loop_control_flow)
