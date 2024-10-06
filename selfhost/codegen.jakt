@@ -3669,7 +3669,7 @@ struct CodeGenerator {
         mut first = true
 
         mut cases_with_bindings: [CheckedMatchCase] = []
-        mut deferred_catch_all: ([CheckedStatement], CheckedMatchBody)? = None // (defaults, body)?
+        mut deferred_catch_all: ([String:CheckedExpression], [String:VarId], CheckedMatchBody)? = None // (defaults, variables, body)?
 
         for case_index in 0..cases.size() {
             let match_case = cases[case_index]
@@ -3680,7 +3680,7 @@ struct CodeGenerator {
                 guard not has_arguments else {
                     panic("Bindings should not be present in a generic else")
                 }
-                deferred_catch_all = (match_case.patterns[0].defaults, match_case.body)
+                deferred_catch_all = (match_case.patterns[0].defaults, match_case.bindings, match_case.body)
                 continue
             }
 
@@ -3723,7 +3723,7 @@ struct CodeGenerator {
                 defer output.append('}')
 
                 match pattern {
-                    EnumVariant(name, args, subject_type_id, index: variant_index, scope_id) => {
+                    EnumVariant(name, args, subject_type_id, index: variant_index) => {
                         let enum_ = .program.get_enum(match .program.get_type(subject_type_id) {
                             Enum(enum_id) => enum_id
                             GenericEnumInstance(id) => id
@@ -3775,23 +3775,19 @@ struct CodeGenerator {
                         }
                     }
                 }
-                for default_ in defaults {
-                    .codegen_statement(statement: default_, &mut output)
-                }
+                .declare_pattern_defaults(&defaults, variables: &case_.bindings, &mut output)
                 .codegen_match_body(body, return_type_id, &mut output)
             }
         }
 
         if deferred_catch_all is Some(catch_all_case) {
-            let (defaults, body) = catch_all_case
+            let (defaults, variables, body) = catch_all_case
 
             if not first { output.append("else ") }
 
             output.append('{')
 
-            for default_ in defaults {
-                .codegen_statement(statement: default_, &mut output)
-            }
+            .declare_pattern_defaults(&defaults, &variables, &mut output)
 
             .codegen_match_body(body, return_type_id, &mut output)
             output.append('}')
@@ -3874,7 +3870,7 @@ struct CodeGenerator {
                         continue
                     }
                     match pattern {
-                        EnumVariant(name, args, subject_type_id, index, scope_id) => {
+                        EnumVariant(name, args, subject_type_id, index) => {
                             let enum_type = .program.get_type(subject_type_id)
                             let enum_id = match enum_type {
                                 Enum(id) | GenericEnumInstance(id) => id
@@ -3896,7 +3892,7 @@ struct CodeGenerator {
                                         )
 
                                         let arg = args[0]
-                                        let var = .program.find_var_in_scope(scope_id, var: arg.binding)!
+                                        let var = .program.get_variable(match_case.bindings[arg.binding])
                                         output.append(.codegen_type(var.type_id))
                                         if not var.is_mutable {
                                             output.append(" const")
@@ -3913,7 +3909,7 @@ struct CodeGenerator {
                                             name)
 
                                         for arg in args {
-                                            let var = .program.find_var_in_scope(scope_id, var: arg.binding)!
+                                            let var = .program.get_variable(match_case.bindings[arg.binding])
                                             output.append(.codegen_type(var.type_id))
                                             if not var.is_mutable {
                                                 output.append(" const")
@@ -3948,9 +3944,7 @@ struct CodeGenerator {
                                 }
                             }
 
-                            for default_ in pattern.defaults {
-                                .codegen_statement(statement: default_, &mut output)
-                            }
+                            .declare_pattern_defaults(&pattern.defaults, variables: &match_case.bindings, &mut output)
 
                             .codegen_match_body(body, return_type_id: type_id, &mut output)
                             output.append("};/*case end*/\n")
@@ -3959,9 +3953,8 @@ struct CodeGenerator {
                             has_default = true
 
                             output.append("default: {\n")
-                            for default_ in pattern.defaults {
-                                .codegen_statement(statement: default_, &mut output)
-                            }
+
+                            .declare_pattern_defaults(&pattern.defaults, variables: &match_case.bindings, &mut output)
 
                             .codegen_match_body(body, return_type_id: type_id, &mut output)
                             output.append("};/*case end*/\n")
@@ -4028,6 +4021,13 @@ struct CodeGenerator {
                 // Here all `break`s and `continue`s should have used `LoopBreak` and `LoopContinue` from EVOCF.
                 ReturnExplicitValue => {}
             }
+        }
+    }
+
+    fn declare_pattern_defaults(mut this, anon defaults: &[String:CheckedExpression], variables: &[String:VarId], output: &mut StringBuilder) throws {
+        for (name, init) in defaults {
+            let var_id = variables[name]
+            .codegen_var_decl(var_id, init, &mut output)
         }
     }
 
@@ -4930,19 +4930,7 @@ struct CodeGenerator {
                     .codegen_statement(statement: v, &mut output)
                 }
             }
-            VarDecl(var_id, init) => {
-                let var = .program.get_variable(var_id)
-                let var_type = .program.get_type(var.type_id)
-                output.append(.codegen_type(var.type_id))
-                output.append(" ")
-                if not var.is_mutable and not (var_type is Reference or var_type is MutableReference) {
-                    output.append("const ")
-                }
-                output.append(var.name_for_codegen().as_name_for_use())
-                output.append(" = ")
-                .codegen_expression(init, &mut output)
-                output.append(";")
-            }
+            VarDecl(var_id, init) => .codegen_var_decl(var_id, init, &mut output)
             InlineCpp(lines) => {
                 for line in lines {
                     mut escaped_line = line
@@ -5008,6 +4996,20 @@ struct CodeGenerator {
         if add_newline {
             output.append("\n")
         }
+    }
+
+    fn codegen_var_decl(mut this, var_id: VarId, init: CheckedExpression, output: &mut StringBuilder) throws {
+        let var = .program.get_variable(var_id)
+        let var_type = .program.get_type(var.type_id)
+        output.append(.codegen_type(var.type_id))
+        output.append(" ")
+        if not var.is_mutable and not (var_type is Reference or var_type is MutableReference) {
+            output.append("const ")
+        }
+        output.append(var.name_for_codegen().as_name_for_use())
+        output.append(" = ")
+        .codegen_expression(init, &mut output)
+        output.append(";")
     }
 
     fn codegen_return(mut this, anon val: CheckedExpression?, output: &mut StringBuilder) throws -> void => match val.has_value() {

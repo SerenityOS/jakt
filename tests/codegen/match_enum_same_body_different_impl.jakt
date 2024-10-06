@@ -1,0 +1,23 @@
+/// Expect:
+/// - output: "I have i32\n"
+
+
+// When a function is templated, the C++ for the match body will be different,
+// because it will also have the template arguments.
+//
+// The behavior from PR #1597 will make the generated C++ not compile, because
+// it assumes all bodies will codegen the same.
+
+fn may_be_templated<T>(anon t: T) { println("I have T") }
+fn may_be_templated(anon val: i32) { println("I have i32") }
+fn may_be_templated(anon val: f64) { println("I have f64") }
+
+enum Foo { Bar(i32), Baz(f64), Bork([i32]) }
+
+fn main() {
+    let foo = Foo::Bar(12)
+
+    match foo {
+        Bar(i) | Baz(i) | Bork(i) => may_be_templated(i)
+    }
+}

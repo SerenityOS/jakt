@@ -1614,15 +1614,19 @@ struct ClassInstanceRebind {
 struct CheckedMatchCase {
     patterns: [CheckedMatchPattern]
     body: CheckedMatchBody
+    // All of the patterns in each case have these bindings, which are referenced
+    // in the shared body.
+    bindings: [String:VarId]
 }
 
 enum CheckedMatchPattern {
-    defaults: [CheckedStatement]
+    defaults: [String:CheckedExpression]
+    marker_span: Span
 
-    EnumVariant(name: String, args: [EnumVariantPatternArgument], subject_type_id: TypeId, index: usize, scope_id: ScopeId, marker_span: Span)
-    Expression(expression: CheckedExpression, marker_span: Span)
-    ClassInstance(type: TypeId, rebind_name: ClassInstanceRebind?, marker_span: Span)
-    CatchAll(has_arguments: bool, marker_span: Span)
+    EnumVariant(name: String, args: [EnumVariantPatternArgument], subject_type_id: TypeId, index: usize)
+    Expression(expression: CheckedExpression)
+    ClassInstance(type: TypeId, rebind_name: ClassInstanceRebind?)
+    CatchAll(has_arguments: bool)
 }
 
 struct OperatorTraitImplementation {
