@@ -746,7 +746,7 @@ fn find_span_in_expression(program: CheckedProgram, expr: CheckedExpression, spa
                 let body = match_case.body
                 for pattern in match_case.patterns {
                     let found = match pattern {
-                        EnumVariant(name, args, subject_type_id, index, scope_id, marker_span) => {
+                        EnumVariant(name, args, subject_type_id, index, marker_span) => {
                             if marker_span.contains(span) {
                                 // FIXME: return Some(get_enum_variant_usage_from_type_id_and_name(program, type_id: subject_type_id, variant_index))
                                 return Some(get_enum_variant_usage_from_type_id_and_name(

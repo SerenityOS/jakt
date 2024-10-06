@@ -5279,15 +5279,15 @@ struct Typechecker {
 
         match lhs_type {
             TypeVariable => {
-				// Unpack one layer of inference at a time
+                // Unpack one layer of inference at a time
                 let maybe_resolved_inference = generic_inferences.get(lhs_type_id)
                 if maybe_resolved_inference is Some(resolved_inference) {
-					return .check_types_for_compat(
-						lhs_type_id: resolved_inference
-						rhs_type_id
-						generic_inferences
-						span
-					)
+                    return .check_types_for_compat(
+                        lhs_type_id: resolved_inference
+                        rhs_type_id
+                        generic_inferences
+                        span
+                    )
                 } else {
                     generic_inferences.set(key: lhs_type_id, value: rhs_type_id)
                 }
@@ -6736,7 +6736,7 @@ struct Typechecker {
         While(condition, block, span) => .typecheck_while(condition, block, scope_id, safety_mode, span)
         Continue(span) => .typecheck_continue(span)
         Break(span) => .typecheck_break(span)
-        VarDecl(var, init, span) => .typecheck_var_decl(var, init, scope_id, safety_mode, span)
+        VarDecl(var, init, span) => .typecheck_and_register_var_decl(var, init, scope_id, safety_mode, span)
         DestructuringAssignment(vars, var_decl, span) => .typecheck_destructuring_assignment(vars, var_decl, scope_id, safety_mode, span)
         If(condition, then_block, else_statement, span) => .typecheck_if(condition, then_block, else_statement, scope_id, safety_mode, span)
         Garbage(span) => CheckedStatement::Garbage(span)
@@ -6826,19 +6826,21 @@ struct Typechecker {
                     match_cases: [
                         CheckedMatchCase(
                             patterns: [CheckedMatchPattern::Expression(
-                                defaults: []
-                                expression: CheckedExpression::Boolean(val: true, span)
+                                defaults: [:]
                                 marker_span: span
+                                expression: CheckedExpression::Boolean(val: true, span)
                             )]
                             body: CheckedMatchBody::Expression(CheckedExpression::Block(block: checked_block, span, type_id: checked_block.yielded_type!))
+                            bindings: [:]
                         )
                         CheckedMatchCase(
                             patterns: [CheckedMatchPattern::CatchAll(
-                                defaults: []
-                                has_arguments: false
+                                defaults: [:]
                                 marker_span: span
+                                has_arguments: false
                             )]
                             body: CheckedMatchBody::Block(checked_else_block)
+                            bindings: [:]
                         )
                     ]
                     span
@@ -7278,7 +7280,7 @@ struct Typechecker {
                     index: i
                     is_optional: false
                     span)
-                var_decls.push(.typecheck_var_decl(var: vars[i], init, scope_id, safety_mode, span))
+                var_decls.push(.typecheck_and_register_var_decl(var: vars[i], init, scope_id, safety_mode, span))
             }
         } else {
             .error("Tuple inner types sould have same size as tuple members", span)
@@ -7492,9 +7494,9 @@ struct Typechecker {
         Garbage => (None, expr)
     }
 
-    fn typecheck_var_decl(mut this, var: ParsedVarDecl, init: ParsedExpression, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
+    fn typecheck_var_decl(mut this, var: ParsedVarDecl, init: ParsedExpression, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> (CheckedVariable, CheckedExpression)? {
         mut lhs_type_id = .typecheck_typename(parsed_type: var.parsed_type, scope_id, name: var.name)
-        mut checked_expr = .typecheck_expression(expr: init, scope_id, safety_mode, type_hint: TypeHint::MustBe(type_id: lhs_type_id))
+        let checked_expr = .typecheck_expression(expr: init, scope_id, safety_mode, type_hint: TypeHint::MustBe(type_id: lhs_type_id))
         let rhs_type_id = checked_expr.type()
 
         if rhs_type_id.equals(void_type_id()) {
@@ -7577,7 +7579,7 @@ struct Typechecker {
 
             if not (.is_numeric(lhs_type_id) and is_rhs_zero) and (.is_integer(lhs_type_id) ^ .is_integer(rhs_type_id)) {
                 .error(format("Type mismatch: expected ‘{}’, but got ‘{}’", .type_name(lhs_type_id), .type_name(rhs_type_id)), checked_expr.span())
-                return CheckedStatement::Garbage(span)
+                return None
             }
         } else {
             if not lhs_type_id.equals(rhs_type_id) and not rhs_type_id.equals(unknown_type_id())
@@ -7586,18 +7588,25 @@ struct Typechecker {
             }
         }
 
-        let checked_var = CheckedVariable(
+        if .dump_type_hints and var.inlay_span is Some(inlay_span) {
+            .dump_type_hint(type_id: lhs_type_id, span: inlay_span)
+        }
+
+        return (CheckedVariable(
             name: var.name
             type_id: lhs_type_id
             is_mutable: var.is_mutable
             definition_span: var.span
             type_span: None
             visibility: CheckedVisibility::Public
-        )
+        ), checked_expr)
+    }
 
-        if .dump_type_hints and var.inlay_span.has_value() {
-            .dump_type_hint(type_id: lhs_type_id, span: var.inlay_span!)
+    fn typecheck_and_register_var_decl(mut this, var: ParsedVarDecl, init: ParsedExpression, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
+        guard .typecheck_var_decl(var, init, scope_id, safety_mode, span) is Some(checked_var_and_init) else {
+            return CheckedStatement::Garbage(span)
         }
+        let (checked_var, checked_expr) = checked_var_and_init
 
         mut module = .current_module()
         let var_id = module.add_variable(checked_var)
@@ -9912,26 +9921,59 @@ struct Typechecker {
         )
     }
 
+    // Typechecks defaults from patterns and pushes them into the given key builder.
+    // As this is always used as the last step, it consumes the builder and yields the final key.
+    fn typecheck_pattern_defaults(
+        mut this
+        default_bindings: &[String:ParsedPatternDefault]
+        scope_id: ScopeId //  init expression will be checked against this scope
+        safety_mode: SafetyMode
+        mut key_builder: BindingKeyBuilder
+    ) throws -> ([String:CheckedExpression], BindingKey) {
+        mut defaults: [String:CheckedExpression] = [:]
+        defaults.ensure_capacity(default_bindings.size())
+
+        mut module = .current_module()
+        for (name, default_) in default_bindings {
+            guard .typecheck_var_decl(
+                var: default_.variable
+                init: default_.value
+                scope_id
+                safety_mode
+                span: default_.variable.span
+            ) is Some(checked_var_and_init) else {
+                // error has already been registered, so it's okay
+                // to not have all defaults registered
+                continue
+            }
+            let (variable, init) = checked_var_and_init
+            let var_id = module.add_variable(variable)
+            key_builder = key_builder.submit(name, var_id, program: .program)
+            defaults[name] = init
+        }
+        return (defaults, key_builder.finish())
+    }
+
+
+    // Prepares `.generic_inferences` and a new scope with the inferences for
+    // the bindings from the pattern. Returns the name for the covered variant
+    // (if found), the resulting match pattern and the binding key to know
+    // whether the body is already typechecked against this pattern.
     fn typecheck_match_variant(
         mut this
         case_: &ParsedMatchCase
         subject_type_id: TypeId
         variant_index: usize
-        final_result_type: TypeId?
         variant: CheckedEnumVariant
         variant_arguments: [EnumVariantPatternArgument]
         default_bindings: [String:ParsedPatternDefault]
         arguments_span: Span
         scope_id: ScopeId
         safety_mode: SafetyMode
-    ) throws -> (String?, CheckedMatchPattern, CheckedMatchBody, TypeId?, bool) {
+        mut key_builder: BindingKeyBuilder
+    ) throws -> (String?, CheckedMatchPattern, BindingKey) {
         mut covered_name: String? = None
 
-        let new_scope_id = .create_scope(
-            parent_scope_id: scope_id
-            can_throw: .get_scope(scope_id).can_throw
-            debug_name: format("catch-enum-variant({})", variant.name())
-        )
         mut module = .current_module()
         match variant {
             Untyped(name) => {
@@ -9961,7 +10003,7 @@ struct Typechecker {
                             type_span: None
                             visibility: CheckedVisibility::Public
                         ))
-                        .add_var_to_scope(scope_id: new_scope_id, name: variant_argument.binding, var_id, span)
+                        key_builder = key_builder.submit(variant_argument.binding, var_id, program: .program)
                     }
                 }
             }
@@ -10028,7 +10070,7 @@ struct Typechecker {
                             type_span: None
                             visibility: CheckedVisibility::Public
                         ))
-                        .add_var_to_scope(scope_id: new_scope_id, name: arg.binding, var_id, span: matched_span)
+                        key_builder = key_builder.submit(arg.binding, var_id, program: .program)
                     } else {
                         .error(format("Match case argument '{}' does not exist in struct-like enum variant '{}'", arg_name, name), arg.span)
                     }
@@ -10039,38 +10081,19 @@ struct Typechecker {
             }
         }
 
-        mut defaults: [CheckedStatement] = []
-        for (_, default_) in default_bindings {
-            let checked_var_decl = .typecheck_var_decl(
-                var: default_.variable
-                init: default_.value
-                scope_id: new_scope_id
-                safety_mode
-                span: default_.variable.span
-            )
-            defaults.push(checked_var_decl)
-        }
+        let (defaults, key) = .typecheck_pattern_defaults(&default_bindings, scope_id, safety_mode, key_builder)
 
-        let (checked_body, result_type, seen_none) = .typecheck_match_body(
-            body: case_.body
-            scope_id: new_scope_id
-            safety_mode
-            generic_inferences: &mut .generic_inferences
-            final_result_type
-            span: case_.marker_span
-        )
 
         let checked_match_pattern = CheckedMatchPattern::EnumVariant(
             defaults
+            marker_span: case_.marker_span
             name: variant.name()
             args: variant_arguments
             subject_type_id
             index: variant_index
-            scope_id: new_scope_id
-            marker_span: case_.marker_span
         )
 
-        return (covered_name, checked_match_pattern, checked_body, result_type, seen_none)
+        return (covered_name, checked_match_pattern, key)
     }
 
     fn typecheck_match(
@@ -10085,16 +10108,22 @@ struct Typechecker {
         let checked_expr = .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint: None, span)
         let subject_type_id = checked_expr.type()
         let type_to_match_on = .get_type(subject_type_id)
-        mut checked_cases: [CheckedMatchCase] = []
 
         let old_generic_inferences = .generic_inferences.perform_checkpoint(reset: false)
         defer {
             .generic_inferences.restore(old_generic_inferences)
         }
 
-        mut final_result_type: TypeId? = None
+        // NOTE: Separating the cases by the types of their bindings gets
+        // better results than cloning all the bodies, specially since it
+        // avoids re-typechecking when not necessary, but it still is not the
+        // perfect solution. The section "Why is this not ideal" in
+        // documentation/pattern-match-avoid-duplication.md explains why.
+
+
+        mut match_builder = MatchBuilder()
         if type_hint.has_value() and not type_hint!.type_id.equals(unknown_type_id()) and not .get_type(type_hint!.type_id) is TypeVariable {
-            final_result_type = type_hint!.type_id
+            match_builder.final_result_type = type_hint!.type_id
         }
 
         if type_to_match_on is GenericEnumInstance(id, args) {
@@ -10108,8 +10137,6 @@ struct Typechecker {
             }
         }
 
-        mut yielded_none = false
-
         match type_to_match_on {
             Enum(enum_id) | GenericEnumInstance(id: enum_id) => {
                 let enum_ = .get_enum(enum_id)
@@ -10121,15 +10148,8 @@ struct Typechecker {
                 let case_count = cases.size()
                 mut current_case_index = 0uz
                 for case_ in cases {
-                    mut checked_patterns: [CheckedMatchPattern] = []
-                    mut last_checked_body: CheckedMatchBody? = None
-                    // if the input is malformed, there will be cases with empty patterns.
-                    defer if not checked_patterns.is_empty() {
-                        checked_cases.push(CheckedMatchCase(
-                            patterns: checked_patterns
-                            body: last_checked_body!
-                        ))
-                    }
+                    let case_proof = match_builder.start_case()
+
                     for pattern in case_.patterns {
                         match pattern {
                             EnumVariant(variant_names, variant_arguments, arguments_span) => {
@@ -10152,46 +10172,49 @@ struct Typechecker {
                                     continue
                                 }
 
-                                mut i = 0uz
-                                mut matched_variant: CheckedEnumVariant? = None
-                                mut variant_index: usize? = None
-                                for v in enum_.variants {
-                                    if v.name() == variant_names_[1].0 {
-                                        matched_variant = v
-                                        variant_index = i
+                                mut maybe_variant_index: usize? = None
+                                for i in 0..enum_.variants.size() {
+                                    if enum_.variants[i].name() == variant_names_[1].0 {
+                                        maybe_variant_index = i
                                     }
-                                    i++
                                 }
 
-                                if not matched_variant.has_value() {
+                                guard maybe_variant_index is Some(variant_index) else {
                                     .error(format("Enum '{}' does not contain a variant named '{}'", enum_.name, variant_names_[1].0), case_.marker_span)
 
                                     return CheckedExpression::Match(expr: checked_expr, match_cases: [], span, type_id: unknown_type_id(), all_variants_constant: false)
                                 }
 
-                                let (covered_name, checked_match_case, checked_body, result_type, seen_none) = .typecheck_match_variant(
+                                let variant = enum_.variants[variant_index]
+
+
+                                let (covered_name, pattern, key) = .typecheck_match_variant(
                                     &case_
                                     subject_type_id
-                                    variant_index: variant_index!
-                                    final_result_type
-                                    variant: matched_variant!
+                                    variant_index
+                                    variant
                                     variant_arguments
                                     default_bindings: pattern.defaults
                                     arguments_span
                                     scope_id
                                     safety_mode
+                                    key_builder: match_builder.start_pattern(&case_proof)
                                 )
 
-                                last_checked_body = checked_body
-                                yielded_none |= seen_none
-
-                                if covered_name.has_value() {
-                                    covered_variants.add(covered_name!)
+                                if covered_name is Some(name) {
+                                    covered_variants.add(name)
                                 }
 
-                                final_result_type = result_type
-
-                                checked_patterns.push(checked_match_case)
+                                match_builder.register_pattern(
+                                    &case_proof
+                                    body: &case_.body
+                                    safety_mode
+                                    key
+                                    scope_id
+                                    pattern
+                                    typechecker: &mut this
+                                    &fn[variant]() -> String => format("catch-enum-variant({})", variant.name())
+                                )
                             }
                             CatchAll(variant_arguments, arguments_span) => {
                                 if current_case_index != case_count - 1 {
@@ -10210,70 +10233,58 @@ struct Typechecker {
                                         if not covered_variants.contains(variant.name()) {
                                             expanded_catch_all = true
 
-                                            let (covered_name, checked_match_pattern, checked_body, result_type, seen_none) = .typecheck_match_variant(
+                                            let (covered_name, checked_match_pattern, key) = .typecheck_match_variant(
                                                 &case_
                                                 subject_type_id
                                                 variant_index
-                                                final_result_type
                                                 variant
                                                 variant_arguments
                                                 default_bindings: pattern.defaults
                                                 arguments_span
                                                 scope_id
                                                 safety_mode
+                                                key_builder: match_builder.start_pattern(&case_proof)
                                             )
 
-                                            last_checked_body = checked_body
-                                            yielded_none |= seen_none
 
-                                            if covered_name.has_value() {
-                                                covered_variants.add(covered_name!)
+                                            if covered_name is Some(name) {
+                                                covered_variants.add(name)
                                             }
 
-                                            final_result_type = result_type
-
-                                            checked_patterns.push(checked_match_pattern)
+                                            match_builder.register_pattern(
+                                                &case_proof
+                                                body: &case_.body
+                                                safety_mode
+                                                key
+                                                scope_id
+                                                pattern: checked_match_pattern
+                                                typechecker: &mut this
+                                                &fn[variant]() -> String => format("catch-enum-variant({})", variant.name())
+                                            )
                                         }
 
                                         variant_index++
                                     }
                                 } else {
-                                    let new_scope_id = .create_scope(
-                                        parent_scope_id: scope_id
-                                        can_throw: .get_scope(scope_id).can_throw
-                                        debug_name: "catch-all"
-                                    )
-                                    mut defaults: [CheckedStatement] = []
-                                    for (_, default_) in pattern.defaults {
-                                        let checked_var_decl = .typecheck_var_decl(
-                                            var: default_.variable
-                                            init: default_.value
-                                            scope_id: new_scope_id
-                                            safety_mode
-                                            span: default_.variable.span
-                                        )
-                                        defaults.push(checked_var_decl)
-                                    }
+                                    let (defaults, key) = .typecheck_pattern_defaults(default_bindings: &pattern.defaults, scope_id, safety_mode, key_builder: match_builder.start_pattern(&case_proof))
 
-                                    let (checked_body, result_type, seen_none) = .typecheck_match_body(
-                                        body: case_.body
-                                        scope_id: new_scope_id
-                                        safety_mode
-                                        generic_inferences: &mut .generic_inferences
-                                        final_result_type
-                                        span: case_.marker_span
-                                    )
-                                    last_checked_body = checked_body
-                                    yielded_none |= seen_none
-                                    final_result_type = result_type
 
                                     let checked_match_pattern = CheckedMatchPattern::CatchAll(
                                         defaults
-                                        has_arguments: false
                                         marker_span: case_.marker_span
+                                        has_arguments: false
                                     )
 
-                                    checked_patterns.push(checked_match_pattern)
+                                    match_builder.register_pattern(
+                                        &case_proof
+                                        body: &case_.body
+                                        safety_mode
+                                        key
+                                        scope_id
+                                        pattern: checked_match_pattern
+                                        typechecker: &mut this
+                                        &fn() -> String => "catch-all"
+                                    )
                                 }
                             }
                             else => {}
@@ -10321,14 +10332,8 @@ struct Typechecker {
                     mut covered_cases: {StructId} = {}
 
                     for case_ in cases {
-                        mut checked_patterns: [CheckedMatchPattern] = []
-                        mut last_checked_body: CheckedMatchBody? = None
-                        defer if not checked_patterns.is_empty() {
-                            checked_cases.push(CheckedMatchCase(
-                                patterns: checked_patterns
-                                body: last_checked_body!
-                            ))
-                        }
+                        let case_proof = match_builder.start_case()
+
                         for pattern in case_.patterns {
                             match pattern {
                                 EnumVariant(variant_names, variant_arguments, arguments_span) => {
@@ -10437,13 +10442,11 @@ struct Typechecker {
                                         }
                                     }
 
-                                    let new_scope_id = .create_scope(
-                                        parent_scope_id: scope_id
-                                        can_throw: .get_scope(scope_id).can_throw
-                                        debug_name: format("class-variant({})", names)
-                                    )
 
                                     mut rebind_name: ClassInstanceRebind? = None
+
+                                    mut key_builder = match_builder.start_pattern(&case_proof)
+
                                     if not variant_arguments.is_empty() {
                                         if variant_arguments.size() != 1 {
                                             .error(
@@ -10451,53 +10454,39 @@ struct Typechecker {
                                                 arguments_span
                                             )
                                         }
-                                        let arg = variant_arguments[0]
+                                        let arg = &variant_arguments[0]
+                                        if arg.is_mutable and not checked_expr.is_mutable(program: .program) {
+                                            .error("Cannot call mutating method on an immutable object instance", span)
+                                        }
                                         rebind_name = ClassInstanceRebind(
                                             name: arg.name_in_enum()
                                             name_span: arg.name_in_enum_span()
                                             is_mutable: arg.is_mutable
                                             is_reference: arg.is_reference
                                         )
-
+                                        let rebind = rebind_name!
                                         mut module = .current_module()
                                         let variable_id = module.add_variable(checked_variable: CheckedVariable(
-                                            name: rebind_name!.name
+                                            name: rebind.name
                                             type_id: type
-                                            is_mutable: rebind_name!.is_mutable
-                                            definition_span: rebind_name!.name_span
+                                            is_mutable: rebind.is_mutable
+                                            definition_span: rebind.name_span
                                             type_span: case_.marker_span
                                             visibility: CheckedVisibility::Public
                                         ))
-
-                                        if rebind_name!.is_mutable and not checked_expr.is_mutable(program: .program) {
-                                            .error("Cannot call mutating method on an immutable object instance", span)
-                                        }
-                                        .add_var_to_scope(
-                                            scope_id: new_scope_id
-                                            name: rebind_name!.name
-                                            var_id: variable_id
-                                            span: rebind_name!.name_span
-                                        )
+                                        key_builder = key_builder.submit(rebind.name, variable_id, program: .program)
                                     }
 
-                                    let (checked_body, result_type, seen_none) = .typecheck_match_body(
-                                        body: case_.body
-                                        scope_id: new_scope_id
+                                    match_builder.register_pattern(
+                                        &case_proof
+                                        body: &case_.body
                                         safety_mode
-                                        generic_inferences: &mut .generic_inferences
-                                        final_result_type
-                                        span: case_.marker_span
+                                        key: key_builder.finish()
+                                        scope_id
+                                        pattern: CheckedMatchPattern::ClassInstance(defaults: [:], marker_span: case_.marker_span,  type, rebind_name)
+                                        typechecker: &mut this
+                                        &fn[names]() -> String => format("class-variant({})", names)
                                     )
-                                    last_checked_body = checked_body
-                                    yielded_none |= seen_none
-                                    final_result_type = result_type
-
-                                    checked_patterns.push(CheckedMatchPattern::ClassInstance(
-                                        defaults: []
-                                        type
-                                        rebind_name
-                                        marker_span: case_.marker_span
-                                    ))
                                 }
                                 CatchAll(variant_arguments, arguments_span) => {
                                     if seen_catch_all {
@@ -10506,11 +10495,6 @@ struct Typechecker {
                                         seen_catch_all = true
                                         catch_all_marker_span = case_.marker_span
 
-                                        let new_scope_id = .create_scope(
-                                            parent_scope_id: scope_id
-                                            can_throw: .get_scope(scope_id).can_throw
-                                            debug_name: "class-variant(else)"
-                                        )
 
                                         if not variant_arguments.is_empty() {
                                             .error(
@@ -10519,23 +10503,16 @@ struct Typechecker {
                                             )
                                         }
 
-                                        let (checked_body, result_type, seen_none) = .typecheck_match_body(
-                                            body: case_.body
-                                            scope_id: new_scope_id
+                                        match_builder.register_pattern(
+                                            &case_proof
+                                            body: &case_.body
                                             safety_mode
-                                            generic_inferences: &mut .generic_inferences
-                                            final_result_type
-                                            span: case_.marker_span
+                                            key: BindingKey::New([:])
+                                            scope_id
+                                            pattern: CheckedMatchPattern::CatchAll(defaults: [:], marker_span: case_.marker_span, has_arguments: false)
+                                            typechecker: &mut this
+                                            &fn() -> String => "class-variant(else)"
                                         )
-                                        last_checked_body = checked_body
-                                        yielded_none |= seen_none
-                                        final_result_type = result_type
-
-                                        checked_patterns.push(CheckedMatchPattern::CatchAll(
-                                            defaults: []
-                                            has_arguments: false
-                                            marker_span: case_.marker_span
-                                        ))
                                     }
                                 }
                                 else => {
@@ -10589,14 +10566,8 @@ struct Typechecker {
                     let case_count = cases.size()
                     mut current_case_index = 0uz
                     for case_ in cases {
-                        mut checked_patterns: [CheckedMatchPattern] = []
-                        mut last_checked_body: CheckedMatchBody? = None
-                        defer if not checked_patterns.is_empty() {
-                            checked_cases.push(CheckedMatchCase(
-                                patterns: checked_patterns
-                                body: last_checked_body!
-                            ))
-                        }
+                        let case_proof = match_builder.start_case()
+
                         for pattern in case_.patterns {
                             match pattern {
                                 EnumVariant(variant_names, variant_arguments, arguments_span) => {
@@ -10615,41 +10586,34 @@ struct Typechecker {
 
                                     // We don't know what the enum type is, but we have the type var for it, so generate a generic enum match.
                                     // note that this will be fully checked when this match expression is actually instantiated.
-                                    let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: format("catch-enum-variant({})", variant_names))
-                                    mut defaults: [CheckedStatement] = []
-                                    for (_, default_) in pattern.defaults {
-                                        let checked_var_decl = .typecheck_var_decl(
-                                            var: default_.variable
-                                            init: default_.value
-                                            scope_id: new_scope_id
-                                            safety_mode
-                                            span: default_.variable.span
-                                        )
-                                        defaults.push(checked_var_decl)
-                                    }
 
-                                    let (checked_body, result_type, seen_none) = .typecheck_match_body(
-                                        body: case_.body
-                                        scope_id: new_scope_id
+                                    let (defaults, key) = .typecheck_pattern_defaults(
+                                        default_bindings: &pattern.defaults
+                                        scope_id
                                         safety_mode
-                                        generic_inferences: &mut .generic_inferences
-                                        final_result_type
-                                        span: case_.marker_span
+                                        key_builder: match_builder.start_pattern(&case_proof)
                                     )
-                                    last_checked_body = checked_body
-                                    yielded_none |= seen_none
-                                    final_result_type = result_type
 
                                     let checked_match_pattern = CheckedMatchPattern::EnumVariant(
                                         defaults
+                                        marker_span: case_.marker_span
                                         name: variant_names.last()!.0
                                         args: variant_arguments
                                         subject_type_id
                                         index: 0
-                                        scope_id: new_scope_id
-                                        marker_span: case_.marker_span
                                     )
-                                    checked_patterns.push(checked_match_pattern)
+
+
+                                    match_builder.register_pattern(
+                                        &case_proof
+                                        body: &case_.body
+                                        safety_mode
+                                        key
+                                        scope_id
+                                        pattern: checked_match_pattern
+                                        typechecker: &mut this
+                                        &fn[variant_names]() -> String => format("catch-enum-variant({})", variant_names)
+                                    )
                                 }
                                 CatchAll(variant_arguments) => {
                                     if current_case_index != case_count - 1 {
@@ -10671,38 +10635,30 @@ struct Typechecker {
                                         ))
                                     }
 
-                                    let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: "catch-all")
-                                    mut defaults: [CheckedStatement] = []
-                                    for (_, default_) in pattern.defaults {
-                                        let checked_var_decl = .typecheck_var_decl(
-                                            var: default_.variable
-                                            init: default_.value
-                                            scope_id: new_scope_id
-                                            safety_mode
-                                            span: default_.variable.span
-                                        )
-                                        defaults.push(checked_var_decl)
-                                    }
 
-                                    let (checked_body, result_type, seen_none) = .typecheck_match_body(
-                                        body: case_.body
-                                        scope_id: new_scope_id
+                                    let (defaults, key) = .typecheck_pattern_defaults(
+                                        default_bindings: &pattern.defaults
+                                        scope_id
                                         safety_mode
-                                        generic_inferences: &mut .generic_inferences
-                                        final_result_type
-                                        span: case_.marker_span
+                                        key_builder: match_builder.start_pattern(&case_proof)
                                     )
-                                    last_checked_body = checked_body
-                                    yielded_none |= seen_none
-                                    final_result_type = result_type
 
                                     let checked_match_pattern = CheckedMatchPattern::CatchAll(
                                         defaults
-                                        has_arguments: variant_arguments.size() != 0
                                         marker_span: case_.marker_span
+                                        has_arguments: variant_arguments.size() != 0
                                     )
 
-                                    checked_patterns.push(checked_match_pattern)
+                                    match_builder.register_pattern(
+                                        &case_proof
+                                        body: &case_.body
+                                        safety_mode
+                                        key
+                                        scope_id
+                                        pattern: checked_match_pattern
+                                        typechecker: &mut this
+                                        &fn() -> String => "catch-all"
+                                    )
                                 }
                                 Expression(expr) => {
                                     if is_enum_match {
@@ -10768,25 +10724,16 @@ struct Typechecker {
                                         .error("Expression patterns cannot have default bindings", case_.marker_span)
                                     }
 
-                                    let new_scope_id = .create_scope(parent_scope_id: scope_id, can_throw: .get_scope(scope_id).can_throw, debug_name: format("catch-expression({})", expr))
-                                    let (checked_body, result_type, seen_none) = .typecheck_match_body(
-                                        body: case_.body
-                                        scope_id: new_scope_id
+                                    match_builder.register_pattern(
+                                        &case_proof
+                                        body: &case_.body
                                         safety_mode
-                                        generic_inferences: &mut .generic_inferences
-                                        final_result_type
-                                        span: case_.marker_span
+                                        key: match_builder.empty_binding_key(&case_proof)
+                                        scope_id
+                                        pattern: CheckedMatchPattern::Expression(defaults: [:], marker_span: case_.marker_span, expression: checked_expression)
+                                        typechecker: &mut this
+                                        &fn[expr]() -> String => format("catch-expression({})", expr)
                                     )
-                                    last_checked_body = checked_body
-                                    yielded_none |= seen_none
-                                    final_result_type = result_type
-
-                                    let checked_match_pattern = CheckedMatchPattern::Expression(
-                                        defaults: []
-                                        expression: checked_expression
-                                        marker_span: case_.marker_span
-                                    )
-                                    checked_patterns.push(checked_match_pattern)
                                 }
                                 else => {}
                             }
@@ -10810,26 +10757,47 @@ struct Typechecker {
         }
 
         // FIXME: These errors should probably point at the case that returns None, all maybe even all the cases that do (but that could be excessive).
-        if yielded_none and final_result_type.has_value() {
-            if .get_type(final_result_type!) is GenericInstance(id, args) {
+        if match_builder.yielded_none and match_builder.final_result_type is Some(final_result_type) {
+            if .get_type(final_result_type) is GenericInstance(id, args) {
                 if not id.equals(.find_struct_in_prelude("Optional")) and not id.equals(.find_struct_in_prelude("WeakPtr")) {
                     .error(
-                        message: format("Type mismatch: expected ‘{}’, but got None", .type_name(final_result_type!))
+                        message: format("Type mismatch: expected ‘{}’, but got None", .type_name(final_result_type))
                         span: span
                     )
                 }
             } else {
                 .error(
-                    message: format("Type mismatch: expected ‘{}’, but got None", .type_name(final_result_type!))
+                    message: format("Type mismatch: expected ‘{}’, but got None", .type_name(final_result_type))
                     span: span
                 )
             }
         }
 
-        return CheckedExpression::Match(expr: checked_expr, match_cases: checked_cases, span, type_id: final_result_type ?? void_type_id(), all_variants_constant: true)
+        return CheckedExpression::Match(expr: checked_expr, match_cases: match_builder.all_cases, span, type_id: match_builder.final_result_type ?? void_type_id(), all_variants_constant: true)
     }
 
-    fn typecheck_match_body(mut this, body: ParsedMatchBody, scope_id: ScopeId, safety_mode: SafetyMode, generic_inferences: &mut GenericInferences, final_result_type: TypeId?, span: Span) throws -> (CheckedMatchBody, TypeId?, bool) {
+    restricted(MatchBuilder::register_pattern) fn typecheck_match_body(
+        mut this
+        body: ParsedMatchBody
+        parent_scope_id: ScopeId
+        bindings: [String:VarId]
+        body_scope_debug_name: String
+        safety_mode: SafetyMode
+        final_result_type: TypeId?
+        span: Span
+    ) throws -> (CheckedMatchBody, TypeId?, bool) {
+
+        let scope_id = .create_scope(
+            parent_scope_id
+            can_throw: .get_scope(parent_scope_id).can_throw
+            debug_name: body_scope_debug_name
+        )
+
+        for (name, var_id) in bindings {
+            .add_var_to_scope(scope_id, name, var_id, span: .program.get_variable(var_id).definition_span)
+        }
+
+
         mut result_type = final_result_type
         mut seen_none = false
         let checked_match_body = match body {
@@ -10852,7 +10820,7 @@ struct Typechecker {
                         result_type = .choose_broader_type_id(
                             original_type_id: result_type_hint!.type_id
                             potential_type_id: block_type_id
-                            generic_inferences
+                            generic_inferences: &mut .generic_inferences
                             span: yield_span
                         )
                     } else {
@@ -10862,7 +10830,7 @@ struct Typechecker {
                     .check_types_for_compat(
                         lhs_type_id: result_type!
                         rhs_type_id: block_type_id
-                        generic_inferences
+                        generic_inferences: &mut .generic_inferences
                         span: yield_span
                     )
                 }
@@ -10896,7 +10864,7 @@ struct Typechecker {
                     result_type = .choose_broader_type_id(
                         original_type_id: result_type_hint!.type_id
                         potential_type_id: checked_expression.type()
-                        generic_inferences
+                        generic_inferences: &mut .generic_inferences
                         span
                     )
                 } else {
@@ -10906,7 +10874,7 @@ struct Typechecker {
                 .check_types_for_compat(
                     lhs_type_id: result_type!
                     rhs_type_id: checked_expression.type()
-                    generic_inferences
+                    generic_inferences: &mut .generic_inferences
                     span
                 )
 
@@ -12679,5 +12647,161 @@ fn dump_scope(anon scope_id: ScopeId, anon program: &CheckedProgram, indent: i64
     eprintln("{: >{}}Children:", "", cindent)
     for id in scope.children {
         dump_scope(id, program, indent: cindent + 2)
+    }
+}
+
+enum BindingKey {
+    Found(usize) // found equivalent pattern at an index
+    New([String:VarId]) // need to make a new case.
+}
+
+fn search_empty_pattern(cases: ArraySlice<CheckedMatchCase>) -> BindingKey {
+    for idx in 0..cases.size() {
+        if cases[idx].bindings.is_empty() {
+            return BindingKey::Found(idx)
+        }
+    }
+    return BindingKey::New([:])
+}
+
+// The state that is kept while discovering bindings from a pattern inside a
+// match, which discards possible aliasing cases on each binding discovery. It
+// is used by the typechecker to detect when the body of a case must be
+// typechecked with new types for a certain pattern. The `cases` slice is the
+// subset of cases that the pattern can refer to, which are the checked cases
+// from previous patterns that share the same body. This invariant is easy to
+// miss, but `MatchBuilder` (below) helps in enforcing it.
+// NOTE: The `correct` set may be implemented with a bit array with size cases.size()
+enum BindingKeyBuilder {
+    Empty(cases: ArraySlice<CheckedMatchCase>)
+    Known(built: [String:VarId], correct: {usize}, cases: ArraySlice<CheckedMatchCase>)
+    New(built: [String:VarId])
+
+    fn finish(this) -> BindingKey => match this {
+        Empty(cases) => search_empty_pattern(cases)
+        Known(built, correct, cases) => {
+            // From the remaining possibilities, find one that is exactly the
+            // size of the binding list.
+            for idx in correct {
+                if cases[idx].bindings.size() == built.size() {
+                    return BindingKey::Found(idx)
+                }
+            }
+            yield BindingKey::New(built)
+        }
+        New(built) => BindingKey::New(built)
+    }
+
+    fn submit(
+        mut this
+        anon name: String
+        anon var_id: VarId
+        program: CheckedProgram
+    ) -> BindingKeyBuilder => match this {
+        Empty(cases) => {
+            let correct = build_correct_set(0..cases.size(), name, var_id, cases, program)
+            yield BindingKeyBuilder::from_set(correct, built: [name:var_id], cases)
+        }
+        Known(built: built_, correct, cases) => {
+            mut built = built_
+            built[name] = var_id
+
+            let next_correct = build_correct_set(correct.iterator(), name, var_id, cases, program)
+
+            yield BindingKeyBuilder::from_set(correct: next_correct, built, cases)
+        }
+        New(built: built_) => {
+            mut built = built_
+            built[name] = var_id
+            yield BindingKeyBuilder::New(built)
+        }
+    }
+
+    // FIXME: This could require IntoIterator, but Range (0..cases.size() in Empty case above) is Iterable, not IntoIterator.
+    fn build_correct_set<Src requires(Iterable<usize>)>(
+        anon src: Src
+        name: String
+        var_id: VarId
+        cases: ArraySlice<CheckedMatchCase>
+        program: CheckedProgram
+    ) -> {usize} {
+        mut correct: {usize} = {}
+        let wanted_type = program.get_variable(var_id).type_id
+
+        for idx in src {
+            if cases[idx].bindings.get(name) is Some(var) and program.get_variable(var).type_id == wanted_type {
+                correct.add(idx)
+            }
+        }
+
+        return correct
+    }
+
+    fn from_set(
+        correct: {usize}
+        built: [String:VarId]
+        cases: ArraySlice<CheckedMatchCase>
+    ) -> BindingKeyBuilder => match correct.is_empty() {
+        true => BindingKeyBuilder::New(built)
+        false => BindingKeyBuilder::Known(built, correct, cases)
+    }
+}
+
+// Since we have to keep state per case loop, it is pretty easy to forget to
+// update the state every loop, specially with different loops scattered across
+// Typechecker.typecheck_match. This acts as a key that is also used to
+// remember where the checked cases for the current case body starts.
+struct CaseStartedProof {
+    restricted(MatchBuilder)
+    start_of_case: usize
+}
+
+// Centralized state for Typechecker.typecheck_match. It tracks the necessary
+// state when typechecking a whole match. It is in charge of grouping patterns
+// with their respective checked body & bindings, as discovered by
+// `BindingKeyBuilder`. It also helps in enforcing that the `cases` array that
+// `BindingKeyBuilder` inspects only contains cases referring to the same
+// parsed body.
+struct MatchBuilder {
+    all_cases: [CheckedMatchCase] = []
+    yielded_none: bool = false
+    final_result_type: TypeId? = None
+
+    fn start_case(mut this) -> CaseStartedProof => CaseStartedProof(start_of_case: .all_cases.size())
+
+    fn start_pattern(this, anon proof: &CaseStartedProof) -> BindingKeyBuilder => BindingKeyBuilder::Empty(cases: .all_cases[proof.start_of_case..])
+    // skips the builder step for patterns that don't have bindings
+    fn empty_binding_key(this, anon proof: &CaseStartedProof) -> BindingKey => search_empty_pattern(cases: .all_cases[proof.start_of_case..])
+
+    fn register_pattern(
+        mut this
+        anon proof: &CaseStartedProof
+        body: &ParsedMatchBody
+        safety_mode: SafetyMode
+        key: BindingKey
+        scope_id: ScopeId // scope id where the match is located
+        pattern: CheckedMatchPattern // the pattern to register
+        typechecker: &mut Typechecker
+        anon scope_debug_name: &fn() -> String // when a scope id is required
+    ) throws -> void => match key {
+        Found(index) => {
+            // add this pattern to the checked cases, since it was found
+            let case_index = index + proof.start_of_case
+            .all_cases[case_index].patterns.push(pattern)
+        }
+        New(built) => {
+            let (body, result_type, seen_none) = typechecker.typecheck_match_body(
+                body: *body
+                parent_scope_id: scope_id
+                bindings: built
+                body_scope_debug_name: scope_debug_name()
+                safety_mode
+                final_result_type: .final_result_type
+                span: pattern.marker_span
+            )
+            .final_result_type = result_type
+            .yielded_none |= seen_none
+            .all_cases.push(CheckedMatchCase(patterns: [pattern], body, bindings: built))
+        }
     }
 }
