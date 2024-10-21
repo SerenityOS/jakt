@@ -4489,6 +4489,16 @@ struct CodeGenerator {
         let expression_type = .program.get_type(expr.type())
         let name = call.name_for_codegen()
 
+		let use_cpp_index_operator = name.as_name_for_use() == "operator[]" and call.args.size() == 1 
+
+        guard not use_cpp_index_operator else {
+            .codegen_expression(expr, &mut output, syntactically_self_contained: true)
+            output.append('[')
+            .codegen_expression(call.args[0].1, &mut output)
+            output.append(']')
+            return
+        }
+
         let object_is_this = .expr_codegens_to_this_pointer(expr)
 
         let field_accessor = match name {
