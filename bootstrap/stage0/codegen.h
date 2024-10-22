@@ -31,6 +31,20 @@ bool case_has_bindings(Jakt::types::CheckedMatchCase const& match_case);
 
 size_t count_match_cases(JaktInternal::DynamicArray<Jakt::types::CheckedMatchCase> const& cases);
 
+bool has_cpp_value(Jakt::ids::TypeId const type_id);
+
+bool has_control_flow(Jakt::types::CheckedMatchCase const match_case, bool const include_loop_control_flow);
+
+bool has_control_flow(Jakt::types::CheckedBlock const block, bool const include_loop_control_flow);
+
+bool has_control_flow(NonnullRefPtr<typename Jakt::types::CheckedStatement> const stmt, bool const include_loop_control_flow);
+
+bool has_control_flow(NonnullRefPtr<typename Jakt::types::CheckedExpression> const expr, bool const include_loop_control_flow);
+
+bool has_control_flow(JaktInternal::Tuple<NonnullRefPtr<typename Jakt::types::CheckedExpression>,NonnullRefPtr<typename Jakt::types::CheckedExpression>> const dict_pair, bool const include_loop_control_flow);
+
+bool has_control_flow(JaktInternal::Tuple<ByteString,NonnullRefPtr<typename Jakt::types::CheckedExpression>> const call_arg, bool const include_loop_control_flow);
+
 }
 namespace codegen {
 struct AllowedControlExits {
@@ -94,6 +108,7 @@ constexpr VariantData() {}
 constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ByteString debug_description() const;
 [[nodiscard]] static YieldMethod ReturnExplicitValue(ByteString ctor);
 [[nodiscard]] static YieldMethod AssignAndGoto(ByteString name, ByteString label);
+[[nodiscard]] static YieldMethod Return();
 ~YieldMethod();
 YieldMethod& operator=(YieldMethod const &);
 YieldMethod& operator=(YieldMethod &&);
@@ -106,7 +121,7 @@ YieldMethod() {};
 };
 struct CodeGenerator {
   public:
-public: NonnullRefPtr<Jakt::compiler::Compiler> compiler;public: NonnullRefPtr<Jakt::types::CheckedProgram> program;public: Jakt::codegen::ControlFlowState control_flow_state;public: JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,ByteString>> entered_yieldable_blocks;public: ByteStringBuilder deferred_output;public: JaktInternal::Optional<NonnullRefPtr<Jakt::types::CheckedFunction>> current_function;public: bool inside_defer;public: Jakt::codegen::CodegenDebugInfo debug_info;public: JaktInternal::DynamicArray<ByteString> namespace_stack;public: size_t fresh_var_counter;public: size_t fresh_label_counter;public: JaktInternal::Optional<ByteString> this_replacement;public: JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences;public: JaktInternal::Set<Jakt::ids::ModuleId> used_modules;public: JaktInternal::Optional<Jakt::codegen::YieldMethod> yield_method;public: ByteString current_error_handler(bool const forward_error_with_try) const;
+public: NonnullRefPtr<Jakt::compiler::Compiler> compiler;public: NonnullRefPtr<Jakt::types::CheckedProgram> program;public: Jakt::codegen::ControlFlowState control_flow_state;public: JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,ByteString>> entered_yieldable_blocks;public: ByteStringBuilder deferred_output;public: JaktInternal::Optional<NonnullRefPtr<Jakt::types::CheckedFunction>> current_function;public: bool inside_defer;public: Jakt::codegen::CodegenDebugInfo debug_info;public: JaktInternal::DynamicArray<ByteString> namespace_stack;public: size_t fresh_var_counter;public: size_t fresh_label_counter;public: JaktInternal::Optional<ByteString> this_replacement;public: JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> generic_inferences;public: JaktInternal::Set<Jakt::ids::ModuleId> used_modules;public: JaktInternal::Optional<Jakt::codegen::YieldMethod> yield_method;public: bool yields_erroror;public: ByteString current_error_handler(bool const forward_error_with_try);
 public: ByteString fresh_var();
 public: ByteString fresh_label();
 public: JaktInternal::DynamicArray<Jakt::ids::ModuleId> topologically_sort_modules() const;
@@ -152,10 +167,14 @@ public: ErrorOr<void> codegen_expression(NonnullRefPtr<typename Jakt::types::Che
 public: bool expr_codegens_to_this_pointer(NonnullRefPtr<typename Jakt::types::CheckedExpression> const expr) const;
 public: ErrorOr<void> codegen_prefix_unary(NonnullRefPtr<typename Jakt::types::CheckedExpression> const expr, StringView const cpp_operator, ByteStringBuilder& output, bool const syntactically_self_contained);
 public: ErrorOr<void> codegen_postfix_unary(NonnullRefPtr<typename Jakt::types::CheckedExpression> const expr, StringView const cpp_operator, ByteStringBuilder& output, bool const syntactically_self_contained);
-public: ErrorOr<void> codegen_match(NonnullRefPtr<typename Jakt::types::CheckedExpression> const expr, JaktInternal::DynamicArray<Jakt::types::CheckedMatchCase> const match_cases, Jakt::ids::TypeId const type_id, bool const all_variants_constant, ByteStringBuilder& output);
-public: ErrorOr<void> codegen_generic_match(NonnullRefPtr<typename Jakt::types::CheckedExpression> const expr, JaktInternal::DynamicArray<Jakt::types::CheckedMatchCase> const cases, Jakt::ids::TypeId const return_type_id, ByteString const cpp_match_result_type, bool const all_variants_constant, ByteStringBuilder& output);
+public: ErrorOr<void> codegen_match(NonnullRefPtr<typename Jakt::types::CheckedExpression> const expr, JaktInternal::DynamicArray<Jakt::types::CheckedMatchCase> const match_cases, Jakt::ids::TypeId const type_id, bool const all_variants_constant, bool const forward_error_with_try, ByteStringBuilder& output);
+public: ErrorOr<void> codegen_value_match(NonnullRefPtr<typename Jakt::types::CheckedExpression> const expr, JaktInternal::DynamicArray<Jakt::types::CheckedMatchCase> const match_cases, Jakt::ids::TypeId const type_id, bool const forward_error_with_try, ByteStringBuilder& output);
+public: ErrorOr<void> codegen_inner_match(NonnullRefPtr<typename Jakt::types::CheckedExpression> const expr, JaktInternal::DynamicArray<Jakt::types::CheckedMatchCase> const match_cases, Jakt::ids::TypeId const type_id, ByteStringBuilder& output);
+public: ErrorOr<void> codegen_void_match(NonnullRefPtr<typename Jakt::types::CheckedExpression> const expr, JaktInternal::DynamicArray<Jakt::types::CheckedMatchCase> const match_cases, Jakt::ids::TypeId const type_id, ByteStringBuilder& output);
+public: ErrorOr<void> codegen_returned_match(NonnullRefPtr<typename Jakt::types::CheckedExpression> const expr, JaktInternal::DynamicArray<Jakt::types::CheckedMatchCase> const match_cases, Jakt::ids::TypeId const type_id, ByteStringBuilder& output);
+public: ErrorOr<void> codegen_generic_match(NonnullRefPtr<typename Jakt::types::CheckedExpression> const expr, JaktInternal::DynamicArray<Jakt::types::CheckedMatchCase> const cases, Jakt::ids::TypeId const return_type_id, ByteStringBuilder& output);
 public: ErrorOr<void> codegen_generic_pattern_condition(Jakt::types::CheckedMatchPattern const& pattern, bool const is_parenthesized, ByteStringBuilder& output);
-public: ErrorOr<void> codegen_enum_match(Jakt::types::CheckedEnum const enum_, NonnullRefPtr<typename Jakt::types::CheckedExpression> const expr, JaktInternal::DynamicArray<Jakt::types::CheckedMatchCase> const match_cases, Jakt::ids::TypeId const type_id, ByteString const cpp_match_result_type, bool const all_variants_constant, ByteStringBuilder& output);
+public: ErrorOr<void> codegen_enum_match(Jakt::types::CheckedEnum const enum_, NonnullRefPtr<typename Jakt::types::CheckedExpression> const expr, JaktInternal::DynamicArray<Jakt::types::CheckedMatchCase> const match_cases, Jakt::ids::TypeId const type_id, ByteStringBuilder& output);
 public: ErrorOr<void> codegen_match_body(Jakt::types::CheckedMatchBody const body, Jakt::ids::TypeId const return_type_id, ByteStringBuilder& output);
 public: ErrorOr<ByteString> codegen_function_return_type(NonnullRefPtr<Jakt::types::CheckedFunction> const function);
 public: ErrorOr<void> codegen_binary_expression(NonnullRefPtr<typename Jakt::types::CheckedExpression> const expression, Jakt::ids::TypeId const type_id, NonnullRefPtr<typename Jakt::types::CheckedExpression> const lhs, NonnullRefPtr<typename Jakt::types::CheckedExpression> const rhs, Jakt::types::CheckedBinaryOperator const op, ByteStringBuilder& output, bool const forward_error_with_try, bool const syntactically_self_contained);
@@ -169,7 +188,10 @@ public: ErrorOr<void> codegen_call(Jakt::types::CheckedCall const call, ByteStri
 public: ErrorOr<void> codegen_call_unwrapped(Jakt::types::CheckedCall const call, ByteStringBuilder& output);
 public: ErrorOr<ByteString> codegen_namespace_path(Jakt::types::CheckedCall const call);
 public: ErrorOr<void> codegen_block(Jakt::types::CheckedBlock const block, ByteStringBuilder& output);
+public: StringView break_statement() const;
 public: ErrorOr<void> codegen_statement(NonnullRefPtr<typename Jakt::types::CheckedStatement> const statement, ByteStringBuilder& output);
+public: ErrorOr<void> codegen_return(JaktInternal::Optional<NonnullRefPtr<typename Jakt::types::CheckedExpression>> const val, ByteStringBuilder& output);
+public: ErrorOr<void> codegen_value_return(NonnullRefPtr<typename Jakt::types::CheckedExpression> const val, ByteStringBuilder& output);
 public: ErrorOr<ByteString> codegen_type(Jakt::ids::TypeId const type_id);
 public: ErrorOr<ByteString> codegen_type_possibly_as_namespace(Jakt::ids::TypeId const type_id, bool const as_namespace);
 public: ErrorOr<ByteString> codegen_generic_type_instance(Jakt::ids::StructId const id, JaktInternal::DynamicArray<Jakt::ids::TypeId> const args, bool const as_namespace);
@@ -185,10 +207,14 @@ public: ErrorOr<void> codegen_constructor_predecl(NonnullRefPtr<Jakt::types::Che
 public: ErrorOr<void> codegen_constructor(NonnullRefPtr<Jakt::types::CheckedFunction> const function, bool const is_inline, ByteStringBuilder& output);
 public: ErrorOr<void> codegen_function_in_namespace(NonnullRefPtr<Jakt::types::CheckedFunction> const function, JaktInternal::Optional<Jakt::ids::TypeId> const containing_struct, bool const as_method, bool const skip_template, JaktInternal::Optional<JaktInternal::DynamicArray<Jakt::ids::TypeId>> const explicit_generic_instantiation, ByteStringBuilder& output);
 public: ErrorOr<void> codegen_lambda_block(bool const can_throw, Jakt::types::CheckedBlock const block, Jakt::ids::TypeId const return_type_id, ByteStringBuilder& output);
-public: CodeGenerator(NonnullRefPtr<Jakt::compiler::Compiler> a_compiler, NonnullRefPtr<Jakt::types::CheckedProgram> a_program, Jakt::codegen::ControlFlowState a_control_flow_state, JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,ByteString>> a_entered_yieldable_blocks, ByteStringBuilder a_deferred_output, JaktInternal::Optional<NonnullRefPtr<Jakt::types::CheckedFunction>> a_current_function, bool a_inside_defer, Jakt::codegen::CodegenDebugInfo a_debug_info, JaktInternal::DynamicArray<ByteString> a_namespace_stack, size_t a_fresh_var_counter, size_t a_fresh_label_counter, JaktInternal::Optional<ByteString> a_this_replacement, JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> a_generic_inferences, JaktInternal::Set<Jakt::ids::ModuleId> a_used_modules, JaktInternal::Optional<Jakt::codegen::YieldMethod> a_yield_method);
+public: CodeGenerator(NonnullRefPtr<Jakt::compiler::Compiler> a_compiler, NonnullRefPtr<Jakt::types::CheckedProgram> a_program, Jakt::codegen::ControlFlowState a_control_flow_state, JaktInternal::DynamicArray<JaktInternal::Tuple<ByteString,ByteString>> a_entered_yieldable_blocks, ByteStringBuilder a_deferred_output, JaktInternal::Optional<NonnullRefPtr<Jakt::types::CheckedFunction>> a_current_function, bool a_inside_defer, Jakt::codegen::CodegenDebugInfo a_debug_info, JaktInternal::DynamicArray<ByteString> a_namespace_stack, size_t a_fresh_var_counter, size_t a_fresh_label_counter, JaktInternal::Optional<ByteString> a_this_replacement, JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> a_generic_inferences, JaktInternal::Set<Jakt::ids::ModuleId> a_used_modules, JaktInternal::Optional<Jakt::codegen::YieldMethod> a_yield_method, bool a_yields_erroror);
 
 public: ByteString debug_description() const;
-};}
+};template <typename T>
+bool has_control_flow(JaktInternal::DynamicArray<T> const any_of, bool const include_loop_control_flow);
+template <typename T>
+bool has_control_flow(JaktInternal::Optional<T> const maybe_v, bool const include_loop_control_flow);
+}
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::codegen::AllowedControlExits> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::codegen::AllowedControlExits const& value) {

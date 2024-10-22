@@ -237,16 +237,9 @@ return {};
 
 ErrorOr<void> Jakt::build::Builder::link_into_archive(ByteString const archiver,ByteString const archive_filename,JaktInternal::DynamicArray<ByteString> const extra_arguments) {
 {
-JaktInternal::DynamicArray<ByteString> args = DynamicArray<ByteString>::create_with({archiver, ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<void>> {
-auto __jakt_enum_value = (extra_arguments.size());
-if (__jakt_enum_value == static_cast<size_t>(0ULL)) {return JaktInternal::ExplicitValue(ByteString::from_utf8_without_validation("cr"sv));
-}else {return JaktInternal::ExplicitValue(ByteString::from_utf8_without_validation("crT"sv));
-}}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-}), archive_filename});
+JaktInternal::DynamicArray<ByteString> args = DynamicArray<ByteString>::create_with({archiver, [&]() -> ByteString { auto __jakt_enum_value = extra_arguments.size();
+if (__jakt_enum_value == static_cast<size_t>(0ULL)) {return ByteString::from_utf8_without_validation("cr"sv);}else {return ByteString::from_utf8_without_validation("crT"sv);} 
+}(), archive_filename});
 {
 JaktInternal::ArrayIterator<ByteString> _magic = this->linked_files.iterator();
 for (;;){

@@ -445,10 +445,10 @@ CheckedTraitRequirements() {};
 class CheckedTrait :public RefCounted<CheckedTrait>, public Weakable<CheckedTrait> {
   public:
 virtual ~CheckedTrait() = default;
-public: ByteString name;public: Jakt::utility::Span name_span;public: Jakt::types::CheckedTraitRequirements requirements;public: JaktInternal::DynamicArray<Jakt::types::CheckedGenericParameter> generic_parameters;public: Jakt::ids::ScopeId scope_id;public: protected:
-explicit CheckedTrait(ByteString a_name, Jakt::utility::Span a_name_span, Jakt::types::CheckedTraitRequirements a_requirements, JaktInternal::DynamicArray<Jakt::types::CheckedGenericParameter> a_generic_parameters, Jakt::ids::ScopeId a_scope_id);
+public: ByteString name;public: Jakt::utility::Span name_span;public: Jakt::types::CheckedTraitRequirements requirements;public: JaktInternal::DynamicArray<Jakt::types::CheckedGenericParameter> generic_parameters;public: Jakt::ids::ScopeId scope_id;public: JaktInternal::Dictionary<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<Jakt::ids::TraitId,JaktInternal::DynamicArray<Jakt::ids::TypeId>>>> extended_trait_implementations;public: protected:
+explicit CheckedTrait(ByteString a_name, Jakt::utility::Span a_name_span, Jakt::types::CheckedTraitRequirements a_requirements, JaktInternal::DynamicArray<Jakt::types::CheckedGenericParameter> a_generic_parameters, Jakt::ids::ScopeId a_scope_id, JaktInternal::Dictionary<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<Jakt::ids::TraitId,JaktInternal::DynamicArray<Jakt::ids::TypeId>>>> a_extended_trait_implementations);
 public:
-static NonnullRefPtr<CheckedTrait> __jakt_create(ByteString name, Jakt::utility::Span name_span, Jakt::types::CheckedTraitRequirements requirements, JaktInternal::DynamicArray<Jakt::types::CheckedGenericParameter> generic_parameters, Jakt::ids::ScopeId scope_id);
+static NonnullRefPtr<CheckedTrait> __jakt_create(ByteString name, Jakt::utility::Span name_span, Jakt::types::CheckedTraitRequirements requirements, JaktInternal::DynamicArray<Jakt::types::CheckedGenericParameter> generic_parameters, Jakt::ids::ScopeId scope_id, JaktInternal::Dictionary<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<Jakt::ids::TraitId,JaktInternal::DynamicArray<Jakt::ids::TypeId>>>> extended_trait_implementations);
 
 public: ByteString debug_description() const;
 };struct LoadedModule {

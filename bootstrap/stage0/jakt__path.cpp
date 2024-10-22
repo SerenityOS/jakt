@@ -157,16 +157,9 @@ ErrorOr<Jakt::jakt__path::Path> Jakt::jakt__path::Path::replace_extension(ByteSt
 {
 JaktInternal::Tuple<ByteString,ByteString> const parts = this->split_at_last_slash();
 ByteString const basename = this->basename(true);
-ByteString const extension = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<Jakt::jakt__path::Path>> {
-auto __jakt_enum_value = (new_extension);
-if (__jakt_enum_value == ByteString::from_utf8_without_validation(""sv)) {return JaktInternal::ExplicitValue(ByteString::from_utf8_without_validation(""sv));
-}else {return JaktInternal::ExplicitValue(ByteString::from_utf8_without_validation("."sv) + new_extension);
-}}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+ByteString const extension = [&]() -> ByteString { auto __jakt_enum_value = new_extension;
+if (__jakt_enum_value == ByteString::from_utf8_without_validation(""sv)) {return ByteString::from_utf8_without_validation(""sv);}else {return ByteString::from_utf8_without_validation("."sv) + new_extension;} 
+}();
 return Jakt::jakt__path::Path::from_parts(DynamicArray<ByteString>::create_with({parts.template get<0>(), basename + extension}));
 }
 }

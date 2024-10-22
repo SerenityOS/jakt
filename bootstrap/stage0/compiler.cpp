@@ -179,23 +179,11 @@ this->current_file_contents = TRY((file->read_all()));
 return ErrorOr<void> {};}();
 if (__jakt_var_3.is_error()) {auto error = __jakt_var_3.release_error();
 {
-({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<bool>> {
-auto __jakt_enum_value = (error.code());
-if (__jakt_enum_value == ErrNOENT) {return ({warnln(StringView::from_string_literal("\u001b[31;1mError\u001b[0m Could not access {}: File not found"sv),this->files.operator[](file_id.id));}), JaktInternal::ExplicitValue<void>();
-}else if (__jakt_enum_value == ErrACCES) {return ({warnln(StringView::from_string_literal("\u001b[31;1mError\u001b[0m Could not access {}: Permission denied"sv),this->files.operator[](file_id.id));}), JaktInternal::ExplicitValue<void>();
-}else if (__jakt_enum_value == ErrFBIG) {return ({warnln(StringView::from_string_literal("\u001b[31;1mError\u001b[0m Could not access {}: File too big"sv),this->files.operator[](file_id.id));}), JaktInternal::ExplicitValue<void>();
-}else if (__jakt_enum_value == ErrNAMETOOLONG) {return ({warnln(StringView::from_string_literal("\u001b[31;1mError\u001b[0m Could not access {}: Name too long"sv),this->files.operator[](file_id.id));}), JaktInternal::ExplicitValue<void>();
-}else {{
+{auto __jakt_enum_value = error.code();
+if (__jakt_enum_value == ErrNOENT) {warnln(StringView::from_string_literal("\u001b[31;1mError\u001b[0m Could not access {}: File not found"sv),this->files.operator[](file_id.id));goto __jakt_label_4;}else if (__jakt_enum_value == ErrACCES) {warnln(StringView::from_string_literal("\u001b[31;1mError\u001b[0m Could not access {}: Permission denied"sv),this->files.operator[](file_id.id));goto __jakt_label_4;}else if (__jakt_enum_value == ErrFBIG) {warnln(StringView::from_string_literal("\u001b[31;1mError\u001b[0m Could not access {}: File too big"sv),this->files.operator[](file_id.id));goto __jakt_label_4;}else if (__jakt_enum_value == ErrNAMETOOLONG) {warnln(StringView::from_string_literal("\u001b[31;1mError\u001b[0m Could not access {}: Name too long"sv),this->files.operator[](file_id.id));goto __jakt_label_4;}else {{
 Jakt::utility::panic(ByteString::from_utf8_without_validation("Incurred unrecognized error while trying to open file"sv));
 }
-return JaktInternal::ExplicitValue<void>();
-}return JaktInternal::ExplicitValue<void>();
-}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+goto __jakt_label_4;}}goto __jakt_label_4; __jakt_label_4:;;
 this->current_file = old_file_id;
 return false;
 }
@@ -274,17 +262,10 @@ return this->find_in_search_paths(Jakt::jakt__path::Path::from_string(module_nam
 
 ErrorOr<JaktInternal::Optional<Jakt::jakt__path::Path>> Jakt::compiler::Compiler::find_in_search_paths(Jakt::jakt__path::Path const path,bool const relative_import,size_t const parent_path_count) const {
 {
-JaktInternal::Optional<Jakt::jakt__path::Path> const current_file_path = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<Jakt::jakt__path::Path>,ErrorOr<JaktInternal::Optional<Jakt::jakt__path::Path>>> {
-auto __jakt_enum_value = (relative_import);
-if (__jakt_enum_value) {return JaktInternal::ExplicitValue(this->current_file_path());
-}else if (!__jakt_enum_value) {return JaktInternal::ExplicitValue(this->assume_main_file_path.value_or_lazy_evaluated_optional([&] { return this->current_file_path(); }));
-}VERIFY_NOT_REACHED();
-}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+JaktInternal::Optional<Jakt::jakt__path::Path> const current_file_path = [&]() -> JaktInternal::Optional<Jakt::jakt__path::Path> { auto __jakt_enum_value = relative_import;
+if (__jakt_enum_value) {return this->current_file_path();}else if (!__jakt_enum_value) {return this->assume_main_file_path.value_or_lazy_evaluated_optional([&] { return this->current_file_path(); });}VERIFY_NOT_REACHED();
+ 
+}();
 if (current_file_path.has_value()){
 Jakt::jakt__path::Path candidate_path = TRY((current_file_path.value().absolute())).parent();
 if (relative_import && (parent_path_count > static_cast<size_t>(0ULL))){

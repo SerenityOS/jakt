@@ -8,9 +8,7 @@ namespace Jakt {
 namespace error {
 void print_error_json(ByteString const file_name,Jakt::error::JaktError const error) {
 {
-({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, void>{
-auto&& __jakt_match_variant = error;
+{auto&& __jakt_match_variant = error;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Message */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Message;ByteString const& message = __jakt_match_value.message;
@@ -18,8 +16,7 @@ Jakt::utility::Span const& span = __jakt_match_value.span;
 {
 Jakt::error::display_message_with_span_json(Jakt::error::MessageSeverity::Error(),file_name,message,span);
 }
-return JaktInternal::ExplicitValue<void>();
-};/*case end*/
+goto __jakt_label_2;};/*case end*/
 case 1 /* MessageWithHint */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.MessageWithHint;ByteString const& message = __jakt_match_value.message;
 Jakt::utility::Span const& span = __jakt_match_value.span;
@@ -29,23 +26,15 @@ Jakt::utility::Span const& hint_span = __jakt_match_value.hint_span;
 Jakt::error::display_message_with_span_json(Jakt::error::MessageSeverity::Error(),file_name,message,span);
 Jakt::error::display_message_with_span_json(Jakt::error::MessageSeverity::Hint(),file_name,hint,hint_span);
 }
-return JaktInternal::ExplicitValue<void>();
-};/*case end*/
+goto __jakt_label_2;};/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
-}()
-);
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+}goto __jakt_label_2; __jakt_label_2:;;
 }
 }
 
 ErrorOr<void> print_error(ByteString const file_name,JaktInternal::Optional<JaktInternal::DynamicArray<u8>> const file_contents,Jakt::error::JaktError const error) {
 {
-({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<void>>{
-auto&& __jakt_match_variant = error;
+{auto&& __jakt_match_variant = error;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Message */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Message;ByteString const& message = __jakt_match_value.message;
@@ -53,8 +42,7 @@ Jakt::utility::Span const& span = __jakt_match_value.span;
 {
 Jakt::error::display_message_with_span(Jakt::error::MessageSeverity::Error(),file_name,file_contents,message,span);
 }
-return JaktInternal::ExplicitValue<void>();
-};/*case end*/
+goto __jakt_label_3;};/*case end*/
 case 1 /* MessageWithHint */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.MessageWithHint;ByteString const& message = __jakt_match_value.message;
 Jakt::utility::Span const& span = __jakt_match_value.span;
@@ -64,15 +52,9 @@ Jakt::utility::Span const& hint_span = __jakt_match_value.hint_span;
 Jakt::error::display_message_with_span(Jakt::error::MessageSeverity::Error(),file_name,file_contents,message,span);
 Jakt::error::display_message_with_span(Jakt::error::MessageSeverity::Hint(),file_name,file_contents,hint,hint_span);
 }
-return JaktInternal::ExplicitValue<void>();
-};/*case end*/
+goto __jakt_label_3;};/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
-}()
-);
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+}goto __jakt_label_3; __jakt_label_3:;;
 }
 return {};
 }
@@ -476,49 +458,31 @@ break;
 }
 Jakt::utility::Span Jakt::error::JaktError::span() const {
 {
-return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<Jakt::utility::Span, Jakt::utility::Span>{
-auto&& __jakt_match_variant = *this;
+{auto&& __jakt_match_variant = *this;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Message */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Message;Jakt::utility::Span const& span = __jakt_match_value.span;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 1 /* MessageWithHint */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.MessageWithHint;Jakt::utility::Span const& span = __jakt_match_value.span;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
-}()
-);
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+}
 }
 }
 
 ByteString Jakt::error::JaktError::message() const {
 {
-return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString, ByteString>{
-auto&& __jakt_match_variant = *this;
+{auto&& __jakt_match_variant = *this;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Message */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Message;ByteString const& message = __jakt_match_value.message;
-return JaktInternal::ExplicitValue(message);
-};/*case end*/
+return message;};/*case end*/
 case 1 /* MessageWithHint */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.MessageWithHint;ByteString const& message = __jakt_match_value.message;
-return JaktInternal::ExplicitValue(message);
-};/*case end*/
+return message;};/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
-}()
-);
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+}
 }
 }
 
@@ -617,37 +581,19 @@ case 1 /* Error */:break;
 }
 ByteString Jakt::error::MessageSeverity::name() const {
 {
-return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString, ByteString>{
-auto&& __jakt_match_variant = *this;
+{auto&& __jakt_match_variant = *this;
 switch(__jakt_match_variant.__jakt_init_index()) {
-case 0 /* Hint */:return JaktInternal::ExplicitValue(ByteString::from_utf8_without_validation("Hint"sv));
-case 1 /* Error */:return JaktInternal::ExplicitValue(ByteString::from_utf8_without_validation("Error"sv));
-default: VERIFY_NOT_REACHED();}/*switch end*/
-}()
-);
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+case 0 /* Hint */:return ByteString::from_utf8_without_validation("Hint"sv);case 1 /* Error */:return ByteString::from_utf8_without_validation("Error"sv);default: VERIFY_NOT_REACHED();}/*switch end*/
+}
 }
 }
 
 ByteString Jakt::error::MessageSeverity::ansi_color_code() const {
 {
-return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString, ByteString>{
-auto&& __jakt_match_variant = *this;
+{auto&& __jakt_match_variant = *this;
 switch(__jakt_match_variant.__jakt_init_index()) {
-case 0 /* Hint */:return JaktInternal::ExplicitValue(ByteString::from_utf8_without_validation("94"sv));
-case 1 /* Error */:return JaktInternal::ExplicitValue(ByteString::from_utf8_without_validation("31"sv));
-default: VERIFY_NOT_REACHED();}/*switch end*/
-}()
-);
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+case 0 /* Hint */:return ByteString::from_utf8_without_validation("94"sv);case 1 /* Error */:return ByteString::from_utf8_without_validation("31"sv);default: VERIFY_NOT_REACHED();}/*switch end*/
+}
 }
 }
 
