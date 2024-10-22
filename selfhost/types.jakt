@@ -769,6 +769,7 @@ class CheckedTrait {
     public requirements: CheckedTraitRequirements
     public generic_parameters: [CheckedGenericParameter]
     public scope_id: ScopeId
+    public extended_trait_implementations: [String:[(TraitId, [TypeId])]] = [:]
 }
 
 struct LoadedModule {

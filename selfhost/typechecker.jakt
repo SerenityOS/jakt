@@ -2133,6 +2133,17 @@ struct Typechecker {
                             default_pass
                         )
                     }
+                    Trait(trait_id) | GenericTraitInstance(id: trait_id) => {
+                        mut trait_ = .get_trait(trait_id)
+                        .resolve_external_trait_implementations(
+                            implementation
+                            entity_scope_id: trait_.scope_id
+                            trait_implementations: &mut trait_.extended_trait_implementations
+                            for_type
+                            scope_id
+                            default_pass
+                        )
+                    }
                     else => {
                         if not default_pass {
                             .error(
@@ -2436,6 +2447,18 @@ struct Typechecker {
                                     type_arguments.push(param.type_id)
                                 }
                                 type = .find_or_add_type_id(Type::GenericEnumInstance(id, args: type_arguments))
+                            }
+                            yield type
+                        }
+                        Trait(id) => {
+                            let trait_ = .get_trait(id)
+                            mut type = for_type
+                            if not trait_.generic_parameters.is_empty() {
+                                mut type_arguments: [TypeId] = []
+                                for param in trait_.generic_parameters {
+                                    type_arguments.push(param.type_id)
+                                }
+                                type = .find_or_add_type_id(Type::GenericTraitInstance(id, args: type_arguments))
                             }
                             yield type
                         }
@@ -3137,6 +3160,15 @@ struct Typechecker {
                 }
             } else {
                 trait_implementations.set(trait_name.name, [(trait_id, generic_arguments)])
+            }
+
+            for (name, impls) in .get_trait(trait_id).extended_trait_implementations {
+                if trait_implementations.contains(name) {
+                    mut existing_list = trait_implementations.get(name)!
+                    existing_list.push_values(&impls)
+                } else {
+                    trait_implementations.set(name, impls[..].to_array())
+                }
             }
 
             result.push((trait_id, generic_arguments))
@@ -4317,8 +4349,20 @@ struct Typechecker {
         scope_id: ScopeId
     ) throws {
         trait_requirements.ensure_capacity(names.size())
+
+        mut names_as_strings: [String] = []
         for name in names {
-            mut type_id = .find_type_in_scope(scope_id, name: name.name)
+            names_as_strings.push(name.name)
+        }
+
+        let check_scope_id = .create_scope(
+            parent_scope_id: scope_id
+            can_throw: false
+            debug_name: format("trait-requirement-check-scope({} in {})", names_as_strings, .get_scope(scope_id).debug_name)
+        )
+
+        for name in names {
+            mut type_id = .find_type_in_scope(scope_id: check_scope_id, name: name.name)
             guard type_id.has_value() else {
                 .error(format("Couldn't find trait ‘{}’", name.name), name.name_span)
                 continue
@@ -4332,7 +4376,7 @@ struct Typechecker {
             if not name.generic_parameters.is_empty() {
                 mut generic_arguments: [TypeId] = []
                 for argument in name.generic_parameters {
-                    generic_arguments.push(.typecheck_typename(parsed_type: argument, scope_id: scope_id, name: None))
+                    generic_arguments.push(.typecheck_typename(parsed_type: argument, scope_id: check_scope_id, name: None))
                 }
 
                 let final_type = Type::GenericTraitInstance(id: trait_id, args: generic_arguments)
@@ -4340,8 +4384,14 @@ struct Typechecker {
             }
 
             trait_implementations.push(type_id!)
-
             trait_requirements.push(trait_id)
+
+            .add_type_to_scope(
+                scope_id: check_scope_id
+                type_name: name.name
+                type_id: type_id!
+                span: name.name_span
+            )
         }
     }
 
@@ -4613,6 +4663,7 @@ struct Typechecker {
         let (implemented_traits, decl_span) = match type {
             GenericEnumInstance(id) | Enum(id) => (.get_enum(id).trait_implementations, .get_enum(id).name_span)
             GenericInstance(id) | Struct(id) => (.get_struct(id).trait_implementations, .get_struct(id).name_span)
+            GenericTraitInstance(id) | Trait(id) => (.get_trait(id).extended_trait_implementations, .get_trait(id).name_span)
             else => match type.is_builtin() {
                 true => {
                     let struct_id = .program.builtin_implementation_struct(
@@ -12240,11 +12291,30 @@ struct Typechecker {
                 if id.equals(trait_id) and generics_match([]) {
                     return [[]]
                 }
-                yield []
+
+                let trait_ = .get_trait(id)
+                mut implementations: [[TypeId]] = []
+                for (_, trait_descriptors) in trait_.extended_trait_implementations {
+                    for trait_descriptor in trait_descriptors {
+                        if trait_descriptor.0.equals(trait_id) and generics_match(trait_descriptor.1) {
+                            implementations.push(trait_descriptor.1)
+                        }
+                    }
+                }
+                yield implementations
             }
             GenericTraitInstance(id, args) => {
                 if not id.equals(trait_id) or not generics_match(args) {
-                    return []
+                    let trait_ = .get_trait(id)
+                    mut implementations: [[TypeId]] = []
+                    for (_, trait_descriptors) in trait_.extended_trait_implementations {
+                        for trait_descriptor in trait_descriptors {
+                            if trait_descriptor.0.equals(trait_id) and generics_match(trait_descriptor.1) {
+                                implementations.push(trait_descriptor.1)
+                            }
+                        }
+                    }
+                    return implementations
                 }
                 yield [args]
             }
