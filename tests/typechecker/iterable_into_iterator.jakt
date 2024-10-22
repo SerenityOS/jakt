@@ -1,0 +1,16 @@
+/// Expect:
+/// - output: "1\n1\n"
+
+fn first_of<It requires(IntoIterator<i32>)>(anon it: It) -> i32? {
+    for i in it {
+        return i
+    }
+
+    return None
+}
+
+fn main() {
+    let arr: [i32] = [1, 2, 3]
+    println("{}", first_of(arr)!)
+    println("{}", first_of(arr.iterator())!)
+}

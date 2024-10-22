@@ -1,5 +1,6 @@
 trait Iterable<T> {
     fn next(mut this) -> T?
+    fn iterator(this) -> Self => this
 }
 
 trait ThrowingIterable<T> {
@@ -10,9 +11,13 @@ trait IntoIterator<T> {
     fn iterator(this) -> Iterable<T>
 }
 
+type Iterable implements(IntoIterator<T>) {}
+
 trait IntoThrowingIterator<T> {
     fn iterator(this) -> ThrowingIterable<T>
 }
+
+type ThrowingIterable implements(IntoThrowingIterator<T>) {}
 
 type Array implements(IntoIterator<T>) { }
 type ArraySlice implements(IntoIterator<T>) { }
