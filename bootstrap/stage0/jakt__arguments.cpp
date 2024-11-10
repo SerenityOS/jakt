@@ -35,7 +35,7 @@ break;
 }
 ByteString name = _magic_value.value();
 {
-if (this->args.operator[](i) == name){
+if (this->args[i] == name){
 this->removed_indices.push(i);
 return true;
 }
@@ -73,18 +73,18 @@ break;
 }
 ByteString name = _magic_value.value();
 {
-if (this->args.operator[](i) == name){
+if (this->args[i] == name){
 if (this->args.size() <= JaktInternal::checked_add(i,static_cast<size_t>(1ULL))){
 warnln(StringView::from_string_literal("The option '{}' requires a value, but none was supplied"sv),name);
 return Error::from_errno(static_cast<i32>(200));
 }
 this->removed_indices.push(i);
 this->removed_indices.push(JaktInternal::checked_add(i,static_cast<size_t>(1ULL)));
-return this->args.operator[](JaktInternal::checked_add(i,static_cast<size_t>(1ULL)));
+return this->args[JaktInternal::checked_add(i,static_cast<size_t>(1ULL))];
 }
-if (this->args.operator[](i).starts_with(name)){
+if (this->args[i].starts_with(name)){
 this->removed_indices.push(i);
-return this->args.operator[](i).substring(name.length(),JaktInternal::checked_sub(this->args.operator[](i).length(),name.length()));
+return this->args[i].substring(name.length(),JaktInternal::checked_sub(this->args[i].length(),name.length()));
 }
 }
 
@@ -121,19 +121,19 @@ break;
 }
 ByteString name = _magic_value.value();
 {
-if (this->args.operator[](i) == name){
+if (this->args[i] == name){
 if (this->args.size() <= JaktInternal::checked_add(i,static_cast<size_t>(1ULL))){
 warnln(StringView::from_string_literal("The option '{}' requires a value, but none was supplied"sv),name);
 return Error::from_errno(static_cast<i32>(200));
 }
 this->removed_indices.push(i);
 this->removed_indices.push(JaktInternal::checked_add(i,static_cast<size_t>(1ULL)));
-result.push(this->args.operator[](JaktInternal::checked_add(i,static_cast<size_t>(1ULL))));
+result.push(this->args[JaktInternal::checked_add(i,static_cast<size_t>(1ULL))]);
 continue;
 }
-if (this->args.operator[](i).starts_with(name)){
+if (this->args[i].starts_with(name)){
 this->removed_indices.push(i);
-result.push(this->args.operator[](i).substring(name.length(),JaktInternal::checked_sub(this->args.operator[](i).length(),name.length())));
+result.push(this->args[i].substring(name.length(),JaktInternal::checked_sub(this->args[i].length(),name.length())));
 }
 }
 
@@ -163,8 +163,8 @@ break;
 ByteString arg = _magic_value.value();
 {
 if (arg == ByteString::from_utf8_without_validation("--"sv)){
-parser.definitely_positional_args = parser.args.operator[](JaktInternal::Range<size_t>{static_cast<size_t>(JaktInternal::checked_add(i,static_cast<size_t>(1ULL))),static_cast<size_t>(parser.args.size())}).to_array();
-parser.args = parser.args.operator[](JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(i)}).to_array();
+parser.definitely_positional_args = parser.args[JaktInternal::Range<size_t>{static_cast<size_t>(JaktInternal::checked_add(i,static_cast<size_t>(1ULL))),static_cast<size_t>(parser.args.size())}].to_array();
+parser.args = parser.args[JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(i)}].to_array();
 break;
 }
 i += static_cast<size_t>(1ULL);
@@ -190,7 +190,7 @@ break;
 size_t i = _magic_value.value();
 {
 if (!this->removed_indices.contains(i)){
-remaining.push(this->args.operator[](i));
+remaining.push(this->args[i]);
 }
 }
 

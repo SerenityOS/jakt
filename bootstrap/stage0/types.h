@@ -1098,7 +1098,7 @@ public: ByteString name;public: Jakt::utility::Span name_span;public: bool is_mu
 public: ByteString debug_description() const;
 };struct CheckedMatchCase {
   public:
-public: JaktInternal::DynamicArray<Jakt::types::CheckedMatchPattern> patterns;public: Jakt::types::CheckedMatchBody body;public: CheckedMatchCase(JaktInternal::DynamicArray<Jakt::types::CheckedMatchPattern> a_patterns, Jakt::types::CheckedMatchBody a_body);
+public: JaktInternal::DynamicArray<Jakt::types::CheckedMatchPattern> patterns;public: Jakt::types::CheckedMatchBody body;public: JaktInternal::Dictionary<ByteString,Jakt::ids::VarId> bindings;public: CheckedMatchCase(JaktInternal::DynamicArray<Jakt::types::CheckedMatchPattern> a_patterns, Jakt::types::CheckedMatchBody a_body, JaktInternal::Dictionary<ByteString,Jakt::ids::VarId> a_bindings);
 
 public: ByteString debug_description() const;
 };struct CheckedMatchPattern {
@@ -1106,7 +1106,8 @@ u8 __jakt_variant_index = 0;
 union CommonData {
 u8 __jakt_uninit_common;
 struct {
-JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::CheckedStatement>> defaults;
+JaktInternal::Dictionary<ByteString,NonnullRefPtr<typename Jakt::types::CheckedExpression>> defaults;
+Jakt::utility::Span marker_span;
 } init_common;
 constexpr CommonData() {}
 ~CommonData() {}
@@ -1118,30 +1119,25 @@ ByteString name;
 JaktInternal::DynamicArray<Jakt::parser::EnumVariantPatternArgument> args;
 Jakt::ids::TypeId subject_type_id;
 size_t index;
-Jakt::ids::ScopeId scope_id;
-Jakt::utility::Span marker_span;
 } EnumVariant;
 struct {
 NonnullRefPtr<typename Jakt::types::CheckedExpression> expression;
-Jakt::utility::Span marker_span;
 } Expression;
 struct {
 Jakt::ids::TypeId type;
 JaktInternal::Optional<Jakt::types::ClassInstanceRebind> rebind_name;
-Jakt::utility::Span marker_span;
 } ClassInstance;
 struct {
 bool has_arguments;
-Jakt::utility::Span marker_span;
 } CatchAll;
 constexpr VariantData() {}
 ~VariantData() {}
 } as;
 constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ByteString debug_description() const;
-[[nodiscard]] static CheckedMatchPattern EnumVariant(JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::CheckedStatement>> defaults, ByteString name, JaktInternal::DynamicArray<Jakt::parser::EnumVariantPatternArgument> args, Jakt::ids::TypeId subject_type_id, size_t index, Jakt::ids::ScopeId scope_id, Jakt::utility::Span marker_span);
-[[nodiscard]] static CheckedMatchPattern Expression(JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::CheckedStatement>> defaults, NonnullRefPtr<typename Jakt::types::CheckedExpression> expression, Jakt::utility::Span marker_span);
-[[nodiscard]] static CheckedMatchPattern ClassInstance(JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::CheckedStatement>> defaults, Jakt::ids::TypeId type, JaktInternal::Optional<Jakt::types::ClassInstanceRebind> rebind_name, Jakt::utility::Span marker_span);
-[[nodiscard]] static CheckedMatchPattern CatchAll(JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::CheckedStatement>> defaults, bool has_arguments, Jakt::utility::Span marker_span);
+[[nodiscard]] static CheckedMatchPattern EnumVariant(JaktInternal::Dictionary<ByteString,NonnullRefPtr<typename Jakt::types::CheckedExpression>> defaults, Jakt::utility::Span marker_span, ByteString name, JaktInternal::DynamicArray<Jakt::parser::EnumVariantPatternArgument> args, Jakt::ids::TypeId subject_type_id, size_t index);
+[[nodiscard]] static CheckedMatchPattern Expression(JaktInternal::Dictionary<ByteString,NonnullRefPtr<typename Jakt::types::CheckedExpression>> defaults, Jakt::utility::Span marker_span, NonnullRefPtr<typename Jakt::types::CheckedExpression> expression);
+[[nodiscard]] static CheckedMatchPattern ClassInstance(JaktInternal::Dictionary<ByteString,NonnullRefPtr<typename Jakt::types::CheckedExpression>> defaults, Jakt::utility::Span marker_span, Jakt::ids::TypeId type, JaktInternal::Optional<Jakt::types::ClassInstanceRebind> rebind_name);
+[[nodiscard]] static CheckedMatchPattern CatchAll(JaktInternal::Dictionary<ByteString,NonnullRefPtr<typename Jakt::types::CheckedExpression>> defaults, Jakt::utility::Span marker_span, bool has_arguments);
 ~CheckedMatchPattern();
 CheckedMatchPattern& operator=(CheckedMatchPattern const &);
 CheckedMatchPattern& operator=(CheckedMatchPattern &&);

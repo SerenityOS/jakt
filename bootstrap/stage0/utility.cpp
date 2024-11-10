@@ -149,35 +149,20 @@ break;
 }
 u32 cp = _magic_value.value();
 {
-({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ByteString> {
-auto __jakt_enum_value = (cp);
+{auto __jakt_enum_value = cp;
 if (__jakt_enum_value == infallible_integer_cast<u32>(static_cast<u8>(u8'"'))) {{
 builder.append(StringView::from_string_literal("\\\""sv));
 }
-return JaktInternal::ExplicitValue<void>();
-}else if (__jakt_enum_value == infallible_integer_cast<u32>(static_cast<u8>(u8'\\'))) {{
+goto __jakt_label_0;}else if (__jakt_enum_value == infallible_integer_cast<u32>(static_cast<u8>(u8'\\'))) {{
 builder.append(StringView::from_string_literal("\\\\"sv));
 }
-return JaktInternal::ExplicitValue<void>();
-}else if (__jakt_enum_value == infallible_integer_cast<u32>(static_cast<u8>(u8'\n'))) {{
+goto __jakt_label_0;}else if (__jakt_enum_value == infallible_integer_cast<u32>(static_cast<u8>(u8'\n'))) {{
 builder.append(StringView::from_string_literal("\\n"sv));
 }
-return JaktInternal::ExplicitValue<void>();
-}else {{
+goto __jakt_label_0;}else {{
 builder.append_code_point(cp);
 }
-return JaktInternal::ExplicitValue<void>();
-}return JaktInternal::ExplicitValue<void>();
-}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    if (_jakt_value.is_loop_break())
-        break;
-    if (_jakt_value.is_loop_continue())
-        continue;
-    _jakt_value.release_value();
-});
+goto __jakt_label_0;}}goto __jakt_label_0; __jakt_label_0:;;
 }
 
 }
@@ -200,9 +185,7 @@ break;
 }
 u32 cp = _magic_value.value();
 {
-({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ByteString> {
-auto __jakt_enum_value = (cp);
+{auto __jakt_enum_value = cp;
 if (__jakt_enum_value == infallible_integer_cast<u32>(static_cast<u8>(u8'\\'))) {{
 if (in_escape){
 builder.append(static_cast<u8>(u8'\\'));
@@ -213,13 +196,11 @@ in_escape = true;
 }
 
 }
-return JaktInternal::ExplicitValue<void>();
-}else if ((__jakt_enum_value == infallible_integer_cast<u32>(static_cast<u8>(u8'"')))||(__jakt_enum_value == infallible_integer_cast<u32>(static_cast<u8>(u8'\'')))) {{
+goto __jakt_label_1;}else if ((__jakt_enum_value == infallible_integer_cast<u32>(static_cast<u8>(u8'"')))||(__jakt_enum_value == infallible_integer_cast<u32>(static_cast<u8>(u8'\'')))) {{
 builder.append_code_point(cp);
 in_escape = false;
 }
-return JaktInternal::ExplicitValue<void>();
-}else if (__jakt_enum_value == infallible_integer_cast<u32>(static_cast<u8>(u8'n'))) {{
+goto __jakt_label_1;}else if (__jakt_enum_value == infallible_integer_cast<u32>(static_cast<u8>(u8'n'))) {{
 if (in_escape){
 builder.append(static_cast<u8>(u8'\n'));
 in_escape = false;
@@ -229,22 +210,11 @@ builder.append_code_point(cp);
 }
 
 }
-return JaktInternal::ExplicitValue<void>();
-}else {{
+goto __jakt_label_1;}else {{
 builder.append_code_point(cp);
 in_escape = false;
 }
-return JaktInternal::ExplicitValue<void>();
-}return JaktInternal::ExplicitValue<void>();
-}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    if (_jakt_value.is_loop_break())
-        break;
-    if (_jakt_value.is_loop_continue())
-        continue;
-    _jakt_value.release_value();
-});
+goto __jakt_label_1;}}goto __jakt_label_1; __jakt_label_1:;;
 }
 
 }

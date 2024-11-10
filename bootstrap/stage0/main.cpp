@@ -405,17 +405,17 @@ JaktInternal::DynamicArray<ByteString> const parts = range.split(':');
 if (parts.is_empty()){
 return Jakt::FormatRange(static_cast<size_t>(0ULL),input_file_length);
 }
-JaktInternal::Optional<u32> const start_input = parts.operator[](static_cast<i64>(0LL)).template to_number<u32>();
+JaktInternal::Optional<u32> const start_input = parts[static_cast<i64>(0LL)].template to_number<u32>();
 if (!start_input.has_value()){
 return JaktInternal::OptionalNone();
 }
 size_t const start = infallible_integer_cast<size_t>(start_input.value());
 size_t const end = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t,JaktInternal::Optional<Jakt::FormatRange>> {
-auto __jakt_enum_value = (parts.size());
+    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<size_t, JaktInternal::Optional<Jakt::FormatRange>>{
+auto __jakt_enum_value = parts.size();
 if (__jakt_enum_value == static_cast<size_t>(1ULL)) {return JaktInternal::ExplicitValue(input_file_length);
 }else if (__jakt_enum_value == static_cast<size_t>(2ULL)) {{
-JaktInternal::Optional<u32> const end_input = parts.operator[](static_cast<i64>(1LL)).template to_number<u32>();
+JaktInternal::Optional<u32> const end_input = parts[static_cast<i64>(1LL)].template to_number<u32>();
 if (!end_input.has_value()){
 return JaktInternal::OptionalNone();
 }
@@ -425,7 +425,8 @@ VERIFY_NOT_REACHED();
 }else {{
 return JaktInternal::OptionalNone();
 }
-}}());
+}}()
+);
     if (_jakt_value.is_return())
         return _jakt_value.release_return();
     _jakt_value.release_value();
@@ -450,7 +451,7 @@ if (args.size() <= static_cast<size_t>(1ULL)){
 warnln(StringView::from_string_literal("{}"sv),Jakt::usage());
 return static_cast<int>(1);
 }
-if (args.operator[](static_cast<i64>(1LL)) == ByteString::from_utf8_without_validation("cross"sv)){
+if (args[static_cast<i64>(1LL)] == ByteString::from_utf8_without_validation("cross"sv)){
 return Jakt::selfhost_crosscompiler_main(args);
 }
 return Jakt::compiler_main(args);
@@ -501,7 +502,7 @@ break;
 }
 size_t bytes_written = static_cast<size_t>(0ULL);
 while (bytes_written < bytes_read){
-bytes_written += TRY((output_file->write(buffer.operator[](JaktInternal::Range<size_t>{static_cast<size_t>(bytes_written),static_cast<size_t>(bytes_read)}).to_array())));
+bytes_written += TRY((output_file->write(buffer[JaktInternal::Range<size_t>{static_cast<size_t>(bytes_written),static_cast<size_t>(bytes_read)}].to_array())));
 }
 if (bytes_written != bytes_read){
 return Error::__jakt_from_string_literal(StringView::from_string_literal("Failed to write to file"sv));
@@ -535,7 +536,7 @@ bool only_support_libs = false;
 bool target_links_ak = false;
 AK::Queue<ByteString> args_to_process = AK::Queue<ByteString>();
 {
-JaktInternal::ArrayIterator<ByteString> _magic = args.operator[](JaktInternal::Range<i64>{static_cast<i64>(static_cast<i64>(1LL)),static_cast<i64>(9223372036854775807LL)}).iterator();
+JaktInternal::ArrayIterator<ByteString> _magic = args[JaktInternal::Range<i64>{static_cast<i64>(static_cast<i64>(1LL)),static_cast<i64>(9223372036854775807LL)}].iterator();
 for (;;){
 JaktInternal::Optional<ByteString> const _magic_value = _magic.next();
 if (!_magic_value.has_value()){
@@ -551,75 +552,50 @@ args_to_process.enqueue(arg);
 
 while (!args_to_process.is_empty()){
 ByteString const arg = args_to_process.dequeue();
-({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<int>> {
-auto __jakt_enum_value = (arg);
+{auto __jakt_enum_value = arg;
 if ((__jakt_enum_value == ByteString::from_utf8_without_validation("--target-triple"sv))||(__jakt_enum_value == ByteString::from_utf8_without_validation("-T"sv))) {{
 target_triple = args_to_process.dequeue();
 }
-return JaktInternal::ExplicitValue<void>();
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--sysroot"sv)) {{
+goto __jakt_label_203;}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--sysroot"sv)) {{
 sysroot = args_to_process.dequeue();
 }
-return JaktInternal::ExplicitValue<void>();
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--system-lib-dir"sv)) {{
+goto __jakt_label_203;}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--system-lib-dir"sv)) {{
 system_lib_dirs.push(args_to_process.dequeue());
 }
-return JaktInternal::ExplicitValue<void>();
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--system-include-dir"sv)) {{
+goto __jakt_label_203;}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--system-include-dir"sv)) {{
 system_include_dirs.push(args_to_process.dequeue());
 }
-return JaktInternal::ExplicitValue<void>();
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--compiler-include-dir"sv)) {{
+goto __jakt_label_203;}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--compiler-include-dir"sv)) {{
 compiler_include_dir = args_to_process.dequeue();
 }
-return JaktInternal::ExplicitValue<void>();
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--compiler-lib-dir"sv)) {{
+goto __jakt_label_203;}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--compiler-lib-dir"sv)) {{
 compiler_lib_dir = args_to_process.dequeue();
 }
-return JaktInternal::ExplicitValue<void>();
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--install-root"sv)) {{
+goto __jakt_label_203;}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--install-root"sv)) {{
 install_root = args_to_process.dequeue();
 }
-return JaktInternal::ExplicitValue<void>();
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--runtime-lib-path"sv)) {{
+goto __jakt_label_203;}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--runtime-lib-path"sv)) {{
 runtime_lib_path = Jakt::jakt__path::Path::from_string(args_to_process.dequeue());
 }
-return JaktInternal::ExplicitValue<void>();
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--runtime-path"sv)) {{
+goto __jakt_label_203;}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--runtime-path"sv)) {{
 runtime_path = Jakt::jakt__path::Path::from_string(args_to_process.dequeue());
 }
-return JaktInternal::ExplicitValue<void>();
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--source-file"sv)) {{
+goto __jakt_label_203;}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--source-file"sv)) {{
 source_file = args_to_process.dequeue();
 }
-return JaktInternal::ExplicitValue<void>();
-}else if ((__jakt_enum_value == ByteString::from_utf8_without_validation("--output-filename"sv))||(__jakt_enum_value == ByteString::from_utf8_without_validation("-o"sv))) {{
+goto __jakt_label_203;}else if ((__jakt_enum_value == ByteString::from_utf8_without_validation("--output-filename"sv))||(__jakt_enum_value == ByteString::from_utf8_without_validation("-o"sv))) {{
 output_filename = args_to_process.dequeue();
 }
-return JaktInternal::ExplicitValue<void>();
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--target-links-ak"sv)) {{
+goto __jakt_label_203;}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--target-links-ak"sv)) {{
 target_links_ak = true;
 }
-return JaktInternal::ExplicitValue<void>();
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--only-support-libs"sv)) {{
+goto __jakt_label_203;}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--only-support-libs"sv)) {{
 only_support_libs = true;
 }
-return JaktInternal::ExplicitValue<void>();
-}else {{
+goto __jakt_label_203;}else {{
 compiler_args.push(arg);
 }
-return JaktInternal::ExplicitValue<void>();
-}return JaktInternal::ExplicitValue<void>();
-}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    if (_jakt_value.is_loop_break())
-        break;
-    if (_jakt_value.is_loop_continue())
-        continue;
-    _jakt_value.release_value();
-});
+goto __jakt_label_203;}}goto __jakt_label_203; __jakt_label_203:;;
 }
 if (!source_file.has_value() && (!only_support_libs)){
 warnln(StringView::from_string_literal("error: Expected --source_file to be passed"sv));
@@ -647,7 +623,7 @@ if (!runtime_lib_path.has_value()){
 runtime_lib_path = local_install_base_path.join(ByteString::from_utf8_without_validation("lib"sv)).join(TRY((TRY((Jakt::jakt__platform::Target::active())).name(false))));
 }
 Function<JaktInternal::DynamicArray<ByteString>()> const compiler_invocation_args = [&compiler_args, &abbreviated_triple, &sysroot, &compiler_include_dir, &compiler_lib_dir, &system_include_dirs, &system_lib_dirs, &runtime_lib_path, &runtime_path]() -> JaktInternal::DynamicArray<ByteString> {{
-JaktInternal::DynamicArray<ByteString> args = compiler_args.operator[](JaktInternal::Range<i64>{static_cast<i64>(0LL),static_cast<i64>(9223372036854775807LL)}).to_array();
+JaktInternal::DynamicArray<ByteString> args = compiler_args[JaktInternal::Range<i64>{static_cast<i64>(0LL),static_cast<i64>(9223372036854775807LL)}].to_array();
 args.push(ByteString::from_utf8_without_validation("--target-triple"sv));
 args.push(__jakt_format(StringView::from_string_literal("{}-unknown"sv),abbreviated_triple));
 if (sysroot.has_value()){
@@ -780,9 +756,9 @@ JaktInternal::DynamicArray<ByteString> const components = path.components();
 if (components.is_empty()){
 return {};
 }
-Jakt::jakt__path::Path current_path = Jakt::jakt__path::Path::from_string(components.operator[](static_cast<i64>(0LL)));
+Jakt::jakt__path::Path current_path = Jakt::jakt__path::Path::from_string(components[static_cast<i64>(0LL)]);
 {
-JaktInternal::ArrayIterator<ByteString> _magic = components.operator[](JaktInternal::Range<i64>{static_cast<i64>(static_cast<i64>(1LL)),static_cast<i64>(9223372036854775807LL)}).iterator();
+JaktInternal::ArrayIterator<ByteString> _magic = components[JaktInternal::Range<i64>{static_cast<i64>(static_cast<i64>(1LL)),static_cast<i64>(9223372036854775807LL)}].iterator();
 for (;;){
 JaktInternal::Optional<ByteString> const _magic_value = _magic.next();
 if (!_magic_value.has_value()){
@@ -866,16 +842,9 @@ Jakt::jakt__path::Path const current_executable_path = Jakt::jakt__path::Path::f
 Jakt::jakt__path::Path const install_base_path = current_executable_path.parent().parent();
 Jakt::jakt__path::Path const default_runtime_path = install_base_path.join(ByteString::from_utf8_without_validation("include/runtime"sv));
 Jakt::jakt__path::Path const default_runtime_library_path = install_base_path.join(ByteString::from_utf8_without_validation("lib"sv));
-ByteString const default_compiler_path = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<int>> {
-auto __jakt_enum_value = (false);
-if (__jakt_enum_value) {return JaktInternal::ExplicitValue(ByteString::from_utf8_without_validation("clang-cl"sv));
-}else {return JaktInternal::ExplicitValue(ByteString::from_utf8_without_validation("clang++"sv));
-}}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+ByteString const default_compiler_path = [&]() -> ByteString { auto __jakt_enum_value = false;
+if (__jakt_enum_value) {return ByteString::from_utf8_without_validation("clang-cl"sv);}else {return ByteString::from_utf8_without_validation("clang++"sv);} 
+}();
 bool const optimize = TRY((args_parser.flag(DynamicArray<ByteString>::create_with({ByteString::from_utf8_without_validation("-O"sv)}))));
 bool const lexer_debug = TRY((args_parser.flag(DynamicArray<ByteString>::create_with({ByteString::from_utf8_without_validation("-dl"sv)}))));
 bool const parser_debug = TRY((args_parser.flag(DynamicArray<ByteString>::create_with({ByteString::from_utf8_without_validation("-dp"sv)}))));
@@ -934,32 +903,18 @@ break;
 ByteString spec = _magic_value.value();
 {
 JaktInternal::DynamicArray<ByteString> const parts = spec.split('=');
-({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,ErrorOr<int>> {
-auto __jakt_enum_value = (parts.size());
+{auto __jakt_enum_value = parts.size();
 if (__jakt_enum_value == static_cast<size_t>(1ULL)) {{
-user_configuration.set(parts.operator[](static_cast<i64>(0LL)), ByteString::from_utf8_without_validation("true"sv));
+user_configuration.set(parts[static_cast<i64>(0LL)], ByteString::from_utf8_without_validation("true"sv));
 }
-return JaktInternal::ExplicitValue<void>();
-}else if (__jakt_enum_value == static_cast<size_t>(2ULL)) {{
-user_configuration.set(parts.operator[](static_cast<i64>(0LL)), parts.operator[](static_cast<i64>(1LL)));
+goto __jakt_label_204;}else if (__jakt_enum_value == static_cast<size_t>(2ULL)) {{
+user_configuration.set(parts[static_cast<i64>(0LL)], parts[static_cast<i64>(1LL)]);
 }
-return JaktInternal::ExplicitValue<void>();
-}else {{
+goto __jakt_label_204;}else {{
 warnln(StringView::from_string_literal("error: invalid configuration specification: {}"sv),spec);
 return static_cast<int>(1);
 }
-return JaktInternal::ExplicitValue<void>();
-}return JaktInternal::ExplicitValue<void>();
-}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    if (_jakt_value.is_loop_break())
-        break;
-    if (_jakt_value.is_loop_continue())
-        continue;
-    _jakt_value.release_value();
-});
+goto __jakt_label_204;}}goto __jakt_label_204; __jakt_label_204:;;
 }
 
 }
@@ -1037,17 +992,10 @@ Jakt::jakt__path::Path const file_path = Jakt::jakt__path::Path::from_string(fil
 ByteString const guessed_output_filename = file_path.basename(true);
 ByteString const output_filename = binary_dir.join(set_output_filename.value_or_lazy_evaluated([&] { return guessed_output_filename; })).to_string();
 JaktInternal::DynamicArray<Jakt::error::JaktError> errors = DynamicArray<Jakt::error::JaktError>::create_with({});
-NonnullRefPtr<Jakt::compiler::Compiler> compiler = Jakt::compiler::Compiler::__jakt_create(DynamicArray<Jakt::jakt__path::Path>::create_with({}),Dictionary<ByteString, Jakt::utility::FileId>::create_with_entries({}),DynamicArray<Jakt::error::JaktError>::create_with({}),JaktInternal::OptionalNone(),DynamicArray<u8>::create_with({}),lexer_debug,parser_debug,false,debug_print,debug_print_cpp_import,Jakt::jakt__path::Path::from_parts(DynamicArray<ByteString>::create_with({runtime_path, ByteString::from_utf8_without_validation("jaktlib"sv)})),Jakt::jakt__path::Path::from_parts(DynamicArray<ByteString>::create_with({runtime_path, ByteString::from_utf8_without_validation("prelude.jakt"sv)})),extra_include_paths,json_errors,dump_type_hints,dump_try_hints,optimize,target_triple,user_configuration,binary_dir,exports_dir,({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<Jakt::jakt__path::Path>,ErrorOr<int>> {
-auto __jakt_enum_value = (assume_main_file_path.has_value());
-if (__jakt_enum_value) {return JaktInternal::ExplicitValue(static_cast<JaktInternal::Optional<Jakt::jakt__path::Path>>(Jakt::jakt__path::Path::from_string(assume_main_file_path.value())));
-}else if (!__jakt_enum_value) {return JaktInternal::ExplicitValue(JaktInternal::OptionalNone());
-}VERIFY_NOT_REACHED();
-}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-}),Set<ByteString>::create_with_values({}));
+NonnullRefPtr<Jakt::compiler::Compiler> compiler = Jakt::compiler::Compiler::__jakt_create(DynamicArray<Jakt::jakt__path::Path>::create_with({}),Dictionary<ByteString, Jakt::utility::FileId>::create_with_entries({}),DynamicArray<Jakt::error::JaktError>::create_with({}),JaktInternal::OptionalNone(),DynamicArray<u8>::create_with({}),lexer_debug,parser_debug,false,debug_print,debug_print_cpp_import,Jakt::jakt__path::Path::from_parts(DynamicArray<ByteString>::create_with({runtime_path, ByteString::from_utf8_without_validation("jaktlib"sv)})),Jakt::jakt__path::Path::from_parts(DynamicArray<ByteString>::create_with({runtime_path, ByteString::from_utf8_without_validation("prelude.jakt"sv)})),extra_include_paths,json_errors,dump_type_hints,dump_try_hints,optimize,target_triple,user_configuration,binary_dir,exports_dir,[&]() -> JaktInternal::Optional<Jakt::jakt__path::Path> { auto __jakt_enum_value = assume_main_file_path.has_value();
+if (__jakt_enum_value) {return static_cast<JaktInternal::Optional<Jakt::jakt__path::Path>>(Jakt::jakt__path::Path::from_string(assume_main_file_path.value()));}else if (!__jakt_enum_value) {return JaktInternal::OptionalNone();}VERIFY_NOT_REACHED();
+ 
+}(),Set<ByteString>::create_with_values({}));
 TRY((compiler->load_prelude()));
 if ((format || format_debug) || format_inplace){
 NonnullRefPtr<Jakt::jakt__file_iterator::RecursiveFileIterator> const directory_or_file_paths = TRY((Jakt::jakt__file_iterator::RecursiveFileIterator::make(file_path,ByteString::from_utf8_without_validation("jakt"sv))));
@@ -1168,7 +1116,7 @@ ByteString const function_name = jakt__function_name__overload_set__.template ge
 JaktInternal::DynamicArray<Jakt::ids::FunctionId> const overload_set = jakt__function_name__overload_set__.template get<1>();
 
 if (function_name == ByteString::from_utf8_without_validation("main"sv)){
-main_function_id = overload_set.operator[](static_cast<i64>(0LL));
+main_function_id = overload_set[static_cast<i64>(0LL)];
 break;
 }
 }
@@ -1199,9 +1147,7 @@ return static_cast<int>(1);
 JaktInternal::DynamicArray<Jakt::types::ResolvedNamespace> const namespace_ = DynamicArray<Jakt::types::ResolvedNamespace>::create_with({});
 Jakt::utility::Span const call_span = Jakt::utility::Span(Jakt::utility::FileId(static_cast<size_t>(0ULL)),static_cast<size_t>(0ULL),static_cast<size_t>(0ULL));
 JaktInternal::Optional<Jakt::types::CheckedParameter> const first_main_param = checked_program->get_function(main_function_id.value())->params.first();
-JaktInternal::DynamicArray<Jakt::types::Value> const arguments = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::DynamicArray<Jakt::types::Value>,ErrorOr<int>> {
-auto __jakt_enum_value = (first_main_param.has_value());
+JaktInternal::DynamicArray<Jakt::types::Value> const arguments = [&]() -> JaktInternal::DynamicArray<Jakt::types::Value> { auto __jakt_enum_value = first_main_param.has_value();
 if (__jakt_enum_value) {{
 JaktInternal::DynamicArray<Jakt::types::Value> passed_arguments = DynamicArray<Jakt::types::Value>::create_with({Jakt::types::Value(Jakt::types::ValueImpl::JaktString(file_name.value()),call_span)});
 {
@@ -1219,73 +1165,49 @@ passed_arguments.push(Jakt::types::Value(Jakt::types::ValueImpl::JaktString(argu
 }
 }
 
-return JaktInternal::ExplicitValue<JaktInternal::DynamicArray<Jakt::types::Value>>(DynamicArray<Jakt::types::Value>::create_with({Jakt::types::Value(Jakt::types::ValueImpl::JaktArray(passed_arguments,first_main_param.value().variable->type_id),call_span)}));
+return DynamicArray<Jakt::types::Value>::create_with({Jakt::types::Value(Jakt::types::ValueImpl::JaktArray(passed_arguments,first_main_param.value().variable->type_id),call_span)});
 }
 VERIFY_NOT_REACHED();
-}else if (!__jakt_enum_value) {return JaktInternal::ExplicitValue(DynamicArray<Jakt::types::Value>::create_with({}));
-}VERIFY_NOT_REACHED();
-}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+}else if (!__jakt_enum_value) {return DynamicArray<Jakt::types::Value>::create_with({});}VERIFY_NOT_REACHED();
+ 
+}();
 Jakt::interpreter::ExecutionResult const main_result = TRY((interpreter->execute(main_function_id.value(),namespace_,JaktInternal::OptionalNone(),arguments,call_span,JaktInternal::OptionalNone(),true)));
-({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<int>>{
-auto&& __jakt_match_variant = main_result;
+{auto&& __jakt_match_variant = main_result;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* Return */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Return;Jakt::types::Value const& x = __jakt_match_value.value;
-return ({({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<int>>{
-auto&& __jakt_match_variant = *x.impl;
+{auto&& __jakt_match_variant = *x.impl;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 16 /* CInt */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.CInt;int const& ret_val = __jakt_match_value.value;
 {
-return infallible_integer_cast<int>(ret_val);
+return static_cast<int>(ret_val);
 }
-return JaktInternal::ExplicitValue<void>();
-};/*case end*/
+goto __jakt_label_206;};/*case end*/
 case 9 /* I64 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I64;i64 const& ret_val = __jakt_match_value.value;
 {
 return infallible_integer_cast<int>(ret_val);
 }
-return JaktInternal::ExplicitValue<void>();
-};/*case end*/
+goto __jakt_label_206;};/*case end*/
 case 0 /* Void */:{
 return static_cast<int>(0);
 }
-return JaktInternal::ExplicitValue<void>();
-default:{
+goto __jakt_label_206;default:{
 warnln(StringView::from_string_literal("Error: Main function  must return an integer"sv));
 return static_cast<int>(1);
 }
-return JaktInternal::ExplicitValue<void>();
-}/*switch end*/
-}()
-);
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});}), JaktInternal::ExplicitValue<void>();
-};/*case end*/
+goto __jakt_label_206;}/*switch end*/
+}goto __jakt_label_206; __jakt_label_206:;;goto __jakt_label_205;};/*case end*/
 case 1 /* Throw */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Throw;Jakt::types::Value const& x = __jakt_match_value.value;
 {
 warnln(StringView::from_string_literal("Error: Main function  threw: {}"sv),TRY((Jakt::repl::serialize_ast_node(TRY((Jakt::interpreter::value_to_checked_expression(x,interpreter)))))));
 return static_cast<int>(1);
 }
-return JaktInternal::ExplicitValue<void>();
-};/*case end*/
+goto __jakt_label_205;};/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
-}()
-);
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+}goto __jakt_label_205; __jakt_label_205:;;
 }
 if (goto_def.has_value()){
 size_t const index = infallible_integer_cast<size_t>(goto_def.value().template to_number<u32>().value());
@@ -1673,17 +1595,10 @@ return static_cast<int>(1);
 }
 ;
 Jakt::jakt__path::Path const runtime_lib_path = Jakt::jakt__path::Path::from_string(runtime_library_path);
-Jakt::jakt__platform::Target const target = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<Jakt::jakt__platform::Target,ErrorOr<int>> {
-auto __jakt_enum_value = (target_triple.has_value());
-if (__jakt_enum_value) {return JaktInternal::ExplicitValue(TRY((Jakt::jakt__platform::Target::from_triple(target_triple.value()))));
-}else if (!__jakt_enum_value) {return JaktInternal::ExplicitValue(TRY((Jakt::jakt__platform::Target::active())));
-}VERIFY_NOT_REACHED();
-}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+Jakt::jakt__platform::Target const target = TRY(([&]() -> ErrorOr<Jakt::jakt__platform::Target> { auto __jakt_enum_value = target_triple.has_value();
+if (__jakt_enum_value) {return Jakt::jakt__platform::Target::from_triple(target_triple.value());}else if (!__jakt_enum_value) {return Jakt::jakt__platform::Target::active();}VERIFY_NOT_REACHED();
+ 
+}()));
 if (link_archive.has_value()){
 JaktInternal::DynamicArray<ByteString> extra_arguments = DynamicArray<ByteString>::create_with({});
 if (archive_link_support_libs){
@@ -1833,9 +1748,7 @@ formatted_file.append(byte);
 }
 }
 
-({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void, ErrorOr<void>>{
-auto&& __jakt_match_variant = formatted_token.token;
+{auto&& __jakt_match_variant = formatted_token.token;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 55 /* Eol */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Eol;JaktInternal::Optional<ByteString> const& comment = __jakt_match_value.comment;
@@ -1845,40 +1758,17 @@ u8 next_char = static_cast<u8>(u8' ');
 if (comment.value().length() != static_cast<size_t>(0ULL)){
 next_char = comment.value().byte_at(static_cast<size_t>(0ULL));
 }
-ByteString const space = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<void>> {
-auto __jakt_enum_value = (next_char);
-if ((__jakt_enum_value == static_cast<u8>(u8' '))||(__jakt_enum_value == static_cast<u8>(u8'\t'))||(__jakt_enum_value == static_cast<u8>(u8'/'))) {return JaktInternal::ExplicitValue(ByteString::from_utf8_without_validation(""sv));
-}else {return JaktInternal::ExplicitValue(ByteString::from_utf8_without_validation(" "sv));
-}}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    if (_jakt_value.is_loop_break())
-        return JaktInternal::LoopBreak {};
-    if (_jakt_value.is_loop_continue())
-        return JaktInternal::LoopContinue {};
-    _jakt_value.release_value();
-});
-ByteString const lhs_space = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString,ErrorOr<void>> {
-auto __jakt_enum_value = (on_new_line);
-if (__jakt_enum_value) {return JaktInternal::ExplicitValue(Jakt::indent(formatted_token.indent));
-}else {return JaktInternal::ExplicitValue(ByteString::from_utf8_without_validation(" "sv));
-}}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    if (_jakt_value.is_loop_break())
-        return JaktInternal::LoopBreak {};
-    if (_jakt_value.is_loop_continue())
-        return JaktInternal::LoopContinue {};
-    _jakt_value.release_value();
-});
+ByteString const space = [&]() -> ByteString { auto __jakt_enum_value = next_char;
+if ((__jakt_enum_value == static_cast<u8>(u8' '))||(__jakt_enum_value == static_cast<u8>(u8'\t'))||(__jakt_enum_value == static_cast<u8>(u8'/'))) {return ByteString::from_utf8_without_validation(""sv);}else {return ByteString::from_utf8_without_validation(" "sv);} 
+}();
+ByteString const lhs_space = [&]() -> ByteString { auto __jakt_enum_value = on_new_line;
+if (__jakt_enum_value) {return Jakt::indent(formatted_token.indent);}else {return ByteString::from_utf8_without_validation(" "sv);} 
+}();
 formatted_file.appendff(ByteString::from_utf8_without_validation("{}//{}{}"sv),lhs_space,space,comment.value());
 }
 on_new_line = true;
 }
-return JaktInternal::ExplicitValue<void>();
-};/*case end*/
+goto __jakt_label_207;};/*case end*/
 case 114 /* Garbage */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Garbage;JaktInternal::Optional<ByteString> const& consumed = __jakt_match_value.consumed;
 {
@@ -1886,8 +1776,7 @@ if (consumed.has_value()){
 formatted_file.appendff(ByteString::from_utf8_without_validation("{}"sv),consumed.value());
 }
 }
-return JaktInternal::ExplicitValue<void>();
-};/*case end*/
+goto __jakt_label_207;};/*case end*/
 default:{
 if (on_new_line){
 formatted_file.appendff(ByteString::from_utf8_without_validation("{}"sv),Jakt::indent(formatted_token.indent));
@@ -1895,18 +1784,8 @@ formatted_file.appendff(ByteString::from_utf8_without_validation("{}"sv),Jakt::i
 formatted_file.appendff(ByteString::from_utf8_without_validation("{}"sv),TRY((formatted_token.token_text())));
 on_new_line = false;
 }
-return JaktInternal::ExplicitValue<void>();
-}/*switch end*/
-}()
-);
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    if (_jakt_value.is_loop_break())
-        break;
-    if (_jakt_value.is_loop_continue())
-        continue;
-    _jakt_value.release_value();
-});
+goto __jakt_label_207;}/*switch end*/
+break;}goto __jakt_label_207; __jakt_label_207:;;
 {
 JaktInternal::ArrayIterator<u8> _magic = formatted_token.trailing_trivia.iterator();
 for (;;){

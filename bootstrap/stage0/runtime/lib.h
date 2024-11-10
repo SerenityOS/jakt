@@ -399,7 +399,7 @@ template<typename T, typename U>
 constexpr static bool lenient_is(U value)
 {
     using NonRef = RemoveCVReference<U>;
-    if constexpr (IsSame<NonRef, T> || IsSame<NonRef, NonnullRefPtr<T>> || IsSame<NonRef, RefPtr<T>>)
+    if constexpr (IsSame<NonRef, T> || IsSame<NonRef, T*> || IsSame<NonRef, NonnullRefPtr<T>> || IsSame<NonRef, RefPtr<T>>)
         return true;
     else
         return Jakt::is<T>(forward<U>(value));
