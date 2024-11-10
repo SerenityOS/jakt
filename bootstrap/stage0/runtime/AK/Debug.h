@@ -78,6 +78,10 @@
 #    define CSS_TOKENIZER_DEBUG 0
 #endif
 
+#ifndef CSS_TRANSITIONS_DEBUG
+#    define CSS_TRANSITIONS_DEBUG 0
+#endif
+
 #ifndef DDS_DEBUG
 #    define DDS_DEBUG 0
 #endif
@@ -448,6 +452,10 @@
 
 #ifndef SQLSERVER_DEBUG
 #    define SQLSERVER_DEBUG 0
+#endif
+
+#ifndef STYLE_INVALIDATION_DEBUG
+#    define STYLE_INVALIDATION_DEBUG 0
 #endif
 
 #ifndef SYNTAX_HIGHLIGHTING_DEBUG

@@ -60,7 +60,7 @@ u8 Jakt::lexer::Lexer::peek() const {
 if (this->eof()){
 return static_cast<u8>(0);
 }
-return this->input.operator[](this->index);
+return this->input[this->index];
 }
 }
 
@@ -69,7 +69,7 @@ u8 Jakt::lexer::Lexer::peek_ahead(size_t const steps) const {
 if (JaktInternal::checked_add(this->index,steps) >= this->input.size()){
 return static_cast<u8>(0);
 }
-return this->input.operator[](JaktInternal::checked_add(this->index,steps));
+return this->input[JaktInternal::checked_add(this->index,steps)];
 }
 }
 
@@ -78,7 +78,7 @@ u8 Jakt::lexer::Lexer::peek_behind(size_t const steps) const {
 if (this->index < steps){
 return static_cast<u8>(0);
 }
-return this->input.operator[](JaktInternal::checked_sub(this->index,steps));
+return this->input[JaktInternal::checked_sub(this->index,steps)];
 }
 }
 
@@ -100,7 +100,7 @@ break;
 }
 size_t i = _magic_value.value();
 {
-builder.append(this->input.operator[](i));
+builder.append(this->input[i]);
 }
 
 }
@@ -115,17 +115,9 @@ Jakt::lexer::Token Jakt::lexer::Lexer::lex_character_constant_or_name() {
 if (this->peek_ahead(static_cast<size_t>(1ULL)) != static_cast<u8>(u8'\'')){
 return this->lex_number_or_name();
 }
-JaktInternal::Optional<ByteString> const prefix = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<ByteString>,Jakt::lexer::Token> {
-auto __jakt_enum_value = (this->peek());
-if (__jakt_enum_value == static_cast<u8>(u8'b')) {return JaktInternal::ExplicitValue(ByteString::from_utf8_without_validation("b"sv));
-}else if (__jakt_enum_value == static_cast<u8>(u8'c')) {return JaktInternal::ExplicitValue(ByteString::from_utf8_without_validation("c"sv));
-}else {return JaktInternal::ExplicitValue(JaktInternal::OptionalNone());
-}}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+JaktInternal::Optional<ByteString> const prefix = [&]() -> JaktInternal::Optional<ByteString> { auto __jakt_enum_value = this->peek();
+if (__jakt_enum_value == static_cast<u8>(u8'b')) {return ByteString::from_utf8_without_validation("b"sv);}else if (__jakt_enum_value == static_cast<u8>(u8'c')) {return ByteString::from_utf8_without_validation("c"sv);}else {return JaktInternal::OptionalNone();} 
+}();
 if (prefix.has_value()){
 this->index += static_cast<size_t>(1ULL);
 }
@@ -149,9 +141,9 @@ this->error(ByteString::from_utf8_without_validation("Expected single quote"sv),
 }
 this->index += static_cast<size_t>(1ULL);
 ByteStringBuilder builder = ByteStringBuilder::create();
-builder.append(this->input.operator[](JaktInternal::checked_add(start,static_cast<size_t>(1ULL))));
+builder.append(this->input[JaktInternal::checked_add(start,static_cast<size_t>(1ULL))]);
 if (escaped){
-builder.append(this->input.operator[](JaktInternal::checked_add(start,static_cast<size_t>(2ULL))));
+builder.append(this->input[JaktInternal::checked_add(start,static_cast<size_t>(2ULL))]);
 }
 ByteString const quote = builder.to_string();
 size_t const end = this->index;
@@ -172,7 +164,7 @@ return this->lex_number();
 else if (Jakt::utility::is_ascii_alpha(this->peek()) || (this->peek() == static_cast<u8>(u8'_'))){
 ByteStringBuilder string_builder = ByteStringBuilder::create();
 while (Jakt::utility::is_ascii_alphanumeric(this->peek()) || (this->peek() == static_cast<u8>(u8'_'))){
-u8 const value = this->input.operator[](this->index);
+u8 const value = this->input[this->index];
 ++this->index;
 string_builder.append(value);
 }
@@ -187,7 +179,7 @@ this->error(ByteString::from_utf8_without_validation("C++ keywords are not allow
 }
 return Jakt::lexer::Token::from_keyword_or_identifier(string,span);
 }
-u8 const unknown_char = this->input.operator[](this->index);
+u8 const unknown_char = this->input[this->index];
 size_t const end = ++this->index;
 this->error(__jakt_format(StringView::from_string_literal("unknown character: {:c}"sv),unknown_char),this->span(start,end));
 return Jakt::lexer::Token::Garbage(__jakt_format(StringView::from_string_literal("{:c}"sv),unknown_char),this->span(start,end));
@@ -196,21 +188,10 @@ return Jakt::lexer::Token::Garbage(__jakt_format(StringView::from_string_literal
 
 bool Jakt::lexer::Lexer::valid_digit(Jakt::lexer::LiteralPrefix const prefix,u8 const digit,bool const decimal_allowed) {
 {
-return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<bool, bool>{
-auto&& __jakt_match_variant = prefix;
+{auto&& __jakt_match_variant = prefix;
 switch(__jakt_match_variant.__jakt_init_index()) {
-case 1 /* Hexadecimal */:return JaktInternal::ExplicitValue(Jakt::utility::is_ascii_hexdigit(digit));
-case 2 /* Octal */:return JaktInternal::ExplicitValue(Jakt::utility::is_ascii_octdigit(digit));
-case 3 /* Binary */:return JaktInternal::ExplicitValue(Jakt::utility::is_ascii_binary(digit));
-default:return JaktInternal::ExplicitValue(Jakt::utility::is_ascii_digit(digit) || (decimal_allowed && (digit == static_cast<u8>(u8'.'))));
-}/*switch end*/
-}()
-);
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+case 1 /* Hexadecimal */:return Jakt::utility::is_ascii_hexdigit(digit);case 2 /* Octal */:return Jakt::utility::is_ascii_octdigit(digit);case 3 /* Binary */:return Jakt::utility::is_ascii_binary(digit);default:return Jakt::utility::is_ascii_digit(digit) || (decimal_allowed && (digit == static_cast<u8>(u8'.')));}/*switch end*/
+}
 }
 }
 
@@ -221,36 +202,25 @@ bool floating = false;
 Jakt::lexer::LiteralPrefix prefix = Jakt::lexer::LiteralPrefix::None();
 ByteStringBuilder number = ByteStringBuilder::create();
 if (this->peek() == static_cast<u8>(u8'0')){
-({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,Jakt::lexer::Token> {
-auto __jakt_enum_value = (this->peek_ahead(static_cast<size_t>(1ULL)));
+{auto __jakt_enum_value = this->peek_ahead(static_cast<size_t>(1ULL));
 if (__jakt_enum_value == static_cast<u8>(u8'x')) {{
 prefix = Jakt::lexer::LiteralPrefix::Hexadecimal();
 this->index += static_cast<size_t>(2ULL);
 }
-return JaktInternal::ExplicitValue<void>();
-}else if (__jakt_enum_value == static_cast<u8>(u8'o')) {{
+goto __jakt_label_5;}else if (__jakt_enum_value == static_cast<u8>(u8'o')) {{
 prefix = Jakt::lexer::LiteralPrefix::Octal();
 this->index += static_cast<size_t>(2ULL);
 }
-return JaktInternal::ExplicitValue<void>();
-}else if (__jakt_enum_value == static_cast<u8>(u8'b')) {{
+goto __jakt_label_5;}else if (__jakt_enum_value == static_cast<u8>(u8'b')) {{
 prefix = Jakt::lexer::LiteralPrefix::Binary();
 this->index += static_cast<size_t>(2ULL);
 }
-return JaktInternal::ExplicitValue<void>();
-}else {{
+goto __jakt_label_5;}else {{
 }
-return JaktInternal::ExplicitValue<void>();
-}return JaktInternal::ExplicitValue<void>();
-}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+goto __jakt_label_5;}}goto __jakt_label_5; __jakt_label_5:;;
 }
 while (!this->eof()){
-u8 const value = this->input.operator[](this->index);
+u8 const value = this->input[this->index];
 if (!this->valid_digit(prefix,value,true)){
 break;
 }
@@ -283,22 +253,13 @@ return Jakt::lexer::Token::Number(prefix,number.to_string(),suffix,this->span(st
 
 Jakt::lexer::LiteralSuffix Jakt::lexer::Lexer::consume_numeric_literal_suffix() {
 {
-({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<void,Jakt::lexer::LiteralSuffix> {
-auto __jakt_enum_value = (this->peek());
+{auto __jakt_enum_value = this->peek();
 if ((__jakt_enum_value == static_cast<u8>(u8'u'))||(__jakt_enum_value == static_cast<u8>(u8'i'))||(__jakt_enum_value == static_cast<u8>(u8'f'))) {{
 }
-return JaktInternal::ExplicitValue<void>();
-}else {{
+goto __jakt_label_6;}else {{
 return Jakt::lexer::LiteralSuffix::None();
 }
-return JaktInternal::ExplicitValue<void>();
-}return JaktInternal::ExplicitValue<void>();
-}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+goto __jakt_label_6;}}goto __jakt_label_6; __jakt_label_6:;;
 if ((this->peek() == static_cast<u8>(u8'u')) && (this->peek_ahead(static_cast<size_t>(1ULL)) == static_cast<u8>(u8'z'))){
 this->index += static_cast<size_t>(2ULL);
 return Jakt::lexer::LiteralSuffix::UZ();
@@ -309,57 +270,17 @@ while (Jakt::utility::is_ascii_digit(this->peek_ahead(local_index))){
 if (local_index > static_cast<size_t>(3ULL)){
 return Jakt::lexer::LiteralSuffix::None();
 }
-u8 const value = this->input.operator[](JaktInternal::checked_add(this->index,local_index));
+u8 const value = this->input[JaktInternal::checked_add(this->index,local_index)];
 ++local_index;
 i64 const digit = Jakt::as_saturated<i64, u8>(JaktInternal::checked_sub(value,static_cast<u8>(u8'0')));
 width = JaktInternal::checked_add(JaktInternal::checked_mul(width,static_cast<i64>(10LL)),digit);
 }
-Jakt::lexer::LiteralSuffix const suffix = ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<Jakt::lexer::LiteralSuffix,Jakt::lexer::LiteralSuffix> {
-auto __jakt_enum_value = (this->peek());
-if (__jakt_enum_value == static_cast<u8>(u8'u')) {return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<Jakt::lexer::LiteralSuffix,Jakt::lexer::LiteralSuffix> {
-auto __jakt_enum_value = (width);
-if (__jakt_enum_value == static_cast<i64>(8LL)) {return JaktInternal::ExplicitValue(Jakt::lexer::LiteralSuffix::U8());
-}else if (__jakt_enum_value == static_cast<i64>(16LL)) {return JaktInternal::ExplicitValue(Jakt::lexer::LiteralSuffix::U16());
-}else if (__jakt_enum_value == static_cast<i64>(32LL)) {return JaktInternal::ExplicitValue(Jakt::lexer::LiteralSuffix::U32());
-}else if (__jakt_enum_value == static_cast<i64>(64LL)) {return JaktInternal::ExplicitValue(Jakt::lexer::LiteralSuffix::U64());
-}else {return JaktInternal::ExplicitValue(Jakt::lexer::LiteralSuffix::None());
-}}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-}));
-}else if (__jakt_enum_value == static_cast<u8>(u8'i')) {return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<Jakt::lexer::LiteralSuffix,Jakt::lexer::LiteralSuffix> {
-auto __jakt_enum_value = (width);
-if (__jakt_enum_value == static_cast<i64>(8LL)) {return JaktInternal::ExplicitValue(Jakt::lexer::LiteralSuffix::I8());
-}else if (__jakt_enum_value == static_cast<i64>(16LL)) {return JaktInternal::ExplicitValue(Jakt::lexer::LiteralSuffix::I16());
-}else if (__jakt_enum_value == static_cast<i64>(32LL)) {return JaktInternal::ExplicitValue(Jakt::lexer::LiteralSuffix::I32());
-}else if (__jakt_enum_value == static_cast<i64>(64LL)) {return JaktInternal::ExplicitValue(Jakt::lexer::LiteralSuffix::I64());
-}else {return JaktInternal::ExplicitValue(Jakt::lexer::LiteralSuffix::None());
-}}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-}));
-}else if (__jakt_enum_value == static_cast<u8>(u8'f')) {return JaktInternal::ExplicitValue(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<Jakt::lexer::LiteralSuffix,Jakt::lexer::LiteralSuffix> {
-auto __jakt_enum_value = (width);
-if (__jakt_enum_value == static_cast<i64>(32LL)) {return JaktInternal::ExplicitValue(Jakt::lexer::LiteralSuffix::F32());
-}else if (__jakt_enum_value == static_cast<i64>(64LL)) {return JaktInternal::ExplicitValue(Jakt::lexer::LiteralSuffix::F64());
-}else {return JaktInternal::ExplicitValue(Jakt::lexer::LiteralSuffix::None());
-}}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-}));
-}else {return JaktInternal::ExplicitValue(Jakt::lexer::LiteralSuffix::None());
-}}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+Jakt::lexer::LiteralSuffix const suffix = [&]() -> Jakt::lexer::LiteralSuffix { auto __jakt_enum_value = this->peek();
+if (__jakt_enum_value == static_cast<u8>(u8'u')) {{auto __jakt_enum_value = width;
+if (__jakt_enum_value == static_cast<i64>(8LL)) {return Jakt::lexer::LiteralSuffix::U8();}else if (__jakt_enum_value == static_cast<i64>(16LL)) {return Jakt::lexer::LiteralSuffix::U16();}else if (__jakt_enum_value == static_cast<i64>(32LL)) {return Jakt::lexer::LiteralSuffix::U32();}else if (__jakt_enum_value == static_cast<i64>(64LL)) {return Jakt::lexer::LiteralSuffix::U64();}else {return Jakt::lexer::LiteralSuffix::None();}}}else if (__jakt_enum_value == static_cast<u8>(u8'i')) {{auto __jakt_enum_value = width;
+if (__jakt_enum_value == static_cast<i64>(8LL)) {return Jakt::lexer::LiteralSuffix::I8();}else if (__jakt_enum_value == static_cast<i64>(16LL)) {return Jakt::lexer::LiteralSuffix::I16();}else if (__jakt_enum_value == static_cast<i64>(32LL)) {return Jakt::lexer::LiteralSuffix::I32();}else if (__jakt_enum_value == static_cast<i64>(64LL)) {return Jakt::lexer::LiteralSuffix::I64();}else {return Jakt::lexer::LiteralSuffix::None();}}}else if (__jakt_enum_value == static_cast<u8>(u8'f')) {{auto __jakt_enum_value = width;
+if (__jakt_enum_value == static_cast<i64>(32LL)) {return Jakt::lexer::LiteralSuffix::F32();}else if (__jakt_enum_value == static_cast<i64>(64LL)) {return Jakt::lexer::LiteralSuffix::F64();}else {return Jakt::lexer::LiteralSuffix::None();}}}else {return Jakt::lexer::LiteralSuffix::None();} 
+}();
 if (!(suffix.__jakt_init_index() == 0 /* None */)){
 this->index += local_index;
 }
@@ -403,51 +324,24 @@ return Jakt::lexer::Token::QuotedString(str,this->span(start,end));
 Jakt::lexer::Token Jakt::lexer::Lexer::lex_plus() {
 {
 size_t const start = this->index++;
-return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<Jakt::lexer::Token,Jakt::lexer::Token> {
-auto __jakt_enum_value = (this->peek());
-if (__jakt_enum_value == static_cast<u8>(u8'=')) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::PlusEqual(this->span(start,++this->index)));
-}else if (__jakt_enum_value == static_cast<u8>(u8'+')) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::PlusPlus(this->span(start,++this->index)));
-}else {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Plus(this->span(JaktInternal::checked_sub(this->index,static_cast<size_t>(1ULL)),this->index)));
-}}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+{auto __jakt_enum_value = this->peek();
+if (__jakt_enum_value == static_cast<u8>(u8'=')) {return Jakt::lexer::Token::PlusEqual(this->span(start,++this->index));}else if (__jakt_enum_value == static_cast<u8>(u8'+')) {return Jakt::lexer::Token::PlusPlus(this->span(start,++this->index));}else {return Jakt::lexer::Token::Plus(this->span(JaktInternal::checked_sub(this->index,static_cast<size_t>(1ULL)),this->index));}}
 }
 }
 
 Jakt::lexer::Token Jakt::lexer::Lexer::lex_minus() {
 {
 size_t const start = this->index++;
-return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<Jakt::lexer::Token,Jakt::lexer::Token> {
-auto __jakt_enum_value = (this->peek());
-if (__jakt_enum_value == static_cast<u8>(u8'=')) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::MinusEqual(this->span(start,++this->index)));
-}else if (__jakt_enum_value == static_cast<u8>(u8'-')) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::MinusMinus(this->span(start,++this->index)));
-}else if (__jakt_enum_value == static_cast<u8>(u8'>')) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Arrow(this->span(start,++this->index)));
-}else {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Minus(this->span(JaktInternal::checked_sub(this->index,static_cast<size_t>(1ULL)),this->index)));
-}}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+{auto __jakt_enum_value = this->peek();
+if (__jakt_enum_value == static_cast<u8>(u8'=')) {return Jakt::lexer::Token::MinusEqual(this->span(start,++this->index));}else if (__jakt_enum_value == static_cast<u8>(u8'-')) {return Jakt::lexer::Token::MinusMinus(this->span(start,++this->index));}else if (__jakt_enum_value == static_cast<u8>(u8'>')) {return Jakt::lexer::Token::Arrow(this->span(start,++this->index));}else {return Jakt::lexer::Token::Minus(this->span(JaktInternal::checked_sub(this->index,static_cast<size_t>(1ULL)),this->index));}}
 }
 }
 
 Jakt::lexer::Token Jakt::lexer::Lexer::lex_asterisk() {
 {
 size_t const start = this->index++;
-return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<Jakt::lexer::Token,Jakt::lexer::Token> {
-auto __jakt_enum_value = (this->peek());
-if (__jakt_enum_value == static_cast<u8>(u8'=')) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::AsteriskEqual(this->span(start,++this->index)));
-}else {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Asterisk(this->span(JaktInternal::checked_sub(this->index,static_cast<size_t>(1ULL)),this->index)));
-}}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+{auto __jakt_enum_value = this->peek();
+if (__jakt_enum_value == static_cast<u8>(u8'=')) {return Jakt::lexer::Token::AsteriskEqual(this->span(start,++this->index));}else {return Jakt::lexer::Token::Asterisk(this->span(JaktInternal::checked_sub(this->index,static_cast<size_t>(1ULL)),this->index));}}
 }
 }
 
@@ -474,7 +368,7 @@ this->index--;
 break;
 }
 }
-this->comment_contents = this->input.operator[](JaktInternal::Range<size_t>{static_cast<size_t>(comment_start_index),static_cast<size_t>(this->index)}).to_array();
+this->comment_contents = this->input[JaktInternal::Range<size_t>{static_cast<size_t>(comment_start_index),static_cast<size_t>(this->index)}].to_array();
 return this->next().value_or_lazy_evaluated([&] { return Jakt::lexer::Token::Eof(this->span(this->index,this->index)); });
 }
 }
@@ -482,222 +376,106 @@ return this->next().value_or_lazy_evaluated([&] { return Jakt::lexer::Token::Eof
 Jakt::lexer::Token Jakt::lexer::Lexer::lex_caret() {
 {
 size_t const start = this->index++;
-return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<Jakt::lexer::Token,Jakt::lexer::Token> {
-auto __jakt_enum_value = (this->peek());
-if (__jakt_enum_value == static_cast<u8>(u8'=')) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::CaretEqual(this->span(start,++this->index)));
-}else {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Caret(this->span(JaktInternal::checked_sub(this->index,static_cast<size_t>(1ULL)),this->index)));
-}}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+{auto __jakt_enum_value = this->peek();
+if (__jakt_enum_value == static_cast<u8>(u8'=')) {return Jakt::lexer::Token::CaretEqual(this->span(start,++this->index));}else {return Jakt::lexer::Token::Caret(this->span(JaktInternal::checked_sub(this->index,static_cast<size_t>(1ULL)),this->index));}}
 }
 }
 
 Jakt::lexer::Token Jakt::lexer::Lexer::lex_pipe() {
 {
 size_t const start = this->index++;
-return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<Jakt::lexer::Token,Jakt::lexer::Token> {
-auto __jakt_enum_value = (this->peek());
-if (__jakt_enum_value == static_cast<u8>(u8'=')) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::PipeEqual(this->span(start,++this->index)));
-}else if (__jakt_enum_value == static_cast<u8>(u8'|')) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::PipePipe(this->span(start,++this->index)));
-}else {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Pipe(this->span(JaktInternal::checked_sub(this->index,static_cast<size_t>(1ULL)),this->index)));
-}}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+{auto __jakt_enum_value = this->peek();
+if (__jakt_enum_value == static_cast<u8>(u8'=')) {return Jakt::lexer::Token::PipeEqual(this->span(start,++this->index));}else if (__jakt_enum_value == static_cast<u8>(u8'|')) {return Jakt::lexer::Token::PipePipe(this->span(start,++this->index));}else {return Jakt::lexer::Token::Pipe(this->span(JaktInternal::checked_sub(this->index,static_cast<size_t>(1ULL)),this->index));}}
 }
 }
 
 Jakt::lexer::Token Jakt::lexer::Lexer::lex_percent_sign() {
 {
 size_t const start = this->index++;
-return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<Jakt::lexer::Token,Jakt::lexer::Token> {
-auto __jakt_enum_value = (this->peek());
-if (__jakt_enum_value == static_cast<u8>(u8'=')) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::PercentSignEqual(this->span(start,++this->index)));
-}else {return JaktInternal::ExplicitValue(Jakt::lexer::Token::PercentSign(this->span(JaktInternal::checked_sub(this->index,static_cast<size_t>(1ULL)),this->index)));
-}}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+{auto __jakt_enum_value = this->peek();
+if (__jakt_enum_value == static_cast<u8>(u8'=')) {return Jakt::lexer::Token::PercentSignEqual(this->span(start,++this->index));}else {return Jakt::lexer::Token::PercentSign(this->span(JaktInternal::checked_sub(this->index,static_cast<size_t>(1ULL)),this->index));}}
 }
 }
 
 Jakt::lexer::Token Jakt::lexer::Lexer::lex_exclamation_point() {
 {
 size_t const start = this->index++;
-return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<Jakt::lexer::Token,Jakt::lexer::Token> {
-auto __jakt_enum_value = (this->peek());
-if (__jakt_enum_value == static_cast<u8>(u8'=')) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::NotEqual(this->span(start,++this->index)));
-}else {return JaktInternal::ExplicitValue(Jakt::lexer::Token::ExclamationPoint(this->span(JaktInternal::checked_sub(this->index,static_cast<size_t>(1ULL)),this->index)));
-}}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+{auto __jakt_enum_value = this->peek();
+if (__jakt_enum_value == static_cast<u8>(u8'=')) {return Jakt::lexer::Token::NotEqual(this->span(start,++this->index));}else {return Jakt::lexer::Token::ExclamationPoint(this->span(JaktInternal::checked_sub(this->index,static_cast<size_t>(1ULL)),this->index));}}
 }
 }
 
 Jakt::lexer::Token Jakt::lexer::Lexer::lex_ampersand() {
 {
 size_t const start = this->index++;
-return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<Jakt::lexer::Token,Jakt::lexer::Token> {
-auto __jakt_enum_value = (this->peek());
-if (__jakt_enum_value == static_cast<u8>(u8'=')) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::AmpersandEqual(this->span(start,++this->index)));
-}else if (__jakt_enum_value == static_cast<u8>(u8'&')) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::AmpersandAmpersand(this->span(start,++this->index)));
-}else {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Ampersand(this->span(JaktInternal::checked_sub(this->index,static_cast<size_t>(1ULL)),this->index)));
-}}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+{auto __jakt_enum_value = this->peek();
+if (__jakt_enum_value == static_cast<u8>(u8'=')) {return Jakt::lexer::Token::AmpersandEqual(this->span(start,++this->index));}else if (__jakt_enum_value == static_cast<u8>(u8'&')) {return Jakt::lexer::Token::AmpersandAmpersand(this->span(start,++this->index));}else {return Jakt::lexer::Token::Ampersand(this->span(JaktInternal::checked_sub(this->index,static_cast<size_t>(1ULL)),this->index));}}
 }
 }
 
 Jakt::lexer::Token Jakt::lexer::Lexer::lex_less_than() {
 {
 size_t const start = this->index++;
-return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<Jakt::lexer::Token,Jakt::lexer::Token> {
-auto __jakt_enum_value = (this->peek());
-if (__jakt_enum_value == static_cast<u8>(u8'=')) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::LessThanOrEqual(this->span(start,++this->index)));
-}else if (__jakt_enum_value == static_cast<u8>(u8'<')) {{
+{auto __jakt_enum_value = this->peek();
+if (__jakt_enum_value == static_cast<u8>(u8'=')) {return Jakt::lexer::Token::LessThanOrEqual(this->span(start,++this->index));}else if (__jakt_enum_value == static_cast<u8>(u8'<')) {{
 this->index++;
-return JaktInternal::ExplicitValue<Jakt::lexer::Token>(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<Jakt::lexer::Token,Jakt::lexer::Token> {
-auto __jakt_enum_value = (this->peek());
-if (__jakt_enum_value == static_cast<u8>(u8'<')) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::LeftArithmeticShift(this->span(start,++this->index)));
-}else if (__jakt_enum_value == static_cast<u8>(u8'=')) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::LeftShiftEqual(this->span(start,++this->index)));
-}else {return JaktInternal::ExplicitValue(Jakt::lexer::Token::LeftShift(this->span(JaktInternal::checked_sub(this->index,static_cast<size_t>(1ULL)),this->index)));
-}}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-}));
+{auto __jakt_enum_value = this->peek();
+if (__jakt_enum_value == static_cast<u8>(u8'<')) {return Jakt::lexer::Token::LeftArithmeticShift(this->span(start,++this->index));}else if (__jakt_enum_value == static_cast<u8>(u8'=')) {return Jakt::lexer::Token::LeftShiftEqual(this->span(start,++this->index));}else {return Jakt::lexer::Token::LeftShift(this->span(JaktInternal::checked_sub(this->index,static_cast<size_t>(1ULL)),this->index));}}
 }
 VERIFY_NOT_REACHED();
-}else {return JaktInternal::ExplicitValue(Jakt::lexer::Token::LessThan(this->span(JaktInternal::checked_sub(this->index,static_cast<size_t>(1ULL)),this->index)));
-}}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+}else {return Jakt::lexer::Token::LessThan(this->span(JaktInternal::checked_sub(this->index,static_cast<size_t>(1ULL)),this->index));}}
 }
 }
 
 Jakt::lexer::Token Jakt::lexer::Lexer::lex_greater_than() {
 {
 size_t const start = this->index++;
-return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<Jakt::lexer::Token,Jakt::lexer::Token> {
-auto __jakt_enum_value = (this->peek());
-if (__jakt_enum_value == static_cast<u8>(u8'=')) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::GreaterThanOrEqual(this->span(start,++this->index)));
-}else if (__jakt_enum_value == static_cast<u8>(u8'>')) {{
+{auto __jakt_enum_value = this->peek();
+if (__jakt_enum_value == static_cast<u8>(u8'=')) {return Jakt::lexer::Token::GreaterThanOrEqual(this->span(start,++this->index));}else if (__jakt_enum_value == static_cast<u8>(u8'>')) {{
 this->index++;
-return JaktInternal::ExplicitValue<Jakt::lexer::Token>(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<Jakt::lexer::Token,Jakt::lexer::Token> {
-auto __jakt_enum_value = (this->peek());
-if (__jakt_enum_value == static_cast<u8>(u8'>')) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::RightArithmeticShift(this->span(start,++this->index)));
-}else if (__jakt_enum_value == static_cast<u8>(u8'=')) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::RightShiftEqual(this->span(start,++this->index)));
-}else {return JaktInternal::ExplicitValue(Jakt::lexer::Token::RightShift(this->span(JaktInternal::checked_sub(this->index,static_cast<size_t>(1ULL)),this->index)));
-}}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-}));
+{auto __jakt_enum_value = this->peek();
+if (__jakt_enum_value == static_cast<u8>(u8'>')) {return Jakt::lexer::Token::RightArithmeticShift(this->span(start,++this->index));}else if (__jakt_enum_value == static_cast<u8>(u8'=')) {return Jakt::lexer::Token::RightShiftEqual(this->span(start,++this->index));}else {return Jakt::lexer::Token::RightShift(this->span(JaktInternal::checked_sub(this->index,static_cast<size_t>(1ULL)),this->index));}}
 }
 VERIFY_NOT_REACHED();
-}else {return JaktInternal::ExplicitValue(Jakt::lexer::Token::GreaterThan(this->span(JaktInternal::checked_sub(this->index,static_cast<size_t>(1ULL)),this->index)));
-}}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+}else {return Jakt::lexer::Token::GreaterThan(this->span(JaktInternal::checked_sub(this->index,static_cast<size_t>(1ULL)),this->index));}}
 }
 }
 
 Jakt::lexer::Token Jakt::lexer::Lexer::lex_dot() {
 {
 size_t const start = this->index++;
-return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<Jakt::lexer::Token,Jakt::lexer::Token> {
-auto __jakt_enum_value = (this->peek());
-if (__jakt_enum_value == static_cast<u8>(u8'.')) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::DotDot(this->span(start,++this->index)));
-}else {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Dot(this->span(JaktInternal::checked_sub(this->index,static_cast<size_t>(1ULL)),this->index)));
-}}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+{auto __jakt_enum_value = this->peek();
+if (__jakt_enum_value == static_cast<u8>(u8'.')) {return Jakt::lexer::Token::DotDot(this->span(start,++this->index));}else {return Jakt::lexer::Token::Dot(this->span(JaktInternal::checked_sub(this->index,static_cast<size_t>(1ULL)),this->index));}}
 }
 }
 
 Jakt::lexer::Token Jakt::lexer::Lexer::lex_colon() {
 {
 size_t const start = this->index++;
-return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<Jakt::lexer::Token,Jakt::lexer::Token> {
-auto __jakt_enum_value = (this->peek());
-if (__jakt_enum_value == static_cast<u8>(u8':')) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::ColonColon(this->span(start,++this->index)));
-}else {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Colon(this->span(JaktInternal::checked_sub(this->index,static_cast<size_t>(1ULL)),this->index)));
-}}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+{auto __jakt_enum_value = this->peek();
+if (__jakt_enum_value == static_cast<u8>(u8':')) {return Jakt::lexer::Token::ColonColon(this->span(start,++this->index));}else {return Jakt::lexer::Token::Colon(this->span(JaktInternal::checked_sub(this->index,static_cast<size_t>(1ULL)),this->index));}}
 }
 }
 
 Jakt::lexer::Token Jakt::lexer::Lexer::lex_question_mark() {
 {
 size_t const start = this->index++;
-return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<Jakt::lexer::Token,Jakt::lexer::Token> {
-auto __jakt_enum_value = (this->peek());
+{auto __jakt_enum_value = this->peek();
 if (__jakt_enum_value == static_cast<u8>(u8'?')) {{
 this->index++;
-return JaktInternal::ExplicitValue<Jakt::lexer::Token>(({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<Jakt::lexer::Token,Jakt::lexer::Token> {
-auto __jakt_enum_value = (this->peek());
-if (__jakt_enum_value == static_cast<u8>(u8'=')) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::QuestionMarkQuestionMarkEqual(this->span(start,++this->index)));
-}else {return JaktInternal::ExplicitValue(Jakt::lexer::Token::QuestionMarkQuestionMark(this->span(start,this->index)));
-}}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-}));
+{auto __jakt_enum_value = this->peek();
+if (__jakt_enum_value == static_cast<u8>(u8'=')) {return Jakt::lexer::Token::QuestionMarkQuestionMarkEqual(this->span(start,++this->index));}else {return Jakt::lexer::Token::QuestionMarkQuestionMark(this->span(start,this->index));}}
 }
 VERIFY_NOT_REACHED();
-}else {return JaktInternal::ExplicitValue(Jakt::lexer::Token::QuestionMark(this->span(JaktInternal::checked_sub(this->index,static_cast<size_t>(1ULL)),this->index)));
-}}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+}else {return Jakt::lexer::Token::QuestionMark(this->span(JaktInternal::checked_sub(this->index,static_cast<size_t>(1ULL)),this->index));}}
 }
 }
 
 Jakt::lexer::Token Jakt::lexer::Lexer::lex_equals() {
 {
 size_t const start = this->index++;
-return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<Jakt::lexer::Token,Jakt::lexer::Token> {
-auto __jakt_enum_value = (this->peek());
-if (__jakt_enum_value == static_cast<u8>(u8'=')) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::DoubleEqual(this->span(start,++this->index)));
-}else if (__jakt_enum_value == static_cast<u8>(u8'>')) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::FatArrow(this->span(start,++this->index)));
-}else {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Equal(this->span(JaktInternal::checked_sub(this->index,static_cast<size_t>(1ULL)),this->index)));
-}}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+{auto __jakt_enum_value = this->peek();
+if (__jakt_enum_value == static_cast<u8>(u8'=')) {return Jakt::lexer::Token::DoubleEqual(this->span(start,++this->index));}else if (__jakt_enum_value == static_cast<u8>(u8'>')) {return Jakt::lexer::Token::FatArrow(this->span(start,++this->index));}else {return Jakt::lexer::Token::Equal(this->span(JaktInternal::checked_sub(this->index,static_cast<size_t>(1ULL)),this->index));}}
 }
 }
 
@@ -748,45 +526,8 @@ break;
 
 }
 size_t const start = this->index;
-return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<JaktInternal::Optional<Jakt::lexer::Token>,JaktInternal::Optional<Jakt::lexer::Token>> {
-auto __jakt_enum_value = (this->input.operator[](this->index));
-if (__jakt_enum_value == static_cast<u8>(u8'(')) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::LParen(this->span(start,++this->index)));
-}else if (__jakt_enum_value == static_cast<u8>(u8')')) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::RParen(this->span(start,++this->index)));
-}else if (__jakt_enum_value == static_cast<u8>(u8'[')) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::LSquare(this->span(start,++this->index)));
-}else if (__jakt_enum_value == static_cast<u8>(u8']')) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::RSquare(this->span(start,++this->index)));
-}else if (__jakt_enum_value == static_cast<u8>(u8'{')) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::LCurly(this->span(start,++this->index)));
-}else if (__jakt_enum_value == static_cast<u8>(u8'}')) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::RCurly(this->span(start,++this->index)));
-}else if (__jakt_enum_value == static_cast<u8>(u8'<')) {return JaktInternal::ExplicitValue(this->lex_less_than());
-}else if (__jakt_enum_value == static_cast<u8>(u8'>')) {return JaktInternal::ExplicitValue(this->lex_greater_than());
-}else if (__jakt_enum_value == static_cast<u8>(u8'.')) {return JaktInternal::ExplicitValue(this->lex_dot());
-}else if (__jakt_enum_value == static_cast<u8>(u8',')) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Comma(this->span(start,++this->index)));
-}else if (__jakt_enum_value == static_cast<u8>(u8'~')) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Tilde(this->span(start,++this->index)));
-}else if (__jakt_enum_value == static_cast<u8>(u8';')) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Semicolon(this->span(start,++this->index)));
-}else if (__jakt_enum_value == static_cast<u8>(u8':')) {return JaktInternal::ExplicitValue(this->lex_colon());
-}else if (__jakt_enum_value == static_cast<u8>(u8'?')) {return JaktInternal::ExplicitValue(this->lex_question_mark());
-}else if (__jakt_enum_value == static_cast<u8>(u8'+')) {return JaktInternal::ExplicitValue(this->lex_plus());
-}else if (__jakt_enum_value == static_cast<u8>(u8'-')) {return JaktInternal::ExplicitValue(this->lex_minus());
-}else if (__jakt_enum_value == static_cast<u8>(u8'*')) {return JaktInternal::ExplicitValue(this->lex_asterisk());
-}else if (__jakt_enum_value == static_cast<u8>(u8'/')) {return JaktInternal::ExplicitValue(this->lex_forward_slash());
-}else if (__jakt_enum_value == static_cast<u8>(u8'^')) {return JaktInternal::ExplicitValue(this->lex_caret());
-}else if (__jakt_enum_value == static_cast<u8>(u8'|')) {return JaktInternal::ExplicitValue(this->lex_pipe());
-}else if (__jakt_enum_value == static_cast<u8>(u8'%')) {return JaktInternal::ExplicitValue(this->lex_percent_sign());
-}else if (__jakt_enum_value == static_cast<u8>(u8'!')) {return JaktInternal::ExplicitValue(this->lex_exclamation_point());
-}else if (__jakt_enum_value == static_cast<u8>(u8'&')) {return JaktInternal::ExplicitValue(this->lex_ampersand());
-}else if (__jakt_enum_value == static_cast<u8>(u8'$')) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Dollar(this->span(start,++this->index)));
-}else if (__jakt_enum_value == static_cast<u8>(u8'=')) {return JaktInternal::ExplicitValue(this->lex_equals());
-}else if (__jakt_enum_value == static_cast<u8>(u8'\n')) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Eol(this->consume_comment_contents(),this->span(start,++this->index)));
-}else if (__jakt_enum_value == static_cast<u8>(u8'\'')) {return JaktInternal::ExplicitValue(this->lex_quoted_string(static_cast<u8>(u8'\'')));
-}else if (__jakt_enum_value == static_cast<u8>(u8'\"')) {return JaktInternal::ExplicitValue(this->lex_quoted_string(static_cast<u8>(u8'"')));
-}else if (__jakt_enum_value == static_cast<u8>(u8'b')) {return JaktInternal::ExplicitValue(this->lex_character_constant_or_name());
-}else if (__jakt_enum_value == static_cast<u8>(u8'c')) {return JaktInternal::ExplicitValue(this->lex_character_constant_or_name());
-}else {return JaktInternal::ExplicitValue(this->lex_number_or_name());
-}}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+{auto __jakt_enum_value = this->input[this->index];
+if (__jakt_enum_value == static_cast<u8>(u8'(')) {return Jakt::lexer::Token::LParen(this->span(start,++this->index));}else if (__jakt_enum_value == static_cast<u8>(u8')')) {return Jakt::lexer::Token::RParen(this->span(start,++this->index));}else if (__jakt_enum_value == static_cast<u8>(u8'[')) {return Jakt::lexer::Token::LSquare(this->span(start,++this->index));}else if (__jakt_enum_value == static_cast<u8>(u8']')) {return Jakt::lexer::Token::RSquare(this->span(start,++this->index));}else if (__jakt_enum_value == static_cast<u8>(u8'{')) {return Jakt::lexer::Token::LCurly(this->span(start,++this->index));}else if (__jakt_enum_value == static_cast<u8>(u8'}')) {return Jakt::lexer::Token::RCurly(this->span(start,++this->index));}else if (__jakt_enum_value == static_cast<u8>(u8'<')) {return this->lex_less_than();}else if (__jakt_enum_value == static_cast<u8>(u8'>')) {return this->lex_greater_than();}else if (__jakt_enum_value == static_cast<u8>(u8'.')) {return this->lex_dot();}else if (__jakt_enum_value == static_cast<u8>(u8',')) {return Jakt::lexer::Token::Comma(this->span(start,++this->index));}else if (__jakt_enum_value == static_cast<u8>(u8'~')) {return Jakt::lexer::Token::Tilde(this->span(start,++this->index));}else if (__jakt_enum_value == static_cast<u8>(u8';')) {return Jakt::lexer::Token::Semicolon(this->span(start,++this->index));}else if (__jakt_enum_value == static_cast<u8>(u8':')) {return this->lex_colon();}else if (__jakt_enum_value == static_cast<u8>(u8'?')) {return this->lex_question_mark();}else if (__jakt_enum_value == static_cast<u8>(u8'+')) {return this->lex_plus();}else if (__jakt_enum_value == static_cast<u8>(u8'-')) {return this->lex_minus();}else if (__jakt_enum_value == static_cast<u8>(u8'*')) {return this->lex_asterisk();}else if (__jakt_enum_value == static_cast<u8>(u8'/')) {return this->lex_forward_slash();}else if (__jakt_enum_value == static_cast<u8>(u8'^')) {return this->lex_caret();}else if (__jakt_enum_value == static_cast<u8>(u8'|')) {return this->lex_pipe();}else if (__jakt_enum_value == static_cast<u8>(u8'%')) {return this->lex_percent_sign();}else if (__jakt_enum_value == static_cast<u8>(u8'!')) {return this->lex_exclamation_point();}else if (__jakt_enum_value == static_cast<u8>(u8'&')) {return this->lex_ampersand();}else if (__jakt_enum_value == static_cast<u8>(u8'$')) {return Jakt::lexer::Token::Dollar(this->span(start,++this->index));}else if (__jakt_enum_value == static_cast<u8>(u8'=')) {return this->lex_equals();}else if (__jakt_enum_value == static_cast<u8>(u8'\n')) {return Jakt::lexer::Token::Eol(this->consume_comment_contents(),this->span(start,++this->index));}else if (__jakt_enum_value == static_cast<u8>(u8'\'')) {return this->lex_quoted_string(static_cast<u8>(u8'\''));}else if (__jakt_enum_value == static_cast<u8>(u8'\"')) {return this->lex_quoted_string(static_cast<u8>(u8'"'));}else if (__jakt_enum_value == static_cast<u8>(u8'b')) {return this->lex_character_constant_or_name();}else if (__jakt_enum_value == static_cast<u8>(u8'c')) {return this->lex_character_constant_or_name();}else {return this->lex_number_or_name();}}
 }
 }
 
@@ -4536,546 +4277,362 @@ break;
 }
 Jakt::utility::Span Jakt::lexer::Token::span() const {
 {
-return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<Jakt::utility::Span, Jakt::utility::Span>{
-auto&& __jakt_match_variant = *this;
+{auto&& __jakt_match_variant = *this;
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* SingleQuotedString */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.SingleQuotedString;Jakt::utility::Span const& span = __jakt_match_value.span;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 1 /* QuotedString */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.QuotedString;Jakt::utility::Span const& span = __jakt_match_value.span;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 2 /* Number */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Number;Jakt::utility::Span const& span = __jakt_match_value.span;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 3 /* Identifier */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Identifier;Jakt::utility::Span const& span = __jakt_match_value.span;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 4 /* Semicolon */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Semicolon;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 5 /* Colon */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Colon;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 6 /* ColonColon */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.ColonColon;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 7 /* LParen */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.LParen;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 8 /* RParen */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.RParen;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 9 /* LCurly */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.LCurly;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 10 /* RCurly */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.RCurly;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 11 /* LSquare */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.LSquare;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 12 /* RSquare */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.RSquare;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 13 /* PercentSign */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.PercentSign;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 14 /* Plus */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Plus;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 15 /* Minus */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Minus;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 16 /* Equal */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Equal;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 17 /* PlusEqual */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.PlusEqual;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 18 /* PlusPlus */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.PlusPlus;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 19 /* MinusEqual */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.MinusEqual;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 20 /* MinusMinus */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.MinusMinus;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 21 /* AsteriskEqual */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.AsteriskEqual;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 22 /* ForwardSlashEqual */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.ForwardSlashEqual;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 23 /* PercentSignEqual */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.PercentSignEqual;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 24 /* NotEqual */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.NotEqual;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 25 /* DoubleEqual */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.DoubleEqual;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 26 /* GreaterThan */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.GreaterThan;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 27 /* GreaterThanOrEqual */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.GreaterThanOrEqual;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 28 /* LessThan */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.LessThan;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 29 /* LessThanOrEqual */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.LessThanOrEqual;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 30 /* LeftArithmeticShift */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.LeftArithmeticShift;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 31 /* LeftShift */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.LeftShift;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 32 /* LeftShiftEqual */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.LeftShiftEqual;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 33 /* RightShift */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.RightShift;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 34 /* RightArithmeticShift */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.RightArithmeticShift;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 35 /* RightShiftEqual */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.RightShiftEqual;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 36 /* Asterisk */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Asterisk;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 37 /* Ampersand */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Ampersand;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 38 /* AmpersandEqual */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.AmpersandEqual;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 39 /* AmpersandAmpersand */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.AmpersandAmpersand;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 40 /* Pipe */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Pipe;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 41 /* PipeEqual */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.PipeEqual;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 42 /* PipePipe */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.PipePipe;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 43 /* Caret */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Caret;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 44 /* CaretEqual */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.CaretEqual;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 45 /* Dollar */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Dollar;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 46 /* Tilde */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Tilde;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 47 /* ForwardSlash */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.ForwardSlash;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 48 /* ExclamationPoint */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.ExclamationPoint;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 49 /* QuestionMark */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.QuestionMark;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 50 /* QuestionMarkQuestionMark */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.QuestionMarkQuestionMark;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 51 /* QuestionMarkQuestionMarkEqual */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.QuestionMarkQuestionMarkEqual;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 52 /* Comma */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Comma;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 53 /* Dot */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Dot;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 54 /* DotDot */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.DotDot;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 55 /* Eol */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Eol;Jakt::utility::Span const& span = __jakt_match_value.span;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 56 /* Eof */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Eof;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 57 /* FatArrow */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.FatArrow;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 58 /* Arrow */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Arrow;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 59 /* And */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.And;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 60 /* Anon */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Anon;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 61 /* As */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.As;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 62 /* Boxed */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Boxed;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 63 /* Break */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Break;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 64 /* Catch */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Catch;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 65 /* Class */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Class;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 66 /* Continue */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Continue;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 67 /* Cpp */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Cpp;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 68 /* Defer */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Defer;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 69 /* Destructor */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Destructor;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 70 /* Else */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Else;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 71 /* Enum */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Enum;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 72 /* Extern */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Extern;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 73 /* Export */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Export;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 74 /* False */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.False;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 75 /* For */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.For;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 76 /* Fn */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Fn;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 77 /* Comptime */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Comptime;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 78 /* If */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.If;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 79 /* Import */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Import;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 80 /* Relative */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Relative;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 81 /* In */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.In;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 82 /* Is */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Is;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 83 /* Let */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Let;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 84 /* Loop */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Loop;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 85 /* Match */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Match;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 86 /* Must */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Must;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 87 /* Mut */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Mut;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 88 /* Namespace */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Namespace;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 89 /* Not */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Not;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 90 /* Or */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Or;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 91 /* Override */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Override;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 92 /* Private */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Private;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 93 /* Public */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Public;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 94 /* Raw */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Raw;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 95 /* Reflect */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Reflect;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 96 /* Return */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Return;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 97 /* Restricted */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Restricted;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 98 /* Sizeof */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Sizeof;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 99 /* Struct */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Struct;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 100 /* This */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.This;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 101 /* Throw */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Throw;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 102 /* Throws */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Throws;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 103 /* True */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.True;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 104 /* Try */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Try;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 105 /* Unsafe */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Unsafe;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 106 /* Virtual */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Virtual;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 107 /* Weak */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Weak;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 108 /* While */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.While;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 109 /* Yield */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Yield;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 110 /* Guard */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Guard;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 111 /* Implements */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Implements;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 112 /* Requires */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Requires;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 113 /* Trait */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Trait;Jakt::utility::Span const& span = __jakt_match_value.value;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 case 114 /* Garbage */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Garbage;Jakt::utility::Span const& span = __jakt_match_value.span;
-return JaktInternal::ExplicitValue(span);
-};/*case end*/
+return span;};/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
-}()
-);
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+}
 }
 }
 
 Jakt::lexer::Token Jakt::lexer::Token::from_keyword_or_identifier(ByteString const string,Jakt::utility::Span const span) {
 {
-return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<Jakt::lexer::Token,Jakt::lexer::Token> {
-auto __jakt_enum_value = (string);
-if (__jakt_enum_value == ByteString::from_utf8_without_validation("and"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::And(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("anon"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Anon(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("as"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::As(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("boxed"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Boxed(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("break"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Break(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("catch"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Catch(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("class"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Class(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("continue"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Continue(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("cpp"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Cpp(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("defer"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Defer(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("destructor"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Destructor(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("else"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Else(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("enum"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Enum(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("extern"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Extern(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("export"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Export(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("false"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::False(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("for"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::For(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("fn"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Fn(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("comptime"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Comptime(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("if"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::If(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("import"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Import(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("relative"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Relative(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("in"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::In(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("is"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Is(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("let"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Let(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("loop"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Loop(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("match"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Match(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("must"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Must(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("mut"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Mut(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("namespace"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Namespace(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("not"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Not(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("or"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Or(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("override"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Override(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("private"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Private(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("public"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Public(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("raw"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Raw(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("reflect"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Reflect(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("return"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Return(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("restricted"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Restricted(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("sizeof"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Sizeof(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("struct"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Struct(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("this"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::This(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("throw"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Throw(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("throws"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Throws(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("true"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::True(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("try"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Try(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("unsafe"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Unsafe(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("virtual"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Virtual(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("weak"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Weak(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("while"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::While(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("yield"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Yield(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("guard"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Guard(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("requires"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Requires(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("implements"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Implements(span));
-}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("trait"sv)) {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Trait(span));
-}else {return JaktInternal::ExplicitValue(Jakt::lexer::Token::Identifier(string,span));
-}}());
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+{auto __jakt_enum_value = string;
+if (__jakt_enum_value == ByteString::from_utf8_without_validation("and"sv)) {return Jakt::lexer::Token::And(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("anon"sv)) {return Jakt::lexer::Token::Anon(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("as"sv)) {return Jakt::lexer::Token::As(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("boxed"sv)) {return Jakt::lexer::Token::Boxed(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("break"sv)) {return Jakt::lexer::Token::Break(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("catch"sv)) {return Jakt::lexer::Token::Catch(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("class"sv)) {return Jakt::lexer::Token::Class(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("continue"sv)) {return Jakt::lexer::Token::Continue(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("cpp"sv)) {return Jakt::lexer::Token::Cpp(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("defer"sv)) {return Jakt::lexer::Token::Defer(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("destructor"sv)) {return Jakt::lexer::Token::Destructor(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("else"sv)) {return Jakt::lexer::Token::Else(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("enum"sv)) {return Jakt::lexer::Token::Enum(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("extern"sv)) {return Jakt::lexer::Token::Extern(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("export"sv)) {return Jakt::lexer::Token::Export(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("false"sv)) {return Jakt::lexer::Token::False(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("for"sv)) {return Jakt::lexer::Token::For(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("fn"sv)) {return Jakt::lexer::Token::Fn(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("comptime"sv)) {return Jakt::lexer::Token::Comptime(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("if"sv)) {return Jakt::lexer::Token::If(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("import"sv)) {return Jakt::lexer::Token::Import(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("relative"sv)) {return Jakt::lexer::Token::Relative(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("in"sv)) {return Jakt::lexer::Token::In(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("is"sv)) {return Jakt::lexer::Token::Is(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("let"sv)) {return Jakt::lexer::Token::Let(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("loop"sv)) {return Jakt::lexer::Token::Loop(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("match"sv)) {return Jakt::lexer::Token::Match(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("must"sv)) {return Jakt::lexer::Token::Must(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("mut"sv)) {return Jakt::lexer::Token::Mut(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("namespace"sv)) {return Jakt::lexer::Token::Namespace(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("not"sv)) {return Jakt::lexer::Token::Not(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("or"sv)) {return Jakt::lexer::Token::Or(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("override"sv)) {return Jakt::lexer::Token::Override(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("private"sv)) {return Jakt::lexer::Token::Private(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("public"sv)) {return Jakt::lexer::Token::Public(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("raw"sv)) {return Jakt::lexer::Token::Raw(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("reflect"sv)) {return Jakt::lexer::Token::Reflect(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("return"sv)) {return Jakt::lexer::Token::Return(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("restricted"sv)) {return Jakt::lexer::Token::Restricted(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("sizeof"sv)) {return Jakt::lexer::Token::Sizeof(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("struct"sv)) {return Jakt::lexer::Token::Struct(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("this"sv)) {return Jakt::lexer::Token::This(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("throw"sv)) {return Jakt::lexer::Token::Throw(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("throws"sv)) {return Jakt::lexer::Token::Throws(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("true"sv)) {return Jakt::lexer::Token::True(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("try"sv)) {return Jakt::lexer::Token::Try(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("unsafe"sv)) {return Jakt::lexer::Token::Unsafe(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("virtual"sv)) {return Jakt::lexer::Token::Virtual(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("weak"sv)) {return Jakt::lexer::Token::Weak(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("while"sv)) {return Jakt::lexer::Token::While(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("yield"sv)) {return Jakt::lexer::Token::Yield(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("guard"sv)) {return Jakt::lexer::Token::Guard(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("requires"sv)) {return Jakt::lexer::Token::Requires(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("implements"sv)) {return Jakt::lexer::Token::Implements(span);}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("trait"sv)) {return Jakt::lexer::Token::Trait(span);}else {return Jakt::lexer::Token::Identifier(string,span);}}
 }
 }
 
@@ -5216,21 +4773,10 @@ case 3 /* Binary */:break;
 }
 ByteString Jakt::lexer::LiteralPrefix::to_string() const {
 {
-return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString, ByteString>{
-auto&& __jakt_match_variant = *this;
+{auto&& __jakt_match_variant = *this;
 switch(__jakt_match_variant.__jakt_init_index()) {
-case 0 /* None */:return JaktInternal::ExplicitValue(ByteString::from_utf8_without_validation(""sv));
-case 1 /* Hexadecimal */:return JaktInternal::ExplicitValue(ByteString::from_utf8_without_validation("0x"sv));
-case 2 /* Octal */:return JaktInternal::ExplicitValue(ByteString::from_utf8_without_validation("0o"sv));
-case 3 /* Binary */:return JaktInternal::ExplicitValue(ByteString::from_utf8_without_validation("0b"sv));
-default: VERIFY_NOT_REACHED();}/*switch end*/
-}()
-);
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+case 0 /* None */:return ByteString::from_utf8_without_validation(""sv);case 1 /* Hexadecimal */:return ByteString::from_utf8_without_validation("0x"sv);case 2 /* Octal */:return ByteString::from_utf8_without_validation("0o"sv);case 3 /* Binary */:return ByteString::from_utf8_without_validation("0b"sv);default: VERIFY_NOT_REACHED();}/*switch end*/
+}
 }
 }
 
@@ -5539,29 +5085,10 @@ case 11 /* F64 */:break;
 }
 ByteString Jakt::lexer::LiteralSuffix::to_string() const {
 {
-return ({
-    auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString, ByteString>{
-auto&& __jakt_match_variant = *this;
+{auto&& __jakt_match_variant = *this;
 switch(__jakt_match_variant.__jakt_init_index()) {
-case 0 /* None */:return JaktInternal::ExplicitValue(ByteString::from_utf8_without_validation(""sv));
-case 1 /* UZ */:return JaktInternal::ExplicitValue(ByteString::from_utf8_without_validation("uz"sv));
-case 2 /* U8 */:return JaktInternal::ExplicitValue(ByteString::from_utf8_without_validation("u8"sv));
-case 3 /* U16 */:return JaktInternal::ExplicitValue(ByteString::from_utf8_without_validation("u16"sv));
-case 4 /* U32 */:return JaktInternal::ExplicitValue(ByteString::from_utf8_without_validation("u32"sv));
-case 5 /* U64 */:return JaktInternal::ExplicitValue(ByteString::from_utf8_without_validation("u64"sv));
-case 6 /* I8 */:return JaktInternal::ExplicitValue(ByteString::from_utf8_without_validation("i8"sv));
-case 7 /* I16 */:return JaktInternal::ExplicitValue(ByteString::from_utf8_without_validation("i16"sv));
-case 8 /* I32 */:return JaktInternal::ExplicitValue(ByteString::from_utf8_without_validation("i32"sv));
-case 9 /* I64 */:return JaktInternal::ExplicitValue(ByteString::from_utf8_without_validation("i64"sv));
-case 10 /* F32 */:return JaktInternal::ExplicitValue(ByteString::from_utf8_without_validation("f32"sv));
-case 11 /* F64 */:return JaktInternal::ExplicitValue(ByteString::from_utf8_without_validation("f64"sv));
-default: VERIFY_NOT_REACHED();}/*switch end*/
-}()
-);
-    if (_jakt_value.is_return())
-        return _jakt_value.release_return();
-    _jakt_value.release_value();
-});
+case 0 /* None */:return ByteString::from_utf8_without_validation(""sv);case 1 /* UZ */:return ByteString::from_utf8_without_validation("uz"sv);case 2 /* U8 */:return ByteString::from_utf8_without_validation("u8"sv);case 3 /* U16 */:return ByteString::from_utf8_without_validation("u16"sv);case 4 /* U32 */:return ByteString::from_utf8_without_validation("u32"sv);case 5 /* U64 */:return ByteString::from_utf8_without_validation("u64"sv);case 6 /* I8 */:return ByteString::from_utf8_without_validation("i8"sv);case 7 /* I16 */:return ByteString::from_utf8_without_validation("i16"sv);case 8 /* I32 */:return ByteString::from_utf8_without_validation("i32"sv);case 9 /* I64 */:return ByteString::from_utf8_without_validation("i64"sv);case 10 /* F32 */:return ByteString::from_utf8_without_validation("f32"sv);case 11 /* F64 */:return ByteString::from_utf8_without_validation("f64"sv);default: VERIFY_NOT_REACHED();}/*switch end*/
+}
 }
 }
 
