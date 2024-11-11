@@ -1340,17 +1340,24 @@ class Interpreter {
     }
 
     public fn find_or_add_type_id(mut this, anon type: Type) -> TypeId {
-
-        for module in .program.modules {
-            for id in 0..module.types.size() {
-                if module.types[id].equals(type) {
-                    return TypeId(module: module.id, id)
+        let type_hash = type.hash()
+        for index in 0...program.modules.size() {
+            let module = &.program.modules[index]
+            let types = &module.types
+            if module.type_skip_list.get(type_hash) is Some(head) {
+                mut current = head
+                while true {
+                    let other = &types[current.id]
+                    if other.type.equals(type) {
+                        return current
+                    }
+                    guard other.next_with_same_hash.has_value() else { break }
+                    current = other.next_with_same_hash!
                 }
             }
         }
 
-        .program.modules[0].types.push(type)
-
+        .program.modules[0].add_type(type)
         return TypeId(module: ModuleId(id: 0), id: .program.modules[0].types.size() - 1)
     }
 

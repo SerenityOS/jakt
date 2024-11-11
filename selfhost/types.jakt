@@ -7,7 +7,7 @@ import parser {
 }
 import utility { FileId, IterationDecision, Queue, Span, join, panic, todo }
 import compiler { Compiler }
-import ids { EnumId, FunctionId, ModuleId, ScopeId, StructId, TraitId, TypeId, VarId }
+import ids { EnumId, FunctionId, ModuleId, ScopeId, StructId, TraitId, TypeId, VarId, pair_int_hash }
 
 enum StructOrEnumId {
     Struct(StructId)
@@ -288,6 +288,61 @@ boxed enum Type {
     Function(params: [TypeId], can_throw: bool, return_type_id: TypeId, pseudo_function_id: FunctionId)
     Self
     Const(Value)
+
+    fn hash(this) -> u32 => match this {
+        Void => 0
+        Bool => 1
+        U8 => 2
+        U16 => 3
+        U32 => 4
+        U64 => 5
+        I8 => 6
+        I16 => 7
+        I32 => 8
+        I64 => 9
+        F32 => 10
+        F64 => 11
+        Usize => 12
+        JaktString => 13
+        CChar => 14
+        CInt => 15
+        Unknown => 16
+        Never => 17
+        TypeVariable(name, is_value) => pair_int_hash(pair_int_hash(name.hash(), is_value.hash()), 18)
+        Dependent(namespace_type, name, args) => {
+            mut hash = pair_int_hash(namespace_type.hash(), name.hash())
+            for arg in args {
+                hash = pair_int_hash(hash, arg.hash())
+            }
+            yield pair_int_hash(hash, 19)
+        }
+        GenericTraitInstance(id, args) default(code: u32 = 20)
+        | GenericEnumInstance(id, args) default(code: u32 = 21)
+        | GenericInstance(id, args) default(code: u32 = 22)
+        => {
+            mut hash = pair_int_hash(id.hash(), args.size().hash())
+            for arg in args {
+                hash = pair_int_hash(hash, arg.hash())
+            }
+            yield pair_int_hash(hash, code)
+        }
+        Struct(id) default(code: u32 = 23)
+        | Enum(id) default(code: u32 = 24)
+        | RawPtr(id) default(code: u32 = 25)
+        | Trait(id) default(code: u32 = 26)
+        | Reference(id) default(code: u32 = 27)
+        | MutableReference(id) default(code: u32 = 28)
+        => pair_int_hash(id.hash(), code)
+        Function(params, can_throw, return_type_id) => {
+            mut hash = pair_int_hash(params.size().hash(), can_throw.hash())
+            for param in params {
+                hash = pair_int_hash(hash, param.hash())
+            }
+            yield pair_int_hash(pair_int_hash(hash, return_type_id.hash()), 29)
+        }
+        Self => 30
+        Const => 31
+    }
 
     fn generic_parameters(this, program: CheckedProgram) -> [CheckedGenericParameter]? => match this {
         Struct(id) | GenericInstance(id) => Some(program.get_struct(id).generic_parameters)
@@ -708,10 +763,18 @@ struct ResolvedForallChunk {
     public generated_scopes: [ScopeId]
 }
 
+struct TypeWithSkipList {
+    type: Type
+    hash: u32
+    next_with_same_hash: TypeId? = None
+}
+
 class Module {
     public id: ModuleId
     public name: String
-    public types: [Type]
+    public types: [TypeWithSkipList]
+    // hash -> TypeId (skip list head)
+    public type_skip_list: [u32:TypeId] = [:]
     public resolved_import_path: String
     public is_root: bool
 
@@ -726,12 +789,31 @@ class Module {
 
     public fn is_prelude(this) -> bool => .id.id == 0
 
+    public fn add_type(mut this, anon type: Type) {
+        let hash = type.hash()
+        let type_with_skip_list = TypeWithSkipList(type: type, hash: hash)
+        let expecte_type_id = TypeId(module: .id, id: .types.size())
+        if .type_skip_list.get(hash) is Some(head) {
+            mut last = head
+            while true {
+                let next = .types[last.id].next_with_same_hash
+                if not next.has_value() { break }
+                last = next!
+            }
+            .types[last.id].next_with_same_hash = expecte_type_id
+        } else {
+            .type_skip_list.set(hash, expecte_type_id)
+        }
+        .types.push(type_with_skip_list)
+    }
+
     public fn new_type_variable(mut this, implemented_traits: [TypeId]? = None) -> TypeId {
         let new_id = .types.size()
 
         let empty_implementation: [TypeId] = []
         let trait_implementations = implemented_traits ?? empty_implementation
-        .types.push(Type::TypeVariable(name: format("T{}", new_id), trait_implementations))
+        let type = Type::TypeVariable(name: format("T{}", new_id), trait_implementations)
+        .add_type(type)
 
         return TypeId(module: .id, id: new_id)
     }
@@ -1884,32 +1966,33 @@ class CheckedProgram {
     public fn create_module(mut this, name: String, is_root: bool, path: String? = None) -> ModuleId {
         let new_id = .modules.size()
         let module_id = ModuleId(id: new_id)
-        let module = Module(
+        mut module = Module(
             id: module_id,
             name: name,
-            types: [ // FIXME: use general builtin types array
-                Type::Void,
-                Type::Bool,
-                Type::U8,
-                Type::U16,
-                Type::U32,
-                Type::U64,
-                Type::I8,
-                Type::I16,
-                Type::I32,
-                Type::I64,
-                Type::F32,
-                Type::F64,
-                Type::Usize,
-                Type::JaktString,
-                Type::CChar,
-                Type::CInt,
-                Type::Unknown,
-                Type::Never
-            ],
+            types: [],
             resolved_import_path: path ?? .compiler.current_file_path()!.to_string(),
             is_root: is_root,
         )
+        for type in [
+            Type::Void
+            Type::Bool
+            Type::U8
+            Type::U16
+            Type::U32
+            Type::U64
+            Type::I8
+            Type::I16
+            Type::I32
+            Type::I64
+            Type::F32
+            Type::F64
+            Type::Usize
+            Type::JaktString
+            Type::CChar
+            Type::CInt
+            Type::Unknown
+            Type::Never
+        ] { module.add_type(type) }
         .modules.push(module)
 
         return module_id
@@ -2074,7 +2157,7 @@ class CheckedProgram {
     public fn get_module(this, anon id: ModuleId) -> Module => .modules[id.id]
     public fn get_function(this, anon id: FunctionId) -> CheckedFunction => .modules[id.module.id].functions[id.id]
     public fn get_variable(this, anon id: VarId) -> CheckedVariable => .modules[id.module.id].variables[id.id]
-    public fn get_type(this, anon id: TypeId) -> Type => .modules[id.module.id].types[id.id]
+    public fn get_type(this, anon id: TypeId) -> Type => .modules[id.module.id].types[id.id].type
     public fn get_enum(this, anon id: EnumId) -> CheckedEnum => .modules[id.module.id].enums[id.id]
     public fn get_struct(this, anon id: StructId) -> CheckedStruct => .modules[id.module.id].structures[id.id]
     public fn get_scope(this, anon id: ScopeId) -> Scope => .modules[id.module_id.id].scopes[id.id]
@@ -2941,24 +3024,27 @@ class CheckedProgram {
     }
 
     public fn find_or_add_type_id(mut this, anon type: Type, module_id: ModuleId, only_in_current_module: bool = false) -> TypeId {
-        if only_in_current_module {
-            let types = &.get_module(module_id).types
-            for id in 0..types.size() {
-                if types[id].equals(type) {
-                    return TypeId(module: module_id, id)
-                }
-            }
-        } else {
-            for module in .modules {
-                for id in 0..module.types.size() {
-                    if module.types[id].equals(type) {
-                        return TypeId(module: module.id, id)
+        let type_hash = type.hash()
+        mut modules_to_search = module_id.id..(module_id.id + 1)
+        if not only_in_current_module { modules_to_search = 0...modules.size() }
+
+        for index in modules_to_search {
+            let module = &.modules[index]
+            let types = &module.types
+            if module.type_skip_list.get(type_hash) is Some(head) {
+                mut current = head
+                while true {
+                    let other = &types[current.id]
+                    if other.type.equals(type) {
+                        return current
                     }
+                    guard other.next_with_same_hash.has_value() else { break }
+                    current = other.next_with_same_hash!
                 }
             }
         }
 
-        .modules[module_id.id].types.push(type)
+        .modules[module_id.id].add_type(type)
 
         return TypeId(module: module_id, id: .modules[module_id.id].types.size() - 1)
     }
