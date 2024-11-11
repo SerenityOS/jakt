@@ -26,9 +26,9 @@ import cpp_import::clang_c {
     clang_EvalResult_getAsDouble, clang_EvalResult_getAsInt, clang_EvalResult_getAsLongLong
     clang_EvalResult_getAsStr, clang_EvalResult_getAsUnsigned, clang_EvalResult_getKind
     clang_EvalResult_isUnsignedInt, clang_Type_getNamedType, clang_Type_getNumTemplateArguments
-    clang_Type_getSizeOf, clang_Type_getTemplateArgumentAsType, clang_createIndex, clang_createTranslationUnit
-    clang_disposeIndex, clang_disposeString, clang_disposeTokens, clang_disposeTranslationUnit, clang_equalCursors
-    clang_getArgType, clang_getArrayElementType, clang_getArraySize, clang_getCString, clang_getCanonicalCursor
+    clang_Type_getSizeOf, clang_Type_getTemplateArgumentAsType, clang_createIndex, clang_disposeIndex
+    clang_disposeString, clang_disposeTokens, clang_disposeTranslationUnit, clang_equalCursors, clang_getArgType
+    clang_getArrayElementType, clang_getArraySize, clang_getCString, clang_getCanonicalCursor
     clang_getCanonicalType, clang_getCursorDefinition, clang_getCursorExtent, clang_getCursorKind
     clang_getCursorKindSpelling, clang_getCursorLocation, clang_getCursorPrettyPrinted
     clang_getCursorPrintingPolicy, clang_getCursorResultType, clang_getCursorSemanticParent, clang_getCursorSpelling
@@ -1405,7 +1405,7 @@ class CppImportProcessor {
                 )
             }
             else => {
-                if .debug_print { 
+                if .debug_print {
                     let k = clang_getCursorKind(cursor)
                     let v = clang_getCursorKindSpelling(k)
                     eprintln("Unsupported template cursor kind: {}", string_from(v))
@@ -2451,82 +2451,63 @@ class CppImportProcessor {
             end: 0
         )
 
-        // Check if a PCH exists for this file
         mut tu = CXTranslationUnit()
 
-        let path_separator_string = format("{:c}", get_path_separator())
-        let pch_file_path = program.compiler.binary_dir.join(
-            filename.replace(replace: path_separator_string, with: "_")
-        ).replace_extension("pch")
-
-        if pch_file_path.exists() {
-            // Parse the TU from the PCH
-            tu = clang_createTranslationUnit(index: .index, file_name: pch_file_path.to_string().c_string())
+        mut includes = program.compiler.include_paths[..].to_array()
+        if clang_runtime_dir.has_value() {
+            includes.push(clang_runtime_dir!)
         }
 
-        if tu == CXTranslationUnit() {
-            mut includes = program.compiler.include_paths[..].to_array()
-            if clang_runtime_dir.has_value() {
-                includes.push(clang_runtime_dir!)
-            }
+        mut args_storage = [""; 3 + includes.size() + defines.size()]
+        if is_c {
+            args_storage[0] = "-xc"
+            args_storage[1] = "-std=c11"
+        } else {
+            args_storage[0] = "-xc++-header"
+            args_storage[1] = "-std=c++23"
+        }
+        args_storage[2] = format("--target={}", program.compiler.target_triple ?? Target::active().name())
 
-            mut args_storage = [""; 3 + includes.size() + defines.size()]
-            if is_c {
-                args_storage[0] = "-xc"
-                args_storage[1] = "-std=c11"
-            } else {
-                args_storage[0] = "-xc++-header"
-                args_storage[1] = "-std=c++23"
-            }
-            args_storage[2] = format("--target={}", program.compiler.target_triple ?? Target::active().name())
+        for i in 0..includes.size() {
+            args_storage[i + 2] = format("-I{}", includes[i])
+        }
 
-            for i in 0..includes.size() {
-                args_storage[i + 2] = format("-I{}", includes[i])
-            }
+        mut defines_it = defines.iterator()
+        for i in 0..defines.size() {
+            let (key, value) = defines_it.next()!
+            args_storage[i + 2 + includes.size()] = format("-D{}={}", key, value)
+        }
 
-            mut defines_it = defines.iterator()
-            for i in 0..defines.size() {
-                let (key, value) = defines_it.next()!
-                args_storage[i + 2 + includes.size()] = format("-D{}={}", key, value)
-            }
+        mut args = allocate<raw c_char>(count: args_storage.size())
+        let r = bitcast<raw c_char>(args)
+        defer free(r)
 
-            mut args = allocate<raw c_char>(count: args_storage.size())
-            let r = bitcast<raw c_char>(args)
-            defer free(r)
+        for i in 0..args_storage.size() {
+            unsafe { cpp { "args[i] = const_cast<char*>(args_storage[i].characters());" } }
+        }
 
-            for i in 0..args_storage.size() {
-                unsafe { cpp { "args[i] = const_cast<char*>(args_storage[i].characters());" } }
-            }
-
-            let err = clang_parseTranslationUnit2(
-                index: .index
-                source_filename: filename.c_string()
-                command_line_args: args
-                num_command_line_args: args_storage.size() as! c_int
-                unsaved_files: null<raw CXUnsavedFile>()
-                num_unsaved_files: 0
-                options: (
-                    CXTranslationUnit_Flags::CXTranslationUnit_SkipFunctionBodies as! c_int |
-                    CXTranslationUnit_Flags::CXTranslationUnit_DetailedPreprocessingRecord as! c_int
-                )
-                out_tu: &raw tu
+        let err = clang_parseTranslationUnit2(
+            index: .index
+            source_filename: filename.c_string()
+            command_line_args: args
+            num_command_line_args: args_storage.size() as! c_int
+            unsaved_files: null<raw CXUnsavedFile>()
+            num_unsaved_files: 0
+            options: (
+                CXTranslationUnit_Flags::CXTranslationUnit_SkipFunctionBodies as! c_int |
+                CXTranslationUnit_Flags::CXTranslationUnit_DetailedPreprocessingRecord as! c_int
             )
-            if not (err is CXError_Success) {
-                eprintln("Error: {}", match err {
-                    CXError_Failure => "Failure"
-                    CXError_Crashed => "Crashed"
-                    CXError_InvalidArguments => "InvalidArguments"
-                    CXError_ASTReadError => "ASTReadError"
-                    else => "Unknown"
-                })
-                throw Error::from_string_literal(CppImportErrors::path_not_found())
-            }
-
-            clang_saveTranslationUnit(
-                tu
-                file_name: pch_file_path.to_string().c_string()
-                options: 0
-            )
+            out_tu: &raw tu
+        )
+        if not (err is CXError_Success) {
+            eprintln("Error: {}", match err {
+                CXError_Failure => "Failure"
+                CXError_Crashed => "Crashed"
+                CXError_InvalidArguments => "InvalidArguments"
+                CXError_ASTReadError => "ASTReadError"
+                else => "Unknown"
+            })
+            throw Error::from_string_literal(CppImportErrors::path_not_found())
         }
 
         let cursor = clang_getTranslationUnitCursor(tu)
