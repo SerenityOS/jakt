@@ -40,7 +40,7 @@ struct StructId implements(Hashable, Equal<StructId>) {
 
     [[inline(make_available)]]
     fn hash(this) -> u32 {
-        return pair_int_hash(.id.hash(), .module.hash())
+        return pair_int_hash(.id as! u32, .module.id as! u32)
     }
 }
 
@@ -51,6 +51,11 @@ struct EnumId {
     [[inline(make_available)]]
     fn equals(this, anon rhs: EnumId) -> bool {
         return this.module.id == rhs.module.id and this.id == rhs.id
+    }
+
+    [[inline(make_available)]]
+    fn hash(this) -> u32 {
+        return pair_int_hash(.id as! u32, .module.id as! u32)
     }
 }
 
@@ -67,7 +72,9 @@ struct TypeId implements(Hashable, Equal<TypeId>) {
     }
 
     [[inline(make_available)]]
-    fn hash(this) -> u32 => .id.pair_hash_with(&.module)
+    fn hash(this) -> u32 {
+        return pair_int_hash(.id as! u32, .module.id as! u32)
+    }
 }
 
 struct TraitId {
@@ -77,6 +84,11 @@ struct TraitId {
     [[inline(make_available)]]
     fn equals(this, anon other: TraitId) -> bool {
         return this.module.id == other.module.id and this.id == other.id
+    }
+
+    [[inline(make_available)]]
+    fn hash(this) -> u32 {
+        return pair_int_hash(.id as! u32, .module.id as! u32)
     }
 }
 

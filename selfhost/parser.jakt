@@ -1530,12 +1530,14 @@ struct ParsedTypeQualifiers {
     is_immutable: bool = false
 }
 
-struct CheckedQualifiers implements(Equal<CheckedQualifiers>) {
+struct CheckedQualifiers implements(Equal<CheckedQualifiers>, Hashable) {
     is_immutable: bool = false
 
     fn equals(this, anon other: CheckedQualifiers) -> bool {
         return .is_immutable == other.is_immutable
     }
+
+    fn hash(this) -> u32 => .is_immutable.hash()
 }
 
 boxed enum ParsedType {
