@@ -651,6 +651,7 @@ fn compiler_main(anon args: [String]) throws -> c_int {
         std_include_path: Path::from_parts([runtime_path, "jaktlib"])
         prelude_path: Path::from_parts([runtime_path, "prelude.jakt"])
         include_paths: extra_include_paths
+        extra_cpp_flags
         json_errors
         dump_type_hints
         dump_try_hints

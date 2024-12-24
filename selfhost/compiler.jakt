@@ -21,6 +21,7 @@ class Compiler {
     public std_include_path: Path
     public prelude_path: Path
     public include_paths: [String]
+    public extra_cpp_flags: [String]
     public json_errors: bool
     public dump_type_hints: bool
     public dump_try_hints: bool

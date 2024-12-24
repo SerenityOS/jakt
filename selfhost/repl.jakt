@@ -184,6 +184,7 @@ struct REPL {
             std_include_path
             prelude_path
             include_paths: []
+            extra_cpp_flags: []
             json_errors: false
             dump_type_hints: false
             dump_try_hints: false

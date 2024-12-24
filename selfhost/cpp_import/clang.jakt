@@ -2458,7 +2458,27 @@ class CppImportProcessor {
             includes.push(clang_runtime_dir!)
         }
 
-        mut args_storage = [""; 3 + includes.size() + defines.size()]
+        mut system_includes: [String] = []
+        mut next_arg_is_system_header = false
+        for arg in program.compiler.extra_cpp_flags {
+            if next_arg_is_system_header {
+                system_includes.push(arg)
+                next_arg_is_system_header = false
+                continue
+            }
+            guard arg.starts_with("-isystem") else { continue }
+            if arg == "-isystem" {
+                next_arg_is_system_header = true
+                continue
+            }
+            let start = match arg.starts_with("-isystem=") {
+                true => 9uz
+                false => 8uz
+            }
+            system_includes.push(arg.substring(start, length: arg.length() - start))
+        }
+
+        mut args_storage = [""; 3 + includes.size() + system_includes.size() + defines.size()]
         if is_c {
             args_storage[0] = "-xc"
             args_storage[1] = "-std=c11"
@@ -2468,14 +2488,20 @@ class CppImportProcessor {
         }
         args_storage[2] = format("--target={}", program.compiler.target_triple ?? Target::active().name())
 
-        for i in 0..includes.size() {
-            args_storage[i + 2] = format("-I{}", includes[i])
+        mut arg_offset = 3
+        for include in includes {
+            args_storage[arg_offset] = format("-I{}", include)
+            arg_offset += 1
         }
 
-        mut defines_it = defines.iterator()
-        for i in 0..defines.size() {
-            let (key, value) = defines_it.next()!
-            args_storage[i + 2 + includes.size()] = format("-D{}={}", key, value)
+        for include in system_includes {
+            args_storage[arg_offset] = format("-isystem{}", include)
+            arg_offset += 1
+        }
+
+        for (key, value) in defines {
+            args_storage[arg_offset] = format("-D{}={}", key, value)
+            arg_offset += 1
         }
 
         mut args = allocate<raw c_char>(count: args_storage.size())
