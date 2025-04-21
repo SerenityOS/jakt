@@ -15,7 +15,6 @@ function(add_jakt_compiler_flags target)
     -Werror
     -Wno-dangling-reference
     -Wno-deprecated-declarations
-    -Wno-ignored-value        # FIXME: Diagnose/avoid this during code gen, as it might mean something
     -Wno-implicit-fallthrough # !!
     -Wno-invalid-offsetof     # LibJS JIT fallout; invalid offset_of on WeakLink (ignored in serenity proper)
     -Wno-literal-suffix
@@ -35,6 +34,7 @@ function(add_jakt_compiler_flags target)
     -Wno-unused-local-typedefs
     -Wno-unused-parameter
     -Wno-unused-result
+    -Wno-unused-value        # FIXME: Diagnose/avoid this during code gen, as it might mean something
     -Wno-unused-variable
     -Wno-user-defined-literals
   )
@@ -47,7 +47,7 @@ function(add_jakt_compiler_flags target)
   if (CYGWIN OR MSYS)
     target_compile_options("${target}" PRIVATE -Wa,-mbig-obj)
   endif()
-  target_compile_features("${target}" PRIVATE cxx_std_20)
+  target_compile_features("${target}" PRIVATE cxx_std_23)
 
   if (WIN32)
     cmake_policy(GET CMP0091 msvc_runtime_prop_enabled)
