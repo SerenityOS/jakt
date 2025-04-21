@@ -13,32 +13,29 @@ function(add_jakt_compiler_flags target)
     -Wall
     -Wextra
     -Werror
-    -Wno-maybe-uninitialized
-    -Wno-unused-local-typedefs
-    -Wno-unused-function
-    -Wno-unused-variable
-    -Wno-unused-parameter
-    -Wno-unused-but-set-variable
-    -Wno-unused-result
-    -Wno-implicit-fallthrough # !!
-    -Wno-trigraphs
-    -Wno-parentheses-equality
-    -Wno-unqualified-std-cast-call
-    -Wno-user-defined-literals
-    -Wno-literal-suffix
-    -Wno-return-type
-    -Wno-deprecated-declarations
-    -Wno-unknown-warning-option
-    -Wno-unused-command-line-argument
-    -Wno-unused-lambda-capture
-    -Wno-reorder-ctor
     -Wno-dangling-reference
+    -Wno-deprecated-declarations
+    -Wno-implicit-fallthrough # !!
+    -Wno-invalid-offsetof     # LibJS JIT fallout; invalid offset_of on WeakLink (ignored in serenity proper)
+    -Wno-literal-suffix
+    -Wno-maybe-uninitialized
+    -Wno-parentheses-equality
+    -Wno-reorder-ctor
+    -Wno-return-type
+    -Wno-trigraphs
     -Wno-type-limits
-    # Silence warning about `no_unique_address`;
-    # It does not apply on windows, and clang-cl just warns about it.
-    -Wno-unknown-attributes
-    # LibJS JIT fallout; invalid offset_of on WeakLink (ignored in serenity proper)
-    -Wno-invalid-offsetof
+    -Wno-unknown-attributes # Silence warning about `no_unique_address` -  It does not apply on windows, and clang-cl just warns about it.
+    -Wno-unknown-warning-option
+    -Wno-unqualified-std-cast-call
+    -Wno-unused-but-set-variable
+    -Wno-unused-command-line-argument
+    -Wno-unused-function
+    -Wno-unused-lambda-capture
+    -Wno-unused-local-typedefs
+    -Wno-unused-parameter
+    -Wno-unused-result
+    -Wno-unused-variable
+    -Wno-user-defined-literals
   )
   if (MSVC)
     # For clang-cl, which shows up to CMake as MSVC and accepts both kinds of arguments
