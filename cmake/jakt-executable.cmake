@@ -15,6 +15,7 @@ function(add_jakt_compiler_flags target)
     -Werror
     -Wno-dangling-reference
     -Wno-deprecated-declarations
+    -Wno-ignored-value        # FIXME: Diagnose/avoid this during code gen, as it might mean something
     -Wno-implicit-fallthrough # !!
     -Wno-invalid-offsetof     # LibJS JIT fallout; invalid offset_of on WeakLink (ignored in serenity proper)
     -Wno-literal-suffix
