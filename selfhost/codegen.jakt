@@ -2820,7 +2820,7 @@ struct CodeGenerator {
             IndexedTuple(expr, index, is_optional) => {
                 if is_optional {
                     .codegen_expression(expr, &mut output, syntactically_self_contained: true)
-                    output.appendff(".map([](auto& _value) {{ return _value.template get<{}>(); }})", index)
+                    output.appendff(".map([](auto&& _value) {{ return _value.template get<{}>(); }})", index)
                 } else {
                     if .expr_codegens_to_this_pointer(expr) {
                         output.append("this->")
@@ -2869,7 +2869,7 @@ struct CodeGenerator {
                     }
                 }
                 if is_optional {
-                    output.append("map([](auto& _value) { return _value")
+                    output.append("map([](auto&& _value) { return _value")
                     mut access_operator = "."
                     if expression_type is GenericInstance(args) and args.size() > 0 {
                         match .program.get_type(args[0]) {
@@ -2919,7 +2919,7 @@ struct CodeGenerator {
                     }
                 }
                 if is_optional {
-                    output.append("map([](auto& _value) { return _value.")
+                    output.append("map([](auto&& _value) { return _value.")
                     output.append(index)
                     output.append("; })")
                 } else {
@@ -4570,7 +4570,7 @@ struct CodeGenerator {
 
         if is_optional {
             // Note: `object' cannot be a builtin here as its type is Optional<T>.
-            output.append("map([&](auto& _value) { return _value")
+            output.append("map([&](auto&& _value) { return _value")
             mut access_operator = "."
             if expression_type is GenericInstance(args) and args.size() > 0 {
                 match .program.get_type(args[0]) {
