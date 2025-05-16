@@ -19,6 +19,24 @@ template<typename T>
 class ArraySlice;
 
 template<typename T>
+struct JaktObjectTraits : public Traits<T> {
+    ALWAYS_INLINE static constexpr bool equals(T const& a, T const& b) {
+        if constexpr (requires { { a.equals(b) } -> SameAs<bool>; })
+            return a.equals(b);
+        else
+            return a == b;
+    }
+
+    ALWAYS_INLINE static constexpr unsigned hash(T value)
+    {
+        if constexpr (requires { { value.hash() } -> SameAs<u32>; })
+            return value.hash();
+        else
+            return Traits<T>::hash(value);
+    }
+};
+
+template<typename T>
 class DynamicArrayStorage : public RefCounted<DynamicArrayStorage<T>> {
 public:
     DynamicArrayStorage() { }
@@ -69,7 +87,7 @@ public:
     bool contains(T const& value) const
     {
         for (size_t i = 0; i < m_size; ++i) {
-            if (Traits<T>::equals(m_elements[i], value)) {
+            if (JaktObjectTraits<T>::equals(m_elements[i], value)) {
                 return true;
             }
         }
@@ -436,7 +454,7 @@ public:
     bool contains(T const& value) const
     {
         for (size_t i = 0; i < m_size; ++i) {
-            if (Traits<T>::equals(at(i), value)) {
+            if (JaktObjectTraits<T>::equals(at(i), value)) {
                 return true;
             }
         }

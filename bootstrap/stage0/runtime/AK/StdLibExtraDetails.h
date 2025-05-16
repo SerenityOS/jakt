@@ -342,6 +342,7 @@ inline constexpr bool __IsIntegral<unsigned long long> = true;
 template<typename T>
 inline constexpr bool IsIntegral = __IsIntegral<MakeUnsigned<RemoveCV<T>>>;
 
+#ifndef KERNEL
 template<typename T>
 inline constexpr bool __IsFloatingPoint = false;
 template<>
@@ -353,6 +354,7 @@ inline constexpr bool __IsFloatingPoint<long double> = true;
 
 template<typename T>
 inline constexpr bool IsFloatingPoint = __IsFloatingPoint<RemoveCV<T>>;
+#endif
 
 template<typename ReferenceType, typename T>
 using CopyConst = Conditional<IsConst<ReferenceType>, AddConst<T>, RemoveConst<T>>;
@@ -369,11 +371,20 @@ inline constexpr bool IsSigned = IsSame<T, MakeSigned<T>>;
 template<typename T>
 inline constexpr bool IsUnsigned = IsSame<T, MakeUnsigned<T>>;
 
+#ifndef KERNEL
 template<typename T>
 inline constexpr bool IsArithmetic = IsIntegral<T> || IsFloatingPoint<T>;
+#else
+template<typename T>
+inline constexpr bool IsArithmetic = IsIntegral<T>;
+#endif
 
 template<typename T>
 inline constexpr bool IsFundamental = IsArithmetic<T> || IsVoid<T> || IsNullPointer<T>;
+
+// FIXME: The std::is_scalar also includes std::is_member_pointer
+template<typename T>
+inline constexpr bool IsScalar = IsArithmetic<T> || IsEnum<T> || IsPointer<T> || IsNullPointer<T>;
 
 template<typename T, T... Ts>
 struct IntegerSequence {
@@ -418,7 +429,7 @@ using IdentityType = typename __IdentityType<T>::Type;
 template<typename T, typename = void>
 struct __AddReference {
     using LvalueType = T;
-    using TvalueType = T;
+    using RvalueType = T;
 };
 
 template<typename T>
@@ -634,7 +645,9 @@ using AK::Detail::IsCopyAssignable;
 using AK::Detail::IsCopyConstructible;
 using AK::Detail::IsDestructible;
 using AK::Detail::IsEnum;
+#ifndef KERNEL
 using AK::Detail::IsFloatingPoint;
+#endif
 using AK::Detail::IsFunction;
 using AK::Detail::IsFundamental;
 using AK::Detail::IsHashCompatible;
@@ -650,6 +663,7 @@ using AK::Detail::IsPointer;
 using AK::Detail::IsRvalueReference;
 using AK::Detail::IsSame;
 using AK::Detail::IsSameIgnoringCV;
+using AK::Detail::IsScalar;
 using AK::Detail::IsSigned;
 using AK::Detail::IsSpecializationOf;
 using AK::Detail::IsTrivial;

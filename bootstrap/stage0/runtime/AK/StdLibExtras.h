@@ -13,6 +13,7 @@
 #endif
 
 #include <AK/StdLibExtraDetails.h>
+#include <AK/StdShim.h>
 
 #include <AK/Assertions.h>
 
@@ -43,38 +44,6 @@ void compiletime_fail(Args...);
 #    define AK_REPLACED_STD_NAMESPACE std
 #endif
 
-namespace AK_REPLACED_STD_NAMESPACE { // NOLINT(cert-dcl58-cpp) Names in std to aid tools
-
-// NOTE: These are in the "std" namespace since some compilers and static analyzers rely on it.
-//       If USING_AK_GLOBALLY is false, we can't put them in ::std, so we put them in AK::replaced_std instead
-//       The user code should not notice anything unless it explicitly asks for std::stuff, so...don't.
-
-template<typename T>
-constexpr T&& forward(AK::Detail::RemoveReference<T>& param)
-{
-    return static_cast<T&&>(param);
-}
-
-template<typename T>
-constexpr T&& forward(AK::Detail::RemoveReference<T>&& param) noexcept
-{
-    static_assert(!AK::Detail::IsLvalueReference<T>, "Can't forward an rvalue as an lvalue.");
-    return static_cast<T&&>(param);
-}
-
-template<typename T>
-constexpr T&& move(T& arg)
-{
-    return static_cast<T&&>(arg);
-}
-
-}
-
-namespace AK {
-using AK_REPLACED_STD_NAMESPACE::forward;
-using AK_REPLACED_STD_NAMESPACE::move;
-}
-
 namespace AK::Detail {
 template<typename T>
 struct _RawPtr {
@@ -83,6 +52,10 @@ struct _RawPtr {
 }
 
 namespace AK {
+
+struct Empty {
+    constexpr bool operator==(Empty const&) const = default;
+};
 
 template<typename T, typename SizeType = decltype(sizeof(T)), SizeType N>
 constexpr SizeType array_size(T (&)[N])
@@ -126,6 +99,16 @@ constexpr T ceil_div(T a, U b)
     T result = a / b;
     if ((a % b) != 0 && (a > 0) == (b > 0))
         ++result;
+    return result;
+}
+
+template<typename T, typename U>
+constexpr T floor_div(T a, U b)
+{
+    static_assert(sizeof(T) == sizeof(U));
+    T result = a / b;
+    if ((a % b) != 0 && (a > 0) != (b > 0))
+        --result;
     return result;
 }
 
@@ -215,7 +198,9 @@ __DEFINE_GENERIC_ABS(long double, 0.0L, fabsl);
 using AK::array_size;
 using AK::ceil_div;
 using AK::clamp;
+using AK::Empty;
 using AK::exchange;
+using AK::floor_div;
 using AK::forward;
 using AK::is_constant_evaluated;
 using AK::is_power_of_two;

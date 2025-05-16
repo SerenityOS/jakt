@@ -82,6 +82,10 @@
 #    define CSS_TRANSITIONS_DEBUG 0
 #endif
 
+#ifndef DEVICETREE_DEBUG
+#    define DEVICETREE_DEBUG 0
+#endif
+
 #ifndef DDS_DEBUG
 #    define DDS_DEBUG 0
 #endif
@@ -252,6 +256,10 @@
 
 #ifndef JPEG2000_DEBUG
 #    define JPEG2000_DEBUG 0
+#endif
+
+#ifndef JPEGXL_DEBUG
+#    define JPEGXL_DEBUG 0
 #endif
 
 #ifndef JS_BYTECODE_DEBUG

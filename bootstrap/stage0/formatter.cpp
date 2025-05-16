@@ -442,9 +442,9 @@ ByteString output = ByteString::from_utf8_without_validation(""sv);
 Jakt::utility::Span const span = token.span();
 Jakt::lexer::Token local_token = token;
 while (!(local_token.__jakt_init_index() == 10 /* RCurly */)){
-Jakt::lexer::Token __jakt_tmp284 = local_token;
-if (__jakt_tmp284.__jakt_init_index() == 3 /* Identifier */){
-ByteString const name = __jakt_tmp284.as.Identifier.name;
+Jakt::lexer::Token __jakt_tmp287 = local_token;
+if (__jakt_tmp287.__jakt_init_index() == 3 /* Identifier */){
+ByteString const name = __jakt_tmp287.as.Identifier.name;
 collection.push(name);
 }
 local_token = this->consume();
@@ -1733,15 +1733,15 @@ JaktInternal::Optional<Jakt::formatter::ReflowState> reflown_token = JaktInterna
 if (this->tokens_to_reflow.size() > static_cast<size_t>(0ULL)){
 reflown_token = this->tokens_to_reflow[JaktInternal::checked_sub(this->tokens_to_reflow.size(),static_cast<size_t>(1ULL))];
 }
-return TRY((reflown_token.map([](auto& _value) { return _value.token; }).try_value_or_lazy_evaluated_optional([&]() -> ErrorOr<JaktInternal::Optional<Jakt::formatter::FormattedToken>> { return TRY((this->token_provider.formatted_peek())); })));
+return TRY((reflown_token.map([](auto&& _value) { return _value.token; }).try_value_or_lazy_evaluated_optional([&]() -> ErrorOr<JaktInternal::Optional<Jakt::formatter::FormattedToken>> { return TRY((this->token_provider.formatted_peek())); })));
 }
 }
 
 ErrorOr<JaktInternal::Optional<JaktInternal::DynamicArray<Jakt::formatter::FormattedToken>>> Jakt::formatter::Formatter::next() {
 {
 JaktInternal::Optional<Jakt::formatter::ReflowState> const reflown_token = this->tokens_to_reflow.pop();
-JaktInternal::Optional<Jakt::formatter::FormattedToken> maybe_next_underlying_token = TRY((reflown_token.map([](auto& _value) { return _value.token; }).try_value_or_lazy_evaluated_optional([&]() -> ErrorOr<JaktInternal::Optional<Jakt::formatter::FormattedToken>> { return TRY((this->token_provider.next())); })));
-Jakt::formatter::State current_state = reflown_token.map([](auto& _value) { return _value.state; }).value_or_lazy_evaluated([&] { return this->token_provider.state(); });
+JaktInternal::Optional<Jakt::formatter::FormattedToken> maybe_next_underlying_token = TRY((reflown_token.map([](auto&& _value) { return _value.token; }).try_value_or_lazy_evaluated_optional([&]() -> ErrorOr<JaktInternal::Optional<Jakt::formatter::FormattedToken>> { return TRY((this->token_provider.next())); })));
+Jakt::formatter::State current_state = reflown_token.map([](auto&& _value) { return _value.state; }).value_or_lazy_evaluated([&] { return this->token_provider.state(); });
 if (maybe_next_underlying_token.has_value()){
 Jakt::lexer::Token next_underlying_token = maybe_next_underlying_token.value().token;
 bool accepted_at_least_one_token = false;
@@ -1914,8 +1914,8 @@ current_state = this->token_provider.state();
 }
 else {
 JaktInternal::Optional<Jakt::formatter::ReflowState> const reflown_token = this->tokens_to_reflow.pop();
-maybe_next_underlying_token = reflown_token.map([](auto& _value) { return _value.token; });
-current_state = reflown_token.map([](auto& _value) { return _value.state; }).value_or_lazy_evaluated([&] { return current_state; });
+maybe_next_underlying_token = reflown_token.map([](auto&& _value) { return _value.token; });
+current_state = reflown_token.map([](auto&& _value) { return _value.state; }).value_or_lazy_evaluated([&] { return current_state; });
 }
 
 if (!maybe_next_underlying_token.has_value()){

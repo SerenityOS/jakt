@@ -56,11 +56,7 @@ return (this->module.id == rhs.module.id) && (this->id == rhs.id);
 }
 public: __attribute__((always_inline)) inline u32 hash() const {
 {
-return pair_int_hash([](size_t const& self) -> u32 {{
-return AK::Traits<size_t>().hash(self);
-}
-}
-(this->id),this->module.hash());
+return pair_int_hash(infallible_integer_cast<u32>(this->id),infallible_integer_cast<u32>(this->module.id));
 }
 }
 public: StructId(Jakt::ids::ModuleId a_module, size_t a_id);
@@ -71,6 +67,11 @@ public: public: public: ByteString debug_description() const;
 public: Jakt::ids::ModuleId module;public: size_t id;public: __attribute__((always_inline)) inline bool equals(Jakt::ids::EnumId const rhs) const {
 {
 return (this->module.id == rhs.module.id) && (this->id == rhs.id);
+}
+}
+public: __attribute__((always_inline)) inline u32 hash() const {
+{
+return pair_int_hash(infallible_integer_cast<u32>(this->id),infallible_integer_cast<u32>(this->module.id));
 }
 }
 public: EnumId(Jakt::ids::ModuleId a_module, size_t a_id);
@@ -90,15 +91,7 @@ return (this->module.id == rhs.module.id) && (this->id == rhs.id);
 }
 public: __attribute__((always_inline)) inline u32 hash() const {
 {
-return [](size_t const& self, Jakt::ids::ModuleId const& other) -> u32 {{
-return pair_int_hash([](size_t const& self) -> u32 {{
-return AK::Traits<size_t>().hash(self);
-}
-}
-(self),other.hash());
-}
-}
-(this->id,this->module);
+return pair_int_hash(infallible_integer_cast<u32>(this->id),infallible_integer_cast<u32>(this->module.id));
 }
 }
 public: TypeId(Jakt::ids::ModuleId a_module, size_t a_id);
@@ -109,6 +102,11 @@ public: public: public: ByteString debug_description() const;
 public: Jakt::ids::ModuleId module;public: size_t id;public: __attribute__((always_inline)) inline bool equals(Jakt::ids::TraitId const other) const {
 {
 return (this->module.id == other.module.id) && (this->id == other.id);
+}
+}
+public: __attribute__((always_inline)) inline u32 hash() const {
+{
+return pair_int_hash(infallible_integer_cast<u32>(this->id),infallible_integer_cast<u32>(this->module.id));
 }
 }
 public: TraitId(Jakt::ids::ModuleId a_module, size_t a_id);

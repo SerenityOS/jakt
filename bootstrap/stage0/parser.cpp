@@ -2,6 +2,7 @@
 extern "C" __cdecl int SetConsoleOutputCP(unsigned int code_page);
 #endif
 #include "parser.h"
+#include "jakt__prelude__hash.h"
 #include "jakt__prelude__static_array.h"
 namespace Jakt {
 namespace parser {
@@ -1043,6 +1044,16 @@ return this->is_immutable == other.is_immutable;
 }
 }
 
+u32 Jakt::parser::CheckedQualifiers::hash() const {
+{
+return [](bool const& self) -> u32 {{
+return AK::Traits<bool>().hash(self);
+}
+}
+(this->is_immutable);
+}
+}
+
 Jakt::parser::CheckedQualifiers::CheckedQualifiers(bool a_is_immutable): is_immutable(move(a_is_immutable)){}
 
 
@@ -1603,7 +1614,7 @@ if (parsed_function.deprecated_message.has_value()){
 this->error(__jakt_format(StringView::from_string_literal("The attribute '{}' cannot be applied more than once"sv),attribute.name),attribute.span);
 continue;
 }
-ByteString const message = attribute.arguments.first().map([](auto& _value) { return _value.name; }).value_or_lazy_evaluated([&] { return __jakt_format(StringView::from_string_literal("The function '{}' is marked as deprecated"sv),parsed_function.name); });
+ByteString const message = attribute.arguments.first().map([](auto&& _value) { return _value.name; }).value_or_lazy_evaluated([&] { return __jakt_format(StringView::from_string_literal("The function '{}' is marked as deprecated"sv),parsed_function.name); });
 parsed_function.deprecated_message = message;
 }
 goto __jakt_label_15;}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("inline"sv)) {{
@@ -1613,7 +1624,7 @@ continue;
 }
 Jakt::parser::InlineState const inline_state = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<Jakt::parser::InlineState, void>{
-auto __jakt_enum_value = attribute.arguments.first().map([](auto& _value) { return _value.name; }).value_or_lazy_evaluated([&] { return ByteString::from_utf8_without_validation(""sv); });
+auto __jakt_enum_value = attribute.arguments.first().map([](auto&& _value) { return _value.name; }).value_or_lazy_evaluated([&] { return ByteString::from_utf8_without_validation(""sv); });
 if (__jakt_enum_value == ByteString::from_utf8_without_validation("never"sv)) {return JaktInternal::ExplicitValue(Jakt::parser::InlineState::Default());
 }else if ((__jakt_enum_value == ByteString::from_utf8_without_validation(""sv))||(__jakt_enum_value == ByteString::from_utf8_without_validation("always"sv))) {return JaktInternal::ExplicitValue(Jakt::parser::InlineState::ForceInline());
 }else if (__jakt_enum_value == ByteString::from_utf8_without_validation("make_available"sv)) {return JaktInternal::ExplicitValue(Jakt::parser::InlineState::MakeDefinitionAvailable());

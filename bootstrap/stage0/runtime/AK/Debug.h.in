@@ -82,6 +82,10 @@
 #    cmakedefine01 CSS_TRANSITIONS_DEBUG
 #endif
 
+#ifndef DEVICETREE_DEBUG
+#    cmakedefine01 DEVICETREE_DEBUG
+#endif
+
 #ifndef DDS_DEBUG
 #    cmakedefine01 DDS_DEBUG
 #endif
@@ -252,6 +256,10 @@
 
 #ifndef JPEG2000_DEBUG
 #    cmakedefine01 JPEG2000_DEBUG
+#endif
+
+#ifndef JPEGXL_DEBUG
+#    cmakedefine01 JPEGXL_DEBUG
 #endif
 
 #ifndef JS_BYTECODE_DEBUG
