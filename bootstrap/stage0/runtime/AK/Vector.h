@@ -155,6 +155,20 @@ public:
     ALWAYS_INLINE VisibleType const& operator[](size_t i) const { return at(i); }
     ALWAYS_INLINE VisibleType& operator[](size_t i) { return at(i); }
 
+    Optional<VisibleType&> get(size_t i)
+    {
+        if (i >= size())
+            return {};
+        return at(i);
+    }
+
+    Optional<VisibleType const&> get(size_t i) const
+    {
+        if (i >= size())
+            return {};
+        return at(i);
+    }
+
     VisibleType const& first() const { return at(0); }
     VisibleType& first() { return at(0); }
 
@@ -248,6 +262,11 @@ public:
     }
 
     void extend(Vector const& other)
+    {
+        MUST(try_extend(other));
+    }
+
+    void extend(ReadonlySpan<StorageType> other)
     {
         MUST(try_extend(other));
     }
@@ -494,8 +513,7 @@ public:
     ErrorOr<void> try_insert(size_t index, U&& value)
     requires(CanBePlacedInsideVector<U>)
     {
-        if (index > size())
-            return Error::from_errno(EINVAL);
+        VERIFY(index <= size());
         if (index == size())
             return try_append(forward<U>(value));
         TRY(try_grow_capacity(size() + 1));
@@ -549,9 +567,20 @@ public:
 
     ErrorOr<void> try_extend(Vector const& other)
     {
+        // This overload exists to make v.extend(v) work. If we only had the span overload,
+        // this would implicitly call v.span() and call try_extend(ReadonlySpan) – but when
+        // that reallocates to make room, the pointer in the span becomes invalid.
+        TRY(try_grow_capacity(size() + other.size()));
+
+        TRY(try_extend(other.span()));
+        return {};
+    }
+
+    ErrorOr<void> try_extend(ReadonlySpan<StorageType> other)
+    {
         TRY(try_grow_capacity(size() + other.size()));
         TypedTransfer<StorageType>::copy(data() + m_size, other.data(), other.size());
-        m_size += other.m_size;
+        m_size += other.size();
         return {};
     }
 

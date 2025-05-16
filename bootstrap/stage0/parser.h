@@ -1208,9 +1208,10 @@ public: ByteString debug_description() const;
 };struct CheckedQualifiers {
   public:
 public: bool is_immutable;public: bool equals(Jakt::parser::CheckedQualifiers const other) const;
+public: u32 hash() const;
 public: CheckedQualifiers(bool a_is_immutable);
 
-public: public: ByteString debug_description() const;
+public: public: public: ByteString debug_description() const;
 };struct ParsedType: public RefCounted<ParsedType> {
 u8 __jakt_variant_index = 0;
 union CommonData {

@@ -14,6 +14,7 @@ struct SpecializedType;
 struct ResolutionMixin;
 class Scope;
 struct ResolvedForallChunk;
+struct TypeWithSkipList;
 class Module;
 class CheckedTrait;
 struct LoadedModule;
@@ -357,6 +358,7 @@ Type(Type const&);
 Type(Type &&);
 private: void __jakt_destroy_variant();
 public:
+u32 hash() const;
 JaktInternal::Optional<JaktInternal::DynamicArray<Jakt::types::CheckedGenericParameter>> generic_parameters(NonnullRefPtr<Jakt::types::CheckedProgram> const program) const;
 bool is_boxed(NonnullRefPtr<Jakt::types::CheckedProgram> const program) const;
 bool is_concrete() const;
@@ -401,18 +403,24 @@ public: ByteString debug_description() const;
 public: JaktInternal::Dictionary<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<Jakt::utility::Span,Jakt::ids::TypeId>>> parameters;public: Jakt::parser::ParsedNamespace parsed_namespace;public: JaktInternal::DynamicArray<Jakt::ids::ScopeId> generated_scopes;public: ResolvedForallChunk(JaktInternal::Dictionary<ByteString,JaktInternal::DynamicArray<JaktInternal::Tuple<Jakt::utility::Span,Jakt::ids::TypeId>>> a_parameters, Jakt::parser::ParsedNamespace a_parsed_namespace, JaktInternal::DynamicArray<Jakt::ids::ScopeId> a_generated_scopes);
 
 public: ByteString debug_description() const;
+};struct TypeWithSkipList {
+  public:
+public: NonnullRefPtr<typename Jakt::types::Type> type;public: u32 hash;public: JaktInternal::Optional<Jakt::ids::TypeId> next_with_same_hash;public: TypeWithSkipList(NonnullRefPtr<typename Jakt::types::Type> a_type, u32 a_hash, JaktInternal::Optional<Jakt::ids::TypeId> a_next_with_same_hash);
+
+public: ByteString debug_description() const;
 };class Module :public RefCounted<Module>, public Weakable<Module> {
   public:
 virtual ~Module() = default;
-public: Jakt::ids::ModuleId id;public: ByteString name;public: JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::Type>> types;public: ByteString resolved_import_path;public: bool is_root;public: JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::CheckedFunction>> functions;public: JaktInternal::DynamicArray<Jakt::types::CheckedStruct> structures;public: JaktInternal::DynamicArray<Jakt::types::CheckedEnum> enums;public: JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::Scope>> scopes;public: JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::CheckedTrait>> traits;public: JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::CheckedVariable>> variables;public: JaktInternal::DynamicArray<Jakt::ids::ModuleId> imports;public: JaktInternal::Dictionary<size_t,Jakt::ids::StructId> builtin_implementation_structs;public: bool is_prelude() const;
+public: Jakt::ids::ModuleId id;public: ByteString name;public: JaktInternal::DynamicArray<Jakt::types::TypeWithSkipList> types;public: JaktInternal::Dictionary<u32,Jakt::ids::TypeId> type_skip_list;public: ByteString resolved_import_path;public: bool is_root;public: JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::CheckedFunction>> functions;public: JaktInternal::DynamicArray<Jakt::types::CheckedStruct> structures;public: JaktInternal::DynamicArray<Jakt::types::CheckedEnum> enums;public: JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::Scope>> scopes;public: JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::CheckedTrait>> traits;public: JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::CheckedVariable>> variables;public: JaktInternal::DynamicArray<Jakt::ids::ModuleId> imports;public: JaktInternal::Dictionary<size_t,Jakt::ids::StructId> builtin_implementation_structs;public: bool is_prelude() const;
+public: void add_type(NonnullRefPtr<typename Jakt::types::Type> const type);
 public: Jakt::ids::TypeId new_type_variable(JaktInternal::Optional<JaktInternal::DynamicArray<Jakt::ids::TypeId>> const implemented_traits);
 public: Jakt::ids::FunctionId next_function_id() const;
 public: Jakt::ids::FunctionId add_function(NonnullRefPtr<Jakt::types::CheckedFunction> const checked_function);
 public: Jakt::ids::VarId add_variable(NonnullRefPtr<Jakt::types::CheckedVariable> const checked_variable);
 public: protected:
-explicit Module(Jakt::ids::ModuleId a_id, ByteString a_name, JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::Type>> a_types, ByteString a_resolved_import_path, bool a_is_root, JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::CheckedFunction>> a_functions, JaktInternal::DynamicArray<Jakt::types::CheckedStruct> a_structures, JaktInternal::DynamicArray<Jakt::types::CheckedEnum> a_enums, JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::Scope>> a_scopes, JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::CheckedTrait>> a_traits, JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::CheckedVariable>> a_variables, JaktInternal::DynamicArray<Jakt::ids::ModuleId> a_imports, JaktInternal::Dictionary<size_t,Jakt::ids::StructId> a_builtin_implementation_structs);
+explicit Module(Jakt::ids::ModuleId a_id, ByteString a_name, JaktInternal::DynamicArray<Jakt::types::TypeWithSkipList> a_types, JaktInternal::Dictionary<u32,Jakt::ids::TypeId> a_type_skip_list, ByteString a_resolved_import_path, bool a_is_root, JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::CheckedFunction>> a_functions, JaktInternal::DynamicArray<Jakt::types::CheckedStruct> a_structures, JaktInternal::DynamicArray<Jakt::types::CheckedEnum> a_enums, JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::Scope>> a_scopes, JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::CheckedTrait>> a_traits, JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::CheckedVariable>> a_variables, JaktInternal::DynamicArray<Jakt::ids::ModuleId> a_imports, JaktInternal::Dictionary<size_t,Jakt::ids::StructId> a_builtin_implementation_structs);
 public:
-static NonnullRefPtr<Module> __jakt_create(Jakt::ids::ModuleId id, ByteString name, JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::Type>> types, ByteString resolved_import_path, bool is_root, JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::CheckedFunction>> functions, JaktInternal::DynamicArray<Jakt::types::CheckedStruct> structures, JaktInternal::DynamicArray<Jakt::types::CheckedEnum> enums, JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::Scope>> scopes, JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::CheckedTrait>> traits, JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::CheckedVariable>> variables, JaktInternal::DynamicArray<Jakt::ids::ModuleId> imports, JaktInternal::Dictionary<size_t,Jakt::ids::StructId> builtin_implementation_structs);
+static NonnullRefPtr<Module> __jakt_create(Jakt::ids::ModuleId id, ByteString name, JaktInternal::DynamicArray<Jakt::types::TypeWithSkipList> types, JaktInternal::Dictionary<u32,Jakt::ids::TypeId> type_skip_list, ByteString resolved_import_path, bool is_root, JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::CheckedFunction>> functions, JaktInternal::DynamicArray<Jakt::types::CheckedStruct> structures, JaktInternal::DynamicArray<Jakt::types::CheckedEnum> enums, JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::Scope>> scopes, JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::CheckedTrait>> traits, JaktInternal::DynamicArray<NonnullRefPtr<Jakt::types::CheckedVariable>> variables, JaktInternal::DynamicArray<Jakt::ids::ModuleId> imports, JaktInternal::Dictionary<size_t,Jakt::ids::StructId> builtin_implementation_structs);
 
 public: ByteString debug_description() const;
 };struct CheckedTraitRequirements {
@@ -1765,6 +1773,12 @@ namespace Jakt {
 } // namespace Jakt
 template<>struct Jakt::Formatter<Jakt::types::ResolvedForallChunk> : Jakt::Formatter<Jakt::StringView>{
 Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::types::ResolvedForallChunk const& value) {
+JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, value.debug_description());return format_error;}
+};
+namespace Jakt {
+} // namespace Jakt
+template<>struct Jakt::Formatter<Jakt::types::TypeWithSkipList> : Jakt::Formatter<Jakt::StringView>{
+Jakt::ErrorOr<void> format(Jakt::FormatBuilder& builder, Jakt::types::TypeWithSkipList const& value) {
 JaktInternal::PrettyPrint::ScopedEnable pretty_print_enable { m_alternative_form };Jakt::ErrorOr<void> format_error = Jakt::Formatter<Jakt::StringView>::format(builder, value.debug_description());return format_error;}
 };
 namespace Jakt {

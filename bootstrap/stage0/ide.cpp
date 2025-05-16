@@ -2,6 +2,7 @@
 extern "C" __cdecl int SetConsoleOutputCP(unsigned int code_page);
 #endif
 #include "ide.h"
+#include "codegen.h"
 #include "interpreter.h"
 #include "jakt__prelude__static_array.h"
 namespace Jakt {
@@ -503,9 +504,9 @@ auto&& __jakt_match_value = __jakt_match_variant.as.GenericInstance;Jakt::ids::S
 {
 JaktInternal::DynamicArray<Jakt::types::CheckedStruct> structs = DynamicArray<Jakt::types::CheckedStruct>::create_with({program->get_struct(struct_id)});
 for (;;){
-JaktInternal::Optional<Jakt::ids::StructId> __jakt_tmp285 = structs.last().value().super_struct_id;
-if (__jakt_tmp285.has_value()){
-Jakt::ids::StructId const x = __jakt_tmp285.value();
+JaktInternal::Optional<Jakt::ids::StructId> __jakt_tmp288 = structs.last().value().super_struct_id;
+if (__jakt_tmp288.has_value()){
+Jakt::ids::StructId const x = __jakt_tmp288.value();
 structs.push(program->get_struct(x));
 }
 else {
@@ -566,9 +567,9 @@ auto&& __jakt_match_value = __jakt_match_variant.as.Struct;Jakt::ids::StructId c
 {
 JaktInternal::DynamicArray<Jakt::types::CheckedStruct> structs = DynamicArray<Jakt::types::CheckedStruct>::create_with({program->get_struct(struct_id)});
 for (;;){
-JaktInternal::Optional<Jakt::ids::StructId> __jakt_tmp285 = structs.last().value().super_struct_id;
-if (__jakt_tmp285.has_value()){
-Jakt::ids::StructId const x = __jakt_tmp285.value();
+JaktInternal::Optional<Jakt::ids::StructId> __jakt_tmp288 = structs.last().value().super_struct_id;
+if (__jakt_tmp288.has_value()){
+Jakt::ids::StructId const x = __jakt_tmp288.value();
 structs.push(program->get_struct(x));
 }
 else {
@@ -1343,9 +1344,9 @@ JaktInternal::Optional<Jakt::ids::TypeId> result_type = JaktInternal::OptionalNo
 if (!known_type_id.equals(Jakt::types::unknown_type_id())){
 result_type = static_cast<JaktInternal::Optional<Jakt::ids::TypeId>>(known_type_id);
 }
-NonnullRefPtr<typename Jakt::types::Type> __jakt_tmp286 = program->get_type(type_id);
-if (__jakt_tmp286->__jakt_init_index() == 23 /* Struct */){
-Jakt::ids::StructId const struct_id = __jakt_tmp286->as.Struct.value;
+NonnullRefPtr<typename Jakt::types::Type> __jakt_tmp289 = program->get_type(type_id);
+if (__jakt_tmp289->__jakt_init_index() == 23 /* Struct */){
+Jakt::ids::StructId const struct_id = __jakt_tmp289->as.Struct.value;
 {
 JaktInternal::ArrayIterator<NonnullRefPtr<Jakt::types::CheckedField>> _magic = program->get_struct(struct_id).fields.iterator();
 for (;;){
@@ -1545,9 +1546,9 @@ break;
 }
 Jakt::types::CheckedMatchPattern pattern = _magic_value.value();
 {
-Jakt::types::CheckedMatchPattern __jakt_tmp287 = pattern;
-if (__jakt_tmp287.__jakt_init_index() == 0 /* EnumVariant */){
-ByteString const name = __jakt_tmp287.as.EnumVariant.name;
+Jakt::types::CheckedMatchPattern __jakt_tmp290 = pattern;
+if (__jakt_tmp290.__jakt_init_index() == 0 /* EnumVariant */){
+ByteString const name = __jakt_tmp290.as.EnumVariant.name;
 remaining_cases.remove(name);
 }
 }

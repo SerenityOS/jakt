@@ -332,7 +332,7 @@ builder.appendff("file_id: {}", file_id);
 builder.append(")"sv);return builder.to_string(); }
 ErrorOr<Jakt::repl::REPL> Jakt::repl::REPL::create(Jakt::jakt__path::Path const std_include_path,Jakt::jakt__path::Path const prelude_path,JaktInternal::Optional<ByteString> const target_triple,JaktInternal::Dictionary<ByteString,ByteString> const user_configuration) {
 {
-NonnullRefPtr<Jakt::compiler::Compiler> compiler = Jakt::compiler::Compiler::__jakt_create(DynamicArray<Jakt::jakt__path::Path>::create_with({}),Dictionary<ByteString, Jakt::utility::FileId>::create_with_entries({}),DynamicArray<Jakt::error::JaktError>::create_with({}),JaktInternal::OptionalNone(),DynamicArray<u8>::create_with({}),false,false,false,false,false,std_include_path,prelude_path,DynamicArray<ByteString>::create_with({}),false,false,false,false,target_triple,user_configuration,Jakt::jakt__path::Path::from_string(ByteString::from_utf8_without_validation("build"sv)),Jakt::jakt__path::Path::from_string(ByteString::from_utf8_without_validation("build/exports"sv)),Jakt::jakt__path::Path::from_string(ByteString::from_utf8_without_validation("repl.jakt"sv)),Set<ByteString>::create_with_values({}));
+NonnullRefPtr<Jakt::compiler::Compiler> compiler = Jakt::compiler::Compiler::__jakt_create(DynamicArray<Jakt::jakt__path::Path>::create_with({}),Dictionary<ByteString, Jakt::utility::FileId>::create_with_entries({}),DynamicArray<Jakt::error::JaktError>::create_with({}),JaktInternal::OptionalNone(),DynamicArray<u8>::create_with({}),false,false,false,false,false,std_include_path,prelude_path,DynamicArray<ByteString>::create_with({}),DynamicArray<ByteString>::create_with({}),false,false,false,false,target_triple,user_configuration,Jakt::jakt__path::Path::from_string(ByteString::from_utf8_without_validation("build"sv)),Jakt::jakt__path::Path::from_string(ByteString::from_utf8_without_validation("build/exports"sv)),Jakt::jakt__path::Path::from_string(ByteString::from_utf8_without_validation("repl.jakt"sv)),Set<ByteString>::create_with_values({}));
 TRY((compiler->load_prelude()));
 Jakt::utility::FileId const file_id = compiler->get_file_id_or_register(Jakt::jakt__path::Path::from_string(ByteString::from_utf8_without_validation("<repl>"sv)));
 Jakt::ids::ModuleId const placeholder_module_id = Jakt::ids::ModuleId(static_cast<size_t>(0ULL));
@@ -671,9 +671,9 @@ return {};
 } else {__jakt_var_141 = __jakt_var_142.release_value();
 }
 __jakt_var_141.release_value(); });
-Jakt::repl_backend__common::LineResult __jakt_tmp288 = line_result;
-if (__jakt_tmp288.__jakt_init_index() == 0 /* Line */){
-ByteString const line = __jakt_tmp288.as.Line.value;
+Jakt::repl_backend__common::LineResult __jakt_tmp291 = line_result;
+if (__jakt_tmp291.__jakt_init_index() == 0 /* Line */){
+ByteString const line = __jakt_tmp291.as.Line.value;
 if (line == ByteString::from_utf8_without_validation("\n"sv)){
 continue;
 }
@@ -706,9 +706,9 @@ return {};
 } else {__jakt_var_145 = __jakt_var_146.release_value();
 }
 __jakt_var_145.release_value(); });
-Jakt::repl_backend__common::LineResult __jakt_tmp289 = line_result;
-if (__jakt_tmp289.__jakt_init_index() == 0 /* Line */){
-ByteString const line = __jakt_tmp289.as.Line.value;
+Jakt::repl_backend__common::LineResult __jakt_tmp292 = line_result;
+if (__jakt_tmp292.__jakt_init_index() == 0 /* Line */){
+ByteString const line = __jakt_tmp292.as.Line.value;
 builder.append(line);
 this->compiler->current_file = this->file_id;
 this->compiler->current_file_contents = Jakt::repl::REPL::line_to_bytes(builder.to_string());

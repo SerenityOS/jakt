@@ -992,7 +992,7 @@ Jakt::jakt__path::Path const file_path = Jakt::jakt__path::Path::from_string(fil
 ByteString const guessed_output_filename = file_path.basename(true);
 ByteString const output_filename = binary_dir.join(set_output_filename.value_or_lazy_evaluated([&] { return guessed_output_filename; })).to_string();
 JaktInternal::DynamicArray<Jakt::error::JaktError> errors = DynamicArray<Jakt::error::JaktError>::create_with({});
-NonnullRefPtr<Jakt::compiler::Compiler> compiler = Jakt::compiler::Compiler::__jakt_create(DynamicArray<Jakt::jakt__path::Path>::create_with({}),Dictionary<ByteString, Jakt::utility::FileId>::create_with_entries({}),DynamicArray<Jakt::error::JaktError>::create_with({}),JaktInternal::OptionalNone(),DynamicArray<u8>::create_with({}),lexer_debug,parser_debug,false,debug_print,debug_print_cpp_import,Jakt::jakt__path::Path::from_parts(DynamicArray<ByteString>::create_with({runtime_path, ByteString::from_utf8_without_validation("jaktlib"sv)})),Jakt::jakt__path::Path::from_parts(DynamicArray<ByteString>::create_with({runtime_path, ByteString::from_utf8_without_validation("prelude.jakt"sv)})),extra_include_paths,json_errors,dump_type_hints,dump_try_hints,optimize,target_triple,user_configuration,binary_dir,exports_dir,[&]() -> JaktInternal::Optional<Jakt::jakt__path::Path> { auto __jakt_enum_value = assume_main_file_path.has_value();
+NonnullRefPtr<Jakt::compiler::Compiler> compiler = Jakt::compiler::Compiler::__jakt_create(DynamicArray<Jakt::jakt__path::Path>::create_with({}),Dictionary<ByteString, Jakt::utility::FileId>::create_with_entries({}),DynamicArray<Jakt::error::JaktError>::create_with({}),JaktInternal::OptionalNone(),DynamicArray<u8>::create_with({}),lexer_debug,parser_debug,false,debug_print,debug_print_cpp_import,Jakt::jakt__path::Path::from_parts(DynamicArray<ByteString>::create_with({runtime_path, ByteString::from_utf8_without_validation("jaktlib"sv)})),Jakt::jakt__path::Path::from_parts(DynamicArray<ByteString>::create_with({runtime_path, ByteString::from_utf8_without_validation("prelude.jakt"sv)})),extra_include_paths,extra_cpp_flags,json_errors,dump_type_hints,dump_try_hints,optimize,target_triple,user_configuration,binary_dir,exports_dir,[&]() -> JaktInternal::Optional<Jakt::jakt__path::Path> { auto __jakt_enum_value = assume_main_file_path.has_value();
 if (__jakt_enum_value) {return static_cast<JaktInternal::Optional<Jakt::jakt__path::Path>>(Jakt::jakt__path::Path::from_string(assume_main_file_path.value()));}else if (!__jakt_enum_value) {return JaktInternal::OptionalNone();}VERIFY_NOT_REACHED();
  
 }(),Set<ByteString>::create_with_values({}));
@@ -1099,7 +1099,7 @@ break;
 }
 NonnullRefPtr<Jakt::types::Scope> scope = _magic_value.value();
 {
-if (!scope->parent.map([&](auto& _value) { return _value.equals(main_module_scope_id); }).value_or_lazy_evaluated([&] { return false; })){
+if (!scope->parent.map([&](auto&& _value) { return _value.equals(main_module_scope_id); }).value_or_lazy_evaluated([&] { return false; })){
 continue;
 }
 {

@@ -13,6 +13,12 @@
 #include <AK/Types.h>
 #include <AK/kmalloc.h>
 
+#ifdef AK_COMPILER_GCC
+#    pragma GCC diagnostic push
+//   GCC incorrectly claims that the size of the ByteBuffer is too small in some cases when UBSan is disabled.
+#    pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
+
 namespace AK {
 namespace Detail {
 
@@ -380,5 +386,9 @@ struct Traits<ByteBuffer> : public DefaultTraits<ByteBuffer> {
         return byte_buffer.bytes() == other;
     }
 };
+
+#ifdef AK_COMPILER_GCC
+#    pragma GCC diagnostic pop
+#endif
 
 }
