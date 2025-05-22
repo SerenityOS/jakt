@@ -2420,8 +2420,13 @@ class CppImportProcessor {
         import_path: Path
         scope_id: ScopeId
         is_c: bool
-        defines: [String:String]
+        anon in_defines: [String:String]
     ) throws -> ScopeId {
+        mut defines: [String:String] = [:]
+        for (k, v) in in_defines {
+            defines.set(k, v)
+        }
+
         let module_id = scope_id.module_id
         let import_scope_id = program.create_scope(
             parent_scope_id: scope_id
@@ -2459,26 +2464,52 @@ class CppImportProcessor {
         }
 
         mut system_includes: [String] = []
+        mut sysroot: String? = None
         mut next_arg_is_system_header = false
+        mut next_arg_is_sysroot = false
         for arg in program.compiler.extra_cpp_flags {
             if next_arg_is_system_header {
                 system_includes.push(arg)
                 next_arg_is_system_header = false
                 continue
             }
-            guard arg.starts_with("-isystem") else { continue }
-            if arg == "-isystem" {
-                next_arg_is_system_header = true
+            if next_arg_is_sysroot {
+                sysroot = arg
+                next_arg_is_sysroot = false
                 continue
             }
-            let start = match arg.starts_with("-isystem=") {
-                true => 9uz
-                false => 8uz
+
+            if arg.starts_with("-isystem") {
+                if arg == "-isystem" {
+                    next_arg_is_system_header = true
+                    continue
+                }
+                let start = match arg.starts_with("-isystem=") {
+                    true => 9uz
+                    false => 8uz
+                }
+                system_includes.push(arg.substring(start, length: arg.length() - start))
+            } else if arg.starts_with("--sysroot") {
+                if arg == "--sysroot" {
+                    next_arg_is_sysroot = true
+                    continue
+                }
+                let start = match arg.starts_with("--sysroot=") {
+                    true => 10uz
+                    false => 9uz
+                }
+                sysroot = arg.substring(start, length: arg.length() - start)
+            } else if arg.starts_with("-D") {
+                let nameval = arg.substring(start: 2, length: arg.length() - 2).split("=")
+                if nameval.size() == 2 {
+                    defines.set(nameval[0], nameval[1])
+                } else {
+                    defines.set(nameval[0], "")
+                }
             }
-            system_includes.push(arg.substring(start, length: arg.length() - start))
         }
 
-        mut args_storage = [""; 3 + includes.size() + system_includes.size() + defines.size()]
+        mut args_storage = [""; 3 + includes.size() + system_includes.size() + defines.size() + match sysroot.has_value() { true => 1uz, false => 0uz }]
         if is_c {
             args_storage[0] = "-xc"
             args_storage[1] = "-std=c11"
@@ -2489,13 +2520,18 @@ class CppImportProcessor {
         args_storage[2] = format("--target={}", program.compiler.target_triple ?? Target::active().name())
 
         mut arg_offset = 3
-        for include in includes {
-            args_storage[arg_offset] = format("-I{}", include)
+        if sysroot is Some(path) {
+            args_storage[arg_offset] = format("--sysroot={}", path)
             arg_offset += 1
         }
 
         for include in system_includes {
             args_storage[arg_offset] = format("-isystem{}", include)
+            arg_offset += 1
+        }
+
+        for include in includes {
+            args_storage[arg_offset] = format("-I{}", include)
             arg_offset += 1
         }
 
