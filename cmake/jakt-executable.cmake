@@ -50,6 +50,10 @@ function(add_jakt_compiler_flags target)
   target_compile_features("${target}" PRIVATE cxx_std_23)
 
   if (WIN32)
+    target_compile_options("${target}" PRIVATE
+        # AK complains about having to include <memory>, not a problem for us.
+        "-Wno-#warnings"
+    )
     cmake_policy(GET CMP0091 msvc_runtime_prop_enabled)
     if (NOT msvc_runtime_prop_enabled STREQUAL "NEW")
       message(WARNING "CMake Policy CMP0091 is not set to NEW, linker errors from jakt_runtime may result")
