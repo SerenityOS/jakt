@@ -24,6 +24,8 @@ find_package(Threads REQUIRED)
 
 SET(CMAKE_FIND_PACKAGE_SORT_ORDER NATURAL)
 SET(CMAKE_FIND_PACKAGE_SORT_DIRECTION DEC)
+# cmake takes a long time to find cURL if this is off (see PR #1616)
+set(CURL_NO_CURL_CMAKE ON)
 find_package(Clang CONFIG
   PATHS /opt/homebrew/opt/llvm
 )
