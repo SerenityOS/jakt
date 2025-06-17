@@ -153,6 +153,7 @@ function(add_jakt_executable executable)
   endforeach()
 
   add_jakt_compiler_flags("${executable}")
+  target_precompile_headers("${executable}" PRIVATE "${runtime_path}/lib.h")
 
   target_include_directories("${executable}" BEFORE PRIVATE "$<BUILD_INTERFACE:${runtime_path}>")
   foreach(path IN LISTS JAKT_EXECUTABLE_INCLUDES)
