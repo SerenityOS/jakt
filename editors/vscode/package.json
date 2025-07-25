@@ -85,6 +85,12 @@
                     "default": 5000,
                     "description": "The maximum time in milliseconds that the compiler is allowed to take to process a file."
                 },
+                "jaktLanguageServer.maxParallelCompilerProcesses": {
+                    "scope": "resource",
+                    "type": "number",
+                    "default": 4,
+                    "description": "The maximum number of compiler processes that can be launched simultaneously. Prevents the extension from creating too many jobs in a short timespan, which may freeze computers."
+                },
                 "jaktLanguageServer.extraCompilerImportPaths": {
                     "scope": "resource",
                     "type": "array",
