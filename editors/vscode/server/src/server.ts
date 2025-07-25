@@ -336,6 +336,9 @@ connection.onHover(async (request: HoverParams) => {
 interface ExampleSettings {
     maxNumberOfProblems: number;
     maxCompilerInvocationTime: number;
+    // The maximum number of compiler processes that can
+    // be running at any point in time.
+    maxParallelCompilerProcesses: number;
     extraCompilerImportPaths: Array<string>;
     compiler: {
         executablePath: string;
@@ -352,6 +355,7 @@ interface ExampleSettings {
 const defaultSettings: ExampleSettings = {
     maxNumberOfProblems: 1000,
     maxCompilerInvocationTime: 5000,
+    maxParallelCompilerProcesses: 4,
     extraCompilerImportPaths: [],
     compiler: { executablePath: "jakt" },
     hints: { showImplicitTry: true, showInferredTypes: true },
@@ -491,7 +495,59 @@ function convertPosition(position: Position, text: string): number {
     return i;
 }
 
+
+function sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// even though it's global, the runtime is concurrent but single-threaded.
+let runningCompilerCount = 0;
+
+
+async function acquireCompilerLock(): Promise<void> {
+    const maxRetries = 100;
+
+    let remainingTries = maxRetries;
+
+    while (remainingTries--) {
+        if (++runningCompilerCount > globalSettings.maxParallelCompilerProcesses) {
+            --runningCompilerCount;
+            // slep for max invocation time. Should guarantee acquiring on the next iteration unless there's heavy
+            // contention.
+            await sleep(globalSettings.maxCompilerInvocationTime);
+
+        } else {
+            // acquired.
+            return;
+        }
+    }
+
+    throw new Error(`max retries (${maxRetries}) exceeded for acquiring compiler lock. Are we saturated?`);
+
+}
+
+function releaseCompilerLock() {
+    runningCompilerCount--;
+}
+
 async function runCompiler(
+    text: string,
+    flags: string,
+    settings: ExampleSettings,
+    options: { allowErrors?: boolean } = {},
+    path?: string
+): Promise<string> {
+
+    await acquireCompilerLock();
+    try {
+        const result = await runCompilerUnrestricted(text, flags, settings, options, path);
+        return result;
+    } finally {
+        releaseCompilerLock();
+    }
+}
+
+async function runCompilerUnrestricted(
     text: string,
     flags: string,
     settings: ExampleSettings,
