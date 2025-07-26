@@ -1371,6 +1371,7 @@ struct CheckedBlock {
     control_flow: BlockControlFlow
     yielded_type: TypeId? = None
     yielded_none: bool = false
+    is_for_loop: bool = false 
 }
 
 struct FieldRecord {
