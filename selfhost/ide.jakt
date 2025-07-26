@@ -5,6 +5,7 @@ import typechecker {
     FunctionId, Module, ModuleId, NumberConstant, Scope, ScopeId, StructId, Type, TypeId, unknown_type_id
     void_type_id
 }
+import ids { VarId }
 import types { comptime_format_impl }
 import utility { panic, todo, join, prepend_to_each, Span }
 import compiler { Compiler }
@@ -557,7 +558,12 @@ fn find_span_in_statement(program: CheckedProgram, statement: CheckedStatement, 
     let none: Usage? = None
 
     return match statement {
-        Block(block) => find_span_in_block(program, block, span)
+        Block(block) => {
+            if block.is_for_loop {
+                return find_span_in_for_loop(program, block, span)
+            }
+            yield find_span_in_block(program, block, span)
+        }
         Defer(statement) => find_span_in_statement(program, statement, span)
         Expression(expr) => find_span_in_expression(program, expr, span)
         If(condition, then_block, else_statement) => {
@@ -585,34 +591,11 @@ fn find_span_in_statement(program: CheckedProgram, statement: CheckedStatement, 
         }
         Throw(expr) => find_span_in_expression(program, expr, span)
         VarDecl(var_id, init) => {
-            let checked_var = program.get_variable(var_id)
-            let found = find_span_in_expression(program, expr: init, span)
-            if found.has_value() {
+            if find_span_in_expression(program, expr: init, span) is Some(found) {
                 return found
             }
-            if checked_var.type_span.has_value() {
-                let type_span = checked_var.type_span!
-                if type_span.contains(span) {
-                    return Some(Usage::Typename(checked_var.type_id))
-                }
-            }
 
-            if checked_var.definition_span.contains(span) {
-                let mutability = match checked_var.is_mutable {
-                    true => Mutability::Mutable
-                    false => Mutability::Immutable
-                }
-
-                return Some(Usage::Variable(
-                        span: checked_var.definition_span
-                        name: checked_var.name
-                        type_id: checked_var.type_id
-                        mutability
-                        var_type: VarType::Variable
-                        visibility: VarVisibility::DoesNotApply
-                        struct_type_id: None))
-            }
-            yield none
+            yield find_span_in_vardecl(program, var_id, span)
         }
         While(condition, block) => {
             let found = find_span_in_expression(program, expr: condition, span)
@@ -1392,4 +1375,69 @@ fn get_constructor_signature(program: CheckedProgram, function_id: FunctionId) t
     }
 
     return ""
+}
+
+fn find_span_in_vardecl(program: CheckedProgram, var_id: VarId, span: Span) throws -> Usage? {
+    let checked_var = program.get_variable(var_id)
+    if checked_var.type_span.has_value() {
+        let type_span = checked_var.type_span!
+        if type_span.contains(span) {
+            return Some(Usage::Typename(checked_var.type_id))
+        }
+    }
+
+    if checked_var.definition_span.contains(span) {
+        let mutability = match checked_var.is_mutable {
+            true => Mutability::Mutable
+            false => Mutability::Immutable
+        }
+
+        return Some(Usage::Variable(
+                span: checked_var.definition_span
+                name: checked_var.name
+                type_id: checked_var.type_id
+                mutability
+                var_type: VarType::Variable
+                visibility: VarVisibility::DoesNotApply
+                struct_type_id: None))
+    }
+    return None
+}
+
+fn find_span_in_for_loop(program: CheckedProgram, block: CheckedBlock, span: Span) throws -> Usage? {
+    // TODO: move this to a diff function.
+    // NOTE: It's fine to panic here since we're being wrapped by an external executor,
+    // which will log our messages to the IDE. May not be good if we start shipping a standalone LSP in Jakt.
+
+    // this is a synthetic for loop block. We must skip anything that is not
+    // user code.
+    // User code is:
+    // - iterator variable
+    // - iterable expression
+    // - inner loop body.
+    // So that's what we want to test for.
+
+    // iterable expression: let _magic = <iterable expression>
+    guard block.statements[0] is VarDecl(init) else { panic("cannot find iterable expression in for loop")}
+
+    if find_span_in_expression(program, expr: init, span) is Some(usage) {
+        return usage
+    }
+
+    // loop { <loop block> }
+    guard block.statements[1] is Loop(block: loop_block) else { panic("cannot find loop in for loop block") }
+
+    // <loop block>:
+    // let _magic_value = _magic.next()
+    // if not _magic_value.has_value() { ... }
+    // let <iterator variable> = _magic_value!
+    guard loop_block.statements[2] is VarDecl(var_id: it_var_id) else { panic("cannot find iterator variable in for loop block")}
+
+    if find_span_in_vardecl(program, var_id: it_var_id, span) is Some(found) {
+        return found
+    }
+
+    // Otherwise check the for loop body
+    return find_span_in_statement(program, statement: loop_block.statements[3], span)
+
 }

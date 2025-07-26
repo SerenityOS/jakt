@@ -6932,144 +6932,118 @@ struct Typechecker {
                     expr: range
                     call: ParsedCall(name: "iterator")
                     is_optional: false
-                    span: name_span
+                    span: range.span()
                 )
             }
         } else {
             resolved_iterable_result_type = iterable_trait_implementation!.implemented_type_args[0]
         }
 
-        // let iterable_expr = .typecheck_expression(range, scope_id, safety_mode, type_hint: None)
-        // mut iterable_should_be_mutable = false
-
-        // let iterable_type = .program.get_type(iterable_expr.type())
-
-        // match iterable_type {
-        //     TypeVariable => {
-        //         // Since we're not sure, just make it mutable.
-        //         iterable_should_be_mutable = true
-        //     }
-        //     GenericInstance(id, args) | Struct(id) => {
-        //         let struct_ = .get_struct(id)
-        //         let next_method_function_id = .find_function_in_scope(
-        //             parent_scope_id: struct_.scope_id,
-        //             function_name: "next"
-        //             )
-        //         if not next_method_function_id.has_value() {
-        //             .error("Iterator must have a .next() method", range.span())
-        //         } else {
-        //             let next_method_function = .get_function(next_method_function_id!)
-        //             // Check whether we need to make the iteratar mutable
-        //             if next_method_function.is_mutating() {
-        //                 iterable_should_be_mutable = true
-        //             }
-        //         }
-        //     }
-        //     else => {
-        //         .error("Iterator must have a .next() method", name_span)
-        //     }
-        // }
-
-        let rewritten_statement = ParsedStatement::Block(
-            block: ParsedBlock(
-                stmts: [
-                    // let (mutable) _magic = expr
-                    ParsedStatement::VarDecl(
-                        var: ParsedVarDecl(
-                            name: "_magic",
-                            parsed_type: ParsedType::Empty,
-                            is_mutable: true,
-                            inlay_span: None,
-                            span: name_span
-                        ),
-                        init: expression_to_iterate
-                        span
-                    )
-                    // loop {
-                    ParsedStatement::Loop(
-                        block: ParsedBlock(
-                            stmts: [
-                                // let _magic_value = _magic.next()
-                                ParsedStatement::VarDecl(
-                                    var: ParsedVarDecl(
-                                        name: "_magic_value",
-                                        parsed_type: ParsedType::Empty,
-                                        // FIXME: Figure out whether the loop variable should be mutable
-                                        is_mutable: false,
-                                        inlay_span: None,
-                                        span: name_span
-                                    ),
-                                    init: ParsedExpression::MethodCall(
-                                        expr: ParsedExpression::Var(
-                                            name: "_magic",
-                                            span: name_span
-                                        ),
-                                        call: ParsedCall(name: "next")
-                                        is_optional: false
-                                        span: name_span
-                                    )
-                                    span
-                                ),
-                                // if not _magic_value.has_value() {
-                                ParsedStatement::If(
-                                    condition: ParsedExpression::UnaryOp(
-                                        expr: ParsedExpression::MethodCall(
-                                            expr: ParsedExpression::Var(
-                                                name: "_magic_value",
-                                                span: name_span
-                                            ),
-                                            call: ParsedCall(name: "has_value")
-                                            is_optional: false
-                                            span: name_span
-                                        ),
-                                        op: UnaryOperator::LogicalNot,
-                                        span: name_span
-                                    ),
-                                    then_block: ParsedBlock(
-                                        stmts: [
-                                            // break
-                                            ParsedStatement::Break(span)
-                                        ]
-                                    ),
-                                    else_statement: None
-                                    span
-                                ),
-                            // let iterator_name = _magic_value!
+        let rewritten_block = ParsedBlock(
+            stmts: [
+                // let (mutable) _magic = expr
+                ParsedStatement::VarDecl(
+                    var: ParsedVarDecl(
+                        name: "_magic",
+                        parsed_type: ParsedType::Empty,
+                        is_mutable: true,
+                        inlay_span: None,
+                        // This is not read by ide::find_span_in_*
+                        span: name_span
+                    ),
+                    init: expression_to_iterate
+                    span: range.span()
+                )
+                // loop {
+                ParsedStatement::Loop(
+                    block: ParsedBlock(
+                        stmts: [
+                            // let _magic_value = _magic.next()
                             ParsedStatement::VarDecl(
                                 var: ParsedVarDecl(
-                                    name: iterator_name,
+                                    name: "_magic_value",
                                     parsed_type: ParsedType::Empty,
-                                    // FIXME: loop variable mutability should be independent
-                                    // of iterable mutability
-                                    is_mutable: true,
-                                    inlay_span: match is_destructuring {
-                                        // No need for a type hint on the tuple as a whole when destructuring,
-                                        // as each of its constituents already gets one.
-                                        true => None
-                                        false => name_span
-                                    },
-                                    span: name_span
+                                    // FIXME: Figure out whether the loop variable should be mutable
+                                    is_mutable: false,
+                                    inlay_span: None,
+                                    // This is not read by ide::find_span_in_*
+                                    span
                                 ),
-                                init: ParsedExpression::ForcedUnwrap(
+                                init: ParsedExpression::MethodCall(
                                     expr: ParsedExpression::Var(
-                                        name: "_magic_value",
-                                        span: name_span
-                                    )
-                                    span: name_span
+                                        name: "_magic",
+                                        span
+                                    ),
+                                    call: ParsedCall(name: "next")
+                                    is_optional: false
+                                    span
                                 )
                                 span
                             ),
-                            ParsedStatement::Block(block, span)
-                            ]
-                        )
-                        span
+                            // if not _magic_value.has_value() {
+                            ParsedStatement::If(
+                                condition: ParsedExpression::UnaryOp(
+                                    expr: ParsedExpression::MethodCall(
+                                        expr: ParsedExpression::Var(
+                                            name: "_magic_value",
+                                            span: name_span
+                                        ),
+                                        call: ParsedCall(name: "has_value")
+                                        is_optional: false
+                                        span: name_span
+                                    ),
+                                    op: UnaryOperator::LogicalNot,
+                                    span: name_span
+                                ),
+                                then_block: ParsedBlock(
+                                    stmts: [
+                                        // break
+                                        ParsedStatement::Break(span)
+                                    ]
+                                ),
+                                else_statement: None
+                                span
+                            ),
+                        // let iterator_name = _magic_value!
+                        ParsedStatement::VarDecl(
+                            var: ParsedVarDecl(
+                                name: iterator_name,
+                                parsed_type: ParsedType::Empty,
+                                // FIXME: loop variable mutability should be independent
+                                // of iterable mutability
+                                is_mutable: true,
+                                inlay_span: match is_destructuring {
+                                    // No need for a type hint on the tuple as a whole when destructuring,
+                                    // as each of its constituents already gets one.
+                                    true => None
+                                    false => name_span
+                                },
+                                span: name_span
+                            ),
+                            init: ParsedExpression::ForcedUnwrap(
+                                expr: ParsedExpression::Var(
+                                    name: "_magic_value",
+                                    span: name_span
+                                )
+                                span: name_span
+                            )
+                            span: name_span
+                        ),
+                        ParsedStatement::Block(block, span)
+                        ]
                     )
-                ]
-            )
-            span
+                    span
+                )
+            ]
         )
 
-        return .typecheck_statement(rewritten_statement, scope_id, safety_mode)
+
+        mut typechecked_for_block = .typecheck_block(rewritten_block, parent_scope_id: scope_id, safety_mode)
+
+        // mark block as for loop block
+        typechecked_for_block.is_for_loop = true
+
+        return CheckedStatement::Block(block: typechecked_for_block, span)
     }
 
     fn expand_context_for_bindings(
