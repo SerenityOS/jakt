@@ -747,6 +747,7 @@ class CppImportProcessor {
                         definition_span: empty_span()
                         type_span: empty_span()
                         visibility: CheckedVisibility::Public
+                        invisible_to_ide: false
                         owner_scope: scope_id
                     )
                     function_params.push(CheckedParameter(
@@ -1210,6 +1211,7 @@ class CppImportProcessor {
             definition_span: empty_span()
             type_span: None
             visibility: CheckedVisibility::Public
+            invisible_to_ide: false
         ))
 
         program.set_owner_scope_if_needed(parent_scope_id, var_id)
@@ -1240,6 +1242,7 @@ class CppImportProcessor {
             definition_span: empty_span()
             type_span: None
             visibility: CheckedVisibility::Public
+            invisible_to_ide: false
             external_name: ExternalName::PreprocessorName(name)
         ))
         program.set_owner_scope_if_needed(parent_scope_id, var_id)
@@ -1705,6 +1708,7 @@ class CppImportProcessor {
                 definition_span: empty_span()
                 type_span: empty_span()
                 visibility: CheckedVisibility::Public
+                invisible_to_ide: false
                 owner_scope: parent_scope_id
             )
             params.push(CheckedParameter(
@@ -1742,6 +1746,7 @@ class CppImportProcessor {
                 definition_span: empty_span()
                 type_span: empty_span()
                 visibility: CheckedVisibility::Public
+                invisible_to_ide: false
                 owner_scope: function_scope
             )
             params.push(CheckedParameter(
@@ -1961,6 +1966,7 @@ class CppImportProcessor {
                 definition_span: empty_span()
                 type_span: None
                 visibility: CheckedVisibility::Public
+                invisible_to_ide: false
                 owner_scope: enum_scope
             ))
             program.set_owner_scope_if_needed(parent_scope_id: enum_scope, var_id)
@@ -2264,6 +2270,7 @@ class CppImportProcessor {
                             definition_span: empty_span()
                             type_span: None
                             visibility: CheckedVisibility::Public
+                            invisible_to_ide: false
                         )
 
                         mut module = program.get_module(module_id)

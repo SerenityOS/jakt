@@ -4439,6 +4439,7 @@ struct CodeGenerator {
                 definition_span: expr.span()
                 type_span: None
                 visibility: CheckedVisibility::Public
+                invisible_to_ide: true
             )
 
             mut params: [CheckedParameter] = [
