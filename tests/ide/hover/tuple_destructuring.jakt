@@ -1,0 +1,9 @@
+/// Expect:
+/// - onHover: 8:13 "let d: i32"
+
+fn a() {
+    let a = "hello"
+    let b = 1i32
+
+    let (c, d) = (a, b)
+}

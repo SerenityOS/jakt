@@ -3,7 +3,7 @@
 //
 // SPDX-License-Identifier: BSD-2-Clause
 import error { JaktError }
-import utility { panic, todo, Span }
+import utility { Span, panic, todo }
 
 enum ParsedTest {
     cppexports: String = ""
@@ -11,6 +11,7 @@ enum ParsedTest {
     SuccessTest(related_cpp_files: [String], output: String, cppincludes: String)
     CompileErrorTest(related_cpp_files: [String], output: String, cppincludes: String)
     RuntimeErrorTest(related_cpp_files: [String], output: String, cppincludes: String)
+    OnHoverTest(output: String, line: i32, column: i32)
     SkipTest
     NoExpectOrSkip
 }
@@ -18,6 +19,7 @@ enum ParsedTest {
 fn is_whitespace(anon cp: u32) -> bool => cp == ' ' or cp == '\t' or cp == '\r'
 
 struct Parser {
+    source: String
     iterator: CodePointIterator
     test_base_dir: String
 
@@ -41,6 +43,47 @@ struct Parser {
         while not .is_eof() and is_whitespace(.current()) {
             .iterator.next()
         }
+    }
+
+    fn parse_int_or_zero(mut this) -> i32 {
+        mut result = 0i32
+
+        while .iterator.peek() is Some(cp) {
+            if cp >= '0' and cp <= '9' {
+                result *= 10
+                result += (cp - '0') as! i32
+                .iterator.next()
+            } else {
+                break
+            }
+
+        }
+
+        return result
+
+    }
+
+    fn lex_raw_quoted_string(mut this) -> String? {
+        if .is_eof() or .current() != '"' as! u32 {
+            return None
+        }
+        .iterator.next()
+        let start = .iterator.byte_offset()
+        mut end = start
+        while not .is_eof() {
+            let cp = .iterator.next()!
+            guard cp != '"' else {
+                return .source.substring(start, length: end - start)
+            }
+            end = .iterator.byte_offset()
+            if cp == '\\' as! u32 {
+                // skip over.
+                guard .iterator.next().has_value() else {
+                    return None
+                }
+            }
+        }
+        return None
     }
 
     fn lex_quoted_string(mut this) throws -> String? {
@@ -93,6 +136,40 @@ struct Parser {
         return .parse_test_information()
     }
 
+    fn parse_onhover(mut this) -> ParsedTest {
+        .skip_whitespace()
+
+        // TODO: better errors!
+        guard .lex_literal(":") else {
+            return ParsedTest::NoExpectOrSkip
+        }
+
+        // line:column
+        .skip_whitespace()
+
+        guard not .is_eof() and .current() >= '1' and .current() <= '9' else {
+            return ParsedTest::NoExpectOrSkip
+        }
+
+        let line = .parse_int_or_zero()
+
+
+        guard .lex_literal(":") else {
+            return ParsedTest::NoExpectOrSkip
+        }
+
+        let column = .parse_int_or_zero()
+
+        .skip_whitespace()
+
+        guard .lex_raw_quoted_string() is Some(output) else {
+            return ParsedTest::NoExpectOrSkip
+        }
+
+        return ParsedTest::OnHoverTest(output, line, column)
+    }
+
+
     fn parse_test_information(mut this) throws -> ParsedTest {
         mut success_test = false
         mut runtime_error = false
@@ -115,6 +192,11 @@ struct Parser {
             .iterator.next()
             .skip_whitespace()
 
+
+            if .lex_literal("onHover") {
+                return .parse_onhover()
+            }
+
             let is_related_cpp_file = .lex_literal("link")
 
             if not success_test {
@@ -134,7 +216,7 @@ struct Parser {
             let expect_output = success_test or compile_error or runtime_error
 
             if not has_cppincludes {
-                has_cppincludes =  .lex_literal("cppincludes")
+                has_cppincludes = .lex_literal("cppincludes")
             }
 
             if not has_cppexports {
@@ -190,7 +272,7 @@ struct Parser {
     }
 
     fn parse(input: String, test_base_dir: String) throws -> ParsedTest {
-        mut parser = Parser(iterator: input.code_points(), test_base_dir)
+        mut parser = Parser(source: input, iterator: input.code_points(), test_base_dir)
         return parser.parse_test()
     }
 }
