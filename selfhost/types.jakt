@@ -1167,6 +1167,7 @@ class CheckedVariable {
     public definition_span: Span
     public type_span: Span?
     public visibility: CheckedVisibility
+    public invisible_to_ide: bool
     public owner_scope: ScopeId? = None
     public owner_scope_generics: [TypeId:TypeId]? = None
     public external_name: ExternalName? = None
@@ -1179,6 +1180,7 @@ class CheckedVariable {
             definition_span: .definition_span
             type_span: .type_span
             visibility: .visibility
+            invisible_to_ide: .invisible_to_ide
             owner_scope: .owner_scope
             owner_scope_generics: .owner_scope_generics
             external_name: .external_name
@@ -3255,6 +3257,7 @@ class CheckedProgram {
                             definition_span: param.variable.definition_span
                             type_span: param.variable.type_span
                             visibility: param.variable.visibility
+                            invisible_to_ide: param.variable.invisible_to_ide
                         )
                         default_value_expression: param.default_value_expression
                     )

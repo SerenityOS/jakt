@@ -429,6 +429,7 @@ fn find_span_in_program(program: CheckedProgram, span: Span) throws -> Usage? {
 fn find_span_in_scope(program: CheckedProgram, scope: Scope, span: Span) throws -> Usage? {
     for scope_var in scope.vars {
         let var = program.get_variable(scope_var.1)
+        guard not var.invisible_to_ide else { continue }
         if var.definition_span.contains(span) {
             return Some(Usage::Typename(var.type_id))
         }
@@ -833,6 +834,9 @@ fn find_span_in_expression(program: CheckedProgram, expr: CheckedExpression, spa
             return none
         }
         Var(var, span: var_span) => {
+            guard not var.invisible_to_ide else {
+                return None
+            }
             let none_type_id: TypeId? = None
             if var_span.contains(span) {
                 let mutability = match var.is_mutable {
@@ -1379,6 +1383,9 @@ fn get_constructor_signature(program: CheckedProgram, function_id: FunctionId) t
 
 fn find_span_in_vardecl(program: CheckedProgram, var_id: VarId, span: Span) throws -> Usage? {
     let checked_var = program.get_variable(var_id)
+    guard not checked_var.invisible_to_ide else {
+        return None
+    }
     if checked_var.type_span.has_value() {
         let type_span = checked_var.type_span!
         if type_span.contains(span) {

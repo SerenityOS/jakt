@@ -694,6 +694,7 @@ fn value_to_checked_expression(anon this_value: Value, anon mut interpreter: Int
                 definition_span: this_value.span
                 type_span: None
                 visibility: CheckedVisibility::Public
+                invisible_to_ide: false
             ))
             statements.push(CheckedStatement::VarDecl(
                 var_id
@@ -7188,6 +7189,7 @@ class Interpreter {
                         definition_span: param.variable.definition_span
                         type_span: param.variable.type_span
                         visibility: param.variable.visibility
+                        invisible_to_ide: false
                     )
                     default_value_expression: param.default_value_expression
                 ))
