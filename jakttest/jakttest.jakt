@@ -136,7 +136,7 @@ import extern "os.h" {
     }
 }
 
-fn print_usage()  {
+fn print_usage() {
     eprintln("usage: jakttest [OPTIONS...] <temp-dir> [<path> ...]")
     eprintln("OPTIONS:")
     eprintln("\t-h\t\tShow this message and exit.")
@@ -196,7 +196,7 @@ fn compare_error(bytes: [u8], expected: String) -> bool {
 }
 
 fn strip_line_breaks(anon input: String) -> String {
-    mut builder = StringBuilder::create();
+    mut builder = StringBuilder::create()
     for i in 0..input.length() {
         let b = input.byte_at(i)
         if b == b'\n' {
@@ -231,7 +231,6 @@ fn usize_from_ascii_digits(anon digits: String) -> usize? {
         // FIXME: overflow check
         value = value * 10 + digit!
     }
-
 
     return value
 }
@@ -352,8 +351,8 @@ struct Options {
 
         if options.files.is_empty() {
             // find files under samples and tests
-            get_jakt_files_under(directory: "samples",  results: &mut options.files)
-            get_jakt_files_under(directory: "tests",    results: &mut options.files)
+            get_jakt_files_under(directory: "samples", results: &mut options.files)
+            get_jakt_files_under(directory: "tests", results: &mut options.files)
             // compile selfhost to check it can compile itself
             options.files.push("selfhost/main.jakt")
         }
@@ -427,6 +426,7 @@ struct Test {
     cppincludes: String
     cppexports: String
     related_cpp_files: String
+    on_hover_position: (i32, i32)? = None
 }
 
 struct TestsRunResult {
@@ -522,17 +522,17 @@ struct TestScheduler {
             } else if .failed_reasons.has_value() {
                 .failed_reasons![test.file_name] = match test.result.kind {
                     Okay => TestFailedReason::StdoutUnmatched(
-                                had: bytes_to_string(result_output)
-                                expected: test.result
-                            )
+                        had: bytes_to_string(result_output)
+                        expected: test.result
+                    )
                     RuntimeError => TestFailedReason::StderrUnmatched(
-                                had: bytes_to_string(error_output)
-                                expected: test.result
-                            )
+                        had: bytes_to_string(error_output)
+                        expected: test.result
+                    )
                     CompileError => TestFailedReason::CompilerErrorUnmatched(
-                                had: bytes_to_string(error_output)
-                                expected: test.result
-                            )
+                        had: bytes_to_string(error_output)
+                        expected: test.result
+                    )
                 }
             }
 
@@ -617,11 +617,11 @@ struct TestScheduler {
         }
 
         return TestScheduler(running_tests
-                            free_directories
-                            directories
-                            passed_count: 0
-                            failed_count: 0
-                            failed_reasons)
+            free_directories
+            directories
+            passed_count: 0
+            failed_count: 0
+        failed_reasons)
     }
 
     public fn run_tests(
@@ -657,47 +657,64 @@ struct TestScheduler {
             "none" // A sentinel value is passed here because Windows shell does not allow empty arguments
             "--cpp-link"
             ":"
+            "--hover-test"
+            "none" // if hover test, line:column
             ""
             ""
         ]
+
+        let cpp_includes_position = 13
+        let cpp_exports_position = cpp_includes_position - 2
+        let related_cpp_files_position = cpp_includes_position + 2
+        let on_hover_position = related_cpp_files_position + 2
+
+        let directory_position = command_buffer.size() - 2
+        let file_position = command_buffer.size() - 1
+
         while not tests.is_empty() {
             let dir_index = scheduler.wait_for_free_directory()
             mut test = tests.pop()!
             test.directory_index = dir_index
             let directory = scheduler.directories[test.directory_index]
             if test.cppincludes.length() > 0 {
-                command_buffer[command_buffer.size() - 5] = test.cppincludes
+                command_buffer[cpp_includes_position] = test.cppincludes
             }
             if test.cppexports.length() > 0 {
-                command_buffer[command_buffer.size() - 7] = test.cppexports
+                command_buffer[cpp_exports_position] = test.cppexports
             }
             if test.related_cpp_files.is_empty() {
-                command_buffer[command_buffer.size() - 3] = ":"
+                command_buffer[related_cpp_files_position] = ":"
             } else {
-                command_buffer[command_buffer.size() - 3] = test.related_cpp_files
+                command_buffer[related_cpp_files_position] = test.related_cpp_files
             }
-            command_buffer[command_buffer.size() - 2] = directory
-            command_buffer[command_buffer.size() - 1] = test.file_name
+            if test.on_hover_position is Some(line_col) {
+                let (line, col) = line_col
+                command_buffer[on_hover_position] = format("{}:{}", line, col)
+            } else {
+                command_buffer[on_hover_position] = "none"
+            }
+            command_buffer[directory_position] = directory
+            command_buffer[file_position] = test.file_name
 
             let pid = process::start_background_process(args: command_buffer)
             scheduler.running_tests[pid] = test
             eprint("\r\x1b[2K[ \x1b[1;31m{}\x1b[m/\x1b[1;32m{}\x1b[m/{} ] Testing {}"
-                    scheduler.failed_count
-                    scheduler.passed_count
-                    total_test_count
-                    test.file_name)
-            unsafe { cpp { "fflush(stderr);" }}
+                scheduler.failed_count
+                scheduler.passed_count
+                total_test_count
+                test.file_name)
+            unsafe { cpp { "fflush(stderr);" } }
         }
 
         while not scheduler.running_tests.is_empty() {
             scheduler.poll_running_tests()
         }
         eprint("\r\x1b[2K")
-        unsafe { cpp { "fflush(stderr);" }}
+        unsafe { cpp { "fflush(stderr);" } }
 
         return TestsRunResult(passed_count: scheduler.passed_count
-                              failed_count: scheduler.failed_count
-                              failed_reasons: scheduler.failed_reasons)
+            failed_count: scheduler.failed_count
+            failed_reasons: scheduler.failed_reasons)
     }
 }
 
@@ -732,7 +749,6 @@ fn main(args: [String]) -> c_int {
         return 1
     }
 
-
     // Check if jakttest is run from the source root, we use the Python script
     // for that but any file would be ok.
     guard fs::stat_silencing_enoent(path: "jakttest/run_one.py") is Some(_) else {
@@ -754,27 +770,38 @@ fn main(args: [String]) -> c_int {
         match result {
             SuccessTest(related_cpp_files, output, cppincludes, cppexports) => {
                 tests.push(Test(result: ExpectedResult(kind: ResultKind::Okay, output)
-                                file_name
-                                directory_index: 0
-                                cppincludes
-                                cppexports
-                                related_cpp_files: join(related_cpp_files, separator: ":")))
+                    file_name
+                    directory_index: 0
+                    cppincludes
+                    cppexports
+                    related_cpp_files: join(related_cpp_files, separator: ":")))
             }
             CompileErrorTest(related_cpp_files, output, cppincludes, cppexports) => {
                 tests.push(Test(result: ExpectedResult(kind: ResultKind::CompileError, output)
-                                file_name
-                                directory_index: 0
-                                cppincludes
-                                cppexports
-                                related_cpp_files: join(related_cpp_files, separator: ":")))
+                    file_name
+                    directory_index: 0
+                    cppincludes
+                    cppexports
+                    related_cpp_files: join(related_cpp_files, separator: ":")))
             }
             RuntimeErrorTest(related_cpp_files, output, cppincludes, cppexports) => {
                 tests.push(Test(result: ExpectedResult(kind: ResultKind::RuntimeError, output)
-                                file_name
-                                directory_index: 0
-                                cppincludes
-                                cppexports
-                                related_cpp_files: join(related_cpp_files, separator: ":")))
+                    file_name
+                    directory_index: 0
+                    cppincludes
+                    cppexports
+                    related_cpp_files: join(related_cpp_files, separator: ":")))
+            }
+            OnHoverTest(output: unparsed_output, line, column) => {
+                let json_output = "{\"hover\": \"" + unparsed_output + "\"}\n"
+                tests.push(Test(result: ExpectedResult(kind: ResultKind::Okay, output: json_output)
+                    file_name
+                    directory_index: 0
+                    cppincludes: ""
+                    cppexports: ""
+                    related_cpp_files: ""
+                    on_hover_position: (line, column)
+                ))
             }
             SkipTest => {
                 eprintln("[ \x1b[33;1mSKIP\x1b[m ] {}", file_name)
@@ -792,7 +819,7 @@ fn main(args: [String]) -> c_int {
     directories.ensure_capacity(parsed_options.job_count as! usize)
     fs::mkdir_if_not_present(path: parsed_options.temp_dir)
     for i in 0..parsed_options.job_count {
-        let path = format("{}/jakttest-tmp-{}",  parsed_options.temp_dir, i)
+        let path = format("{}/jakttest-tmp-{}", parsed_options.temp_dir, i)
         fs::mkdir_if_not_present(path)
         directories.push(path)
     }
@@ -833,8 +860,8 @@ fn main(args: [String]) -> c_int {
     }
 
     println("==============================")
-    println("{} passed" , run_result.passed_count)
-    println("{} failed" run_result.failed_count + bad_formatted_tests.size())
+    println("{} passed", run_result.passed_count)
+    println("{} failed"run_result.failed_count + bad_formatted_tests.size())
     println("{} skipped", skipped_count)
     println("==============================")
 
@@ -886,7 +913,7 @@ fn main(args: [String]) -> c_int {
                     }
 
                     output += "Test failed at an earlier stage than expected:\n"
-                    output +=  failed_stage + " failed with output:\n"
+                    output += failed_stage + " failed with output:\n"
                     output += had + "\n"
                     output += expected.kind.to_stage().to_string() + " expected with " + output_type + " output:\n"
                     output += expected.output
@@ -898,7 +925,7 @@ fn main(args: [String]) -> c_int {
                     }
 
                     output += "Test failed at a later stage than expected:\n"
-                    output +=  failed_stage + " failed with output:\n"
+                    output += failed_stage + " failed with output:\n"
                     output += had + "\n"
                     output += expected.kind.to_stage().to_string() + " expected with " + output_type + " output:\n"
                     output += expected.output

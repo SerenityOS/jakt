@@ -1,0 +1,10 @@
+/// Expect:
+/// - onHover: 7:18 "let integer: i32"
+
+fn a() {
+    let values: [(String, i32)] = []
+
+    for (_, integer) in values {
+
+    }
+}

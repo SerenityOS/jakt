@@ -1,0 +1,10 @@
+/// Expect:
+/// - onHover: 7:27 "let val: i32"
+
+fn a() {
+    let maybe_val: i32? = None
+
+    if maybe_val is Some(val) {
+
+    }
+}

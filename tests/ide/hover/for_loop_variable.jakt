@@ -1,0 +1,12 @@
+/// Expect:
+/// - onHover: 8:11 "mut value: struct String"
+
+fn a() {
+
+    let values: [String] = []
+
+    for value in values {
+        eprintln("{}", value)
+    }
+
+}
