@@ -605,7 +605,7 @@ fn find_span_in_statement(program: CheckedProgram, statement: CheckedStatement, 
             }
             yield find_span_in_block(program, block, span)
         }
-        DestructuringAssignment(vars, var_decl) => {
+        DestructuringDeclaration(vars, var_decl) => {
             for var in vars {
                 let found = find_span_in_statement(program, statement: var, span)
                 if found.has_value() {

@@ -593,7 +593,7 @@ boxed enum ParsedStatement {
     Expression(expr: ParsedExpression, span: Span)
     Defer(statement: ParsedStatement, span: Span)
     UnsafeBlock(block: ParsedBlock, span: Span)
-    DestructuringAssignment(vars: [ParsedVarDecl], var_decl: ParsedStatement, span: Span)
+    DestructuringDeclaration(vars: [ParsedVarDecl], var_decl: ParsedStatement, span: Span)
     VarDecl(var: ParsedVarDecl, init: ParsedExpression, span: Span)
     If(condition: ParsedExpression, then_block: ParsedBlock, else_statement: ParsedStatement?, span: Span)
     Block(block: ParsedBlock, span: Span)
@@ -626,8 +626,8 @@ boxed enum ParsedStatement {
             VarDecl(var: rhs_var, init: rhs_init) => lhs_var.equals(rhs_var) and lhs_init.equals(rhs_init)
             else => false
         }
-        DestructuringAssignment(vars: lhs_vars, var_decl: lhs_var_decl) => match rhs_statement {
-            DestructuringAssignment(vars: rhs_vars, var_decl: rhs_var_decl) => {
+        DestructuringDeclaration(vars: lhs_vars, var_decl: lhs_var_decl) => match rhs_statement {
+            DestructuringDeclaration(vars: rhs_vars, var_decl: rhs_var_decl) => {
                 if lhs_vars.size() != rhs_vars.size() {
                     return false
                 }
@@ -4853,7 +4853,7 @@ struct Parser {
 
                 if is_destructuring_assingment {
                     let old_return_statement = return_statement
-                    return_statement = ParsedStatement::DestructuringAssignment(vars, var_decl: old_return_statement, span: merge_spans(start, .previous().span()))
+                    return_statement = ParsedStatement::DestructuringDeclaration(vars, var_decl: old_return_statement, span: merge_spans(start, .previous().span()))
                 }
                 yield return_statement
             }
@@ -4985,7 +4985,7 @@ struct Parser {
             )
             let init = ParsedExpression::Var(name: iterator_name, span: merge_spans(start_span, .previous().span()))
             let var_decl = ParsedStatement::VarDecl(var: tuple_var_decl, init, span: merge_spans(start_span, .previous().span()))
-            let destructured_vars_stmt = ParsedStatement::DestructuringAssignment(vars: destructured_var_decls, var_decl, span: merge_spans(start_span, .previous().span()))
+            let destructured_vars_stmt = ParsedStatement::DestructuringDeclaration(vars: destructured_var_decls, var_decl, span: merge_spans(start_span, .previous().span()))
             mut block_stmts: [ParsedStatement] = []
             block_stmts.push(destructured_vars_stmt)
             block_stmts.push_values(&block.stmts)

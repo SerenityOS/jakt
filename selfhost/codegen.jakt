@@ -4924,7 +4924,7 @@ struct CodeGenerator {
             Garbage => {
                 panic("Garbage statement in codegen")
             }
-            DestructuringAssignment(vars, var_decl) => {
+            DestructuringDeclaration(vars, var_decl) => {
                 .codegen_statement(statement: var_decl, &mut output)
 
                 for v in vars {
@@ -5962,7 +5962,7 @@ fn has_control_flow(anon stmt: CheckedStatement, include_loop_control_flow: bool
     Expression(expr) => has_control_flow(expr, include_loop_control_flow)
     // throw is not considered control flow because it uses the return value to forward errors, which is declared by the surrounding IIFE.
     Defer | Throw | Yield | Garbage => false
-    DestructuringAssignment(var_decl) => has_control_flow(var_decl, include_loop_control_flow)
+    DestructuringDeclaration(var_decl) => has_control_flow(var_decl, include_loop_control_flow)
     VarDecl(init) => has_control_flow(init, include_loop_control_flow)
     If(condition, then_block, else_statement) => has_control_flow(condition, include_loop_control_flow) or has_control_flow(then_block, include_loop_control_flow) or has_control_flow(else_statement, include_loop_control_flow)
     Block(block) => has_control_flow(block, include_loop_control_flow)

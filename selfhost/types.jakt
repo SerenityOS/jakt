@@ -1484,7 +1484,7 @@ struct CheckedEnumVariantBinding {
 boxed enum CheckedStatement {
     Expression(expr: CheckedExpression, span: Span)
     Defer(statement: CheckedStatement, span: Span)
-    DestructuringAssignment(vars: [CheckedStatement], var_decl: CheckedStatement, span: Span)
+    DestructuringDeclaration(vars: [CheckedStatement], var_decl: CheckedStatement, span: Span)
     VarDecl(var_id: VarId, init: CheckedExpression, span: Span)
     If(condition: CheckedExpression, then_block: CheckedBlock, else_statement: CheckedStatement?, span: Span)
     Block(block: CheckedBlock, span: Span)
