@@ -6743,7 +6743,7 @@ struct Typechecker {
         Continue(span) => .typecheck_continue(span)
         Break(span) => .typecheck_break(span)
         VarDecl(var, init, span) => .typecheck_and_register_var_decl(var, init, scope_id, safety_mode, span)
-        DestructuringAssignment(vars, var_decl, span) => .typecheck_destructuring_assignment(vars, var_decl, scope_id, safety_mode, span)
+        DestructuringDeclaration(vars, var_decl, span) => .typecheck_destructuring_declaration(vars, var_decl, scope_id, safety_mode, span)
         If(condition, then_block, else_statement, span) => .typecheck_if(condition, then_block, else_statement, scope_id, safety_mode, span)
         Garbage(span) => CheckedStatement::Garbage(span)
         For(iterator_name, name_span, is_destructuring, range, block, span) => .typecheck_for(iterator_name, name_span, is_destructuring, range, block, scope_id, safety_mode, span)
@@ -7257,7 +7257,7 @@ struct Typechecker {
         return CheckedStatement::If(condition: checked_condition, then_block: checked_block, else_statement: checked_else, span)
     }
 
-    fn typecheck_destructuring_assignment(mut this, vars: [ParsedVarDecl], var_decl: ParsedStatement, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
+    fn typecheck_destructuring_declaration(mut this, vars: [ParsedVarDecl], var_decl: ParsedStatement, scope_id: ScopeId, safety_mode: SafetyMode, span: Span) throws -> CheckedStatement {
         mut var_decls: [CheckedStatement] = []
         let checked_tuple_var_decl = .typecheck_statement(statement: var_decl, scope_id, safety_mode)
         mut expr_type_id: TypeId = unknown_type_id()
