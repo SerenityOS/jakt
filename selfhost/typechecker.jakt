@@ -6730,7 +6730,15 @@ struct Typechecker {
     }
 
     fn typecheck_statement(mut this, anon statement: ParsedStatement, scope_id: ScopeId, safety_mode: SafetyMode, type_hint: TypeHint? = None) throws -> CheckedStatement => match statement {
-        Expression(expr, span) => CheckedStatement::Expression(expr: .typecheck_expression(expr, scope_id, safety_mode, type_hint: None), span)
+        Expression(expr, span) => {
+            // Detect tuple assignment expressed as a BinaryOp with Assign and a tuple on the LHS,
+            // and handle it via the tuple-assignment path.
+            if expr is BinaryOp(lhs, op, rhs) and op is Assign and lhs is JaktTuple(values) {
+                return .typecheck_tuple_assignment(lhs_values: values, rhs, scope_id, safety_mode, span)
+            }
+
+            yield CheckedStatement::Expression(expr: .typecheck_expression(expr, scope_id, safety_mode, type_hint: None), span)
+        }
         UnsafeBlock(block, span) => CheckedStatement::Block(block: .typecheck_block(block, parent_scope_id: scope_id, safety_mode: SafetyMode::Unsafe), span)
         Yield(expr, span) => .typecheck_yield(expr, span, scope_id, safety_mode, type_hint)
         Return(expr, span) => .typecheck_return(expr, span, scope_id, safety_mode)
@@ -7292,7 +7300,153 @@ struct Typechecker {
             .error("Tuple inner types sould have same size as tuple members", span)
         }
 
-        return CheckedStatement::DestructuringAssignment(vars: var_decls, var_decl: checked_tuple_var_decl, span)
+        return CheckedStatement::DestructuringDeclaration(vars: var_decls, var_decl: checked_tuple_var_decl, span)
+    }
+
+    fn typecheck_tuple_element_assignment(
+        mut this
+        lhs: ParsedExpression
+        rhs: ParsedExpression
+        scope_id: ScopeId
+        safety_mode: SafetyMode
+    ) throws -> [CheckedStatement] {
+        match lhs {
+            // Simple variable assignment
+            Var => {
+                let assign_stmt = ParsedStatement::Expression(
+                    expr: ParsedExpression::BinaryOp(
+                        lhs,
+                        op: BinaryOperator::Assign,
+                        rhs,
+                        span: lhs.span()
+                    )
+                    span: lhs.span()
+                )
+                let checked_assign = .typecheck_statement(assign_stmt, scope_id, safety_mode)
+                return [checked_assign]
+            }
+
+            // Nested tuple assignment - handle recursively
+            JaktTuple(values) => {
+                // Create a temporary variable for the nested tuple RHS
+                let nested_tmp_name = format("__jakt_nested_tuple_tmp{}", .temp_var_count)
+                .temp_var_count++
+
+                let nested_tmp_decl = ParsedVarDecl(
+                    name: nested_tmp_name,
+                    parsed_type: ParsedType::Empty,
+                    is_mutable: false,
+                    inlay_span: None,
+                    span: lhs.span()
+                )
+
+                let nested_var_decl_stmt = ParsedStatement::VarDecl(var: nested_tmp_decl, init: rhs, span: lhs.span())
+                let checked_nested_tmp_decl = .typecheck_statement(nested_var_decl_stmt, scope_id, safety_mode)
+
+                mut nested_assignments: [CheckedStatement] = []
+                nested_assignments.push(checked_nested_tmp_decl)
+
+                // Recursively handle each element in the nested tuple
+                for i in 0..values.size() {
+                    let nested_lhs = values[i]
+                    let nested_rhs = ParsedExpression::IndexedTuple(
+                        expr: ParsedExpression::Var(name: nested_tmp_name, span: lhs.span()),
+                        index: i,
+                        is_optional: false,
+                        span: nested_lhs.span()
+                    )
+
+                    let nested_element_assignments = .typecheck_tuple_element_assignment(
+                        lhs: nested_lhs,
+                        rhs: nested_rhs,
+                        scope_id,
+                        safety_mode
+                    )
+                    nested_assignments.push_values(&nested_element_assignments)
+                }
+
+                return nested_assignments
+            }
+
+            // Other expressions - not allowed in tuple destructuring
+            else => {
+                .error("Left-hand side of tuple assignment must be variables or nested tuples", lhs.span())
+                return []
+            }
+        }
+    }
+
+    fn typecheck_tuple_assignment(
+        mut this
+        lhs_values: [ParsedExpression]
+        rhs: ParsedExpression
+        scope_id: ScopeId
+        safety_mode: SafetyMode
+        span: Span
+    ) throws -> CheckedStatement {
+        // Create a fresh temporary to hold the RHS so we evaluate it once.
+        let tmp_name = format("__jakt_tuple_assign_tmp{}", .temp_var_count)
+        .temp_var_count++
+
+        let tmp_decl = ParsedVarDecl(
+            name: tmp_name
+            parsed_type: ParsedType::Empty
+            // temporary mutability is not required; keep it immutable
+            is_mutable: false
+            inlay_span: None
+            span
+        )
+
+        let var_decl_stmt = ParsedStatement::VarDecl(var: tmp_decl, init: rhs, span)
+        let checked_tmp_decl = .typecheck_statement(var_decl_stmt, scope_id, safety_mode)
+
+        // Inspect the type of RHS to ensure it is a tuple and get element types/arity.
+        mut expr_type_id: TypeId = unknown_type_id()
+        if checked_tmp_decl is VarDecl(var_id, init) {
+            expr_type_id = init.type()
+        } else {
+            .error("Internal error: tuple assignment temp is not a VarDecl", span)
+        }
+
+        let tuple_type = .get_type(expr_type_id)
+        mut element_count = 0uz
+        match tuple_type {
+            GenericInstance(id, args) => {
+                // Confirm it's a Tuple<T...>
+                if .get_struct(id).name == "Tuple" {
+                    element_count = args.size()
+                }
+            }
+            else => {}
+        }
+
+        if element_count == 0 or lhs_values.size() != element_count {
+            .error("Tuple assignment arity mismatch", span)
+        }
+
+        // Build assignment statements: lhs_i = tmp[i]
+        mut assignments: [CheckedStatement] = []
+        for i in 0..lhs_values.size() {
+            let lhs_i = lhs_values[i]
+
+            // Create RHS expression for accessing tuple element
+            let rhs_access = ParsedExpression::IndexedTuple(
+                expr: ParsedExpression::Var(name: tmp_name, span)
+                index: i
+                is_optional: false
+                span: lhs_i.span()
+            )
+
+            let nested_assignment = .typecheck_tuple_element_assignment(
+                lhs: lhs_i,
+                rhs: rhs_access,
+                scope_id,
+                safety_mode
+            )
+            assignments.push_values(&nested_assignment)
+        }
+
+        return CheckedStatement::DestructuringDeclaration(vars: assignments, var_decl: checked_tmp_decl, span)
     }
 
     fn interpreter(mut this) -> Interpreter => Interpreter::create(
