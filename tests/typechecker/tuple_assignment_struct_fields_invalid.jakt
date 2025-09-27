@@ -1,0 +1,12 @@
+/// Expect:
+/// - error: "Left-hand side of tuple assignment must be variables or nested tuples"
+
+struct Point {
+    x: i64
+    y: i64
+}
+
+fn main() {
+    mut point = Point(x: 0, y: 0)
+    (point.x, point.y) = (10, 20)
+}

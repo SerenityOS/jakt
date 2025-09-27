@@ -1,11 +1,42 @@
 /// Expect:
-/// - output: "1 hello\n"
+/// - output: "1 hello\n2 world\n1 2 3\n7 8 9\n10 11 12 13\n"
 
 fn foo() throws -> (i64, String) {
     return (1, "hello")
 }
 
+fn bar() throws -> (i64, String) {
+    return (2, "world")
+}
+
 fn main() {
-    let (x1, x2) = foo()
-    println("{} {}", x1, x2)
+    mut a1 = 0
+    mut a2 = ""
+    (a1, a2) = foo()
+    println("{} {}", a1, a2)
+
+    (a1, a2) = bar()
+    println("{} {}", a1, a2)
+
+    let nested_tuple = (1, (2, 3))
+    mut b = 0
+    mut c = 0
+    mut d = 0
+    (b, (c, d)) = nested_tuple
+    println("{} {} {}", b, c, d)
+
+    let left_nested = ((7, 8), 9)
+    mut h = 0
+    mut i = 0
+    mut j = 0
+    ((h, i), j) = left_nested
+    println("{} {} {}", h, i, j)
+
+    let deep_nested = (10, (11, (12, 13)))
+    mut n = 0
+    mut o = 0
+    mut p = 0
+    mut q = 0
+    (n, (o, (p, q))) = deep_nested
+    println("{} {} {} {}", n, o, p, q)
 }

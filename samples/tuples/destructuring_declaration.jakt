@@ -1,0 +1,28 @@
+/// Expect:
+/// - output: "1 hello\n1 2 3\n7 8 9\n10 11 12 13\n"
+
+fn foo() throws -> (i64, String) {
+    return (1, "hello")
+}
+
+fn main() {
+    let (x1, x2) = foo()
+    println("{} {}", x1, x2)
+
+    // NOTE: Nested destructuring directly in a single let is not yet supported.
+    // You must destructure one level at a time, as shown below.
+    // (e.g. `let ((a, b), c) = ((1, 2), 3)` will fail today.)
+
+    let (b, nested_right) = (1, (2, 3))
+    let (c, d) = nested_right
+    println("{} {} {}", b, c, d)
+
+    let (nested_left, j) = ((7, 8), 9)
+    let (h, i) = nested_left
+    println("{} {} {}", h, i, j)
+
+    let (n, nested_mid) = (10, (11, (12, 13)))
+    let (o, nested_inner) = nested_mid
+    let (p, q) = nested_inner
+    println("{} {} {} {}", n, o, p, q)
+}
