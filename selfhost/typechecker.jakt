@@ -7298,7 +7298,6 @@ struct Typechecker {
         safety_mode: SafetyMode
     ) throws -> [CheckedStatement] {
         match lhs {
-            // Simple variable assignment
             Var => {
                 let assign_stmt = ParsedStatement::Expression(
                     expr: ParsedExpression::BinaryOp(
@@ -7312,11 +7311,50 @@ struct Typechecker {
                 let checked_assign = .typecheck_statement(assign_stmt, scope_id, safety_mode)
                 return [checked_assign]
             }
-
-            // Nested tuple assignment - handle recursively
             JaktTuple(values) => {
-                // Create a temporary variable for the nested tuple RHS
-                let nested_tmp_name = format("__jakt_nested_tuple_tmp{}", .temp_var_count)
+                // Optimization: If all elements are simple variables, we can
+                // avoid introducing an intermediate temporary and directly index
+                // into the parent tuple expression (chaining IndexedTuple expressions).
+                mut no_nesting = true
+                for v in values {
+                    match v {
+                        Var => {},
+                        else => {
+                            no_nesting = false
+                            break
+                        }
+                    }
+                }
+
+                if no_nesting {
+                    mut direct_assignments: [CheckedStatement] = []
+                    for i in 0..values.size() {
+                        let nested_lhs = values[i]
+                        let nested_rhs = ParsedExpression::IndexedTuple(
+                            expr: rhs,
+                            index: i,
+                            is_optional: false,
+                            span: nested_lhs.span()
+                        )
+
+                        // Build assignment: nested_lhs = rhs.get<i>()
+                        let assign_stmt = ParsedStatement::Expression(
+                            expr: ParsedExpression::BinaryOp(
+                                lhs: nested_lhs,
+                                op: BinaryOperator::Assign,
+                                rhs: nested_rhs,
+                                span: nested_lhs.span()
+                            )
+                            span: nested_lhs.span()
+                        )
+                        let checked_assign = .typecheck_statement(assign_stmt, scope_id, safety_mode)
+                        direct_assignments.push(checked_assign)
+                    }
+                    return direct_assignments
+                }
+
+                // else: introduce an intermediate temporary for the nested tuple RHS
+                let nested_tmp_name = format("__jakt_tuple_assign_tmp{}", .temp_var_count)
                 .temp_var_count++
 
                 let nested_tmp_decl = ParsedVarDecl(
@@ -7354,8 +7392,6 @@ struct Typechecker {
 
                 return nested_assignments
             }
-
-            // Other expressions - not allowed in tuple destructuring
             else => {
                 .error("Left-hand side of tuple assignment must be variables or nested tuples", lhs.span())
                 return []
