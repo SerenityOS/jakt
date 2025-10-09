@@ -1,12 +1,10 @@
-{
-  stdenv,
-  fetchFromGitHub,
-
-  clang_18,
-  cmake,
-  ninja,
-  pkg-config,
-  python3,
+{ stdenv
+, fetchFromGitHub
+, clang_18
+, cmake
+, ninja
+, pkg-config
+, python3
 }:
 
 let
@@ -16,7 +14,8 @@ let
     rev = "05e78dabdbceea46bae7dca52b63dc0a115e7b52"; # latest at the time
     hash = "sha256-ymXQ68Uib1xP4eGPuxm3vRgAIhrVK4rmHdGLfuvsOJU=";
   };
-in stdenv.mkDerivation {
+in
+stdenv.mkDerivation {
   name = "jakt-unwrapped";
   src = ./.;
 
