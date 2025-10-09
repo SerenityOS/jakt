@@ -2,7 +2,7 @@
   stdenv,
   fetchFromGitHub,
 
-  clang_16,
+  clang_18,
   cmake,
   ninja,
   pkg-config,
@@ -24,15 +24,15 @@ in stdenv.mkDerivation {
     pkg-config
     cmake
     ninja
- ];
+  ];
 
   buildInputs = [
-    clang_16
+    clang_18
     python3
   ];
 
   cmakeFlags = [
-    "-DCMAKE_CXX_COMPILER=${clang_16}/bin/clang++"
+    "-DCMAKE_CXX_COMPILER=${clang_18}/bin/clang++"
     "-DSERENITY_SOURCE_DIR=${serenity}"
     "-DCMAKE_INSTALL_BINDIR=bin"
   ];
