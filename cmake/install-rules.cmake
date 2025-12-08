@@ -106,10 +106,7 @@ install(
 # Make a symlink bin/jakt to the final compiler we created, but install it after the real targets
 # to make sure that if we're using hardlinks, the link can actually be created
 set(final_stage_target "jakt_stage${FINAL_STAGE}")
-set(final_stage_install_target "$<TARGET_FILE:${final_stage_target}>")
-if (NO_SYMLINKS)
-    set(final_stage_install_target "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/${final_stage_install_target}")
-endif()
+set(final_stage_install_target "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/$<TARGET_FILE_NAME:${final_stage_target}>")
 
 install(CODE "include(\"${CMAKE_CURRENT_LIST_DIR}/symlink.cmake\")")
 install(CODE "create_symlink(\"${final_stage_install_target}\" \"${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/jakt${CMAKE_EXECUTABLE_SUFFIX}\")")
