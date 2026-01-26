@@ -340,7 +340,7 @@
         },
         "field": {
             "name": "meta.field.jakt",
-            "begin": "(?:\\b(public|private)\\s+)?\\b((?:\\w|_)(?:\\w|_|[0-9])*)\\s*(:)",
+            "begin": "(?:\\b(public|private|restricted)\\s+)?\\b((?:\\w|_)(?:\\w|_|[0-9])*)\\s*(:)",
             "beginCaptures": {
                 "1": {
                     "name": "storage.modifier.visibility.jakt"
@@ -355,7 +355,25 @@
             "end": "$",
             "patterns": [
                 {
+                    "include": "#comment"
+                },
+                {
                     "include": "#types"
+                },
+                {
+                    "name": "meta.field.default-value.jakt",
+                    "begin": "(=)",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "keyword.operator.assignment.jakt"
+                        }
+                    },
+                    "end": "(?=$)",
+                    "patterns": [
+                        {
+                            "include": "#expressions"
+                        }
+                    ]
                 }
             ]
         },
@@ -404,7 +422,7 @@
                 },
                 {
                     "name": "storage.type.primitive.jakt",
-                    "match": "\\b(String|i8|i16|i32|i64|u8|u16|u32|u64|f32|f64|bool|c_int|c_char|usize|void)\\b"
+                    "match": "\\b(String|i8|i16|i32|i64|u8|u16|u32|u64|f32|f64|bool|c_int|c_char|usize|void|never)\\b"
                 },
                 {
                     "match": "\\b(?:[A-Z]|_)(?:\\w|_|[0-9])*\\s*(::)",
@@ -504,7 +522,7 @@
             "patterns": [
                 {
                     "name": "meta.function.declaration.jakt",
-                    "match": "(?:\\b(public|private)\\s+)?(\\bextern\\s+)?(?:(\\boverride\\b)\\s+|(\\bvirtual\\b)\\s+)?(\\b(?:fn|comptime))\\s+((?:\\w|_)(?:\\w|_|[0-9])*)",
+                    "match": "(?:\\b(public|private|restricted)\\s+)?(\\bextern\\s+)?(?:(\\boverride\\b)\\s+|(\\bvirtual\\b)\\s+)?(\\b(?:fn|comptime))\\s+((?:\\w|_)(?:\\w|_|[0-9])*)",
                     "captures": {
                         "1": {
                             "name": "storage.modifier.visibility.jakt"
@@ -523,6 +541,18 @@
                         },
                         "6": {
                             "name": "entity.name.function"
+                        }
+                    }
+                },
+                {
+                    "name": "meta.function.destructor.jakt",
+                    "match": "(?:\\b(public|private|restricted)\\s+)?\\b(destructor)\\b",
+                    "captures": {
+                        "1": {
+                            "name": "storage.modifier.visibility.jakt"
+                        },
+                        "2": {
+                            "name": "keyword.function.destructor.jakt"
                         }
                     }
                 },
@@ -913,13 +943,20 @@
                     "match": "\\b(as)\\b\\s"
                 },
                 {
+                    "name": "keyword.control.reflect.jakt",
+                    "match": "\\b(reflect)\\b"
+                },
+                {
                     "name": "keyword.control.import.jakt",
-                    "match": "\\b(import)(?:\\s*)(?:(\\bextern\\s+c)|(\\bextern))?\\b",
+                    "match": "\\b(import)(?:\\s*)(?:(\\brelative)\\s+)?(?:(\\bextern\\s+c)|(\\bextern))?\\b",
                     "captures": {
                         "2": {
-                            "name": "keyword.control.import.extern-c.jakt"
+                            "name": "keyword.control.import.relative.jakt"
                         },
                         "3": {
+                            "name": "keyword.control.import.extern-c.jakt"
+                        },
+                        "4": {
                             "name": "keyword.control.import.extern.jakt"
                         }
                     }
@@ -937,7 +974,7 @@
                     "name": "meta.control.match.jakt",
                     "begin": "(?<=match.*?)(\\{)",
                     "beginCaptures": {
-                        "2": {
+                        "1": {
                             "name": "punctuation.begin.brace.jakt"
                         }
                     },
@@ -960,6 +997,46 @@
                 {
                     "name": "keyword.operator.logic.jakt",
                     "match": "\\b(not|and|or|is)\\b"
+                },
+                {
+                    "name": "keyword.operator.sizeof.jakt",
+                    "match": "\\b(sizeof)\\b"
+                },
+                {
+                    "name": "keyword.operator.none-coalescing-assign.jakt",
+                    "match": "\\?\\?="
+                },
+                {
+                    "name": "keyword.operator.none-coalescing.jakt",
+                    "match": "\\?\\?"
+                },
+                {
+                    "name": "keyword.operator.logical.jakt",
+                    "match": "&&|\\|\\|"
+                },
+                {
+                    "name": "keyword.operator.arithmetic-shift.jakt",
+                    "match": "<<<|>>>"
+                },
+                {
+                    "name": "keyword.operator.shift-assign.jakt",
+                    "match": "<<=|>>="
+                },
+                {
+                    "name": "keyword.operator.shift.jakt",
+                    "match": "<<|>>"
+                },
+                {
+                    "name": "keyword.operator.increment-decrement.jakt",
+                    "match": "\\+\\+|\\-\\-"
+                },
+                {
+                    "name": "keyword.operator.bitwise-assign.jakt",
+                    "match": "&=|\\|="
+                },
+                {
+                    "name": "keyword.operator.bitwise.jakt",
+                    "match": "&|\\|"
                 },
                 {
                     "name": "keyword.operator.arithmetic.jakt",
@@ -995,7 +1072,7 @@
             "patterns": [
                 {
                     "name": "constant.numeric.hex.jakt",
-                    "match": "\\b(?<!\\$)0(?:x|X)[0-9a-fA-F][0-9a-fA-F_]*(n|(?:[ui](?:8|16|32|64))|usize)?\\b(?!\\$)",
+                    "match": "\\b(?<!\\$)0(?:x|X)[0-9a-fA-F][0-9a-fA-F_]*(uz|(?:[ui](?:8|16|32|64))|usize)?\\b(?!\\$)",
                     "captures": {
                         "1": {
                             "name": "storage.type.numeric.jakt"
@@ -1004,7 +1081,7 @@
                 },
                 {
                     "name": "constant.numeric.binary.jakt",
-                    "match": "\\b(?<!\\$)0(?:b|B)[01][01_]*(n|(?:[ui](?:8|16|32|64))|usize)?\\b(?!\\$)",
+                    "match": "\\b(?<!\\$)0(?:b|B)[01][01_]*(uz|(?:[ui](?:8|16|32|64))|usize)?\\b(?!\\$)",
                     "captures": {
                         "1": {
                             "name": "storage.type.numeric.jakt"
@@ -1013,7 +1090,7 @@
                 },
                 {
                     "name": "constant.numeric.octal.jakt",
-                    "match": "\\b(?<!\\$)0(?:o|O)?[0-7][0-7_]*(n|(?:[ui](?:8|16|32|64))|usize)?\\b(?!\\$)",
+                    "match": "\\b(?<!\\$)0(?:o|O)?[0-7][0-7_]*(uz|(?:[ui](?:8|16|32|64))|usize)?\\b(?!\\$)",
                     "captures": {
                         "1": {
                             "name": "storage.type.numeric.jakt"
@@ -1040,7 +1117,7 @@
                 },
                 {
                     "name": "constant.numeric.jakt",
-                    "match": "\\b(?<!\\$)[0-9][0-9_]*(n|(?:[ui](?:8|16|32|64))|usize)?\\b(?!\\$)",
+                    "match": "\\b(?<!\\$)[0-9][0-9_]*(uz|(?:[ui](?:8|16|32|64))|usize)?\\b(?!\\$)",
                     "captures": {
                         "1": {
                             "name": "storage.type.numeric.jakt"
@@ -1077,6 +1154,30 @@
                     "endCaptures": {
                         "1": {
                             "name": "punctuation.end.quote.double.jakt"
+                        }
+                    },
+                    "patterns": [
+                        {
+                            "name": "constant.character.escape.jakt",
+                            "match": "\\\\."
+                        }
+                    ]
+                },
+                {
+                    "name": "string.quoted.single.prefixed.jakt",
+                    "begin": "([bc])(')",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "storage.type.string.prefix.jakt"
+                        },
+                        "2": {
+                            "name": "punctuation.begin.quote.single.jakt"
+                        }
+                    },
+                    "end": "(')",
+                    "endCaptures": {
+                        "1": {
+                            "name": "punctuation.end.quote.single.jakt"
                         }
                     },
                     "patterns": [
