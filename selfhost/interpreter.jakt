@@ -5632,6 +5632,21 @@ class Interpreter {
         }
     }
 
+    fn value_impl_matches_optional_variant(this, anon value_impl: ValueImpl, anon variant_name: String) -> bool {
+        return match value_impl {
+            OptionalSome => variant_name == "Some"
+            OptionalNone => variant_name == "None"
+            else => false
+        }
+    }
+
+    fn optional_payload_if_present(this, anon value_impl: ValueImpl) -> Value? {
+        if value_impl is OptionalSome(value) {
+            return value
+        }
+        return None
+    }
+
     public fn execute_expression_without_cast(mut this, anon expr: CheckedExpression, anon mut scope: InterpreterScope) throws -> StatementResult => match expr {
         BinaryOp(lhs, op, rhs, span) => {
             let lhs_value = match .execute_expression(lhs, scope) {
@@ -6953,6 +6968,7 @@ class Interpreter {
                 else => {
                     mut catch_all_case: CheckedMatchBody? = None
                     mut found_body: CheckedMatchBody? = None
+                    mut found_args: [EnumVariantPatternArgument]? = None
                     mut span: Span? = None
 
                     for match_case in match_cases {
@@ -6995,7 +7011,20 @@ class Interpreter {
                                     .error("Class instance matches are not implemented yet", marker_span)
                                     .compiler.panic("Invalid type")
                                 }
-                                EnumVariant(marker_span) => {
+                                EnumVariant(name, args, index, marker_span) => {
+                                    let matched_optional_variant = .value_impl_matches_optional_variant(value.impl, name)
+
+                                    if matched_optional_variant {
+                                        found_body = Some(body)
+                                        found_args = args
+                                        span = marker_span
+                                        break
+                                    }
+
+                                    if value.impl is OptionalSome or value.impl is OptionalNone {
+                                        continue
+                                    }
+
                                     .error(
                                         format("Value matches cannot have enum variant arms (matching on {})", value.type_name()),
                                         marker_span)
@@ -7014,6 +7043,11 @@ class Interpreter {
                     found_body = found_body ?? catch_all_case!
                     mut new_scope = InterpreterScope::create(parent: scope, compiler: .compiler, runtime_scope_id: scope.runtime_scope_id)
                     defer new_scope.perform_defers(interpreter: this, span: span!)
+
+                    let optional_payload = .optional_payload_if_present(value.impl)
+                    if found_args is Some(args) and args.size() > 0 and optional_payload is Some(payload) {
+                        new_scope.bindings.set(args[0].binding, payload)
+                    }
 
                     yield match found_body! {
                         Expression(expr) => {

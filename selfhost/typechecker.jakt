@@ -10288,6 +10288,53 @@ struct Typechecker {
         return (covered_name, checked_match_pattern, key)
     }
 
+    fn missing_match_variants(this, anon all_variants: [String], anon covered_variants: {String}) throws -> [String] {
+        mut missing_variants: [String] = []
+        for variant in all_variants {
+            if not covered_variants.contains(variant) {
+                missing_variants.push(variant)
+            }
+        }
+        return missing_variants
+    }
+
+    fn validate_optional_match_variant_pattern(
+        mut this
+        anon variant_names: [(String, Span)]
+        anon variant_arguments: [EnumVariantPatternArgument]
+        marker_span: Span
+        arguments_span: Span
+    ) throws -> (String, usize)? {
+        if variant_names.size() == 0 {
+            .compiler.panic("typecheck_match - optional - EnumVariant - variant_names.size() == 0")
+        }
+
+        let variant_name = variant_names.last()!.0
+        if variant_names.size() > 2 {
+            .error("Invalid optional variant path", marker_span)
+            return None
+        }
+        if variant_names.size() > 1 and variant_names[0].0 != "Optional" {
+            .error(format("Match case '{}' does not match optional variant '{}'", variant_names[0].0, variant_name), variant_names[0].1)
+        }
+
+        if variant_name == "Some" {
+            if variant_arguments.size() > 1 {
+                .error("Optional::Some match case can have at most one argument", arguments_span)
+            }
+            return ("Some", 1uz)
+        }
+        if variant_name == "None" {
+            if variant_arguments.size() > 0 {
+                .error("Optional::None match case cannot have arguments", arguments_span)
+            }
+            return ("None", 0uz)
+        }
+
+        .error(format("Optional does not contain a variant named '{}'", variant_name), marker_span)
+        return None
+    }
+
     fn typecheck_match(
         mut this
         expr: ParsedExpression
@@ -10487,17 +10534,12 @@ struct Typechecker {
                 }
 
                 mut enum_variant_names: [String] = []
-                mut missing_variants: [String] = []
 
                 for variant in enum_.variants {
                     enum_variant_names.push(variant.name())
                 }
 
-                for variant in enum_variant_names {
-                    if not covered_variants.contains(variant) {
-                        missing_variants.push(variant)
-                    }
-                }
+                let missing_variants = .missing_match_variants(enum_variant_names, covered_variants)
 
                 if missing_variants.size() > 0 {
                     if not seen_catch_all {
@@ -10746,8 +10788,16 @@ struct Typechecker {
                 }
                 false => {
                     let is_boolean_match = type_to_match_on is Bool
+                    let optional_inner_type = match type_to_match_on {
+                        GenericInstance(id, args) => match id.equals(.find_struct_in_prelude("Optional")) {
+                            true => Some(args[0])
+                            false => None
+                        }
+                        else => None
+                    }
                     mut seen_true = false
                     mut seen_false = false
+                    mut covered_optional_variants: {String} = {}
                     mut catch_all_span: Span? = None
 
                     mut is_enum_match = false
@@ -10776,6 +10826,63 @@ struct Typechecker {
                                     }
 
                                     is_enum_match = true
+
+                                    if optional_inner_type.has_value() {
+                                        let optional_variant = .validate_optional_match_variant_pattern(
+                                            variant_names
+                                            variant_arguments
+                                            marker_span: case_.marker_span
+                                            arguments_span
+                                        )
+                                        guard optional_variant is Some(variant_info) else {
+                                            continue
+                                        }
+                                        let (variant_name, variant_index) = variant_info
+                                        covered_optional_variants.add(variant_name)
+
+                                        if not pattern.defaults.is_empty() {
+                                            .error("Optional match patterns cannot have default bindings", case_.marker_span)
+                                        }
+
+                                        let key_builder = match variant_arguments.size() == 1 {
+                                            true => {
+                                                let arg = variant_arguments[0]
+                                                mut module = .current_module()
+                                                let var_id = module.add_variable(CheckedVariable(
+                                                    name: arg.binding
+                                                    type_id: optional_inner_type!
+                                                    is_mutable: arg.is_mutable
+                                                    definition_span: arg.span
+                                                    type_span: case_.marker_span
+                                                    visibility: CheckedVisibility::Public
+                                                    invisible_to_ide: false
+                                                ))
+                                                yield match_builder.start_pattern(&case_proof).submit(arg.binding, var_id, program: .program)
+                                            }
+                                            false => match_builder.start_pattern(&case_proof)
+                                        }
+
+                                        let checked_match_pattern = CheckedMatchPattern::EnumVariant(
+                                            defaults: [:]
+                                            marker_span: case_.marker_span
+                                            name: variant_name
+                                            args: variant_arguments
+                                            subject_type_id
+                                            index: variant_index
+                                        )
+
+                                        match_builder.register_pattern(
+                                            &case_proof
+                                            body: &case_.body
+                                            safety_mode
+                                            key: key_builder.finish()
+                                            scope_id
+                                            pattern: checked_match_pattern
+                                            typechecker: &mut this
+                                            &fn[variant_name]() -> String => format("catch-optional-variant({})", variant_name)
+                                        )
+                                        continue
+                                    }
 
                                     // We don't know what the enum type is, but we have the type var for it, so generate a generic enum match.
                                     // note that this will be fully checked when this match expression is actually instantiated.
@@ -10811,6 +10918,10 @@ struct Typechecker {
                                 CatchAll(variant_arguments) => {
                                     if current_case_index != case_count - 1 {
                                         .error("Match else case is only allowed as the last case", case_.marker_span)
+                                    }
+
+                                    if optional_inner_type.has_value() and not is_value_match {
+                                        .error("Optional match cases must be explicit ('Some' and 'None'); catch-all is not allowed", case_.marker_span)
                                     }
 
                                     catch_all_span = case_.marker_span
@@ -10944,6 +11055,23 @@ struct Typechecker {
 
                     if is_value_match and seen_catch_all and is_boolean_match and seen_true and seen_false {
                         .error("All cases are covered, but an irrefutable pattern is also present", catch_all_span!)
+                    }
+
+                    if optional_inner_type.has_value() and is_enum_match {
+                        let missing_optional_variants = .missing_match_variants(["Some", "None"], covered_optional_variants)
+                        if missing_optional_variants.size() > 0 {
+                            if not seen_catch_all {
+                                .error(
+                                    format(
+                                        "Match expression is not exhaustive, missing variants are: {}"
+                                        join(missing_optional_variants, separator: ", ")
+                                    )
+                                    span
+                                )
+                            }
+                        } else if seen_catch_all {
+                            .error("All variants are covered, but an irrefutable pattern is also present", catch_all_span!)
+                        }
                     }
                 }
             }

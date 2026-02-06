@@ -3648,6 +3648,14 @@ struct CodeGenerator {
         output.append('}')
     }
 
+    fn optional_inner_type_for_match_subject(this, anon subject_type_id: TypeId) throws -> TypeId? {
+        let optional_struct_id = .program.find_struct_in_prelude("Optional")
+        if .program.get_type(subject_type_id) is GenericInstance(id, args) and id.equals(optional_struct_id) {
+            return args[0]
+        }
+        return None
+    }
+
     fn codegen_generic_match(
         mut this
         expr: CheckedExpression
@@ -3714,7 +3722,9 @@ struct CodeGenerator {
                 let defaults = pattern.defaults
 
                 defer first = false
-                if not first { output.append("else ") }
+                if not first {
+                    output.append("else ")
+                }
 
 
                 output.append("if (")
@@ -3724,42 +3734,51 @@ struct CodeGenerator {
 
                 match pattern {
                     EnumVariant(name, args, subject_type_id, index: variant_index) => {
-                        let enum_ = .program.get_enum(match .program.get_type(subject_type_id) {
-                            Enum(enum_id) => enum_id
-                            GenericEnumInstance(id) => id
-                            else => {
-                                panic(format("Unexpected type in IsEnumVariant: {}", .program.get_type(subject_type_id)))
-                            }
-                        })
-
-                        if not args.is_empty() {
-                            output.append("auto& __jakt_match_value = __jakt_enum_value.as.")
-                            output.append(enum_.variants[variant_index].name())
-                            output.append(";\n")
-
-                            for arg in args {
+                        let is_optional_subject = .optional_inner_type_for_match_subject(subject_type_id).has_value()
+                        if is_optional_subject {
+                            if name == "Some" and not args.is_empty() {
                                 output.append("auto& ")
-                                output.append(arg.binding)
+                                output.append(args[0].binding)
+                                output.append(" = __jakt_enum_value.value();\n")
+                            }
+                        } else {
+                            let enum_ = .program.get_enum(match .program.get_type(subject_type_id) {
+                                Enum(enum_id) => enum_id
+                                GenericEnumInstance(id) => id
+                                else => {
+                                    panic(format("Unexpected type in IsEnumVariant: {}", .program.get_type(subject_type_id)))
+                                }
+                            })
 
-                                mut is_common_member = false
-                                if arg.name is Some(name) {
-                                    for field in enum_.fields {
-                                        let var = .program.get_variable(field.variable_id)
-                                        if var.name == name {
-                                            is_common_member = true
-                                            break
+                            if not args.is_empty() {
+                                output.append("auto& __jakt_match_value = __jakt_enum_value.as.")
+                                output.append(enum_.variants[variant_index].name())
+                                output.append(";\n")
+
+                                for arg in args {
+                                    output.append("auto& ")
+                                    output.append(arg.binding)
+
+                                    mut is_common_member = false
+                                    if arg.name is Some(name) {
+                                        for field in enum_.fields {
+                                            let var = .program.get_variable(field.variable_id)
+                                            if var.name == name {
+                                                is_common_member = true
+                                                break
+                                            }
                                         }
                                     }
-                                }
 
-                                if is_common_member {
-                                    output.append(" = __jakt_enum_value.common.init_common.")
-                                    output.append(arg.name!)
-                                } else {
-                                    output.append(" = __jakt_match_value.")
-                                    output.append(arg.name ?? "value")
+                                    if is_common_member {
+                                        output.append(" = __jakt_enum_value.common.init_common.")
+                                        output.append(arg.name!)
+                                    } else {
+                                        output.append(" = __jakt_match_value.")
+                                        output.append(arg.name ?? "value")
+                                    }
+                                    output.append(";\n")
                                 }
-                                output.append(";\n")
                             }
                         }
                     }
@@ -3800,7 +3819,17 @@ struct CodeGenerator {
 
     fn codegen_generic_pattern_condition(mut this, pattern: &CheckedMatchPattern, is_parenthesized: bool, output: &mut StringBuilder) throws {
         match pattern {
-            EnumVariant(name, index: variant_index) => {
+            EnumVariant(name, subject_type_id, index: variant_index) => {
+                if .optional_inner_type_for_match_subject(subject_type_id).has_value() {
+                    if name == "Some" {
+                        output.append("__jakt_enum_value.has_value()")
+                    } else if name == "None" {
+                        output.append("!__jakt_enum_value.has_value()")
+                    } else {
+                        panic(format("Unexpected Optional variant in match pattern: {}", name))
+                    }
+                    return
+                }
                 output.appendff("__jakt_enum_value.__jakt_init_index() == {} /* {} */", variant_index, name)
             }
             Expression(expression: expr) => match expr {
