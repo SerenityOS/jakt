@@ -1,0 +1,8 @@
+/// Expect:
+/// - error: "Match expression is not exhaustive, missing variants are: None"
+
+fn unwrap_or_zero(anon value: i64?) -> i64 {
+    return match value {
+        Some(v) => v
+    }
+}

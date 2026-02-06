@@ -1,0 +1,13 @@
+/// Expect:
+/// - output: "42 0\n"
+
+fn unwrap_or_zero(anon value: i64?) -> i64 {
+    return match value {
+        Some(v) => v
+        None => 0
+    }
+}
+
+fn main() {
+    println("{} {}", unwrap_or_zero(Some(42)), unwrap_or_zero(None))
+}
