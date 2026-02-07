@@ -1,32 +1,42 @@
 #!/bin/bash
 
-set -e
+set -euo pipefail
 
-: "${CURRENT_JAKT_COMPILER:=Build/bin/jakt}"
-: "${JAKT_RUNTIME_DIR:=Build/lib}"
-: "${COMPILE_JOBS:=$(nproc)}"
+: "${CURRENT_JAKT_COMPILER:=build/bin/jakt_stage1}"
+: "${SELFHOST_BUILD_DIR:=selfhost_build}"
+: "${STAGE0_TARGET_TRIPLE:=unknown-unknown-unknown-unknown}"
+: "${AUTO_COMMIT:=0}"
 
-# First, get a working build of the compiler
-"$CURRENT_JAKT_COMPILER" -J"$COMPILE_JOBS" --runtime-library-path "$JAKT_RUNTIME_DIR" selfhost/main.jakt
+if [ ! -x "$CURRENT_JAKT_COMPILER" ]; then
+    echo "error: compiler not found or not executable: $CURRENT_JAKT_COMPILER" >&2
+    echo "hint: build it first with: CCACHE_DISABLE=1 ninja -C build jakt_stage1" >&2
+    exit 1
+fi
 
-# Next, use that to build the selfhost
-rm -fr selfhost_build
-mkdir selfhost_build
-build/main --binary-dir selfhost_build -S -T unknown-unknown-unknown-unknown --runtime-library-path "$JAKT_RUNTIME_DIR" --runtime-path runtime selfhost/main.jakt
+rm -rf "$SELFHOST_BUILD_DIR"
+mkdir -p "$SELFHOST_BUILD_DIR"
 
-# Now copy all the things
-rm -fr bootstrap/temp
+"$CURRENT_JAKT_COMPILER" \
+    --binary-dir "$SELFHOST_BUILD_DIR" \
+    -S \
+    -T "$STAGE0_TARGET_TRIPLE" \
+    --runtime-path runtime \
+    -I selfhost \
+    -I runtime \
+    selfhost/main.jakt
+
+rm -rf bootstrap/temp
 mkdir -p bootstrap/temp
 
 cp bootstrap/stage0/README.md bootstrap/temp/
 cp -rL runtime bootstrap/temp/
-cp selfhost_build/*.cpp bootstrap/temp
-cp selfhost_build/*.h bootstrap/temp
+cp "$SELFHOST_BUILD_DIR"/*.cpp bootstrap/temp/
+cp "$SELFHOST_BUILD_DIR"/*.h bootstrap/temp/
 
-# Great, now replace the old one with the new one
-rm -fr bootstrap/stage0
+rm -rf bootstrap/stage0
 mv bootstrap/temp bootstrap/stage0
 
-# Committee committee
-git add bootstrap
-git commit -m 'bootstrap: Update stage0 snapshot'
+if [ "$AUTO_COMMIT" = "1" ]; then
+    git add bootstrap
+    git commit -m 'bootstrap: Update stage0 snapshot'
+fi

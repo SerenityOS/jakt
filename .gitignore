@@ -2,6 +2,7 @@ target
 a.out
 output.cpp
 build
+selfhost_build/
 result
 
 .vscode/
@@ -13,4 +14,3 @@ CMakeFiles/
 
 # Populated by CMake, don't commit.
 runtime/AK
-
