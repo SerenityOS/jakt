@@ -660,9 +660,9 @@ fn compiler_main(anon args: [String]) throws -> c_int {
         user_configuration
         binary_dir
         exports_dir
-        assume_main_file_path: match assume_main_file_path.has_value() {
-            true => Some(Path::from_string(assume_main_file_path!))
-            false => None
+        assume_main_file_path: match assume_main_file_path {
+            Some(main_file_path) => Some(Path::from_string(main_file_path))
+            None => None
         }
         files_used_in_build: {}
     )
@@ -768,18 +768,18 @@ fn compiler_main(anon args: [String]) throws -> c_int {
         let namespace_: [ResolvedNamespace] = []
         let call_span = Span(file_id: FileId(id: 0), start: 0, end: 0)
         let first_main_param = checked_program.get_function(main_function_id!).params.first()
-        let arguments = match first_main_param.has_value() {
-            true => {
+        let arguments = match first_main_param {
+            Some(main_param) => {
                 mut passed_arguments: [Value] = [Value(impl: ValueImpl::JaktString(file_name!), span: call_span)]
                 for argument in interpreted_main_arguments {
                     passed_arguments.push(Value(impl: ValueImpl::JaktString(argument), span: call_span))
                 }
                 yield [Value(
-                    impl: ValueImpl::JaktArray(values: passed_arguments, type_id: first_main_param!.variable.type_id)
+                    impl: ValueImpl::JaktArray(values: passed_arguments, type_id: main_param.variable.type_id)
                     span: call_span
                 )]
             }
-            false => []
+            None => []
         }
 
         let main_result = interpreter.execute(
@@ -1075,9 +1075,9 @@ fn compiler_main(anon args: [String]) throws -> c_int {
         }
 
         let runtime_lib_path = Path::from_string(runtime_library_path)
-        let target = match target_triple.has_value() {
-            true => Target::from_triple(target_triple!)
-            false => Target::active()
+        let target = match target_triple {
+            Some(target_triple_) => Target::from_triple(target_triple_)
+            None => Target::active()
         }
 
         if link_archive.has_value() {

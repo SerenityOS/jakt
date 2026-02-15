@@ -334,12 +334,12 @@ fn process_cpp_declaration(
                 }
                 linkage: FunctionLinkage::External
                 function_scope_id: function_scope
-                struct_id: match this_type.has_value() {
-                    true => match program.get_type(this_type!) {
+                struct_id: match this_type {
+                    Some(type_id) => match program.get_type(type_id) {
                         Struct(id) | GenericInstance(id) => Some(id)
                         else => None
                     }
-                    false => None
+                    None => None
                 }
                 is_instantiated: true
                 parsed_function: None

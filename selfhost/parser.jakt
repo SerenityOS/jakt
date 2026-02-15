@@ -5890,13 +5890,13 @@ struct Parser {
                                     let existing_errors = .compiler.errors[..].to_array()
                                     .index--
                                     let call = .parse_call()
-                                    yield match call.has_value() {
-                                        true => ParsedExpression::MethodCall(
+                                    yield match call {
+                                        Some(resolved_call) => ParsedExpression::MethodCall(
                                             expr: result
-                                            call: call!
+                                            call: resolved_call
                                             is_optional
                                             span: merge_spans(start, end: .previous().span()))
-                                        else => {
+                                        None => {
                                             .index = original_index
                                             .compiler.errors = existing_errors
                                             yield ParsedExpression::IndexedStruct(

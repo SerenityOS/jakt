@@ -586,9 +586,9 @@ fn find_span_in_statement(program: CheckedProgram, statement: CheckedStatement, 
             yield output
         }
         Loop(block) => find_span_in_block(program, block, span)
-        Return(val) => match val.has_value() {
-            true => find_span_in_expression(program, expr: val!, span)
-            else => none
+        Return(val) => match val {
+            Some(return_value) => find_span_in_expression(program, expr: return_value, span)
+            None => none
         }
         Throw(expr) => find_span_in_expression(program, expr, span)
         VarDecl(var_id, init) => {
@@ -614,9 +614,9 @@ fn find_span_in_statement(program: CheckedProgram, statement: CheckedStatement, 
             }
             yield find_span_in_statement(program, statement: var_decl, span)
         }
-        Yield(expr) => match expr.has_value() {
-            true => find_span_in_expression(program, expr: expr!, span)
-            false => none
+        Yield(expr) => match expr {
+            Some(yield_expr) => find_span_in_expression(program, expr: yield_expr, span)
+            None => none
         }
         Break | Continue | Garbage => none
     }
@@ -883,9 +883,9 @@ fn find_span_in_expression(program: CheckedProgram, expr: CheckedExpression, spa
             if found.has_value() {
                 return found
             }
-            yield match catch_block.has_value() {
-                true => find_span_in_block(program, block: catch_block!, span),
-                false => none
+            yield match catch_block {
+                Some(catch_statement) => find_span_in_block(program, block: catch_statement, span),
+                None => none
             }
         }
         Range(from, to) => {

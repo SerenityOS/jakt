@@ -944,9 +944,9 @@ struct CodeGenerator {
 
             output.append(" ")
 
-            let qualifier = match containing_struct.has_value() {
-                true => .codegen_type_possibly_as_namespace(type_id: containing_struct!, as_namespace: true)
-                false => ""
+            let qualifier = match containing_struct {
+                Some(containing_type_id) => .codegen_type_possibly_as_namespace(type_id: containing_type_id, as_namespace: true)
+                None => ""
             }
             if not qualifier.is_empty() {
                 output.append(qualifier)
@@ -2833,9 +2833,9 @@ struct CodeGenerator {
             }
             IndexedStruct(expr, name, index, is_optional) => {
 
-                let var_name = match index.has_value() {
-                    true => .program.get_variable(index!).name_for_codegen().as_name_for_use()
-                    false => name
+                let var_name = match index {
+                    Some(variable_id) => .program.get_variable(variable_id).name_for_codegen().as_name_for_use()
+                    None => name
                 }
 
                 let expression_type = .program.get_type(expr.type())
@@ -5042,9 +5042,9 @@ struct CodeGenerator {
         output.append(";")
     }
 
-    fn codegen_return(mut this, anon val: CheckedExpression?, output: &mut StringBuilder) throws -> void => match val.has_value() {
-        true => .codegen_value_return(val!, &mut output)
-        false => {
+    fn codegen_return(mut this, anon val: CheckedExpression?, output: &mut StringBuilder) throws -> void => match val {
+        Some(return_expr) => .codegen_value_return(return_expr, &mut output)
+        None => {
             output.append(match .current_function!.can_throw or .control_flow_state.indirectly_inside_match {
                 true => "return {};"
                 false => "return;"
@@ -5158,9 +5158,9 @@ struct CodeGenerator {
             GenericInstance(id, args) => .codegen_generic_type_instance(id, args, as_namespace)
             Struct(id) => {
                 let implements_type = .program.get_struct(id).implements_type
-                yield match implements_type.has_value() {
-                    true => .codegen_type_possibly_as_namespace(type_id: implements_type!, as_namespace)
-                    false => .codegen_struct_type(id, as_namespace)
+                yield match implements_type {
+                    Some(implemented_type_id) => .codegen_type_possibly_as_namespace(type_id: implemented_type_id, as_namespace)
+                    None => .codegen_struct_type(id, as_namespace)
                 }
             }
             Enum(id) => .codegen_enum_type(id, as_namespace)
@@ -5336,11 +5336,11 @@ struct CodeGenerator {
                     continue
                 }
 
-                let args = match scope.relevant_type_id.has_value() {
-                    false => ""
-                    true => {
-                        .used_modules.add(scope.relevant_type_id!.module)
-                        let parameters = .program.get_type(scope.relevant_type_id!).generic_parameters(program: .program)
+                let args = match scope.relevant_type_id {
+                    None => ""
+                    Some(relevant_type_id) => {
+                        .used_modules.add(relevant_type_id.module)
+                        let parameters = .program.get_type(relevant_type_id).generic_parameters(program: .program)
                         mut builder = StringBuilder::create()
 
                         if parameters is Some(params) and generic_mappings is Some(mappings) and not params.is_empty() {
@@ -5798,9 +5798,9 @@ struct CodeGenerator {
         if is_main {
             output.append("main")
         } else {
-            let qualifier = match containing_struct.has_value() {
-                true => .codegen_type_possibly_as_namespace(type_id: containing_struct!, as_namespace: true)
-                false => ""
+            let qualifier = match containing_struct {
+                Some(containing_type_id) => .codegen_type_possibly_as_namespace(type_id: containing_type_id, as_namespace: true)
+                None => ""
             }
             if not qualifier.is_empty() {
                 output.append(qualifier)

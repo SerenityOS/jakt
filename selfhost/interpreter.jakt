@@ -1068,9 +1068,9 @@ class Interpreter {
                 yielded_type: then_block.yielded_type
                 yielded_none: then_block.yielded_none
             )
-            let new_else_statement = match else_statement.has_value() {
-                true => Some(.perform_final_interpretation_pass(statement: else_statement!, scope, function_id))
-                else => None
+            let new_else_statement = match else_statement {
+                Some(else_stmt) => Some(.perform_final_interpretation_pass(statement: else_stmt, scope, function_id))
+                None => None
             }
             yield CheckedStatement::If(
                 condition: new_condition
@@ -1124,15 +1124,15 @@ class Interpreter {
                 block: new_block
                 span)
         }
-        Return(val, span) => match val.has_value() {
-            true => CheckedStatement::Return(val: .perform_final_interpretation_expr_pass(expr: val!, scope, function_id), span)
-            false => statement
+        Return(val, span) => match val {
+            Some(return_expr) => CheckedStatement::Return(val: .perform_final_interpretation_expr_pass(expr: return_expr, scope, function_id), span)
+            None => statement
         }
         Break | Continue | InlineCpp | Garbage => statement
         Throw(expr, span) => CheckedStatement::Throw(expr: .perform_final_interpretation_expr_pass(expr, scope, function_id), span)
-        Yield(expr, span) => match expr.has_value() {
-            true => CheckedStatement::Yield(expr: .perform_final_interpretation_expr_pass(expr: expr!, scope, function_id), span)
-            false => statement
+        Yield(expr, span) => match expr {
+            Some(yield_expr) => CheckedStatement::Yield(expr: .perform_final_interpretation_expr_pass(expr: yield_expr, scope, function_id), span)
+            None => statement
         }
     }
 
@@ -2170,12 +2170,12 @@ class Interpreter {
                             }
                         }
 
-                        yield StatementResult::JustValue(match found_index.has_value() {
-                            true => Value(
-                                impl: ValueImpl::OptionalSome(value: values[found_index!])
+                        yield StatementResult::JustValue(match found_index {
+                            Some(index) => Value(
+                                impl: ValueImpl::OptionalSome(value: values[index])
                                 span: call_span
                             )
-                            else => Value(
+                            None => Value(
                                 impl: ValueImpl::OptionalNone
                                 span: call_span
                             )
@@ -2470,10 +2470,7 @@ class Interpreter {
                     JaktArray(values) => {
                         mut mutable_values = values
                         let value = mutable_values.pop()
-                        yield match value.has_value() {
-                            true => StatementResult::JustValue(value!)
-                            false => StatementResult::JustValue(Value(impl: ValueImpl::OptionalNone, span: call_span))
-                        }
+                        yield .value_or_optional_none(value, span: call_span)
                     }
                     else => {
                         panic("Invalid use of Array::push()")
@@ -2483,10 +2480,7 @@ class Interpreter {
                     JaktArray(values) => {
                         mut mutable_values = values
                         let value = mutable_values.first()
-                        yield match value.has_value() {
-                            true => StatementResult::JustValue(value!)
-                            false => StatementResult::JustValue(Value(impl: ValueImpl::OptionalNone, span: call_span))
-                        }
+                        yield .value_or_optional_none(value, span: call_span)
                     }
                     else => {
                         panic("Invalid use of Array::push()")
@@ -2496,10 +2490,7 @@ class Interpreter {
                     JaktArray(values) => {
                         mut mutable_values = values
                         let value = mutable_values.last()
-                        yield match value.has_value() {
-                            true => StatementResult::JustValue(value!)
-                            false => StatementResult::JustValue(Value(impl: ValueImpl::OptionalNone, span: call_span))
-                        }
+                        yield .value_or_optional_none(value, span: call_span)
                     }
                     else => {
                         panic("Invalid use of Array::push()")
@@ -2683,7 +2674,7 @@ class Interpreter {
                     }
 
                     if start == end {
-                        return StatementResult::JustValue(Value(impl: ValueImpl::OptionalNone, span: call_span))
+                        return .value_or_optional_none(value: None, span: call_span)
                     }
 
                     if start > end {
@@ -2817,17 +2808,17 @@ class Interpreter {
                         yield match target_type {
                             I32 => {
                                 let v = value.to_number<i32>()
-                                let impl = match v.has_value() {
-                                    true => ValueImpl::OptionalSome(value: Value(impl: ValueImpl::I32(v!), span: call_span))
-                                    false => ValueImpl::OptionalNone
+                                let impl = match v {
+                                    Some(number) => ValueImpl::OptionalSome(value: Value(impl: ValueImpl::I32(number), span: call_span))
+                                    None => ValueImpl::OptionalNone
                                 }
                                 yield StatementResult::JustValue(Value(impl, span: call_span))
                             }
                             U32 => {
                                 let v = value.to_number<u32>()
-                                let impl = match v.has_value() {
-                                    true => ValueImpl::OptionalSome(value: Value(impl: ValueImpl::U32(v!), span: call_span))
-                                    false => ValueImpl::OptionalNone
+                                let impl = match v {
+                                    Some(number) => ValueImpl::OptionalSome(value: Value(impl: ValueImpl::U32(number), span: call_span))
+                                    None => ValueImpl::OptionalNone
                                 }
                                 yield StatementResult::JustValue(Value(impl, span: call_span))
                             }
@@ -3404,21 +3395,18 @@ class Interpreter {
         }
 
         mut is_prelude_function = false
-        let runtime_scope_id = match invocation_scope.has_value() {
-            true => match invocation_scope!.runtime_scope_id.has_value() {
-                true => invocation_scope!.runtime_scope_id
-                false => None
-            }
-            false => None
+        let runtime_scope_id = match invocation_scope {
+            Some(scope_) => scope_.runtime_scope_id
+            None => None
         }
 
         if function_to_run.linkage is External {
             // If this is a compiler interface function, or a prelude function, we can run it directly
             let function_scope = .program.get_scope(function_to_run.function_scope_id)
             // HACK: We shouldn't do this...
-            let parent_scope_name = match function_scope.parent.has_value() {
-                true => .program.get_scope(function_scope.parent!).debug_name
-                false => ""
+            let parent_scope_name = match function_scope.parent {
+                Some(parent_scope_id) => .program.get_scope(parent_scope_id).debug_name
+                None => ""
             }
             if parent_scope_name == "module(jakt__compiler)" {
                 return match .call_compiler_interface_function(
@@ -3802,13 +3790,13 @@ class Interpreter {
 
                 let block = match cond {
                     true => Some(then_block)
-                    false => match else_statement.has_value() {
-                        true => Some(CheckedBlock(
-                            statements: [else_statement!]
+                    false => match else_statement {
+                        Some(else_stmt) => Some(CheckedBlock(
+                            statements: [else_stmt]
                             scope_id: then_block.scope_id
                             control_flow: BlockControlFlow::MayReturn
                         ))
-                        false => None
+                        None => None
                     }
                 }
 
@@ -5620,10 +5608,10 @@ class Interpreter {
         }
     }
 
-    public fn execute_expression(mut this, anon expr: CheckedExpression, anon mut scope: InterpreterScope) throws -> StatementResult => match .current_function_id.has_value() {
-        false => .execute_expression_without_cast(expr, scope)
-        else => match .execute_expression_without_cast(expr, scope) {
-            Return(value) => StatementResult::Return(cast_value_to_type(value, .program.get_function(.current_function_id!).return_type_id, interpreter: this))
+    public fn execute_expression(mut this, anon expr: CheckedExpression, anon mut scope: InterpreterScope) throws -> StatementResult => match .current_function_id {
+        None => .execute_expression_without_cast(expr, scope)
+        Some(current_function_id) => match .execute_expression_without_cast(expr, scope) {
+            Return(value) => StatementResult::Return(cast_value_to_type(value, .program.get_function(current_function_id).return_type_id, interpreter: this))
             JustValue(value) => StatementResult::JustValue(cast_value_to_type(value, expr.type(), interpreter: this))
             Throw(value) => StatementResult::Throw(value)
             Yield(value) => StatementResult::Yield(value)
@@ -5645,6 +5633,13 @@ class Interpreter {
             return value
         }
         return None
+    }
+
+    fn value_or_optional_none(this, value: Value?, span: Span) -> StatementResult {
+        return StatementResult::JustValue(match value {
+            Some(existing_value) => existing_value
+            None => Value(impl: ValueImpl::OptionalNone, span)
+        })
     }
 
     public fn execute_expression_without_cast(mut this, anon expr: CheckedExpression, anon mut scope: InterpreterScope) throws -> StatementResult => match expr {
@@ -6102,8 +6097,8 @@ class Interpreter {
             }
         }
         Range(from, to, span) => {
-            let start = match from.has_value() {
-                true => match .execute_expression(expr: from!, scope) {
+            let start = match from {
+                Some(range_start_expr) => match .execute_expression(expr: range_start_expr, scope) {
                     Return(value) => {
                         return StatementResult::Return(value)
                     }
@@ -6121,13 +6116,13 @@ class Interpreter {
                         panic("Invalid control flow")
                     }
                 }
-                false => {
+                None => {
                     .error("Partial ranges are not implemented", span)
                     .compiler.panic("Not yet implemented")
                 }
             }
-            let end = match to.has_value() {
-                true => match .execute_expression(expr: to!, scope) {
+            let end = match to {
+                Some(range_end_expr) => match .execute_expression(expr: range_end_expr, scope) {
                     Return(value) => {
                         return StatementResult::Return(value)
                     }
@@ -6145,7 +6140,7 @@ class Interpreter {
                         panic("Invalid control flow")
                     }
                 }
-                false => {
+                None => {
                     .error("Partial ranges are not implemented", span)
                     .compiler.panic("Not yet implemented")
                 }
@@ -6731,9 +6726,9 @@ class Interpreter {
 
             yield StatementResult::JustValue(Value(impl: ValueImpl::U32(code_point!), span: span))
         }
-        JaktArray(vals, repeat, span, type_id) => match repeat.has_value() {
-            true => {
-                let count = match .execute_expression(repeat!, scope) {
+        JaktArray(vals, repeat, span, type_id) => match repeat {
+            Some(repeat_expr) => {
+                let count = match .execute_expression(repeat_expr, scope) {
                     Return(value) => {
                         return StatementResult::Return(value)
                     }
@@ -6785,7 +6780,7 @@ class Interpreter {
                     span: span
                 ))
             }
-            else => {
+            None => {
                 mut values: [Value] = []
                 for value in vals {
                     let val = match .execute_expression(value, scope) {

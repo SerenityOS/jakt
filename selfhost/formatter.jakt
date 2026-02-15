@@ -10,9 +10,9 @@ fn concat<T>(anon xs: [T], anon y: T) throws -> [T] {
 
 fn init<T>(anon xs: [T]) -> [T] => xs[..(xs.size() - 1)].to_array()
 
-fn collapse<T>(anon x: Optional<T>?) -> T? => match x.has_value() {
-    true => x!
-    false => None
+fn collapse<T>(anon x: Optional<T>?) -> T? => match x {
+    Some(value) => value
+    None => None
 }
 
 enum Entity {
