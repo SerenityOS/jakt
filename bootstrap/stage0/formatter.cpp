@@ -262,10 +262,10 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 65 /* Class */:case 99 /* Struct */:{
 TRY((this->push_state(Jakt::formatter::State::Extern())));
 }
-goto __jakt_label_188;default:{
+goto __jakt_label_191;default:{
 }
-goto __jakt_label_188;}/*switch end*/
-}goto __jakt_label_188; __jakt_label_188:;;
+goto __jakt_label_191;}/*switch end*/
+}goto __jakt_label_191; __jakt_label_191:;;
 return this->formatted_token(token,DynamicArray<u8>::create_with({static_cast<u8>(u8' ')}),DynamicArray<u8>::create_with({}));
 }
 VERIFY_NOT_REACHED();
@@ -442,9 +442,9 @@ ByteString output = ByteString::from_utf8_without_validation(""sv);
 Jakt::utility::Span const span = token.span();
 Jakt::lexer::Token local_token = token;
 while (!(local_token.__jakt_init_index() == 10 /* RCurly */)){
-Jakt::lexer::Token __jakt_tmp287 = local_token;
-if (__jakt_tmp287.__jakt_init_index() == 3 /* Identifier */){
-ByteString const name = __jakt_tmp287.as.Identifier.name;
+Jakt::lexer::Token __jakt_tmp295 = local_token;
+if (__jakt_tmp295.__jakt_init_index() == 3 /* Identifier */){
+ByteString const name = __jakt_tmp295.as.Identifier.name;
 collection.push(name);
 }
 local_token = this->consume();
@@ -970,16 +970,16 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 28 /* LessThan */:{
 open_angles += static_cast<i64>(1LL);
 }
-goto __jakt_label_189;case 26 /* GreaterThan */:{
+goto __jakt_label_192;case 26 /* GreaterThan */:{
 open_angles -= static_cast<i64>(1LL);
 }
-goto __jakt_label_189;case 55 /* Eol */:case 13 /* PercentSign */:case 14 /* Plus */:case 15 /* Minus */:case 16 /* Equal */:case 17 /* PlusEqual */:case 19 /* MinusEqual */:case 21 /* AsteriskEqual */:case 22 /* ForwardSlashEqual */:case 23 /* PercentSignEqual */:case 24 /* NotEqual */:case 25 /* DoubleEqual */:case 27 /* GreaterThanOrEqual */:case 29 /* LessThanOrEqual */:case 30 /* LeftArithmeticShift */:case 31 /* LeftShift */:case 33 /* RightShift */:case 32 /* LeftShiftEqual */:case 34 /* RightArithmeticShift */:case 35 /* RightShiftEqual */:case 36 /* Asterisk */:case 38 /* AmpersandEqual */:case 40 /* Pipe */:case 41 /* PipeEqual */:case 43 /* Caret */:case 44 /* CaretEqual */:case 47 /* ForwardSlash */:case 50 /* QuestionMarkQuestionMark */:case 51 /* QuestionMarkQuestionMarkEqual */:case 59 /* And */:case 81 /* In */:case 82 /* Is */:case 90 /* Or */:{
+goto __jakt_label_192;case 55 /* Eol */:case 13 /* PercentSign */:case 14 /* Plus */:case 15 /* Minus */:case 16 /* Equal */:case 17 /* PlusEqual */:case 19 /* MinusEqual */:case 21 /* AsteriskEqual */:case 22 /* ForwardSlashEqual */:case 23 /* PercentSignEqual */:case 24 /* NotEqual */:case 25 /* DoubleEqual */:case 27 /* GreaterThanOrEqual */:case 29 /* LessThanOrEqual */:case 30 /* LeftArithmeticShift */:case 31 /* LeftShift */:case 33 /* RightShift */:case 32 /* LeftShiftEqual */:case 34 /* RightArithmeticShift */:case 35 /* RightShiftEqual */:case 36 /* Asterisk */:case 38 /* AmpersandEqual */:case 40 /* Pipe */:case 41 /* PipeEqual */:case 43 /* Caret */:case 44 /* CaretEqual */:case 47 /* ForwardSlash */:case 50 /* QuestionMarkQuestionMark */:case 51 /* QuestionMarkQuestionMarkEqual */:case 59 /* And */:case 81 /* In */:case 82 /* Is */:case 90 /* Or */:{
 break;
 }
-goto __jakt_label_189;default:{
+goto __jakt_label_192;default:{
 }
-goto __jakt_label_189;}/*switch end*/
-break;}goto __jakt_label_189; __jakt_label_189:;;
+goto __jakt_label_192;}/*switch end*/
+break;}goto __jakt_label_192; __jakt_label_192:;;
 }
 if ((open_angles == static_cast<i64>(0LL)) && (this->peek(lookahead_index).__jakt_init_index() == 7 /* LParen */)){
 TRY((this->push_state(Jakt::formatter::State::GenericCallTypeParams(static_cast<size_t>(0ULL)))));
@@ -1601,12 +1601,12 @@ length += space;
 length += comment.value().length();
 }
 }
-goto __jakt_label_190;};/*case end*/
+goto __jakt_label_193;};/*case end*/
 default:{
 length += TRY((token.token_text())).length();
 }
-goto __jakt_label_190;}/*switch end*/
-}goto __jakt_label_190; __jakt_label_190:;;
+goto __jakt_label_193;}/*switch end*/
+}goto __jakt_label_193; __jakt_label_193:;;
 length += token.trailing_trivia.size();
 return length;
 }
@@ -1672,7 +1672,7 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 8 /* RParen */:case 10 /* RCurly */:case 12 /* RSquare */:{
 enclosure_run_length += static_cast<size_t>(1ULL);
 }
-goto __jakt_label_191;default:{
+goto __jakt_label_194;default:{
 {
 JaktInternal::Range<size_t> _magic = JaktInternal::Range<size_t>{static_cast<size_t>(static_cast<size_t>(0ULL)),static_cast<size_t>(enclosure_run_length)};
 for (;;){
@@ -1690,8 +1690,8 @@ line[JaktInternal::checked_sub(i,j)].token = Jakt::formatter::FormattedToken(lin
 
 enclosure_run_length = static_cast<size_t>(0ULL);
 }
-goto __jakt_label_191;}/*switch end*/
-break;}goto __jakt_label_191; __jakt_label_191:;;
+goto __jakt_label_194;}/*switch end*/
+break;}goto __jakt_label_194; __jakt_label_194:;;
 }
 
 }
@@ -1805,7 +1805,7 @@ this->enclosures_to_ignore += static_cast<size_t>(1ULL);
 }
 
 }
-goto __jakt_label_192;case 8 /* RParen */:case 10 /* RCurly */:case 12 /* RSquare */:{
+goto __jakt_label_195;case 8 /* RParen */:case 10 /* RCurly */:case 12 /* RSquare */:{
 bool ignore = false;
 if (this->enclosures_to_ignore > static_cast<size_t>(0ULL)){
 this->enclosures_to_ignore -= static_cast<size_t>(1ULL);
@@ -1830,7 +1830,7 @@ this->current_line_length += TRY((this->token_length(maybe_next_underlying_token
 
 accepted_at_least_one_token = true;
 }
-goto __jakt_label_192;case 52 /* Comma */:{
+goto __jakt_label_195;case 52 /* Comma */:{
 accepted_at_least_one_token = true;
 if (!Jakt::formatter::Formatter::should_ignore_state(current_state)){
 Jakt::lexer::Token const replacement = Jakt::formatter::collapse<Jakt::lexer::Token>(this->replace_commas_in_enclosure.last()).value_or_lazy_evaluated([&] { return next_underlying_token; });
@@ -1847,7 +1847,7 @@ this->current_line_length += TRY((this->token_length(maybe_next_underlying_token
 }
 
 }
-goto __jakt_label_192;default:{
+goto __jakt_label_195;default:{
 Jakt::lexer::Token const newline = Jakt::lexer::Token::Eol(JaktInternal::OptionalNone(),next_underlying_token.span());
 {auto&& __jakt_match_variant = next_underlying_token;
 switch(__jakt_match_variant.__jakt_init_index()) {
@@ -1861,10 +1861,10 @@ this->in_condition_expr_indented = true;
 }
 }
 }
-goto __jakt_label_193;default:{
+goto __jakt_label_196;default:{
 }
-goto __jakt_label_193;}/*switch end*/
-break;}goto __jakt_label_193; __jakt_label_193:;;
+goto __jakt_label_196;}/*switch end*/
+break;}goto __jakt_label_196; __jakt_label_196:;;
 if (this->logical_break_indent.has_value() && ((next_underlying_token.__jakt_init_index() == 59 /* And */) || (next_underlying_token.__jakt_init_index() == 90 /* Or */))){
 this->current_line.push(Jakt::formatter::ReflowState(maybe_next_underlying_token.value(),current_state,this->enclosures_to_ignore));
 this->current_line_length += TRY((this->token_length(maybe_next_underlying_token.value())));
@@ -1906,8 +1906,8 @@ if (this->in_condition_expr && ((next_underlying_token.__jakt_init_index() == 59
 this->breakable_points_in_current_line.push(Jakt::formatter::BreakablePoint::Logical(this->current_line.size(),this->current_line_length));
 }
 }
-goto __jakt_label_192;}/*switch end*/
-break;}goto __jakt_label_192; __jakt_label_192:;;
+goto __jakt_label_195;}/*switch end*/
+break;}goto __jakt_label_195; __jakt_label_195:;;
 if (this->tokens_to_reflow.is_empty()){
 maybe_next_underlying_token = TRY((this->token_provider.next()));
 current_state = this->token_provider.state();
@@ -1956,12 +1956,12 @@ this->empty_line_count += static_cast<size_t>(1ULL);
 }
 
 }
-goto __jakt_label_194;};/*case end*/
+goto __jakt_label_197;};/*case end*/
 default:{
 this->empty_line_count = static_cast<size_t>(0ULL);
 }
-goto __jakt_label_194;}/*switch end*/
-}goto __jakt_label_194; __jakt_label_194:;;
+goto __jakt_label_197;}/*switch end*/
+}goto __jakt_label_197; __jakt_label_197:;;
 }
 else {
 this->empty_line_count = static_cast<size_t>(0ULL);

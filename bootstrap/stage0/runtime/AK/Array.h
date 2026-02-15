@@ -8,8 +8,10 @@
 
 #include <AK/Iterator.h>
 #include <AK/Optional.h>
+#include <AK/ReverseIterator.h>
 #include <AK/Span.h>
 #include <AK/StdLibExtras.h>
+#include <AK/Tuple.h>
 #include <AK/TypedTransfer.h>
 
 namespace AK {
@@ -63,6 +65,30 @@ struct Array {
         return __data[index];
     }
 
+    template<size_t S>
+    [[nodiscard]] constexpr T& get() &
+    {
+        return at(S);
+    }
+
+    template<size_t S>
+    [[nodiscard]] constexpr T const& get() const&
+    {
+        return at(S);
+    }
+
+    template<size_t S>
+    [[nodiscard]] constexpr T&& get() &&
+    {
+        return move(at(S));
+    }
+
+    template<size_t S>
+    [[nodiscard]] constexpr T const&& get() const&&
+    {
+        return move(at(S));
+    }
+
     [[nodiscard]] constexpr T const& first() const { return at(0); }
     [[nodiscard]] constexpr T& first() { return at(0); }
 
@@ -87,12 +113,23 @@ struct Array {
 
     using ConstIterator = SimpleIterator<Array const, T const>;
     using Iterator = SimpleIterator<Array, T>;
+    using ReverseIterator = SimpleReverseIterator<Array, T>;
+    using ReverseConstIterator = SimpleReverseIterator<Array const, T const>;
 
     [[nodiscard]] constexpr ConstIterator begin() const { return ConstIterator::begin(*this); }
     [[nodiscard]] constexpr Iterator begin() { return Iterator::begin(*this); }
+    [[nodiscard]] constexpr ReverseConstIterator rbegin() const { return ReverseConstIterator::rbegin(*this); }
+    [[nodiscard]] constexpr ReverseIterator rbegin() { return ReverseIterator::rbegin(*this); }
 
     [[nodiscard]] constexpr ConstIterator end() const { return ConstIterator::end(*this); }
     [[nodiscard]] constexpr Iterator end() { return Iterator::end(*this); }
+    [[nodiscard]] constexpr ReverseConstIterator rend() const { return ReverseConstIterator::rend(*this); }
+    [[nodiscard]] constexpr ReverseIterator rend() { return ReverseConstIterator::rend(*this); }
+
+    ALWAYS_INLINE constexpr auto in_reverse() const
+    {
+        return ReverseWrapper::in_reverse(*this);
+    }
 
     [[nodiscard]] constexpr operator ReadonlySpan<T>() const { return span(); }
     [[nodiscard]] constexpr operator Span<T>() { return span(); }
@@ -182,6 +219,16 @@ constexpr auto to_array(Array<T, 0>)
     return Array<T, 0> {};
 }
 
+}
+
+namespace std {
+template<size_t I, typename T, size_t N>
+struct tuple_element<I, AK::Array<T, N>> {
+    using type = T;
+};
+
+template<typename T, size_t N>
+struct tuple_size<AK::Array<T, N>> : AK::Detail::IntegralConstant<size_t, N> { };
 }
 
 #if USING_AK_GLOBALLY

@@ -1384,6 +1384,8 @@ builder.appendff("type_span: {}, ", type_span);
 JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("visibility: {}, ", visibility);
 JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("invisible_to_ide: {}, ", invisible_to_ide);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("owner_scope: {}, ", owner_scope);
 JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("owner_scope_generics: {}, ", owner_scope_generics);
@@ -1393,7 +1395,7 @@ builder.appendff("external_name: {}", external_name);
 builder.append(")"sv);return builder.to_string(); }
 ErrorOr<NonnullRefPtr<Jakt::types::CheckedVariable>> Jakt::types::CheckedVariable::map_types(Function<ErrorOr<Jakt::ids::TypeId>(Jakt::ids::TypeId)> const& map) const {
 {
-return Jakt::types::CheckedVariable::__jakt_create(this->name,TRY((map(this->type_id))),this->is_mutable,this->definition_span,this->type_span,this->visibility,this->owner_scope,this->owner_scope_generics,this->external_name);
+return Jakt::types::CheckedVariable::__jakt_create(this->name,TRY((map(this->type_id))),this->is_mutable,this->definition_span,this->type_span,this->visibility,this->invisible_to_ide,this->owner_scope,this->owner_scope_generics,this->external_name);
 }
 }
 
@@ -1403,8 +1405,8 @@ return this->external_name.value_or_lazy_evaluated([&] { return Jakt::parser::Ex
 }
 }
 
-Jakt::types::CheckedVariable::CheckedVariable(ByteString a_name, Jakt::ids::TypeId a_type_id, bool a_is_mutable, Jakt::utility::Span a_definition_span, JaktInternal::Optional<Jakt::utility::Span> a_type_span, Jakt::types::CheckedVisibility a_visibility, JaktInternal::Optional<Jakt::ids::ScopeId> a_owner_scope, JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> a_owner_scope_generics, JaktInternal::Optional<Jakt::parser::ExternalName> a_external_name): name(move(a_name)), type_id(move(a_type_id)), is_mutable(move(a_is_mutable)), definition_span(move(a_definition_span)), type_span(move(a_type_span)), visibility(move(a_visibility)), owner_scope(move(a_owner_scope)), owner_scope_generics(move(a_owner_scope_generics)), external_name(move(a_external_name)){}
-NonnullRefPtr<CheckedVariable> Jakt::types::CheckedVariable::__jakt_create(ByteString name, Jakt::ids::TypeId type_id, bool is_mutable, Jakt::utility::Span definition_span, JaktInternal::Optional<Jakt::utility::Span> type_span, Jakt::types::CheckedVisibility visibility, JaktInternal::Optional<Jakt::ids::ScopeId> owner_scope, JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> owner_scope_generics, JaktInternal::Optional<Jakt::parser::ExternalName> external_name) { auto o = adopt_ref(*new CheckedVariable (move(name), move(type_id), move(is_mutable), move(definition_span), move(type_span), move(visibility), move(owner_scope), move(owner_scope_generics), move(external_name))); return o; }
+Jakt::types::CheckedVariable::CheckedVariable(ByteString a_name, Jakt::ids::TypeId a_type_id, bool a_is_mutable, Jakt::utility::Span a_definition_span, JaktInternal::Optional<Jakt::utility::Span> a_type_span, Jakt::types::CheckedVisibility a_visibility, bool a_invisible_to_ide, JaktInternal::Optional<Jakt::ids::ScopeId> a_owner_scope, JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> a_owner_scope_generics, JaktInternal::Optional<Jakt::parser::ExternalName> a_external_name): name(move(a_name)), type_id(move(a_type_id)), is_mutable(move(a_is_mutable)), definition_span(move(a_definition_span)), type_span(move(a_type_span)), visibility(move(a_visibility)), invisible_to_ide(move(a_invisible_to_ide)), owner_scope(move(a_owner_scope)), owner_scope_generics(move(a_owner_scope_generics)), external_name(move(a_external_name)){}
+NonnullRefPtr<CheckedVariable> Jakt::types::CheckedVariable::__jakt_create(ByteString name, Jakt::ids::TypeId type_id, bool is_mutable, Jakt::utility::Span definition_span, JaktInternal::Optional<Jakt::utility::Span> type_span, Jakt::types::CheckedVisibility visibility, bool invisible_to_ide, JaktInternal::Optional<Jakt::ids::ScopeId> owner_scope, JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> owner_scope_generics, JaktInternal::Optional<Jakt::parser::ExternalName> external_name) { auto o = adopt_ref(*new CheckedVariable (move(name), move(type_id), move(is_mutable), move(definition_span), move(type_span), move(visibility), move(invisible_to_ide), move(owner_scope), move(owner_scope_generics), move(external_name))); return o; }
 ByteString Jakt::types::CheckedVarDecl::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("CheckedVarDecl("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
 JaktInternal::PrettyPrint::must_output_indentation(builder);
@@ -1430,10 +1432,12 @@ builder.appendff("control_flow: {}, ", control_flow);
 JaktInternal::PrettyPrint::must_output_indentation(builder);
 builder.appendff("yielded_type: {}, ", yielded_type);
 JaktInternal::PrettyPrint::must_output_indentation(builder);
-builder.appendff("yielded_none: {}", yielded_none);
+builder.appendff("yielded_none: {}, ", yielded_none);
+JaktInternal::PrettyPrint::must_output_indentation(builder);
+builder.appendff("is_for_loop: {}", is_for_loop);
 }
 builder.append(")"sv);return builder.to_string(); }
-Jakt::types::CheckedBlock::CheckedBlock(JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::CheckedStatement>> a_statements, Jakt::ids::ScopeId a_scope_id, Jakt::types::BlockControlFlow a_control_flow, JaktInternal::Optional<Jakt::ids::TypeId> a_yielded_type, bool a_yielded_none): statements(move(a_statements)), scope_id(move(a_scope_id)), control_flow(move(a_control_flow)), yielded_type(move(a_yielded_type)), yielded_none(move(a_yielded_none)){}
+Jakt::types::CheckedBlock::CheckedBlock(JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::CheckedStatement>> a_statements, Jakt::ids::ScopeId a_scope_id, Jakt::types::BlockControlFlow a_control_flow, JaktInternal::Optional<Jakt::ids::TypeId> a_yielded_type, bool a_yielded_none, bool a_is_for_loop): statements(move(a_statements)), scope_id(move(a_scope_id)), control_flow(move(a_control_flow)), yielded_type(move(a_yielded_type)), yielded_none(move(a_yielded_none)), is_for_loop(move(a_is_for_loop)){}
 
 ByteString Jakt::types::FieldRecord::debug_description() const { auto builder = ByteStringBuilder::create();builder.append("FieldRecord("sv);{
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
@@ -3301,7 +3305,7 @@ break;
 size_t i = _magic_value.value();
 {
 Jakt::types::CheckedParameter const param = previous_function->params[i];
-Jakt::types::CheckedParameter const new_param = Jakt::types::CheckedParameter(param.requires_label,Jakt::types::CheckedVariable::__jakt_create(param.variable->name,new_params[i],param.variable->is_mutable,param.variable->definition_span,param.variable->type_span,param.variable->visibility,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone()),param.default_value_expression);
+Jakt::types::CheckedParameter const new_param = Jakt::types::CheckedParameter(param.requires_label,Jakt::types::CheckedVariable::__jakt_create(param.variable->name,new_params[i],param.variable->is_mutable,param.variable->definition_span,param.variable->type_span,param.variable->visibility,param.variable->invisible_to_ide,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),JaktInternal::OptionalNone()),param.default_value_expression);
 replacement_params.push(new_param);
 }
 
@@ -7871,9 +7875,9 @@ builder.appendff("span: {}", that.span);
 }
 builder.append(")"sv);
 break;}
-case 2 /* DestructuringAssignment */: {
-builder.append("CheckedStatement::DestructuringAssignment"sv);
-[[maybe_unused]] auto const& that = this->as.DestructuringAssignment;
+case 2 /* DestructuringDeclaration */: {
+builder.append("CheckedStatement::DestructuringDeclaration"sv);
+[[maybe_unused]] auto const& that = this->as.DestructuringDeclaration;
 builder.append("("sv);
 {
 JaktInternal::PrettyPrint::ScopedLevelIncrease increase_indent {};
@@ -8043,12 +8047,12 @@ new (&__jakt_uninit_enum->as.Defer.statement) (decltype(statement))(move(stateme
 new (&__jakt_uninit_enum->as.Defer.span) (decltype(span))(move(span));
 return __jakt_uninit_enum;
 }
-[[nodiscard]] NonnullRefPtr<CheckedStatement> CheckedStatement::DestructuringAssignment(JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::CheckedStatement>> vars, NonnullRefPtr<typename Jakt::types::CheckedStatement> var_decl, Jakt::utility::Span span){
+[[nodiscard]] NonnullRefPtr<CheckedStatement> CheckedStatement::DestructuringDeclaration(JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::CheckedStatement>> vars, NonnullRefPtr<typename Jakt::types::CheckedStatement> var_decl, Jakt::utility::Span span){
 NonnullRefPtr<CheckedStatement> __jakt_uninit_enum = adopt_ref(*new CheckedStatement);
 __jakt_uninit_enum->__jakt_variant_index = 3;
-new (&__jakt_uninit_enum->as.DestructuringAssignment.vars) (decltype(vars))(move(vars));
-new (&__jakt_uninit_enum->as.DestructuringAssignment.var_decl) (decltype(var_decl))(move(var_decl));
-new (&__jakt_uninit_enum->as.DestructuringAssignment.span) (decltype(span))(move(span));
+new (&__jakt_uninit_enum->as.DestructuringDeclaration.vars) (decltype(vars))(move(vars));
+new (&__jakt_uninit_enum->as.DestructuringDeclaration.var_decl) (decltype(var_decl))(move(var_decl));
+new (&__jakt_uninit_enum->as.DestructuringDeclaration.span) (decltype(span))(move(span));
 return __jakt_uninit_enum;
 }
 [[nodiscard]] NonnullRefPtr<CheckedStatement> CheckedStatement::VarDecl(Jakt::ids::VarId var_id, NonnullRefPtr<typename Jakt::types::CheckedExpression> init, Jakt::utility::Span span){
@@ -8149,10 +8153,10 @@ case 1 /* Defer */:
 new (&this->as.Defer.statement) (decltype(this->as.Defer.statement))(rhs.as.Defer.statement);
 new (&this->as.Defer.span) (decltype(this->as.Defer.span))(rhs.as.Defer.span);
 break;
-case 2 /* DestructuringAssignment */:
-new (&this->as.DestructuringAssignment.vars) (decltype(this->as.DestructuringAssignment.vars))(rhs.as.DestructuringAssignment.vars);
-new (&this->as.DestructuringAssignment.var_decl) (decltype(this->as.DestructuringAssignment.var_decl))(rhs.as.DestructuringAssignment.var_decl);
-new (&this->as.DestructuringAssignment.span) (decltype(this->as.DestructuringAssignment.span))(rhs.as.DestructuringAssignment.span);
+case 2 /* DestructuringDeclaration */:
+new (&this->as.DestructuringDeclaration.vars) (decltype(this->as.DestructuringDeclaration.vars))(rhs.as.DestructuringDeclaration.vars);
+new (&this->as.DestructuringDeclaration.var_decl) (decltype(this->as.DestructuringDeclaration.var_decl))(rhs.as.DestructuringDeclaration.var_decl);
+new (&this->as.DestructuringDeclaration.span) (decltype(this->as.DestructuringDeclaration.span))(rhs.as.DestructuringDeclaration.span);
 break;
 case 3 /* VarDecl */:
 new (&this->as.VarDecl.var_id) (decltype(this->as.VarDecl.var_id))(rhs.as.VarDecl.var_id);
@@ -8214,10 +8218,10 @@ case 1 /* Defer */:
 this->as.Defer.statement = rhs.as.Defer.statement;
 this->as.Defer.span = rhs.as.Defer.span;
 break;
-case 2 /* DestructuringAssignment */:
-this->as.DestructuringAssignment.vars = rhs.as.DestructuringAssignment.vars;
-this->as.DestructuringAssignment.var_decl = rhs.as.DestructuringAssignment.var_decl;
-this->as.DestructuringAssignment.span = rhs.as.DestructuringAssignment.span;
+case 2 /* DestructuringDeclaration */:
+this->as.DestructuringDeclaration.vars = rhs.as.DestructuringDeclaration.vars;
+this->as.DestructuringDeclaration.var_decl = rhs.as.DestructuringDeclaration.var_decl;
+this->as.DestructuringDeclaration.span = rhs.as.DestructuringDeclaration.span;
 break;
 case 3 /* VarDecl */:
 this->as.VarDecl.var_id = rhs.as.VarDecl.var_id;
@@ -8284,10 +8288,10 @@ case 1 /* Defer */:
 new (&this->as.Defer.statement) (decltype(this->as.Defer.statement))(rhs.as.Defer.statement);
 new (&this->as.Defer.span) (decltype(this->as.Defer.span))(rhs.as.Defer.span);
 break;
-case 2 /* DestructuringAssignment */:
-new (&this->as.DestructuringAssignment.vars) (decltype(this->as.DestructuringAssignment.vars))(rhs.as.DestructuringAssignment.vars);
-new (&this->as.DestructuringAssignment.var_decl) (decltype(this->as.DestructuringAssignment.var_decl))(rhs.as.DestructuringAssignment.var_decl);
-new (&this->as.DestructuringAssignment.span) (decltype(this->as.DestructuringAssignment.span))(rhs.as.DestructuringAssignment.span);
+case 2 /* DestructuringDeclaration */:
+new (&this->as.DestructuringDeclaration.vars) (decltype(this->as.DestructuringDeclaration.vars))(rhs.as.DestructuringDeclaration.vars);
+new (&this->as.DestructuringDeclaration.var_decl) (decltype(this->as.DestructuringDeclaration.var_decl))(rhs.as.DestructuringDeclaration.var_decl);
+new (&this->as.DestructuringDeclaration.span) (decltype(this->as.DestructuringDeclaration.span))(rhs.as.DestructuringDeclaration.span);
 break;
 case 3 /* VarDecl */:
 new (&this->as.VarDecl.var_id) (decltype(this->as.VarDecl.var_id))(rhs.as.VarDecl.var_id);
@@ -8354,10 +8358,10 @@ case 1 /* Defer */:
 new (&this->as.Defer.statement) (decltype(this->as.Defer.statement))(move(rhs.as.Defer.statement));
 new (&this->as.Defer.span) (decltype(this->as.Defer.span))(move(rhs.as.Defer.span));
 break;
-case 2 /* DestructuringAssignment */:
-new (&this->as.DestructuringAssignment.vars) (decltype(this->as.DestructuringAssignment.vars))(move(rhs.as.DestructuringAssignment.vars));
-new (&this->as.DestructuringAssignment.var_decl) (decltype(this->as.DestructuringAssignment.var_decl))(move(rhs.as.DestructuringAssignment.var_decl));
-new (&this->as.DestructuringAssignment.span) (decltype(this->as.DestructuringAssignment.span))(move(rhs.as.DestructuringAssignment.span));
+case 2 /* DestructuringDeclaration */:
+new (&this->as.DestructuringDeclaration.vars) (decltype(this->as.DestructuringDeclaration.vars))(move(rhs.as.DestructuringDeclaration.vars));
+new (&this->as.DestructuringDeclaration.var_decl) (decltype(this->as.DestructuringDeclaration.var_decl))(move(rhs.as.DestructuringDeclaration.var_decl));
+new (&this->as.DestructuringDeclaration.span) (decltype(this->as.DestructuringDeclaration.span))(move(rhs.as.DestructuringDeclaration.span));
 break;
 case 3 /* VarDecl */:
 new (&this->as.VarDecl.var_id) (decltype(this->as.VarDecl.var_id))(move(rhs.as.VarDecl.var_id));
@@ -8419,10 +8423,10 @@ case 1 /* Defer */:
 this->as.Defer.statement = move(rhs.as.Defer.statement);
 this->as.Defer.span = move(rhs.as.Defer.span);
 break;
-case 2 /* DestructuringAssignment */:
-this->as.DestructuringAssignment.vars = move(rhs.as.DestructuringAssignment.vars);
-this->as.DestructuringAssignment.var_decl = move(rhs.as.DestructuringAssignment.var_decl);
-this->as.DestructuringAssignment.span = move(rhs.as.DestructuringAssignment.span);
+case 2 /* DestructuringDeclaration */:
+this->as.DestructuringDeclaration.vars = move(rhs.as.DestructuringDeclaration.vars);
+this->as.DestructuringDeclaration.var_decl = move(rhs.as.DestructuringDeclaration.var_decl);
+this->as.DestructuringDeclaration.span = move(rhs.as.DestructuringDeclaration.span);
 break;
 case 3 /* VarDecl */:
 this->as.VarDecl.var_id = move(rhs.as.VarDecl.var_id);
@@ -8490,10 +8494,10 @@ case 1 /* Defer */:
 new (&this->as.Defer.statement) (decltype(this->as.Defer.statement))(move(rhs.as.Defer.statement));
 new (&this->as.Defer.span) (decltype(this->as.Defer.span))(move(rhs.as.Defer.span));
 break;
-case 2 /* DestructuringAssignment */:
-new (&this->as.DestructuringAssignment.vars) (decltype(this->as.DestructuringAssignment.vars))(move(rhs.as.DestructuringAssignment.vars));
-new (&this->as.DestructuringAssignment.var_decl) (decltype(this->as.DestructuringAssignment.var_decl))(move(rhs.as.DestructuringAssignment.var_decl));
-new (&this->as.DestructuringAssignment.span) (decltype(this->as.DestructuringAssignment.span))(move(rhs.as.DestructuringAssignment.span));
+case 2 /* DestructuringDeclaration */:
+new (&this->as.DestructuringDeclaration.vars) (decltype(this->as.DestructuringDeclaration.vars))(move(rhs.as.DestructuringDeclaration.vars));
+new (&this->as.DestructuringDeclaration.var_decl) (decltype(this->as.DestructuringDeclaration.var_decl))(move(rhs.as.DestructuringDeclaration.var_decl));
+new (&this->as.DestructuringDeclaration.span) (decltype(this->as.DestructuringDeclaration.span))(move(rhs.as.DestructuringDeclaration.span));
 break;
 case 3 /* VarDecl */:
 new (&this->as.VarDecl.var_id) (decltype(this->as.VarDecl.var_id))(move(rhs.as.VarDecl.var_id));
@@ -8558,9 +8562,9 @@ break;
 case 1 /* Defer */:this->as.Defer.statement.~NonnullRefPtr();
 this->as.Defer.span.~Span();
 break;
-case 2 /* DestructuringAssignment */:this->as.DestructuringAssignment.vars.~DynamicArray();
-this->as.DestructuringAssignment.var_decl.~NonnullRefPtr();
-this->as.DestructuringAssignment.span.~Span();
+case 2 /* DestructuringDeclaration */:this->as.DestructuringDeclaration.vars.~DynamicArray();
+this->as.DestructuringDeclaration.var_decl.~NonnullRefPtr();
+this->as.DestructuringDeclaration.span.~Span();
 break;
 case 3 /* VarDecl */:this->as.VarDecl.var_id.~VarId();
 this->as.VarDecl.init.~NonnullRefPtr();
@@ -8611,8 +8615,8 @@ return static_cast<JaktInternal::Optional<Jakt::utility::Span>>(span);};/*case e
 case 1 /* Defer */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Defer;Jakt::utility::Span const& span = __jakt_match_value.span;
 return span;};/*case end*/
-case 2 /* DestructuringAssignment */: {
-auto&& __jakt_match_value = __jakt_match_variant.as.DestructuringAssignment;Jakt::utility::Span const& span = __jakt_match_value.span;
+case 2 /* DestructuringDeclaration */: {
+auto&& __jakt_match_value = __jakt_match_variant.as.DestructuringDeclaration;Jakt::utility::Span const& span = __jakt_match_value.span;
 return span;};/*case end*/
 case 3 /* VarDecl */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.VarDecl;Jakt::utility::Span const& span = __jakt_match_value.span;

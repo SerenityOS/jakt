@@ -141,27 +141,51 @@ struct Tuple : Detail::Tuple<Ts...> {
     }
 
     template<typename T>
-    auto& get()
+    auto& get() &
     {
         return Detail::Tuple<Ts...>::template get<T>();
-    }
-
-    template<size_t index>
-    auto& get()
-    {
-        return Detail::Tuple<Ts...>::template get_with_index<typename Types::template Type<index>, index>();
     }
 
     template<typename T>
-    auto& get() const
+    auto&& get() &&
+    {
+        return move(Detail::Tuple<Ts...>::template get<T>());
+    }
+
+    template<size_t index>
+    auto& get() &
+    {
+        return Detail::Tuple<Ts...>::template get_with_index<typename Types::template Type<index>, index>();
+    }
+
+    template<size_t index>
+    auto&& get() &&
+    {
+        return move(Detail::Tuple<Ts...>::template get_with_index<typename Types::template Type<index>, index>());
+    }
+
+    template<typename T>
+    auto& get() const&
     {
         return Detail::Tuple<Ts...>::template get<T>();
     }
 
+    template<typename T>
+    auto&& get() const&&
+    {
+        return move(Detail::Tuple<Ts...>::template get<T>());
+    }
+
     template<size_t index>
-    auto& get() const
+    auto& get() const&
     {
         return Detail::Tuple<Ts...>::template get_with_index<typename Types::template Type<index>, index>();
+    }
+
+    template<size_t index>
+    auto&& get() const&&
+    {
+        return move(Detail::Tuple<Ts...>::template get_with_index<typename Types::template Type<index>, index>());
     }
 
     template<typename F>
@@ -219,8 +243,34 @@ private:
 template<class... Args>
 Tuple(Args... args) -> Tuple<Args...>;
 
+template<size_t I, typename T>
+struct TupleElement;
+
+template<size_t I, typename... Ts>
+struct TupleElement<I, Tuple<Ts...>> {
+    using Type = TypeListElement<I, typename Tuple<Ts...>::Types>::Type;
+};
+
+template<typename T>
+struct TupleSize;
+
+template<typename... Ts>
+struct TupleSize<Tuple<Ts...>> : Detail::IntegralConstant<size_t, sizeof...(Ts)> { };
+
+}
+
+namespace std {
+template<size_t I, typename... Ts>
+struct tuple_element<I, AK::Tuple<Ts...>> {
+    using type = AK::TupleElement<I, AK::Tuple<Ts...>>::Type;
+};
+
+template<typename... Ts>
+struct tuple_size<AK::Tuple<Ts...>> : AK::TupleSize<AK::Tuple<Ts...>> { };
 }
 
 #if USING_AK_GLOBALLY
 using AK::Tuple;
+using AK::TupleElement;
+using AK::TupleSize;
 #endif

@@ -22,9 +22,9 @@ break;
 }
 size_t idx = _magic_value.value();
 {
-JaktInternal::Optional<Jakt::ids::VarId> __jakt_tmp245 = cases[idx].bindings.get(name);
-if (__jakt_tmp245.has_value()){
-Jakt::ids::VarId const var = __jakt_tmp245.value();
+JaktInternal::Optional<Jakt::ids::VarId> __jakt_tmp252 = cases[idx].bindings.get(name);
+if (__jakt_tmp252.has_value()){
+Jakt::ids::VarId const var = __jakt_tmp252.value();
 if (program->get_variable(var)->type_id.equals(wanted_type)){
 correct.add(idx);
 }
@@ -51,9 +51,9 @@ break;
 }
 size_t idx = _magic_value.value();
 {
-JaktInternal::Optional<Jakt::ids::VarId> __jakt_tmp246 = cases[idx].bindings.get(name);
-if (__jakt_tmp246.has_value()){
-Jakt::ids::VarId const var = __jakt_tmp246.value();
+JaktInternal::Optional<Jakt::ids::VarId> __jakt_tmp253 = cases[idx].bindings.get(name);
+if (__jakt_tmp253.has_value()){
+Jakt::ids::VarId const var = __jakt_tmp253.value();
 if (program->get_variable(var)->type_id.equals(wanted_type)){
 correct.add(idx);
 }

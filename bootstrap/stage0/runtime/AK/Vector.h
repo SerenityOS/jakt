@@ -58,6 +58,9 @@ public:
     {
     }
 
+    constexpr static auto InlineCapacity = inline_capacity;
+
+#ifndef KERNEL
     Vector(std::initializer_list<T> list)
     requires(!IsLvalueReference<T>)
     {
@@ -65,6 +68,7 @@ public:
         for (auto& item : list)
             unchecked_append(item);
     }
+#endif
 
     Vector(Vector&& other)
         : m_size(other.m_size)
@@ -82,6 +86,12 @@ public:
         other.reset_capacity();
     }
 
+#ifdef KERNEL
+    Vector(Vector const&) = delete;
+
+    template<size_t other_inline_capacity>
+    Vector(Vector<T, other_inline_capacity> const&) = delete;
+#else
     Vector(Vector const& other)
     {
         ensure_capacity(other.size());
@@ -103,6 +113,29 @@ public:
         ensure_capacity(other.size());
         TypedTransfer<StorageType>::copy(data(), other.data(), other.size());
         m_size = other.size();
+    }
+#endif
+
+    ErrorOr<Vector> clone() const
+    {
+        Vector new_vector;
+
+        TRY(new_vector.try_ensure_capacity(size()));
+        TypedTransfer<StorageType>::copy(new_vector.data(), data(), size());
+        new_vector.m_size = size();
+
+        return new_vector;
+    }
+
+    static ErrorOr<Vector> from_span(ReadonlySpan<T> other)
+    {
+        Vector new_vector;
+
+        TRY(new_vector.try_ensure_capacity(other.size()));
+        TypedTransfer<StorageType>::copy(new_vector.data(), other.data(), other.size());
+        new_vector.m_size = other.size();
+
+        return new_vector;
     }
 
     ~Vector()
@@ -271,8 +304,6 @@ public:
         MUST(try_extend(other));
     }
 
-#endif
-
     ALWAYS_INLINE void append(T&& value)
     {
         if constexpr (contains_reference)
@@ -287,7 +318,6 @@ public:
         MUST(try_append(T(value)));
     }
 
-#ifndef KERNEL
     void append(StorageType const* values, size_t count)
     {
         MUST(try_append(values, count));
@@ -365,6 +395,12 @@ public:
         return *this;
     }
 
+#ifdef KERNEL
+    Vector& operator=(Vector const&) = delete;
+
+    template<size_t other_inline_capacity>
+    Vector& operator=(Vector<T, other_inline_capacity> const&) = delete;
+#else
     Vector& operator=(Vector const& other)
     {
         if (this != &other) {
@@ -385,6 +421,7 @@ public:
         m_size = other.size();
         return *this;
     }
+#endif
 
     void clear()
     {
@@ -716,6 +753,7 @@ public:
         return try_resize(new_size, true);
     }
 
+#ifndef KERNEL
     void grow_capacity(size_t needed_capacity)
     {
         MUST(try_grow_capacity(needed_capacity));
@@ -725,6 +763,7 @@ public:
     {
         MUST(try_ensure_capacity(needed_capacity));
     }
+#endif
 
     void shrink(size_t new_size, bool keep_capacity = false)
     {
@@ -745,6 +784,7 @@ public:
         m_size = new_size;
     }
 
+#ifndef KERNEL
     void resize(size_t new_size, bool keep_capacity = false)
     requires(!contains_reference)
     {
@@ -768,6 +808,7 @@ public:
         }
         *this = move(new_vector);
     }
+#endif
 
     using ConstIterator = SimpleIterator<Vector const, VisibleType const>;
     using Iterator = SimpleIterator<Vector, VisibleType>;

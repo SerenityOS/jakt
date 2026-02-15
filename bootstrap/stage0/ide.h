@@ -70,6 +70,10 @@ JaktInternal::DynamicArray<JaktInternal::Tuple<JaktInternal::Optional<ByteString
 
 ErrorOr<ByteString> get_constructor_signature(NonnullRefPtr<Jakt::types::CheckedProgram> const program, Jakt::ids::FunctionId const function_id);
 
+ErrorOr<JaktInternal::Optional<Jakt::ide::Usage>> find_span_in_vardecl(NonnullRefPtr<Jakt::types::CheckedProgram> const program, Jakt::ids::VarId const var_id, Jakt::utility::Span const span);
+
+ErrorOr<JaktInternal::Optional<Jakt::ide::Usage>> find_span_in_for_loop(NonnullRefPtr<Jakt::types::CheckedProgram> const program, Jakt::types::CheckedBlock const block, Jakt::utility::Span const span);
+
 }
 namespace ide {
 struct Mutability {
