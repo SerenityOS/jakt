@@ -100,8 +100,12 @@ public:
     [[nodiscard]] bool ends_with(StringView, CaseSensitivity = CaseSensitivity::CaseSensitive) const;
     [[nodiscard]] bool starts_with(char) const;
     [[nodiscard]] bool ends_with(char) const;
+
+#ifndef KERNEL
     [[nodiscard]] bool matches(StringView mask, CaseSensitivity = CaseSensitivity::CaseInsensitive) const;
     [[nodiscard]] bool matches(StringView mask, Vector<MaskSpan>&, CaseSensitivity = CaseSensitivity::CaseInsensitive) const;
+#endif
+
     [[nodiscard]] bool contains(char) const;
     [[nodiscard]] bool contains(u32) const;
     [[nodiscard]] bool contains(StringView, CaseSensitivity = CaseSensitivity::CaseSensitive) const;
@@ -125,7 +129,9 @@ public:
     [[nodiscard]] Optional<size_t> find_last(StringView needle) const { return StringUtils::find_last(*this, needle); }
     [[nodiscard]] Optional<size_t> find_last_not(char needle) const { return StringUtils::find_last_not(*this, needle); }
 
+#ifndef KERNEL
     [[nodiscard]] Vector<size_t> find_all(StringView needle) const;
+#endif
 
     using SearchDirection = StringUtils::SearchDirection;
     [[nodiscard]] Optional<size_t> find_any_of(StringView needles, SearchDirection direction = SearchDirection::Forward) const { return StringUtils::find_any_of(*this, needles, direction); }
@@ -147,7 +153,9 @@ public:
     [[nodiscard]] Vector<StringView> split_view(char, SplitBehavior = SplitBehavior::Nothing) const;
     [[nodiscard]] Vector<StringView> split_view(StringView, SplitBehavior = SplitBehavior::Nothing) const;
 
+#ifndef KERNEL
     [[nodiscard]] Vector<StringView> split_view_if(Function<bool(char)> const& predicate, SplitBehavior = SplitBehavior::Nothing) const;
+#endif
 
     [[nodiscard]] StringView find_last_split_view(char separator) const
     {
@@ -239,7 +247,11 @@ public:
         No,
         Yes,
     };
+
+#ifndef KERNEL
     [[nodiscard]] Vector<StringView> lines(ConsiderCarriageReturn = ConsiderCarriageReturn::Yes) const;
+#endif
+
     [[nodiscard]] size_t count_lines(ConsiderCarriageReturn = ConsiderCarriageReturn::Yes) const;
 
     // Create a new substring view of this string view, starting either at the beginning of
@@ -408,18 +420,7 @@ struct CaseInsensitiveASCIIStringViewTraits : public Traits<StringView> {
 
 }
 
-// FIXME: Remove this when clang on BSD distributions fully support consteval (specifically in the context of default parameter initialization).
-//        Note that this is fixed in clang-15, but is not yet picked up by all downstream distributions.
-//        See: https://github.com/llvm/llvm-project/issues/48230
-//        Additionally, oss-fuzz currently ships an llvm-project commit that is a pre-release of 15.0.0.
-//        See: https://github.com/google/oss-fuzz/issues/9989
-#if defined(AK_OS_BSD_GENERIC) || defined(OSS_FUZZ)
-#    define AK_STRING_VIEW_LITERAL_CONSTEVAL constexpr
-#else
-#    define AK_STRING_VIEW_LITERAL_CONSTEVAL consteval
-#endif
-
-[[nodiscard]] ALWAYS_INLINE AK_STRING_VIEW_LITERAL_CONSTEVAL AK::StringView operator""sv(char const* cstring, size_t length)
+[[nodiscard]] ALWAYS_INLINE consteval AK::StringView operator""sv(char const* cstring, size_t length)
 {
     return AK::StringView(cstring, length);
 }

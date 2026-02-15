@@ -305,21 +305,21 @@ ErrorOr<SearchableCircularBuffer> SearchableCircularBuffer::create_initialized(B
 ErrorOr<Bytes> SearchableCircularBuffer::read(Bytes bytes)
 {
     auto read_bytes_span = CircularBuffer::read(bytes);
-    TRY(hash_last_bytes(read_bytes_span.size()));
+    TRY(hash_new_bytes());
     return read_bytes_span;
 }
 
 ErrorOr<void> SearchableCircularBuffer::discard(size_t discarded_bytes)
 {
     TRY(CircularBuffer::discard(discarded_bytes));
-    TRY(hash_last_bytes(discarded_bytes));
+    TRY(hash_new_bytes());
     return {};
 }
 
 ErrorOr<size_t> SearchableCircularBuffer::flush_to_stream(Stream& stream)
 {
     auto flushed_byte_count = TRY(CircularBuffer::flush_to_stream(stream));
-    TRY(hash_last_bytes(flushed_byte_count));
+    TRY(hash_new_bytes());
     return flushed_byte_count;
 }
 
@@ -404,22 +404,25 @@ Optional<SearchableCircularBuffer::Match> SearchableCircularBuffer::find_copy_in
         }
     }
 
+    // Needle size needs to be limited, otherwise we can only find HASH_CHUNK_SIZE-sized matches using memory search.
+    needle = needle.trim(minimum_length);
+
     // Try a plain memory search for smaller values.
     // Note: This overlaps with the hash search for chunks of size HASH_CHUNK_SIZE for the purpose of validation.
     if (minimum_length <= HASH_CHUNK_SIZE) {
-        size_t haystack_offset_from_start = 0;
+        size_t haystack_offset_from_end = 0;
         Vector<ReadonlyBytes, 2> haystack;
+
+        // Note: memmem_reverse expects memory chunks in the order that it should search in,
+        //       so haystack[0] needs to be the memory with the highest match priority.
         haystack.append(next_search_span(search_limit()));
         if (haystack[0].size() < search_limit())
-            haystack.append(next_search_span(search_limit() - haystack[0].size()));
+            haystack.prepend(next_search_span(search_limit() - haystack[0].size()));
 
-        // TODO: `memmem` searches the memory in "natural" order, which means that it finds matches with a greater distance first.
-        //       Hash-based searching finds the shortest distances first, which is most likely better for encoding and memory efficiency.
-        //       Look into creating a `memmem_reverse`, which starts searching from the end.
-        auto memmem_match = AK::memmem(haystack.begin(), haystack.end(), needle);
+        auto memmem_match = AK::memmem_reverse(haystack.begin(), haystack.end(), needle);
         while (memmem_match.has_value()) {
             auto match_offset = memmem_match.release_value();
-            auto corrected_match_distance = search_limit() - haystack_offset_from_start - match_offset;
+            auto corrected_match_distance = haystack_offset_from_end + match_offset;
 
             // Validate the match through the set-distance-based implementation and extend it to the largest size possible.
             auto maybe_new_match = find_copy_in_seekback(Array { corrected_match_distance }, min(maximum_length, HASH_CHUNK_SIZE), minimum_length);
@@ -440,13 +443,15 @@ Optional<SearchableCircularBuffer::Match> SearchableCircularBuffer::find_copy_in
             auto size_to_discard = match_offset + 1;
 
             // Trim away the already processed bytes from the haystack.
-            haystack_offset_from_start += size_to_discard;
-            while (size_to_discard > 0) {
-                if (haystack[0].size() < size_to_discard) {
+            // Running out of haystack to discard is fine, in this case we found a match at the largest
+            // distance and therefore tried to advance past that.
+            haystack_offset_from_end += size_to_discard;
+            while (size_to_discard > 0 && haystack.size() > 0) {
+                if (haystack[0].size() <= size_to_discard) {
                     size_to_discard -= haystack[0].size();
                     haystack.remove(0);
                 } else {
-                    haystack[0] = haystack[0].slice(size_to_discard);
+                    haystack[0] = haystack[0].slice(0, haystack[0].size() - size_to_discard);
                     break;
                 }
             }
@@ -455,7 +460,7 @@ Optional<SearchableCircularBuffer::Match> SearchableCircularBuffer::find_copy_in
                 break;
 
             // Try and find the next match.
-            memmem_match = AK::memmem(haystack.begin(), haystack.end(), needle);
+            memmem_match = AK::memmem_reverse(haystack.begin(), haystack.end(), needle);
         }
 
         // If we found a match of size HASH_CHUNK_SIZE, we should have already found that using the hash search. Investigate.
@@ -534,21 +539,20 @@ ErrorOr<void> SearchableCircularBuffer::insert_location_hash(ReadonlyBytes value
     return {};
 }
 
-ErrorOr<void> SearchableCircularBuffer::hash_last_bytes(size_t count)
+ErrorOr<void> SearchableCircularBuffer::hash_new_bytes()
 {
     // Stop early if we don't have enough data overall to hash a full chunk.
     if (search_limit() < HASH_CHUNK_SIZE)
         return {};
 
-    auto remaining_recalculations = count;
-    while (remaining_recalculations > 0) {
-        // Note: We offset everything by HASH_CHUNK_SIZE because we have up to HASH_CHUNK_SIZE - 1 bytes that we couldn't hash before (as we had missing data).
-        //       The number of recalculations stays the same, since we now have up to HASH_CHUNK_SIZE - 1 bytes that we can't hash now.
-        auto recalculation_span = next_search_span(min(remaining_recalculations + HASH_CHUNK_SIZE - 1, search_limit()));
+    auto last_hash_head = (capacity() + m_reading_head - HASH_CHUNK_SIZE) % capacity();
+
+    while (m_hash_head <= last_hash_head) {
+        auto recalculation_span = m_buffer.span().slice(m_hash_head, (capacity() + m_reading_head - m_hash_head) % capacity());
 
         // If the span is smaller than a hash chunk, we need to manually craft some consecutive data to do the hashing.
         if (recalculation_span.size() < HASH_CHUNK_SIZE) {
-            auto auxiliary_span = next_seekback_span(remaining_recalculations);
+            auto auxiliary_span = m_buffer.span().slice((m_hash_head + recalculation_span.size()) % capacity());
 
             // Ensure that our math is correct and that both spans are "adjacent".
             VERIFY(recalculation_span.data() + recalculation_span.size() == m_buffer.data() + m_buffer.size());
@@ -566,7 +570,7 @@ ErrorOr<void> SearchableCircularBuffer::hash_last_bytes(size_t count)
                 TRY(insert_location_hash(temporary_hash_chunk, recalculation_span.data() - m_buffer.data()));
 
                 recalculation_span = recalculation_span.slice(1);
-                remaining_recalculations--;
+                m_hash_head++;
             }
 
             continue;
@@ -576,7 +580,7 @@ ErrorOr<void> SearchableCircularBuffer::hash_last_bytes(size_t count)
             auto value = recalculation_span.slice(i, HASH_CHUNK_SIZE);
             auto raw_offset = value.data() - m_buffer.data();
             TRY(insert_location_hash(value, raw_offset));
-            remaining_recalculations--;
+            m_hash_head++;
         }
     }
 

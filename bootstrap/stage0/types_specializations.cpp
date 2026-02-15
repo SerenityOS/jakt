@@ -41,12 +41,12 @@ auto&& __jakt_match_value = __jakt_match_variant.as.Break;NonnullRefPtr<Jakt::ty
 result = value;
 return Jakt::utility::IterationDecision<bool>::Break(true);
 }
-goto __jakt_label_208;};/*case end*/
+goto __jakt_label_211;};/*case end*/
 case 1 /* Continue */:{
 return Jakt::utility::IterationDecision<bool>::Continue();
 }
-goto __jakt_label_208;default: VERIFY_NOT_REACHED();}/*switch end*/
-}goto __jakt_label_208; __jakt_label_208:;;
+goto __jakt_label_211;default: VERIFY_NOT_REACHED();}/*switch end*/
+}goto __jakt_label_211; __jakt_label_211:;;
 }
 }
 ,ignore_mixin_scopes,root_scope)));
@@ -66,12 +66,12 @@ auto&& __jakt_match_value = __jakt_match_variant.as.Break;Jakt::types::Value con
 result = value;
 return Jakt::utility::IterationDecision<bool>::Break(true);
 }
-goto __jakt_label_209;};/*case end*/
+goto __jakt_label_212;};/*case end*/
 case 1 /* Continue */:{
 return Jakt::utility::IterationDecision<bool>::Continue();
 }
-goto __jakt_label_209;default: VERIFY_NOT_REACHED();}/*switch end*/
-}goto __jakt_label_209; __jakt_label_209:;;
+goto __jakt_label_212;default: VERIFY_NOT_REACHED();}/*switch end*/
+}goto __jakt_label_212; __jakt_label_212:;;
 }
 }
 ,ignore_mixin_scopes,root_scope)));
@@ -91,12 +91,12 @@ auto&& __jakt_match_value = __jakt_match_variant.as.Break;JaktInternal::Tuple<Ja
 result = value;
 return Jakt::utility::IterationDecision<bool>::Break(true);
 }
-goto __jakt_label_210;};/*case end*/
+goto __jakt_label_213;};/*case end*/
 case 1 /* Continue */:{
 return Jakt::utility::IterationDecision<bool>::Continue();
 }
-goto __jakt_label_210;default: VERIFY_NOT_REACHED();}/*switch end*/
-}goto __jakt_label_210; __jakt_label_210:;;
+goto __jakt_label_213;default: VERIFY_NOT_REACHED();}/*switch end*/
+}goto __jakt_label_213; __jakt_label_213:;;
 }
 }
 ,ignore_mixin_scopes,root_scope)));
@@ -116,12 +116,12 @@ auto&& __jakt_match_value = __jakt_match_variant.as.Break;Jakt::ids::EnumId cons
 result = value;
 return Jakt::utility::IterationDecision<bool>::Break(true);
 }
-goto __jakt_label_211;};/*case end*/
+goto __jakt_label_214;};/*case end*/
 case 1 /* Continue */:{
 return Jakt::utility::IterationDecision<bool>::Continue();
 }
-goto __jakt_label_211;default: VERIFY_NOT_REACHED();}/*switch end*/
-}goto __jakt_label_211; __jakt_label_211:;;
+goto __jakt_label_214;default: VERIFY_NOT_REACHED();}/*switch end*/
+}goto __jakt_label_214; __jakt_label_214:;;
 }
 }
 ,ignore_mixin_scopes,root_scope)));
@@ -141,12 +141,12 @@ auto&& __jakt_match_value = __jakt_match_variant.as.Break;Jakt::ids::TraitId con
 result = value;
 return Jakt::utility::IterationDecision<bool>::Break(true);
 }
-goto __jakt_label_212;};/*case end*/
+goto __jakt_label_215;};/*case end*/
 case 1 /* Continue */:{
 return Jakt::utility::IterationDecision<bool>::Continue();
 }
-goto __jakt_label_212;default: VERIFY_NOT_REACHED();}/*switch end*/
-}goto __jakt_label_212; __jakt_label_212:;;
+goto __jakt_label_215;default: VERIFY_NOT_REACHED();}/*switch end*/
+}goto __jakt_label_215; __jakt_label_215:;;
 }
 }
 ,ignore_mixin_scopes,root_scope)));
@@ -166,12 +166,12 @@ auto&& __jakt_match_value = __jakt_match_variant.as.Break;Jakt::ids::StructId co
 result = value;
 return Jakt::utility::IterationDecision<bool>::Break(true);
 }
-goto __jakt_label_213;};/*case end*/
+goto __jakt_label_216;};/*case end*/
 case 1 /* Continue */:{
 return Jakt::utility::IterationDecision<bool>::Continue();
 }
-goto __jakt_label_213;default: VERIFY_NOT_REACHED();}/*switch end*/
-}goto __jakt_label_213; __jakt_label_213:;;
+goto __jakt_label_216;default: VERIFY_NOT_REACHED();}/*switch end*/
+}goto __jakt_label_216; __jakt_label_216:;;
 }
 }
 ,ignore_mixin_scopes,root_scope)));
@@ -191,12 +191,12 @@ auto&& __jakt_match_value = __jakt_match_variant.as.Break;bool const& value = __
 result = value;
 return Jakt::utility::IterationDecision<bool>::Break(true);
 }
-goto __jakt_label_214;};/*case end*/
+goto __jakt_label_217;};/*case end*/
 case 1 /* Continue */:{
 return Jakt::utility::IterationDecision<bool>::Continue();
 }
-goto __jakt_label_214;default: VERIFY_NOT_REACHED();}/*switch end*/
-}goto __jakt_label_214; __jakt_label_214:;;
+goto __jakt_label_217;default: VERIFY_NOT_REACHED();}/*switch end*/
+}goto __jakt_label_217; __jakt_label_217:;;
 }
 }
 ,ignore_mixin_scopes,root_scope)));
@@ -216,12 +216,12 @@ auto&& __jakt_match_value = __jakt_match_variant.as.Break;JaktInternal::Tuple<Ja
 result = value;
 return Jakt::utility::IterationDecision<bool>::Break(true);
 }
-goto __jakt_label_215;};/*case end*/
+goto __jakt_label_218;};/*case end*/
 case 1 /* Continue */:{
 return Jakt::utility::IterationDecision<bool>::Continue();
 }
-goto __jakt_label_215;default: VERIFY_NOT_REACHED();}/*switch end*/
-}goto __jakt_label_215; __jakt_label_215:;;
+goto __jakt_label_218;default: VERIFY_NOT_REACHED();}/*switch end*/
+}goto __jakt_label_218; __jakt_label_218:;;
 }
 }
 ,ignore_mixin_scopes,root_scope)));
@@ -241,12 +241,12 @@ auto&& __jakt_match_value = __jakt_match_variant.as.Break;JaktInternal::Tuple<Ja
 result = value;
 return Jakt::utility::IterationDecision<bool>::Break(true);
 }
-goto __jakt_label_216;};/*case end*/
+goto __jakt_label_219;};/*case end*/
 case 1 /* Continue */:{
 return Jakt::utility::IterationDecision<bool>::Continue();
 }
-goto __jakt_label_216;default: VERIFY_NOT_REACHED();}/*switch end*/
-}goto __jakt_label_216; __jakt_label_216:;;
+goto __jakt_label_219;default: VERIFY_NOT_REACHED();}/*switch end*/
+}goto __jakt_label_219; __jakt_label_219:;;
 }
 }
 ,ignore_mixin_scopes,root_scope)));

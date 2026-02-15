@@ -92,10 +92,16 @@ constexpr T mix(T const& v1, T const& v2, U const& interpolation) // aka lerp
     return v1 + (v2 - v1) * interpolation;
 }
 
+template<typename T>
+constexpr T mod(T const& a, IdentityType<T> const& b)
+{
+    VERIFY(b != 0);
+    return (a % b + b) % b;
+}
+
 template<typename T, typename U>
 constexpr T ceil_div(T a, U b)
 {
-    static_assert(sizeof(T) == sizeof(U));
     T result = a / b;
     if ((a % b) != 0 && (a > 0) == (b > 0))
         ++result;
@@ -105,7 +111,6 @@ constexpr T ceil_div(T a, U b)
 template<typename T, typename U>
 constexpr T floor_div(T a, U b)
 {
-    static_assert(sizeof(T) == sizeof(U));
     T result = a / b;
     if ((a % b) != 0 && (a > 0) != (b > 0))
         --result;
@@ -155,7 +160,7 @@ requires(IsIntegral<T>)
 {
     if (!is_constant_evaluated()) {
         asm volatile(""
-                     : "+r"(value));
+            : "+r"(value));
     }
 }
 
@@ -165,9 +170,9 @@ requires(!IsIntegral<T>)
 {
     if (!is_constant_evaluated()) {
         asm volatile(""
-                     :
-                     : "m"(value)
-                     : "memory");
+            :
+            : "m"(value)
+            : "memory");
     }
 }
 
@@ -207,6 +212,7 @@ using AK::is_power_of_two;
 using AK::max;
 using AK::min;
 using AK::mix;
+using AK::mod;
 using AK::move;
 using AK::RawPtr;
 using AK::round_up_to_power_of_two;

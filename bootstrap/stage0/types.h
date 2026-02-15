@@ -572,7 +572,7 @@ BlockControlFlow() {};
 };
 struct CheckedBlock {
   public:
-public: JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::CheckedStatement>> statements;public: Jakt::ids::ScopeId scope_id;public: Jakt::types::BlockControlFlow control_flow;public: JaktInternal::Optional<Jakt::ids::TypeId> yielded_type;public: bool yielded_none;public: CheckedBlock(JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::CheckedStatement>> a_statements, Jakt::ids::ScopeId a_scope_id, Jakt::types::BlockControlFlow a_control_flow, JaktInternal::Optional<Jakt::ids::TypeId> a_yielded_type, bool a_yielded_none);
+public: JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::CheckedStatement>> statements;public: Jakt::ids::ScopeId scope_id;public: Jakt::types::BlockControlFlow control_flow;public: JaktInternal::Optional<Jakt::ids::TypeId> yielded_type;public: bool yielded_none;public: bool is_for_loop;public: CheckedBlock(JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::CheckedStatement>> a_statements, Jakt::ids::ScopeId a_scope_id, Jakt::types::BlockControlFlow a_control_flow, JaktInternal::Optional<Jakt::ids::TypeId> a_yielded_type, bool a_yielded_none, bool a_is_for_loop);
 
 public: ByteString debug_description() const;
 };class CheckedFunction :public RefCounted<CheckedFunction>, public Weakable<CheckedFunction> {
@@ -678,12 +678,12 @@ public: ByteString debug_description() const;
 };class CheckedVariable :public RefCounted<CheckedVariable>, public Weakable<CheckedVariable> {
   public:
 virtual ~CheckedVariable() = default;
-public: ByteString name;public: Jakt::ids::TypeId type_id;public: bool is_mutable;public: Jakt::utility::Span definition_span;public: JaktInternal::Optional<Jakt::utility::Span> type_span;public: Jakt::types::CheckedVisibility visibility;public: JaktInternal::Optional<Jakt::ids::ScopeId> owner_scope;public: JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> owner_scope_generics;public: JaktInternal::Optional<Jakt::parser::ExternalName> external_name;public: ErrorOr<NonnullRefPtr<Jakt::types::CheckedVariable>> map_types(Function<ErrorOr<Jakt::ids::TypeId>(Jakt::ids::TypeId)> const& map) const;
+public: ByteString name;public: Jakt::ids::TypeId type_id;public: bool is_mutable;public: Jakt::utility::Span definition_span;public: JaktInternal::Optional<Jakt::utility::Span> type_span;public: Jakt::types::CheckedVisibility visibility;public: bool invisible_to_ide;public: JaktInternal::Optional<Jakt::ids::ScopeId> owner_scope;public: JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> owner_scope_generics;public: JaktInternal::Optional<Jakt::parser::ExternalName> external_name;public: ErrorOr<NonnullRefPtr<Jakt::types::CheckedVariable>> map_types(Function<ErrorOr<Jakt::ids::TypeId>(Jakt::ids::TypeId)> const& map) const;
 public: Jakt::parser::ExternalName name_for_codegen() const;
 public: protected:
-explicit CheckedVariable(ByteString a_name, Jakt::ids::TypeId a_type_id, bool a_is_mutable, Jakt::utility::Span a_definition_span, JaktInternal::Optional<Jakt::utility::Span> a_type_span, Jakt::types::CheckedVisibility a_visibility, JaktInternal::Optional<Jakt::ids::ScopeId> a_owner_scope, JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> a_owner_scope_generics, JaktInternal::Optional<Jakt::parser::ExternalName> a_external_name);
+explicit CheckedVariable(ByteString a_name, Jakt::ids::TypeId a_type_id, bool a_is_mutable, Jakt::utility::Span a_definition_span, JaktInternal::Optional<Jakt::utility::Span> a_type_span, Jakt::types::CheckedVisibility a_visibility, bool a_invisible_to_ide, JaktInternal::Optional<Jakt::ids::ScopeId> a_owner_scope, JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> a_owner_scope_generics, JaktInternal::Optional<Jakt::parser::ExternalName> a_external_name);
 public:
-static NonnullRefPtr<CheckedVariable> __jakt_create(ByteString name, Jakt::ids::TypeId type_id, bool is_mutable, Jakt::utility::Span definition_span, JaktInternal::Optional<Jakt::utility::Span> type_span, Jakt::types::CheckedVisibility visibility, JaktInternal::Optional<Jakt::ids::ScopeId> owner_scope, JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> owner_scope_generics, JaktInternal::Optional<Jakt::parser::ExternalName> external_name);
+static NonnullRefPtr<CheckedVariable> __jakt_create(ByteString name, Jakt::ids::TypeId type_id, bool is_mutable, Jakt::utility::Span definition_span, JaktInternal::Optional<Jakt::utility::Span> type_span, Jakt::types::CheckedVisibility visibility, bool invisible_to_ide, JaktInternal::Optional<Jakt::ids::ScopeId> owner_scope, JaktInternal::Optional<JaktInternal::Dictionary<Jakt::ids::TypeId,Jakt::ids::TypeId>> owner_scope_generics, JaktInternal::Optional<Jakt::parser::ExternalName> external_name);
 
 public: ByteString debug_description() const;
 };struct CheckedVarDecl {
@@ -786,7 +786,7 @@ struct {
 JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::CheckedStatement>> vars;
 NonnullRefPtr<typename Jakt::types::CheckedStatement> var_decl;
 Jakt::utility::Span span;
-} DestructuringAssignment;
+} DestructuringDeclaration;
 struct {
 Jakt::ids::VarId var_id;
 NonnullRefPtr<typename Jakt::types::CheckedExpression> init;
@@ -842,7 +842,7 @@ constexpr VariantData() {}
 constexpr u8 __jakt_init_index() const noexcept { return __jakt_variant_index - 1; }ByteString debug_description() const;
 [[nodiscard]] static NonnullRefPtr<CheckedStatement> Expression(NonnullRefPtr<typename Jakt::types::CheckedExpression> expr, Jakt::utility::Span span);
 [[nodiscard]] static NonnullRefPtr<CheckedStatement> Defer(NonnullRefPtr<typename Jakt::types::CheckedStatement> statement, Jakt::utility::Span span);
-[[nodiscard]] static NonnullRefPtr<CheckedStatement> DestructuringAssignment(JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::CheckedStatement>> vars, NonnullRefPtr<typename Jakt::types::CheckedStatement> var_decl, Jakt::utility::Span span);
+[[nodiscard]] static NonnullRefPtr<CheckedStatement> DestructuringDeclaration(JaktInternal::DynamicArray<NonnullRefPtr<typename Jakt::types::CheckedStatement>> vars, NonnullRefPtr<typename Jakt::types::CheckedStatement> var_decl, Jakt::utility::Span span);
 [[nodiscard]] static NonnullRefPtr<CheckedStatement> VarDecl(Jakt::ids::VarId var_id, NonnullRefPtr<typename Jakt::types::CheckedExpression> init, Jakt::utility::Span span);
 [[nodiscard]] static NonnullRefPtr<CheckedStatement> If(NonnullRefPtr<typename Jakt::types::CheckedExpression> condition, Jakt::types::CheckedBlock then_block, JaktInternal::Optional<NonnullRefPtr<typename Jakt::types::CheckedStatement>> else_statement, Jakt::utility::Span span);
 [[nodiscard]] static NonnullRefPtr<CheckedStatement> Block(Jakt::types::CheckedBlock block, Jakt::utility::Span span);

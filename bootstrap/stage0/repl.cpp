@@ -337,7 +337,7 @@ TRY((compiler->load_prelude()));
 Jakt::utility::FileId const file_id = compiler->get_file_id_or_register(Jakt::jakt__path::Path::from_string(ByteString::from_utf8_without_validation("<repl>"sv)));
 Jakt::ids::ModuleId const placeholder_module_id = Jakt::ids::ModuleId(static_cast<size_t>(0ULL));
 ByteString const root_module_name = ByteString::from_utf8_without_validation("repl"sv);
-Jakt::typechecker::Typechecker typechecker = Jakt::typechecker::Typechecker(compiler,Jakt::types::CheckedProgram::__jakt_create(compiler,DynamicArray<NonnullRefPtr<Jakt::types::Module>>::create_with({}),Dictionary<ByteString, JaktInternal::Dictionary<Jakt::ids::TypeId,JaktInternal::DynamicArray<Jakt::parser::ParsedName>>>::create_with_entries({}),Dictionary<ByteString, Jakt::types::LoadedModule>::create_with_entries({})),placeholder_module_id,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),Jakt::typechecker::BreakContinueLegalityTracker::None(),Jakt::typechecker::ReturnLegalityTracker::None(),false,compiler->dump_type_hints,compiler->dump_try_hints,static_cast<u64>(0ULL),Jakt::types::GenericInferences(Dictionary<Jakt::ids::TypeId, Jakt::ids::TypeId>::create_with_entries({})),JaktInternal::OptionalNone(),root_module_name,false,false,Dictionary<ByteString, Jakt::ids::ScopeId>::create_with_entries({}),JaktInternal::OptionalNone(),static_cast<u64>(0ULL),Jakt::types::CheckedBlock(DynamicArray<NonnullRefPtr<typename Jakt::types::CheckedStatement>>::create_with({}),Jakt::ids::ScopeId(Jakt::ids::ModuleId(static_cast<size_t>(18446744073709551615ULL)),static_cast<size_t>(18446744073709551615ULL)),Jakt::types::BlockControlFlow::NeverReturns(),JaktInternal::OptionalNone(),false));
+Jakt::typechecker::Typechecker typechecker = Jakt::typechecker::Typechecker(compiler,Jakt::types::CheckedProgram::__jakt_create(compiler,DynamicArray<NonnullRefPtr<Jakt::types::Module>>::create_with({}),Dictionary<ByteString, JaktInternal::Dictionary<Jakt::ids::TypeId,JaktInternal::DynamicArray<Jakt::parser::ParsedName>>>::create_with_entries({}),Dictionary<ByteString, Jakt::types::LoadedModule>::create_with_entries({})),placeholder_module_id,JaktInternal::OptionalNone(),JaktInternal::OptionalNone(),Jakt::typechecker::BreakContinueLegalityTracker::None(),Jakt::typechecker::ReturnLegalityTracker::None(),false,compiler->dump_type_hints,compiler->dump_try_hints,static_cast<u64>(0ULL),Jakt::types::GenericInferences(Dictionary<Jakt::ids::TypeId, Jakt::ids::TypeId>::create_with_entries({})),JaktInternal::OptionalNone(),root_module_name,false,false,Dictionary<ByteString, Jakt::ids::ScopeId>::create_with_entries({}),JaktInternal::OptionalNone(),static_cast<u64>(0ULL),Jakt::types::CheckedBlock(DynamicArray<NonnullRefPtr<typename Jakt::types::CheckedStatement>>::create_with({}),Jakt::ids::ScopeId(Jakt::ids::ModuleId(static_cast<size_t>(18446744073709551615ULL)),static_cast<size_t>(18446744073709551615ULL)),Jakt::types::BlockControlFlow::NeverReturns(),JaktInternal::OptionalNone(),false,false));
 compiler->current_file = file_id;
 TRY((typechecker.include_prelude()));
 Jakt::ids::ModuleId const root_module_id = typechecker.create_module(root_module_name,true,JaktInternal::OptionalNone());
@@ -393,25 +393,25 @@ switch(__jakt_match_variant.__jakt_init_index()) {
 case 7 /* LParen */:{
 unmatched_parens += static_cast<i64>(1LL);
 }
-goto __jakt_label_200;case 8 /* RParen */:{
+goto __jakt_label_203;case 8 /* RParen */:{
 unmatched_parens -= static_cast<i64>(1LL);
 }
-goto __jakt_label_200;case 11 /* LSquare */:{
+goto __jakt_label_203;case 11 /* LSquare */:{
 unmatched_brackets += static_cast<i64>(1LL);
 }
-goto __jakt_label_200;case 12 /* RSquare */:{
+goto __jakt_label_203;case 12 /* RSquare */:{
 unmatched_brackets -= static_cast<i64>(1LL);
 }
-goto __jakt_label_200;case 9 /* LCurly */:{
+goto __jakt_label_203;case 9 /* LCurly */:{
 unmatched_curlies += static_cast<i64>(1LL);
 }
-goto __jakt_label_200;case 10 /* RCurly */:{
+goto __jakt_label_203;case 10 /* RCurly */:{
 unmatched_curlies -= static_cast<i64>(1LL);
 }
-goto __jakt_label_200;default:{
+goto __jakt_label_203;default:{
 }
-goto __jakt_label_200;}/*switch end*/
-break;}goto __jakt_label_200; __jakt_label_200:;;
+goto __jakt_label_203;}/*switch end*/
+break;}goto __jakt_label_203; __jakt_label_203:;;
 }
 
 }
@@ -461,175 +461,175 @@ Jakt::lexer::Token token = _magic_value.value();
 switch(__jakt_match_variant.__jakt_init_index()) {
 case 0 /* SingleQuotedString */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.SingleQuotedString;Jakt::utility::Span const& span = __jakt_match_value.span;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Green()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Green()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 1 /* QuotedString */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.QuotedString;Jakt::utility::Span const& span = __jakt_match_value.span;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Green()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Green()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 2 /* Number */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Number;Jakt::utility::Span const& span = __jakt_match_value.span;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Blue()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Blue()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 59 /* And */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.And;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 60 /* Anon */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Anon;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 61 /* As */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.As;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 62 /* Boxed */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Boxed;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 63 /* Break */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Break;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 64 /* Catch */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Catch;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 65 /* Class */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Class;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 66 /* Continue */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Continue;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 67 /* Cpp */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Cpp;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 68 /* Defer */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Defer;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 69 /* Destructor */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Destructor;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 70 /* Else */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Else;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 71 /* Enum */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Enum;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 72 /* Extern */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Extern;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 74 /* False */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.False;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 75 /* For */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.For;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 76 /* Fn */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Fn;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 77 /* Comptime */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Comptime;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 78 /* If */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.If;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 79 /* Import */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Import;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 81 /* In */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.In;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 82 /* Is */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Is;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 83 /* Let */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Let;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 84 /* Loop */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Loop;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 85 /* Match */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Match;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 87 /* Mut */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Mut;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 88 /* Namespace */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Namespace;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 89 /* Not */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Not;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 90 /* Or */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Or;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 91 /* Override */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Override;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 92 /* Private */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Private;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 93 /* Public */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Public;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 94 /* Raw */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Raw;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 95 /* Reflect */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Reflect;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 96 /* Return */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Return;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 97 /* Restricted */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Restricted;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 98 /* Sizeof */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Sizeof;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 99 /* Struct */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Struct;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 100 /* This */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.This;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 53 /* Dot */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Dot;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 101 /* Throw */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Throw;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 102 /* Throws */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Throws;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 103 /* True */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.True;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 104 /* Try */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Try;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 105 /* Unsafe */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Unsafe;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 106 /* Virtual */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Virtual;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 107 /* Weak */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Weak;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 108 /* While */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.While;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 109 /* Yield */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Yield;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 110 /* Guard */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Guard;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 111 /* Implements */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Implements;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 112 /* Requires */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Requires;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 113 /* Trait */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Trait;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Yellow()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 54 /* DotDot */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.DotDot;Jakt::utility::Span const& span = __jakt_match_value.value;
-TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Cyan()),JaktInternal::OptionalNone()))));goto __jakt_label_201;};/*case end*/
+TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::XTerm(Jakt::repl_backend__common::XTermColor::Cyan()),JaktInternal::OptionalNone()))));goto __jakt_label_204;};/*case end*/
 case 55 /* Eol */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Eol;Jakt::utility::Span const& span = __jakt_match_value.span;
 JaktInternal::Optional<ByteString> const& comment = __jakt_match_value.comment;
@@ -638,11 +638,11 @@ if (comment.has_value()){
 TRY((editor.highlight(span,Jakt::repl_backend__common::Style(Jakt::repl_backend__common::Color::Components(static_cast<u8>(128),static_cast<u8>(128),static_cast<u8>(128)),JaktInternal::OptionalNone()))));
 }
 }
-goto __jakt_label_201;};/*case end*/
+goto __jakt_label_204;};/*case end*/
 default:{
 }
-goto __jakt_label_201;}/*switch end*/
-break;}goto __jakt_label_201; __jakt_label_201:;;
+goto __jakt_label_204;}/*switch end*/
+break;}goto __jakt_label_204; __jakt_label_204:;;
 }
 
 }
@@ -671,9 +671,9 @@ return {};
 } else {__jakt_var_141 = __jakt_var_142.release_value();
 }
 __jakt_var_141.release_value(); });
-Jakt::repl_backend__common::LineResult __jakt_tmp291 = line_result;
-if (__jakt_tmp291.__jakt_init_index() == 0 /* Line */){
-ByteString const line = __jakt_tmp291.as.Line.value;
+Jakt::repl_backend__common::LineResult __jakt_tmp305 = line_result;
+if (__jakt_tmp305.__jakt_init_index() == 0 /* Line */){
+ByteString const line = __jakt_tmp305.as.Line.value;
 if (line == ByteString::from_utf8_without_validation("\n"sv)){
 continue;
 }
@@ -706,9 +706,9 @@ return {};
 } else {__jakt_var_145 = __jakt_var_146.release_value();
 }
 __jakt_var_145.release_value(); });
-Jakt::repl_backend__common::LineResult __jakt_tmp292 = line_result;
-if (__jakt_tmp292.__jakt_init_index() == 0 /* Line */){
-ByteString const line = __jakt_tmp292.as.Line.value;
+Jakt::repl_backend__common::LineResult __jakt_tmp306 = line_result;
+if (__jakt_tmp306.__jakt_init_index() == 0 /* Line */){
+ByteString const line = __jakt_tmp306.as.Line.value;
 builder.append(line);
 this->compiler->current_file = this->file_id;
 this->compiler->current_file_contents = Jakt::repl::REPL::line_to_bytes(builder.to_string());
@@ -798,7 +798,7 @@ if (value.impl->__jakt_init_index() == 0 /* Void */){
 continue;
 }
 }
-goto __jakt_label_202;};/*case end*/
+goto __jakt_label_205;};/*case end*/
 case 5 /* JustValue */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.JustValue;Jakt::types::Value const& value = __jakt_match_value.value;
 {
@@ -806,7 +806,7 @@ if (value.impl->__jakt_init_index() == 0 /* Void */){
 continue;
 }
 }
-goto __jakt_label_202;};/*case end*/
+goto __jakt_label_205;};/*case end*/
 case 1 /* Throw */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Throw;Jakt::types::Value const& value = __jakt_match_value.value;
 {
@@ -814,11 +814,11 @@ if (value.impl->__jakt_init_index() == 0 /* Void */){
 continue;
 }
 }
-goto __jakt_label_202;};/*case end*/
+goto __jakt_label_205;};/*case end*/
 case 4 /* Break */:case 3 /* Continue */:case 2 /* Yield */:{
 }
-goto __jakt_label_202;default: VERIFY_NOT_REACHED();}/*switch end*/
-break;}goto __jakt_label_202; __jakt_label_202:;;
+goto __jakt_label_205;default: VERIFY_NOT_REACHED();}/*switch end*/
+break;}goto __jakt_label_205; __jakt_label_205:;;
 ByteString const output = ({
     auto&& _jakt_value = ([&]() -> JaktInternal::ExplicitValueOrControlFlow<ByteString, ErrorOr<void>>{
 auto&& __jakt_match_variant = result;

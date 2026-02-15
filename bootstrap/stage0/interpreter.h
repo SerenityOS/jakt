@@ -171,6 +171,8 @@ public: ErrorOr<void> error_with_hint(ByteString const message, Jakt::utility::S
 public: ErrorOr<Jakt::interpreter::StatementResult> execute_binary_operator(Jakt::types::Value const lhs_value, Jakt::types::Value const rhs_value, Jakt::parser::BinaryOperator const op, Jakt::utility::Span const span, NonnullRefPtr<Jakt::interpreter::InterpreterScope> const scope);
 public: ErrorOr<void> update_binding(NonnullRefPtr<typename Jakt::types::CheckedExpression> const binding, NonnullRefPtr<Jakt::interpreter::InterpreterScope> scope, Jakt::types::Value const value, Jakt::utility::Span const span);
 public: ErrorOr<Jakt::interpreter::StatementResult> execute_expression(NonnullRefPtr<typename Jakt::types::CheckedExpression> const expr, NonnullRefPtr<Jakt::interpreter::InterpreterScope> scope);
+private: bool value_impl_matches_optional_variant(NonnullRefPtr<typename Jakt::types::ValueImpl> const value_impl, ByteString const variant_name) const;
+private: JaktInternal::Optional<Jakt::types::Value> optional_payload_if_present(NonnullRefPtr<typename Jakt::types::ValueImpl> const value_impl) const;
 public: ErrorOr<Jakt::interpreter::StatementResult> execute_expression_without_cast(NonnullRefPtr<typename Jakt::types::CheckedExpression> const expr, NonnullRefPtr<Jakt::interpreter::InterpreterScope> scope);
 public: ErrorOr<Jakt::ids::TypeId> array_type_of_struct(Jakt::ids::StructId const struct_id);
 public: ErrorOr<Jakt::types::Value> array_value_of_type(JaktInternal::DynamicArray<Jakt::types::Value> const values, Jakt::ids::TypeId const type, Jakt::utility::Span const span);

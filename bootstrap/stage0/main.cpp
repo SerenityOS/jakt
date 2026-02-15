@@ -556,46 +556,46 @@ ByteString const arg = args_to_process.dequeue();
 if ((__jakt_enum_value == ByteString::from_utf8_without_validation("--target-triple"sv))||(__jakt_enum_value == ByteString::from_utf8_without_validation("-T"sv))) {{
 target_triple = args_to_process.dequeue();
 }
-goto __jakt_label_203;}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--sysroot"sv)) {{
+goto __jakt_label_206;}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--sysroot"sv)) {{
 sysroot = args_to_process.dequeue();
 }
-goto __jakt_label_203;}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--system-lib-dir"sv)) {{
+goto __jakt_label_206;}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--system-lib-dir"sv)) {{
 system_lib_dirs.push(args_to_process.dequeue());
 }
-goto __jakt_label_203;}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--system-include-dir"sv)) {{
+goto __jakt_label_206;}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--system-include-dir"sv)) {{
 system_include_dirs.push(args_to_process.dequeue());
 }
-goto __jakt_label_203;}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--compiler-include-dir"sv)) {{
+goto __jakt_label_206;}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--compiler-include-dir"sv)) {{
 compiler_include_dir = args_to_process.dequeue();
 }
-goto __jakt_label_203;}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--compiler-lib-dir"sv)) {{
+goto __jakt_label_206;}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--compiler-lib-dir"sv)) {{
 compiler_lib_dir = args_to_process.dequeue();
 }
-goto __jakt_label_203;}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--install-root"sv)) {{
+goto __jakt_label_206;}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--install-root"sv)) {{
 install_root = args_to_process.dequeue();
 }
-goto __jakt_label_203;}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--runtime-lib-path"sv)) {{
+goto __jakt_label_206;}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--runtime-lib-path"sv)) {{
 runtime_lib_path = Jakt::jakt__path::Path::from_string(args_to_process.dequeue());
 }
-goto __jakt_label_203;}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--runtime-path"sv)) {{
+goto __jakt_label_206;}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--runtime-path"sv)) {{
 runtime_path = Jakt::jakt__path::Path::from_string(args_to_process.dequeue());
 }
-goto __jakt_label_203;}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--source-file"sv)) {{
+goto __jakt_label_206;}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--source-file"sv)) {{
 source_file = args_to_process.dequeue();
 }
-goto __jakt_label_203;}else if ((__jakt_enum_value == ByteString::from_utf8_without_validation("--output-filename"sv))||(__jakt_enum_value == ByteString::from_utf8_without_validation("-o"sv))) {{
+goto __jakt_label_206;}else if ((__jakt_enum_value == ByteString::from_utf8_without_validation("--output-filename"sv))||(__jakt_enum_value == ByteString::from_utf8_without_validation("-o"sv))) {{
 output_filename = args_to_process.dequeue();
 }
-goto __jakt_label_203;}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--target-links-ak"sv)) {{
+goto __jakt_label_206;}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--target-links-ak"sv)) {{
 target_links_ak = true;
 }
-goto __jakt_label_203;}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--only-support-libs"sv)) {{
+goto __jakt_label_206;}else if (__jakt_enum_value == ByteString::from_utf8_without_validation("--only-support-libs"sv)) {{
 only_support_libs = true;
 }
-goto __jakt_label_203;}else {{
+goto __jakt_label_206;}else {{
 compiler_args.push(arg);
 }
-goto __jakt_label_203;}}goto __jakt_label_203; __jakt_label_203:;;
+goto __jakt_label_206;}}goto __jakt_label_206; __jakt_label_206:;;
 }
 if (!source_file.has_value() && (!only_support_libs)){
 warnln(StringView::from_string_literal("error: Expected --source_file to be passed"sv));
@@ -907,14 +907,14 @@ JaktInternal::DynamicArray<ByteString> const parts = spec.split('=');
 if (__jakt_enum_value == static_cast<size_t>(1ULL)) {{
 user_configuration.set(parts[static_cast<i64>(0LL)], ByteString::from_utf8_without_validation("true"sv));
 }
-goto __jakt_label_204;}else if (__jakt_enum_value == static_cast<size_t>(2ULL)) {{
+goto __jakt_label_207;}else if (__jakt_enum_value == static_cast<size_t>(2ULL)) {{
 user_configuration.set(parts[static_cast<i64>(0LL)], parts[static_cast<i64>(1LL)]);
 }
-goto __jakt_label_204;}else {{
+goto __jakt_label_207;}else {{
 warnln(StringView::from_string_literal("error: invalid configuration specification: {}"sv),spec);
 return static_cast<int>(1);
 }
-goto __jakt_label_204;}}goto __jakt_label_204; __jakt_label_204:;;
+goto __jakt_label_207;}}goto __jakt_label_207; __jakt_label_207:;;
 }
 
 }
@@ -1183,31 +1183,31 @@ auto&& __jakt_match_value = __jakt_match_variant.as.CInt;int const& ret_val = __
 {
 return static_cast<int>(ret_val);
 }
-goto __jakt_label_206;};/*case end*/
+goto __jakt_label_209;};/*case end*/
 case 9 /* I64 */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.I64;i64 const& ret_val = __jakt_match_value.value;
 {
 return infallible_integer_cast<int>(ret_val);
 }
-goto __jakt_label_206;};/*case end*/
+goto __jakt_label_209;};/*case end*/
 case 0 /* Void */:{
 return static_cast<int>(0);
 }
-goto __jakt_label_206;default:{
+goto __jakt_label_209;default:{
 warnln(StringView::from_string_literal("Error: Main function  must return an integer"sv));
 return static_cast<int>(1);
 }
-goto __jakt_label_206;}/*switch end*/
-}goto __jakt_label_206; __jakt_label_206:;;goto __jakt_label_205;};/*case end*/
+goto __jakt_label_209;}/*switch end*/
+}goto __jakt_label_209; __jakt_label_209:;;goto __jakt_label_208;};/*case end*/
 case 1 /* Throw */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Throw;Jakt::types::Value const& x = __jakt_match_value.value;
 {
 warnln(StringView::from_string_literal("Error: Main function  threw: {}"sv),TRY((Jakt::repl::serialize_ast_node(TRY((Jakt::interpreter::value_to_checked_expression(x,interpreter)))))));
 return static_cast<int>(1);
 }
-goto __jakt_label_205;};/*case end*/
+goto __jakt_label_208;};/*case end*/
 default: VERIFY_NOT_REACHED();}/*switch end*/
-}goto __jakt_label_205; __jakt_label_205:;;
+}goto __jakt_label_208; __jakt_label_208:;;
 }
 if (goto_def.has_value()){
 size_t const index = infallible_integer_cast<size_t>(goto_def.value().template to_number<u32>().value());
@@ -1768,7 +1768,7 @@ formatted_file.appendff(ByteString::from_utf8_without_validation("{}//{}{}"sv),l
 }
 on_new_line = true;
 }
-goto __jakt_label_207;};/*case end*/
+goto __jakt_label_210;};/*case end*/
 case 114 /* Garbage */: {
 auto&& __jakt_match_value = __jakt_match_variant.as.Garbage;JaktInternal::Optional<ByteString> const& consumed = __jakt_match_value.consumed;
 {
@@ -1776,7 +1776,7 @@ if (consumed.has_value()){
 formatted_file.appendff(ByteString::from_utf8_without_validation("{}"sv),consumed.value());
 }
 }
-goto __jakt_label_207;};/*case end*/
+goto __jakt_label_210;};/*case end*/
 default:{
 if (on_new_line){
 formatted_file.appendff(ByteString::from_utf8_without_validation("{}"sv),Jakt::indent(formatted_token.indent));
@@ -1784,8 +1784,8 @@ formatted_file.appendff(ByteString::from_utf8_without_validation("{}"sv),Jakt::i
 formatted_file.appendff(ByteString::from_utf8_without_validation("{}"sv),TRY((formatted_token.token_text())));
 on_new_line = false;
 }
-goto __jakt_label_207;}/*switch end*/
-break;}goto __jakt_label_207; __jakt_label_207:;;
+goto __jakt_label_210;}/*switch end*/
+break;}goto __jakt_label_210; __jakt_label_210:;;
 {
 JaktInternal::ArrayIterator<u8> _magic = formatted_token.trailing_trivia.iterator();
 for (;;){

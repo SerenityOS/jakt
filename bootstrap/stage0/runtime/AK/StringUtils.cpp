@@ -6,9 +6,9 @@
  */
 
 #include <AK/CharacterTypes.h>
+#include <AK/Hex.h>
 #include <AK/MemMem.h>
 #include <AK/Optional.h>
-#include <AK/String.h>
 #include <AK/StringBuilder.h>
 #include <AK/StringUtils.h>
 #include <AK/StringView.h>
@@ -21,6 +21,7 @@
 #else
 #    include <AK/ByteString.h>
 #    include <AK/FloatingPointStringConversions.h>
+#    include <AK/String.h>
 #    include <string.h>
 #endif
 
@@ -28,6 +29,7 @@ namespace AK {
 
 namespace StringUtils {
 
+#ifndef KERNEL
 bool matches(StringView str, StringView mask, CaseSensitivity case_sensitivity, Vector<MaskSpan>* match_spans)
 {
     auto record_span = [&match_spans](size_t start, size_t length) {
@@ -92,6 +94,7 @@ bool matches(StringView str, StringView mask, CaseSensitivity case_sensitivity, 
 
     return string_ptr == string_end && mask_ptr == mask_end;
 }
+#endif
 
 template<typename T>
 Optional<T> convert_to_int(StringView str, TrimWhitespace trim_whitespace)
@@ -180,19 +183,12 @@ Optional<T> convert_to_uint_from_hex(StringView str, TrimWhitespace trim_whitesp
 
     for (size_t i = 0; i < count; i++) {
         char digit = string[i];
-        u8 digit_val;
         if (value > (upper_bound >> 4))
             return {};
 
-        if (digit >= '0' && digit <= '9') {
-            digit_val = digit - '0';
-        } else if (digit >= 'a' && digit <= 'f') {
-            digit_val = 10 + (digit - 'a');
-        } else if (digit >= 'A' && digit <= 'F') {
-            digit_val = 10 + (digit - 'A');
-        } else {
+        auto digit_val = decode_hex_digit(digit);
+        if (digit_val == 255)
             return {};
-        }
 
         value = (value << 4) + digit_val;
     }
@@ -437,6 +433,7 @@ Optional<size_t> find_last_not(StringView haystack, char needle)
     return {};
 }
 
+#ifndef KERNEL
 Vector<size_t> find_all(StringView haystack, StringView needle)
 {
     Vector<size_t> positions;
@@ -452,6 +449,7 @@ Vector<size_t> find_all(StringView haystack, StringView needle)
     }
     return positions;
 }
+#endif
 
 Optional<size_t> find_any_of(StringView haystack, StringView needles, SearchDirection direction)
 {
