@@ -625,9 +625,9 @@ class CppImportProcessor {
                     ignore_mixin_scopes: true
                     root_scope: root_scope_id
                 )
-                yield match struct_id.has_value() {
-                    true => program.find_or_add_type_id(Type::Struct(struct_id!), module_id, only_in_current_module: true)
-                    false => builtin(BuiltinType::Unknown)
+                yield match struct_id {
+                    Some(struct_id_) => program.find_or_add_type_id(Type::Struct(struct_id_), module_id, only_in_current_module: true)
+                    None => builtin(BuiltinType::Unknown)
                 }
             }
             CXType_Enum => {
@@ -637,9 +637,9 @@ class CppImportProcessor {
                     ignore_mixin_scopes: true
                     root_scope: root_scope_id
                 )
-                yield match enum_id.has_value() {
-                    true => program.find_or_add_type_id(Type::Enum(enum_id!), module_id, only_in_current_module: true)
-                    false => builtin(BuiltinType::Unknown)
+                yield match enum_id {
+                    Some(enum_id_) => program.find_or_add_type_id(Type::Enum(enum_id_), module_id, only_in_current_module: true)
+                    None => builtin(BuiltinType::Unknown)
                 }
             }
             CXType_Elaborated => {
@@ -662,10 +662,10 @@ class CppImportProcessor {
                     )
                 }
 
-                yield match base_type.has_value() {
-                    false => unknown_type_id()
-                    true => {
-                        mut type_id = base_type!
+                yield match base_type {
+                    None => unknown_type_id()
+                    Some(base_type_id) => {
+                        mut type_id = base_type_id
                         let base_usr = string_from(clang_getCursorUSR(cursor: definition_cursor))
 
                         // NonnullRefPtr<T> where T is a class -> T
@@ -1553,9 +1553,9 @@ class CppImportProcessor {
             scope_id: parent_scope_id
             name
         )
-        let (scope_id, scope_was_just_made) = match existing_scope_id.has_value() {
-            true => (existing_scope_id!, false)
-            false => (
+        let (scope_id, scope_was_just_made) = match existing_scope_id {
+            Some(existing_scope_id_) => (existing_scope_id_, false)
+            None => (
                 program.create_scope(
                     parent_scope_id
                     can_throw: false
@@ -1659,12 +1659,12 @@ class CppImportProcessor {
             }
         }
 
-        let struct_id = match this_type.has_value() {
-            true => match program.get_type(this_type!) {
+        let struct_id = match this_type {
+            Some(this_type_id) => match program.get_type(this_type_id) {
                 Struct(id) | GenericInstance(id) => Some(id)
                 else => None
             }
-            false => None
+            None => None
         }
 
         let (name, external_name) = match kind {
@@ -1877,9 +1877,9 @@ class CppImportProcessor {
         mut module = program.get_module(module_id)
         let existing_enum_id = program.get_scope(parent_scope_id).enums.get(name)
 
-        let (enum_scope, scope_was_just_made) = match existing_enum_id.has_value() {
-            true => (program.get_enum(existing_enum_id!).scope_id, false)
-            false => {
+        let (enum_scope, scope_was_just_made) = match existing_enum_id {
+            Some(existing_enum_id_) => (program.get_enum(existing_enum_id_).scope_id, false)
+            None => {
                 let enum_scope = program.create_scope(
                     parent_scope_id
                     can_throw: false
@@ -2070,9 +2070,9 @@ class CppImportProcessor {
             name = alias_type_name ?? format("<anonymous@{}>", &raw cursor)
         }
 
-        let specialized_name = match named_specialization_disambiguator.has_value() {
-            true => format("{}<{}>", name, named_specialization_disambiguator!),
-            false => name
+        let specialized_name = match named_specialization_disambiguator {
+            Some(disambiguator) => format("{}<{}>", name, disambiguator),
+            None => name
         }
 
         let bases = .extract_cursors_of_kinds(
@@ -2093,17 +2093,17 @@ class CppImportProcessor {
             id: module.structures.size()
         )
 
-        let (struct_scope, struct_type_id, scope_was_just_made) = match existing_struct_id.has_value() {
-            true => {
-                let struct_ = program.get_struct(existing_struct_id!)
+        let (struct_scope, struct_type_id, scope_was_just_made) = match existing_struct_id {
+            Some(existing_struct_id_) => {
+                let struct_ = program.get_struct(existing_struct_id_)
                 yield (struct_.scope_id, struct_.type_id, false)
             }
-            false => match cached_struct_id.has_value() {
-                true => {
-                    let struct_ = program.get_struct(cached_struct_id!)
+            None => match cached_struct_id {
+                Some(cached_struct_id_) => {
+                    let struct_ = program.get_struct(cached_struct_id_)
                     yield (struct_.scope_id, struct_.type_id, false)
                 }
-                false => {
+                None => {
                     let scope_id = program.create_scope(
                         parent_scope_id
                         can_throw: false
@@ -2112,11 +2112,11 @@ class CppImportProcessor {
                         for_block: false
                     )
                     let struct_type_id = program.find_or_add_type_id(
-                        match generic_parameters.has_value() {
-                            false => Type::Struct(struct_id)
-                            true => {
+                        match generic_parameters {
+                            None => Type::Struct(struct_id)
+                            Some(generic_parameters_) => {
                                 mut args: [TypeId] = []
-                                for param in generic_parameters! {
+                                for param in generic_parameters_ {
                                     args.push(param.type_id)
                                 }
 
@@ -2516,7 +2516,7 @@ class CppImportProcessor {
             }
         }
 
-        mut args_storage = [""; 3 + includes.size() + system_includes.size() + defines.size() + match sysroot.has_value() { true => 1uz, false => 0uz }]
+        mut args_storage = [""; 3 + includes.size() + system_includes.size() + defines.size() + match sysroot { Some => 1uz, None => 0uz }]
         if is_c {
             args_storage[0] = "-xc"
             args_storage[1] = "-std=c11"

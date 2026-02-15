@@ -1505,9 +1505,9 @@ boxed enum CheckedStatement {
 
     fn none() -> CheckedStatement? => None
 
-    fn maybe_control_flow(anon statement: CheckedStatement?, anon other_branch: BlockControlFlow) -> BlockControlFlow => match statement.has_value() {
-        true => statement!.control_flow()
-        false => other_branch.partial()
+    fn maybe_control_flow(anon statement: CheckedStatement?, anon other_branch: BlockControlFlow) -> BlockControlFlow => match statement {
+        Some(checked_statement) => checked_statement.control_flow()
+        None => other_branch.partial()
     }
 
     fn control_flow(this) -> BlockControlFlow => match this {
@@ -1515,16 +1515,16 @@ boxed enum CheckedStatement {
         Throw => BlockControlFlow::AlwaysReturns
         Break => BlockControlFlow::AlwaysTransfersControl(might_break: true)
         Continue => BlockControlFlow::AlwaysTransfersControl(might_break: false)
-        Yield(expr) => match expr.has_value() {
-            true => expr!.control_flow().updated(BlockControlFlow::AlwaysTransfersControl(might_break: false))
-            false => BlockControlFlow::AlwaysTransfersControl(might_break: false)
+        Yield(expr) => match expr {
+            Some(yield_expr) => yield_expr.control_flow().updated(BlockControlFlow::AlwaysTransfersControl(might_break: false))
+            None => BlockControlFlow::AlwaysTransfersControl(might_break: false)
         }
         If(condition, then_block, else_statement) => match condition {
             Boolean(val) => match val {
                 true => then_block.control_flow
-                false => match else_statement.has_value() {
-                    true => else_statement!.control_flow()
-                    false => BlockControlFlow::MayReturn
+                false => match else_statement {
+                    Some(else_stmt) => else_stmt.control_flow()
+                    None => BlockControlFlow::MayReturn
                 }
             }
             // Note that a missing 'else' branch produces a partial result.

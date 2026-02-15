@@ -344,6 +344,10 @@ struct Typechecker {
     fn prelude_scope_id(this) -> ScopeId => .program.prelude_scope_id()
     fn root_scope_id(this) -> ScopeId => ScopeId(module_id: ModuleId(id: 1), id: 0)
     fn main_scope_id(this) -> ScopeId => ScopeId(module_id: ModuleId(id: 1), id: 1)
+    fn with_scope<T>(this, value: T?, scope_id: ScopeId) -> (T, ScopeId)? => match value {
+        Some(value_) => Some(value_, scope_id)
+        None => None
+    }
 
     fn current_module(this) -> Module => .program.get_module(.current_module_id)
 
@@ -1085,10 +1089,7 @@ struct Typechecker {
                 external_name: parsed_var_decl.external_name
             ))
 
-            let default_value_expression = match unchecked_member.default_value.has_value() {
-                true => Some(unchecked_member.default_value!, checked_struct_scope_id)
-                false => None
-            }
+            let default_value_expression = .with_scope(value: unchecked_member.default_value, scope_id: checked_struct_scope_id)
 
             structure.fields.push(CheckedField(variable_id, default_value_expression))
 
@@ -1190,9 +1191,9 @@ struct Typechecker {
                     relative_import: import_is_relative
                     parent_path_count: parent_path_count
                 )
-                let file_name = match maybe_file_name.has_value() {
-                    true => maybe_file_name!
-                    false => .get_root_path().parent().join(name_and_span.0).replace_extension("jakt")
+                let file_name = match maybe_file_name {
+                    Some(module_file_name) => module_file_name
+                    None => .get_root_path().parent().join(name_and_span.0).replace_extension("jakt")
                 }
                 if File::exists(file_name.to_string()) {
                     module_name_and_span = name_and_span
@@ -1220,9 +1221,9 @@ struct Typechecker {
             parent_path_count: parent_path_count
         )
 
-        let file_name = match maybe_file_name.has_value() {
-            true => maybe_file_name!
-            false => .get_root_path().parent().join(module_name).replace_extension("jakt")
+        let file_name = match maybe_file_name {
+            Some(module_file_name) => module_file_name
+            None => .get_root_path().parent().join(module_name).replace_extension("jakt")
         }
 
         let is_in_the_stdlib = file_name.absolute().to_string().starts_with(.compiler.std_include_path.absolute().to_string())
@@ -1769,9 +1770,9 @@ struct Typechecker {
     }
 
     fn typecheck_alias(mut this, alias: ParsedAlias, scope_id: ScopeId, allow: ImportRestrictions) throws {
-        let aliased_name = match alias.alias_name.has_value() {
-            true => alias.alias_name!
-            else => {
+        let aliased_name = match alias.alias_name {
+            Some(alias_name) => alias_name
+            None => {
                 let name = alias.target.last()!
                 if not name.generic_parameters.is_empty() {
                     .error_with_hint(
@@ -1802,9 +1803,9 @@ struct Typechecker {
         }
 
         mut scope = .get_scope(scope_id)
-        let alias_scope_id = match scope.alias_scope.has_value() {
-            true => scope.alias_scope!
-            false => {
+        let alias_scope_id = match scope.alias_scope {
+            Some(alias_scope_id) => alias_scope_id
+            None => {
                 let new_scope_id = .create_scope(
                     parent_scope_id: scope_id
                     can_throw: false
@@ -2000,12 +2001,12 @@ struct Typechecker {
             }
             debug_name += ")"
 
-            mut (existing_scope_id, existing_scope_is_imported) = match namespace_.name.has_value() {
-                true => {
-                    let result = .find_namespace_in_scope(scope_id: scope_id, name: namespace_.name!)
+            mut (existing_scope_id, existing_scope_is_imported) = match namespace_.name {
+                Some(namespace_name) => {
+                    let result = .find_namespace_in_scope(scope_id: scope_id, name: namespace_name)
                     yield (result?.0, result?.1 ?? false)
                 }
-                false => (None, false)
+                None => (None, false)
             }
 
             mut namespace_scope_id = existing_scope_id
@@ -2029,9 +2030,9 @@ struct Typechecker {
                 //       do not necessarily link exactly two distinct scopes together, while that is the case for
                 //       regular scope relationships, scopes created by extern imports all have the same global back link
                 //       while they're children of their respective modules at the same time.
-                let parent_scope_id = match namespace_.import_path_if_extern.has_value() {
-                    true => ScopeId(module_id: ModuleId(id: 1), id: 0)
-                    else => scope_id
+                let parent_scope_id = match namespace_.import_path_if_extern {
+                    Some => ScopeId(module_id: ModuleId(id: 1), id: 0)
+                    None => scope_id
                 }
 
                 let child_scope_id = .create_scope(
@@ -2700,10 +2701,7 @@ struct Typechecker {
                 mut module = .current_module()
                 let variable_id = module.add_variable(checked_var)
 
-                let default_value_expression = match field.default_value.has_value() {
-                    true => Some(field.default_value!, enum_scope_id)
-                    false => None
-                }
+                let default_value_expression = .with_scope(value: field.default_value, scope_id: enum_scope_id)
                 checked_fields.push(CheckedField(variable_id, default_value_expression))
             }
         }
@@ -2899,10 +2897,7 @@ struct Typechecker {
                     checked_function.add_param(CheckedParameter(
                         requires_label: param.requires_label
                         variable: checked_variable
-                        default_value_expression: match param.default_argument.has_value() {
-                            true => (param.default_argument!, method_scope_id)
-                            false => None
-                        }
+                        default_value_expression: .with_scope(value: param.default_argument, scope_id: method_scope_id)
                     ))
                 }
             }
@@ -3196,31 +3191,31 @@ struct Typechecker {
         mut super_struct_id: StructId? = None
 
         match parsed_record.record_type {
-            Class(super_type: super_parsed_type) => match super_parsed_type.has_value() {
-                true => {
-                    let super_type_id = .typecheck_typename(parsed_type: super_parsed_type!, scope_id, name: None)
+            Class(super_type: super_parsed_type) => match super_parsed_type {
+                Some(super_parsed_type_) => {
+                    let super_type_id = .typecheck_typename(parsed_type: super_parsed_type_, scope_id, name: None)
                     let super_type = .get_type(super_type_id)
 
                     if super_type is Struct(struct_id) {
                         super_struct_id = struct_id
                     } else {
-                        .error("Class can only inherit from another class", super_parsed_type!.span())
+                        .error("Class can only inherit from another class", super_parsed_type_.span())
                     }
                 }
-                false => {}
+                None => {}
             }
-            Struct(super_type: super_parsed_type) => match super_parsed_type.has_value() {
-                true => {
-                    let super_type_id = .typecheck_typename(parsed_type: super_parsed_type!, scope_id, name: None)
+            Struct(super_type: super_parsed_type) => match super_parsed_type {
+                Some(super_parsed_type_) => {
+                    let super_type_id = .typecheck_typename(parsed_type: super_parsed_type_, scope_id, name: None)
                     let super_type = .get_type(super_type_id)
 
                     if super_type is Struct(struct_id) {
                         super_struct_id = struct_id
                     } else {
-                        .error("Struct can only inherit from another struct", super_parsed_type!.span())
+                        .error("Struct can only inherit from another struct", super_parsed_type_.span())
                     }
                 }
-                false => {}
+                None => {}
             }
             else => {
                 panic("Expected Struct or Class in typecheck_struct_predecl")
@@ -3518,9 +3513,9 @@ struct Typechecker {
                         parsed_function: method.parsed_function!
                         parent_scope_id: scope_id
                         this_arg_type_id: type_id
-                        scope_mixin: match mixin_scope_id.has_value() {
-                            true => ResolutionMixin(scope_id: mixin_scope_id!)
-                            false => None
+                        scope_mixin: match mixin_scope_id {
+                            Some(mixin_scope_id_) => ResolutionMixin(scope_id: mixin_scope_id_)
+                            None => None
                         }
                     )
                 }
@@ -3839,13 +3834,13 @@ struct Typechecker {
                     } else {
                         seen_names.add(variant.name)
 
-                        let expr = match variant.value.has_value() {
-                            true => {
-                                let value_expression = .cast_to_underlying(variant.value!, scope_id: parent_scope_id, parsed_type: underlying_type)
+                        let expr = match variant.value {
+                            Some(variant_value) => {
+                                let value_expression = .cast_to_underlying(variant_value, scope_id: parent_scope_id, parsed_type: underlying_type)
                                 let number_constant = value_expression.to_number_constant(program: .program)
-                                match number_constant.has_value() {
-                                    true => {
-                                        next_constant_value = match number_constant! {
+                                match number_constant {
+                                    Some(number_constant_) => {
+                                        next_constant_value = match number_constant_ {
                                             Signed(val) => (val + 1) as! u64
                                             Unsigned(val) => val + 1
                                             Floating(val) => {
@@ -3853,13 +3848,13 @@ struct Typechecker {
                                             }
                                         }
                                     }
-                                    else => {
+                                    None => {
                                         .error(format("Enum variant '{}' in enum '{}' has a non-constant value: {}", variant.name, enum_.name, value_expression), variant.span)
                                     }
                                 }
                                 yield value_expression
                             }
-                            false => .cast_to_underlying(
+                            None => .cast_to_underlying(
                                 expr: ParsedExpression::NumericConstant(val: NumericConstant::UnknownUnsigned(next_constant_value++), span: variant.span)
                                 scope_id: parent_scope_id
                                 parsed_type: underlying_type
@@ -3931,10 +3926,7 @@ struct Typechecker {
                                 params.push(CheckedParameter(
                                     requires_label: true
                                     variable: checked_var
-                                    default_value_expression: match default_value.has_value() {
-                                        true => (default_value!, enum_.scope_id)
-                                        false => None
-                                    }
+                                    default_value_expression: .with_scope(value: default_value, scope_id: enum_.scope_id)
                                 ))
 
                                 if .dump_type_hints and param.parsed_type is Empty {
@@ -4303,10 +4295,7 @@ struct Typechecker {
         let checked_parameter = CheckedParameter(
             requires_label: parameter.requires_label
             variable
-            default_value_expression: match parameter.default_argument.has_value() {
-                true => (parameter.default_argument!, scope_id)
-                false => None
-            }
+            default_value_expression: .with_scope(value: parameter.default_argument, scope_id: scope_id)
         )
 
         if check_scope.has_value() {
@@ -5789,9 +5778,9 @@ struct Typechecker {
             .current_block.control_flow = .current_block.control_flow.updated(checked_statement.control_flow())
 
             let yield_span: Span? = match parsed_statement {
-                ParsedStatement::Yield(expr) => match expr.has_value() {
-                    true => expr!.span()
-                    false => None
+                ParsedStatement::Yield(expr) => match expr {
+                    Some(yield_expr) => yield_expr.span()
+                    None => None
                 }
                 ParsedStatement::Guard(expr) => Some(expr.span())
                 else => None
@@ -6081,9 +6070,9 @@ struct Typechecker {
                 yield .typecheck_generic_resolved_type(name, checked_inner_types, scope_id, span)
             }
             Function(params, can_throw, return_type, span) => {
-                let function_name = match name.has_value() {
-                    true => name!
-                    else => (try format("lambda{}", .lambda_count++)) ?? ""
+                let function_name = match name {
+                    Some(function_name) => function_name
+                    None => (try format("lambda{}", .lambda_count++)) ?? ""
                 }
 
                 mut checked_params: [CheckedParameter] = []
@@ -8400,9 +8389,9 @@ struct Typechecker {
     }
 
     fn check_restricted_access(mut this, accessor: ScopeId, accessee_kind: String, accessee: ScopeId, name: String, whitelist: [MaybeResolvedScope], span: Span) throws -> bool {
-        let most_specific_active_scope_id = match .current_function_id.has_value() {
-            true => .get_function(.current_function_id!).function_scope_id
-            else => {
+        let most_specific_active_scope_id = match .current_function_id {
+            Some(current_function_id) => .get_function(current_function_id).function_scope_id
+            None => {
                 if not .current_struct_type_id.has_value() {
                     .error(
                         format(
@@ -8796,9 +8785,10 @@ struct Typechecker {
 
             yield result
         }
-        QuotedString(val, span) => match type_hint.has_value() and not type_hint!.type_id.equals(unknown_type_id()) {
-            true => {
-                mut type_id = .strip_optional_from_type(.generic_inferences.map(type_hint!.type_id))
+        QuotedString(val, span) => match type_hint {
+            Some(type_hint_) => match not type_hint_.type_id.equals(unknown_type_id()) {
+                true => {
+                    mut type_id = .strip_optional_from_type(.generic_inferences.map(type_hint_.type_id))
                 let prelude_string_type_id = .prelude_struct_type_named("String")
                 let prelude_string_view_type_id = .prelude_struct_type_named("StringView")
                 mut may_throw = false
@@ -8826,8 +8816,8 @@ struct Typechecker {
                     }
                 }
 
-                .unify(
-                    lhs: type_hint!.type_id
+                    .unify(
+                    lhs: type_hint_.type_id
                     lhs_span: span
                     rhs: type_id
                     rhs_span: span
@@ -8837,16 +8827,31 @@ struct Typechecker {
                     .error("Operation that may throw needs to be in a try statement or a function marked as throws", span)
                 }
 
-                yield CheckedExpression::QuotedString(
-                    val: CheckedStringLiteral(
-                        value: StringLiteral::Static(val)
-                        type_id
-                        may_throw
+                    yield CheckedExpression::QuotedString(
+                        val: CheckedStringLiteral(
+                            value: StringLiteral::Static(val)
+                            type_id
+                            may_throw
+                        )
+                        span
                     )
-                    span
-                )
+                }
+                else => {
+                    let result = CheckedExpression::QuotedString(
+                        val: CheckedStringLiteral(
+                            value: StringLiteral::Static(val)
+                            type_id: .prelude_struct_type_named("String")
+                            may_throw: false
+                        )
+                        span
+                    )
+                    if type_hint is Some(hint) and hint is MustBe(type_id) {
+                        .unify_with_type(found_type: result.type(), expected_type: type_id, span)
+                    }
+                    yield result
+                }
             }
-            else => {
+            None => {
                 let result = CheckedExpression::QuotedString(
                     val: CheckedStringLiteral(
                         value: StringLiteral::Static(val)
@@ -9189,9 +9194,9 @@ struct Typechecker {
         }
         Var(name, span) => {
             let var = .find_var_in_scope(scope_id, var: name)
-            let result = match var.has_value() { // FIXME: this wants to be a match on Optional instead of boolean
-                true => CheckedExpression::Var(var: var!, span)
-                else => {
+            let result = match var {
+                Some(var_) => CheckedExpression::Var(var: var_, span)
+                None => {
                     .error(format("Variable '{}' not found", name), span)
 
                     mut type_id: TypeId? = None
@@ -11784,8 +11789,8 @@ struct Typechecker {
             resolved_namespaces.push(ResolvedNamespace(name, external_name: None, generic_parameters: None))
         }
 
-        mut callee_scope_id = match parent_id.has_value() {
-            true => match parent_id! {
+        mut callee_scope_id = match parent_id {
+            Some(parent_id_) => match parent_id_ {
                 Struct(id) => {
                     mut struct_ = .get_struct(id)
                     mut scope_id = struct_.scope_id
@@ -11819,7 +11824,7 @@ struct Typechecker {
                     yield scope_id
                 }
             }
-            else => {
+            None => {
                 if not is_print_like {
                     resolved_function_id_candidates = .resolve_call(call, namespaces: resolved_namespaces, span, scope_id: caller_scope_id, must_be_enum_constructor)
                 }
@@ -12033,9 +12038,9 @@ struct Typechecker {
             .dump_try_hint(span)
         }
 
-        let external_name = match resolved_function_id.has_value() {
-            true => {
-                let function = .get_function(resolved_function_id!)
+        let external_name = match resolved_function_id {
+            Some(resolved_function_id_) => {
+                let function = .get_function(resolved_function_id_)
                 if function.deprecated_message.has_value() {
                     .error(
                         format("Call to deprecated function: {}", function.deprecated_message!)
@@ -12044,7 +12049,7 @@ struct Typechecker {
                 }
                 yield function.external_name
             }
-            false => None
+            None => None
         }
 
         if resolved_function_id.has_value() {
@@ -12079,9 +12084,9 @@ struct Typechecker {
             }
         }
 
-        let force_inline = match resolved_function_id.has_value() {
-            true => .get_function(resolved_function_id!).force_inline
-            false => InlineState::Default
+        let force_inline = match resolved_function_id {
+            Some(resolved_function_id_) => .get_function(resolved_function_id_).force_inline
+            None => InlineState::Default
         }
         let function_call = CheckedCall(
             namespace_: resolved_namespaces
