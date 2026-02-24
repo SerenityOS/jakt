@@ -3,11 +3,11 @@
 
 comptime id<T>(anon x: T) -> T => x
 
-fn format_with_count<T, comptime N: i32>(anon value: T) throws -> String {
-    let count = id(N) as! i32
+fn format_with_count<comptime N: i32, comptime value: String>() throws -> String {
+    let count = N
     return format("{} {}", value, count)
 }
 
 fn main() {
-    println("{}", format_with_count<String, comptime 5i32>("hello"))
+    println("{}", format_with_count<comptime 5i32, comptime "hello">())
 }

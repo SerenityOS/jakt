@@ -1,17 +1,15 @@
 /// Expect:
 /// - output: "typed: 10\nuntyped: 20\n"
 
-comptime id<T>(anon x: T) -> T => x
-
 fn typed_version<comptime N: i32>() -> i32 {
-    return id(N) as! i32
+    return N
 }
 
 fn untyped_version<comptime N>() -> i32 {
-    return id(N) as! i32
+    return N
 }
 
 fn main() {
     println("typed: {}", typed_version<comptime 10i32>())
-    println("untyped: {}", untyped_version<comptime 20>())
+    println("untyped: {}", untyped_version<comptime 20i32>())
 }

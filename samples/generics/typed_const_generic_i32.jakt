@@ -1,10 +1,8 @@
 /// Expect:
 /// - output: "42\n"
 
-comptime id<T>(anon x: T) -> T => x
-
 fn get_value<comptime N: i32>() -> i32 {
-    return id(N) as! i32
+    return N
 }
 
 fn main() {
