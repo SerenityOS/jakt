@@ -1,0 +1,14 @@
+/// Expect:
+/// - output: "30\n"
+
+comptime id<T>(anon x: T) -> T => x
+
+fn multiply<comptime A: i32, comptime B: i32>() -> i32 {
+    let a = id(A) as! i32
+    let b = id(B) as! i32
+    return a * b
+}
+
+fn main() {
+    println("{}", multiply<comptime 5i32, comptime 6i32>())
+}

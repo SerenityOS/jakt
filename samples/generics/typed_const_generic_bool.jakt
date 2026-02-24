@@ -1,0 +1,13 @@
+/// Expect:
+/// - output: "true\nfalse\n"
+
+comptime id<T>(anon x: T) -> T => x
+
+fn is_enabled<comptime B: bool>() -> bool {
+    return id(B) as! bool
+}
+
+fn main() {
+    println("{}", is_enabled<comptime true>())
+    println("{}", is_enabled<comptime false>())
+}

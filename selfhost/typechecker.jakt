@@ -2519,7 +2519,15 @@ struct Typechecker {
 
             mut trait_implementations: [TypeId] = []
             mut parameter = CheckedGenericParameter::make(parameter_type_id, span: gen_parameter.span)
-            let type = Type::TypeVariable(name: gen_parameter.name, trait_implementations, is_value: gen_parameter.is_value)
+            mut value_type_id: TypeId? = None
+            if gen_parameter.value_type.has_value() {
+                value_type_id = .typecheck_typename(
+                    parsed_type: gen_parameter.value_type!
+                    scope_id
+                    name: gen_parameter.name
+                )
+            }
+            let type = Type::TypeVariable(name: gen_parameter.name, trait_implementations, is_value: gen_parameter.is_value, value_type_id)
             module.add_type(type)
 
             if gen_parameter.requires_list.has_value() {
@@ -2731,7 +2739,15 @@ struct Typechecker {
             mut checked_param = CheckedGenericParameter::make(parameter_type_id, span: gen_parameter.span)
 
             mut trait_implementations: [TypeId] = []
-            let type = Type::TypeVariable(name: gen_parameter.name, trait_implementations, is_value: gen_parameter.is_value)
+            mut value_type_id: TypeId? = None
+            if gen_parameter.value_type.has_value() {
+                value_type_id = .typecheck_typename(
+                    parsed_type: gen_parameter.value_type!
+                    scope_id
+                    name: gen_parameter.name
+                )
+            }
+            let type = Type::TypeVariable(name: gen_parameter.name, trait_implementations, is_value: gen_parameter.is_value, value_type_id)
             module.add_type(type)
 
             if gen_parameter.requires_list.has_value() {
@@ -2838,7 +2854,15 @@ struct Typechecker {
                 mut parameter = FunctionGenericParameter::parameter(type_var_type_id, span: generic_parameter.span)
 
                 mut trait_implementations: [TypeId] = []
-                let type = Type::TypeVariable(name: generic_parameter.name, trait_implementations, is_value: generic_parameter.is_value)
+                mut value_type_id: TypeId? = None
+                if generic_parameter.value_type.has_value() {
+                    value_type_id = .typecheck_typename(
+                        parsed_type: generic_parameter.value_type!
+                        scope_id
+                        name: generic_parameter.name
+                    )
+                }
+                let type = Type::TypeVariable(name: generic_parameter.name, trait_implementations, is_value: generic_parameter.is_value, value_type_id)
                 module.add_type(type)
 
                 if generic_parameter.requires_list.has_value() {
@@ -3246,7 +3270,15 @@ struct Typechecker {
 
             mut parameter = CheckedGenericParameter::make(parameter_type_id, span: gen_parameter.span)
             mut trait_implementations: [TypeId] = []
-            let type = Type::TypeVariable(name: gen_parameter.name, trait_implementations, is_value: gen_parameter.is_value)
+            mut value_type_id: TypeId? = None
+            if gen_parameter.value_type.has_value() {
+                value_type_id = .typecheck_typename(
+                    parsed_type: gen_parameter.value_type!
+                    scope_id
+                    name: gen_parameter.name
+                )
+            }
+            let type = Type::TypeVariable(name: gen_parameter.name, trait_implementations, is_value: gen_parameter.is_value, value_type_id)
             module.add_type(type)
 
             if gen_parameter.requires_list.has_value() {
@@ -4440,7 +4472,15 @@ struct Typechecker {
             if base_definition {
                 mut parameter = FunctionGenericParameter::parameter(type_var_type_id, span: generic_parameter.span)
                 mut trait_implementations: [TypeId] = []
-                let type = Type::TypeVariable(name: generic_parameter.name, trait_implementations, is_value: generic_parameter.is_value)
+                mut value_type_id: TypeId? = None
+                if generic_parameter.value_type.has_value() {
+                    value_type_id = .typecheck_typename(
+                        parsed_type: generic_parameter.value_type!
+                        scope_id: parent_scope_id
+                        name: generic_parameter.name
+                    )
+                }
+                let type = Type::TypeVariable(name: generic_parameter.name, trait_implementations, is_value: generic_parameter.is_value, value_type_id)
                 current_module.add_type(type)
 
                 if generic_parameter.requires_list.has_value() {
@@ -4824,7 +4864,7 @@ struct Typechecker {
             let mapped = generic_substitutions.get(parameter_type_id)
             guard mapped.has_value() else { continue }
             let type_id = mapped!
-            guard .get_type(parameter_type_id) is TypeVariable(name: type_name, is_value) else { continue }
+            guard .get_type(parameter_type_id) is TypeVariable(name: type_name, is_value, value_type_id) else { continue }
 
             let dependent_scope_id: ScopeId? = match .get_type(parameter_type_id) {
                 GenericInstance(id: struct_id) | Struct(struct_id) => .get_struct(struct_id).scope_id
@@ -4836,6 +4876,19 @@ struct Typechecker {
 
             mut scope = .get_scope(scope_id)
             if is_value and .get_type(type_id) is Const(value) {
+                if value_type_id.has_value() {
+                    let actual_type = value.impl.type_id(&mut .program)
+                    if not actual_type.equals(value_type_id!) {
+                        .error(
+                            format(
+                                "Comptime argument type '{}' does not match expected type '{}'"
+                                .type_name(actual_type, debug_mode: false)
+                                .type_name(value_type_id!, debug_mode: false)
+                            )
+                            span
+                        )
+                    }
+                }
                 scope.comptime_bindings[type_name] = value
                 let checked_var = CheckedVariable(
                     name: type_name

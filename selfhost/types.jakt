@@ -274,7 +274,7 @@ boxed enum Type {
     CInt
     Unknown
     Never
-    TypeVariable(name: String, trait_implementations: [TypeId], is_value: bool = false)
+    TypeVariable(name: String, trait_implementations: [TypeId], is_value: bool = false, value_type_id: TypeId? = None)
     Dependent(namespace_type: TypeId, name: String, args: [TypeId])
     GenericInstance(id: StructId, args: [TypeId])
     GenericEnumInstance(id: EnumId, args: [TypeId])
@@ -308,7 +308,13 @@ boxed enum Type {
         CInt => 15
         Unknown => 16
         Never => 17
-        TypeVariable(name, is_value) => pair_int_hash(pair_int_hash(name.hash(), is_value.hash()), 18)
+        TypeVariable(name, is_value, value_type_id) => {
+            mut h = pair_int_hash(pair_int_hash(name.hash(), is_value.hash()), 18)
+            if value_type_id.has_value() {
+                h = pair_int_hash(h, value_type_id!.hash())
+            }
+            yield h
+        }
         Dependent(namespace_type, name, args) => {
             mut hash = pair_int_hash(namespace_type.hash(), name.hash())
             for arg in args {
@@ -2018,6 +2024,24 @@ class CheckedProgram {
         return join(ss, separator: " -> ")
     }
 
+    public fn is_trivial_in_cpp(this, type_id: TypeId) -> bool {
+        guard .get_type(type_id) is TypeVariable(is_value, value_type_id) else {
+            return true
+        }
+        guard is_value else { return true }
+
+        guard value_type_id.has_value() else { return false }
+
+        let vtype = .get_type(value_type_id!)
+        if vtype.is_numeric() or vtype is Bool {
+            return true
+        }
+        return match vtype {
+            Enum(enum_id) => .is_trivial_in_cpp(type_id: .get_enum(enum_id).underlying_type_id)
+            else => false
+        }
+    }
+
     public fn create_scope(
         mut this
         parent_scope_id: ScopeId?
@@ -2086,7 +2110,7 @@ class CheckedProgram {
             CInt => Type::CInt(qualifiers)
             Unknown => Type::Unknown
             Never => Type::Never
-            TypeVariable(name, trait_implementations, is_value) => Type::TypeVariable(qualifiers, name, trait_implementations, is_value)
+            TypeVariable(name, trait_implementations, is_value, value_type_id) => Type::TypeVariable(qualifiers, name, trait_implementations, is_value, value_type_id)
             Dependent(namespace_type, name, args) => Type::Dependent(qualifiers, namespace_type, name, args)
             GenericInstance(id, args) => Type::GenericInstance(qualifiers, id, args)
             GenericEnumInstance(id, args) => Type::GenericEnumInstance(qualifiers, id, args)

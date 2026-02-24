@@ -897,10 +897,29 @@ struct CodeGenerator {
             function.generics.specializations[function.specialization_index!]
         )
 
-        if define_pass and is_full_respecialization {
+        let has_emittable_params = .has_emittable_template_params(function.generics.params)
+
+        if not has_emittable_params and is_full_respecialization {
+            if define_pass {
+                .codegen_function_in_namespace(
+                    function
+                    containing_struct
+                    skip_template: true
+                    &mut output
+                )
+            }
+        } else if define_pass and is_full_respecialization {
             output.append("template<")
             mut first = true
-            for arg in function.generics.specializations[function.specialization_index!] {
+            let specialization = function.generics.specializations[function.specialization_index!]
+            for i in 0..specialization.size() {
+                let arg = specialization[i]
+                if i < function.generics.params.size() {
+                    let param_type_id = function.generics.params[i].checked_parameter.type_id
+                    if not .program.is_trivial_in_cpp(type_id: param_type_id) {
+                        continue
+                    }
+                }
                 if .program.get_type(arg) is TypeVariable(name) {
                     if first {
                         first = false
@@ -956,13 +975,20 @@ struct CodeGenerator {
 
             output.append("<")
             mut first = true
-            for type_id in function.generics.specializations[function.specialization_index!] {
+            let specialization2 = function.generics.specializations[function.specialization_index!]
+            for i in 0..specialization2.size() {
+                if i < function.generics.params.size() {
+                    let param_type_id = function.generics.params[i].checked_parameter.type_id
+                    if not .program.is_trivial_in_cpp(type_id: param_type_id) {
+                        continue
+                    }
+                }
                 if first {
                     first = false
                 } else {
                     output.append(", ")
                 }
-                output.append(.codegen_type(type_id))
+                output.append(.codegen_type(specialization2[i]))
             }
 
             output.append(">(")
@@ -1452,6 +1478,24 @@ struct CodeGenerator {
         }
     }
 
+    fn has_emittable_template_params(this, anon parameters: [CheckedGenericParameter]) -> bool {
+        for param in parameters {
+            if .program.is_trivial_in_cpp(type_id: param.type_id) {
+                return true
+            }
+        }
+        return false
+    }
+
+    fn has_emittable_template_params(this, anon parameters: [FunctionGenericParameter]) -> bool {
+        for param in parameters {
+            if .program.is_trivial_in_cpp(type_id: param.checked_parameter.type_id) {
+                return true
+            }
+        }
+        return false
+    }
+
     fn codegen_template_parameter_names(
         mut this
         anon parameters: [FunctionGenericParameter]
@@ -1504,6 +1548,9 @@ struct CodeGenerator {
     ) throws {
         mut first = true
         for id in parameters {
+            if not .program.is_trivial_in_cpp(type_id: id) {
+                continue
+            }
             if first {
                 first = false
             } else {
@@ -1527,9 +1574,14 @@ struct CodeGenerator {
         output: &mut StringBuilder
     ) throws {
         if not function.generics.params.is_empty() {
-            output.append("template <")
-            .codegen_template_parameter_names(function.generics.params, &mut output)
-            output .append(">\n")
+            mut template_output = StringBuilder::create()
+            .codegen_template_parameter_names(function.generics.params, output: &mut template_output)
+            let template_params = template_output.to_string()
+            if not template_params.is_empty() {
+                output.append("template <")
+                output.append(template_params)
+                output.append(">\n")
+            }
         }
     }
 
@@ -1632,7 +1684,7 @@ struct CodeGenerator {
         if struct_.definition_linkage is External {
             return
         }
-        if not struct_.generic_parameters.is_empty() {
+        if not struct_.generic_parameters.is_empty() and .has_emittable_template_params(struct_.generic_parameters) {
             output.append("template <")
             .codegen_template_parameter_names(struct_.generic_parameters, &mut output)
             output.append(">")
@@ -1661,7 +1713,7 @@ struct CodeGenerator {
         mut generic_parameter_names: [String] = []
         mut template_parameters_builder = StringBuilder::create()
         mut template_parameters = ""
-        if not struct_.generic_parameters.is_empty() {
+        if not struct_.generic_parameters.is_empty() and .has_emittable_template_params(struct_.generic_parameters) {
             struct_is_generic = true
             .codegen_template_parameter_names(
                 struct_.generic_parameters
@@ -1827,7 +1879,7 @@ struct CodeGenerator {
             }
         }
 
-        let is_generic = not enum_.generic_parameters.is_empty()
+        let is_generic = not enum_.generic_parameters.is_empty() and .has_emittable_template_params(enum_.generic_parameters)
 
         if is_generic {
             output.append("template<")
@@ -1857,7 +1909,7 @@ struct CodeGenerator {
             }
         }
 
-        let is_generic = not enum_.generic_parameters.is_empty()
+        let is_generic = not enum_.generic_parameters.is_empty() and .has_emittable_template_params(enum_.generic_parameters)
         mut generic_parameter_names: [String] = []
         mut template_args_builder = StringBuilder::create()
         .codegen_template_parameter_names(enum_.generic_parameters, names: &mut generic_parameter_names, output: &mut template_args_builder)
@@ -2492,7 +2544,7 @@ struct CodeGenerator {
         is_inline: bool = false
         output: &mut StringBuilder
     ) throws {
-        if not is_inline and not struct_.generic_parameters.is_empty() {
+        if not is_inline and not struct_.generic_parameters.is_empty() and .has_emittable_template_params(struct_.generic_parameters) {
             output.append("template <")
             .codegen_template_parameter_names(struct_.generic_parameters, &mut output)
             output.append(">\n")
@@ -2548,7 +2600,7 @@ struct CodeGenerator {
         is_inline: bool = false
         output: &mut StringBuilder
     ) throws {
-        if not is_inline and not enum_.generic_parameters.is_empty() {
+        if not is_inline and not enum_.generic_parameters.is_empty() and .has_emittable_template_params(enum_.generic_parameters) {
             output.append("template <")
             .codegen_template_parameter_names(enum_.generic_parameters, &mut output)
             output.append(">\n")
@@ -4716,13 +4768,19 @@ struct CodeGenerator {
                                     output.append(struct_.name_for_codegen().as_name_for_use())
                                     output.append("<")
                                     mut first = true
-                                    for arg in args {
+                                    for i in 0..args.size() {
+                                        if i < struct_.generic_parameters.size() {
+                                            let param_type_id = struct_.generic_parameters[i].type_id
+                                            if not .program.is_trivial_in_cpp(type_id: param_type_id) {
+                                                continue
+                                            }
+                                        }
                                         if not first {
                                             output.append(", ")
                                         } else {
                                             first = false
                                         }
-                                        output.append(.codegen_type(arg))
+                                        output.append(.codegen_type(args[i]))
                                     }
                                     output.append(">::")
                                     output.append(struct_.create_function_name ?? "__jakt_create")
@@ -4730,13 +4788,19 @@ struct CodeGenerator {
                                     output.append(call.name_for_codegen().as_name_for_use())
                                     output.append("<")
                                     mut first = true
-                                    for arg in args {
+                                    for i in 0..args.size() {
+                                        if i < struct_.generic_parameters.size() {
+                                            let param_type_id = struct_.generic_parameters[i].type_id
+                                            if not .program.is_trivial_in_cpp(type_id: param_type_id) {
+                                                continue
+                                            }
+                                        }
                                         if not first {
                                             output.append(", ")
                                         } else {
                                             first = false
                                         }
-                                        output.append(.codegen_type(arg))
+                                        output.append(.codegen_type(args[i]))
                                     }
                                     output.append(">")
                                 }
@@ -4781,10 +4845,25 @@ struct CodeGenerator {
 
                 if not generic_parameters.is_empty() {
                     mut types: [String] = []
-                    for gen_param in generic_parameters {
-                        types.push(.codegen_type_possibly_as_namespace(type_id: gen_param, as_namespace: false))
+                    if call.function_id.has_value() {
+                        let callee = .program.get_function(call.function_id!)
+                        for i in 0..generic_parameters.size() {
+                            if i < callee.generics.params.size() {
+                                let param_type_id = callee.generics.params[i].checked_parameter.type_id
+                                if not .program.is_trivial_in_cpp(type_id: param_type_id) {
+                                    continue
+                                }
+                            }
+                            types.push(.codegen_type_possibly_as_namespace(type_id: generic_parameters[i], as_namespace: false))
+                        }
+                    } else {
+                        for gen_param in generic_parameters {
+                            types.push(.codegen_type_possibly_as_namespace(type_id: gen_param, as_namespace: false))
+                        }
                     }
-                    output.appendff("<{}>", join(types, separator: ", "))
+                    if not types.is_empty() {
+                        output.appendff("<{}>", join(types, separator: ", "))
+                    }
                 }
 
                 mut arguments: [String] = []
@@ -5236,13 +5315,19 @@ struct CodeGenerator {
             output += struct_.name_for_codegen().as_name_for_use()
             output += "<"
             mut first = true
-            for type_id in args {
+            for i in 0..args.size() {
+                if i < struct_.generic_parameters.size() {
+                    let param_type_id = struct_.generic_parameters[i].type_id
+                    if not .program.is_trivial_in_cpp(type_id: param_type_id) {
+                        continue
+                    }
+                }
                 if not first {
                     output += ","
                 } else {
                     first = false
                 }
-                output += .codegen_type(type_id)
+                output += .codegen_type(args[i])
             }
             output += ">"
             if acquired_by_ref {
@@ -5285,14 +5370,20 @@ struct CodeGenerator {
         }
         output.append("<")
         mut first = true
-        for type_id in args {
+        for i in 0..args.size() {
+            if i < enum_.generic_parameters.size() {
+                let param_type_id = enum_.generic_parameters[i].type_id
+                if not .program.is_trivial_in_cpp(type_id: param_type_id) {
+                    continue
+                }
+            }
             if not first {
                 output.append(", ")
             } else {
                 first = false
             }
 
-            output.append(.codegen_type(type_id))
+            output.append(.codegen_type(args[i]))
         }
         output.append(">")
         if close_tag {
@@ -5460,7 +5551,7 @@ struct CodeGenerator {
     ) throws {
         let qualified_name = .codegen_type_possibly_as_namespace(type_id: struct_.type_id, as_namespace: true)
 
-        if not is_inline and not struct_.generic_parameters.is_empty() {
+        if not is_inline and not struct_.generic_parameters.is_empty() and .has_emittable_template_params(struct_.generic_parameters) {
             output.append("template <")
             .codegen_template_parameter_names(struct_.generic_parameters, &mut output)
             output.append(">\n")
@@ -5581,7 +5672,7 @@ struct CodeGenerator {
         let structure = .program.get_struct(struct_id)
         let qualified_name = .codegen_type_possibly_as_namespace(type_id, as_namespace: true)
 
-        if not is_inline and not structure.generic_parameters.is_empty() {
+        if not is_inline and not structure.generic_parameters.is_empty() and .has_emittable_template_params(structure.generic_parameters) {
             output.append("template <")
             .codegen_template_parameter_names(structure.generic_parameters, &mut output)
             output.append(">\n")
@@ -5819,13 +5910,20 @@ struct CodeGenerator {
         if explicit_generic_instantiation.has_value() {
             output.append("<")
             mut first = true
-            for type in explicit_generic_instantiation! {
+            let instantiation = explicit_generic_instantiation!
+            for i in 0..instantiation.size() {
+                if i < function.generics.params.size() {
+                    let param_type_id = function.generics.params[i].checked_parameter.type_id
+                    if not .program.is_trivial_in_cpp(type_id: param_type_id) {
+                        continue
+                    }
+                }
                 if not first {
                     output.append(", ")
                 } else {
                     first = false
                 }
-                output.append(.codegen_type(type))
+                output.append(.codegen_type(instantiation[i]))
             }
             output.append(">")
         }
