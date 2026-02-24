@@ -1,0 +1,12 @@
+/// Expect:
+/// - error: "Comptime argument type 'bool' does not match expected type 'i32'"
+
+comptime id<T>(anon x: T) -> T => x
+
+fn get_value<comptime N: i32>() -> i32 {
+    return id(N) as! i32
+}
+
+fn main() {
+    println("{}", get_value<comptime true>())
+}

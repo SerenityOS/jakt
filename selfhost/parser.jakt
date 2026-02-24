@@ -509,6 +509,7 @@ struct ParsedGenericParameter {
     // the list, if it exists, must have at least one element.
     requires_list: [ParsedNameWithGenericParameters]?
     is_value: bool
+    value_type: ParsedType? = None
 }
 
 enum ParsedTraitRequirements {
@@ -6579,14 +6580,19 @@ struct Parser {
                 Identifier(name, span) => {
                     mut effective_name = name
                     mut requires_list: [ParsedNameWithGenericParameters]? = None
+                    mut value_type: ParsedType? = None
 
                     .index++
                     if .current() is Requires {
                         .index++
                         requires_list = .parse_trait_list()
                     }
+                    if next_generic_is_value and .current() is Colon {
+                        .index++
+                        value_type = .parse_typename()
+                    }
 
-                    generic_parameters.push(ParsedGenericParameter(name, span, requires_list, is_value: next_generic_is_value))
+                    generic_parameters.push(ParsedGenericParameter(name, span, requires_list, is_value: next_generic_is_value, value_type))
                     next_generic_is_value = false
 
                     if .current() is Comma or .current() is Eol {
