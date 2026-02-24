@@ -4,9 +4,7 @@
 comptime id<T>(anon x: T) -> T => x
 
 fn multiply<comptime A: i32, comptime B: i32>() -> i32 {
-    let a = id(A) as! i32
-    let b = id(B) as! i32
-    return a * b
+    return A * B
 }
 
 fn main() {

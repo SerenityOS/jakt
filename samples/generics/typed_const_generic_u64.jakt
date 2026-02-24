@@ -4,7 +4,7 @@
 comptime id<T>(anon x: T) -> T => x
 
 fn add_ten<comptime N: u64>() -> u64 {
-    return (id(N) as! u64) + 10u64
+    return N + 10u64
 }
 
 fn main() {

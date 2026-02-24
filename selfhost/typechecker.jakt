@@ -4890,16 +4890,6 @@ struct Typechecker {
                     }
                 }
                 scope.comptime_bindings[type_name] = value
-                let checked_var = CheckedVariable(
-                    name: type_name
-                    type_id: value.impl.type_id(&mut .program)
-                    is_mutable: false
-                    definition_span: value.span
-                    type_span: None
-                    visibility: CheckedVisibility::Public
-                    invisible_to_ide: false
-                )
-                scope.vars[type_name] = module.add_variable(checked_var)
             }
 
             if dependent_scope_id.has_value() {
@@ -9245,13 +9235,44 @@ struct Typechecker {
 
             yield CheckedExpression::OptionalSome(expr: checked_expr, span, type_id: optional_type_id)
         }
-        Var(name, span) => {
-            let var = .find_var_in_scope(scope_id, var: name)
-            let result = match var {
-                Some(var_) => CheckedExpression::Var(var: var_, span)
+        Var(name, span) => match .find_var_in_scope(scope_id, var: name) {
+            Some(var) => {
+                let var = .find_var_in_scope(scope_id, var: name)
+                let result = match var {
+                    Some(var_) => CheckedExpression::Var(var: var_, span)
+                    None => {
+                        .error(format("Variable '{}' not found", name), span)
+
+                        mut type_id: TypeId? = None
+                        if type_hint.has_value() {
+                            type_id = type_hint!.type_id
+                        }
+
+                        yield CheckedExpression::Var(
+                            var: CheckedVariable(
+                                name,
+                                type_id: type_id.value_or(unknown_type_id()),
+                                is_mutable: false,
+                                definition_span: span,
+                                type_span: None
+                                visibility: CheckedVisibility::Public
+                                invisible_to_ide: false
+                            ),
+                            span
+                        )
+                    }
+                }
+
+                if type_hint is Some(hint) and hint is MustBe(type_id) {
+                    .unify_with_type(found_type: result.type(), expected_type: type_id, span)
+                }
+
+                yield result
+            }
+            None => match .find_comptime_binding_in_scope(scope_id, name) {
+                Some(value) => value_to_checked_expression(value, interpreter: .interpreter())
                 None => {
                     .error(format("Variable '{}' not found", name), span)
-
                     mut type_id: TypeId? = None
                     if type_hint.has_value() {
                         type_id = type_hint!.type_id
@@ -9271,12 +9292,6 @@ struct Typechecker {
                     )
                 }
             }
-
-            if type_hint is Some(hint) and hint is MustBe(type_id) {
-                .unify_with_type(found_type: result.type(), expected_type: type_id, span)
-            }
-
-            yield result
         }
         ForcedUnwrap(expr, span) => {
             let checked_expr = .typecheck_expression_and_dereference_if_needed(expr, scope_id, safety_mode, type_hint: None, span)

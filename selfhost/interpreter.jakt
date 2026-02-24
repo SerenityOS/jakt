@@ -3545,11 +3545,30 @@ class Interpreter {
             }
         }
 
+        // Add comptime generic parameter values as interpreter bindings
+        mut comptime_bindings: [String:Value] = [:]
+        for i in 0..function_to_run.generics.params.size() {
+            let param = function_to_run.generics.params[i]
+            let param_type_id = param.checked_parameter.type_id
+            if .program.get_type(param_type_id) is TypeVariable(name, is_value) and is_value {
+                if i < function_to_run.generics.specializations.size() and function_to_run.specialization_index.has_value() {
+                    let spec = function_to_run.generics.specializations[function_to_run.specialization_index!]
+                    if i < spec.size() and .program.get_type(spec[i]) is Const(value) {
+                        comptime_bindings[name] = value
+                    }
+                }
+            }
+        }
+
         match function_to_run.type {
             Normal => {
                 mut scope = InterpreterScope::create(parent: invocation_scope, compiler: .compiler, runtime_scope_id)
                 defer {
                     scope.perform_defers(interpreter: this, span: call_span)
+                }
+
+                for pair in comptime_bindings {
+                    scope.bindings[pair.0] = pair.1
                 }
 
                 for i in 0..function_to_run.params.size() {
@@ -3578,6 +3597,10 @@ class Interpreter {
                 mut scope = InterpreterScope::create(parent: invocation_scope, compiler: .compiler, runtime_scope_id)
                 defer {
                     scope.perform_defers(interpreter: this, span: call_span)
+                }
+
+                for pair in comptime_bindings {
+                    scope.bindings[pair.0] = pair.1
                 }
 
                 for i in 0..function_to_run.params.size() {
