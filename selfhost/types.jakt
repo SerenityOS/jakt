@@ -3755,10 +3755,7 @@ fn format_value_impl(anon format_string: String, anon value: Value, program: &Ch
         yield builder.to_string()
     }
 
-    else => {
-        eprintln("Cannot format value {}", value.impl)
-        throw Error::from_string_literal("Cannot format value of this type")
-    }
+    else => runtime_format(format_string, "<unformattable value>")
 }
 
 fn comptime_format_impl(format_string: String, arguments: ArraySlice<Value>, program: &CheckedProgram) throws -> String {
