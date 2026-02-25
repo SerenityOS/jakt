@@ -1,0 +1,13 @@
+/// Expect:
+/// - output: "a-one\na-two\nb-one\nb-two\n"
+
+fn combine<comptime a: String, comptime b: String>() throws -> String {
+    return format("{}-{}", a, b)
+}
+
+fn main() {
+    println("{}", combine<comptime "a", comptime "one">())
+    println("{}", combine<comptime "a", comptime "two">())
+    println("{}", combine<comptime "b", comptime "one">())
+    println("{}", combine<comptime "b", comptime "two">())
+}

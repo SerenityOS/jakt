@@ -1,0 +1,11 @@
+/// Expect:
+/// - output: "hello world\ngoodbye world\n"
+
+fn greet<comptime greeting: String>(anon name: String) throws -> String {
+    return format("{} {}", greeting, name)
+}
+
+fn main() {
+    println("{}", greet<comptime "hello">("world"))
+    println("{}", greet<comptime "goodbye">("world"))
+}

@@ -12,7 +12,7 @@ import typechecker {
     CheckedVisibility, EnumId, FunctionId, Module, ModuleId, Scope, ScopeId, StructId, Type, TypeId, VarId, builtin
     never_type_id, unknown_type_id, void_type_id
 }
-import types { CheckedGenericParameter, CheckedParameter, FunctionGenericParameter, SafetyMode, StructLikeId }
+import types { CheckedGenericParameter, CheckedParameter, FunctionGenericParameter, SafetyMode, StructLikeId, Value }
 import utility { Queue, Span, escape_for_quotes, interpret_escapes, join, panic, prepend_to_each, todo }
 import compiler { Compiler }
 import jakt::path { Path }
@@ -230,6 +230,9 @@ struct CodeGenerator {
     yield_method: YieldMethod? = None
     // Whether the latest output needs to use ErrorOr as return value.
     restricted(codegen_value_match, current_error_handler, codegen_statement) yields_erroror: bool = false
+    // Map from value type's TypeId to list of unique Const TypeIds of that type; mapping per-type tag enums for non-trivial comptime parameters
+    comptime_tag_enums: [TypeId: [TypeId]] = [:]
+    comptime_tags_emitted: bool = false
 
     // `forward_error_with_try` controls whether errors are handled through the TRY() macro or through an external mechanism put by the caller.
     // noreturn functions may not throw, so let them crash instead.
@@ -301,6 +304,135 @@ struct CodeGenerator {
         panic("Cyclic module imports")
     }
 
+    fn add_comptime_tag(mut this, const_type_id: TypeId, value: Value) throws {
+        let value_type_id = value.impl.type_id(&mut .program)
+        if not .comptime_tag_enums.contains(value_type_id) {
+            .comptime_tag_enums.set(value_type_id, [const_type_id])
+        } else {
+            mut list = .comptime_tag_enums[value_type_id]
+            for existing in list {
+                if existing.equals(const_type_id) {
+                    return
+                }
+            }
+            list.push(const_type_id)
+            .comptime_tag_enums.set(value_type_id, list)
+        }
+    }
+
+    fn should_use_comptime_tag(this, param_type_id: TypeId) -> bool {
+        if .program.is_trivial_in_cpp(type_id: param_type_id) {
+            return false
+        }
+        guard .program.get_type(param_type_id) is TypeVariable(is_value, value_type_id) else {
+            return false
+        }
+        return is_value and value_type_id.has_value()
+    }
+
+    fn collect_comptime_tags(mut this) throws {
+        // Scan all types in all modules for non-trivial comptime args
+        for module in .program.modules {
+            for type_with_skip in module.types {
+                match type_with_skip.type {
+                    GenericInstance(id, args) => {
+                        let struct_ = .program.get_struct(id)
+                        for i in 0..args.size() {
+                            if i < struct_.generic_parameters.size() {
+                                let param_type_id = struct_.generic_parameters[i].type_id
+                                if .should_use_comptime_tag(param_type_id) {
+                                    if .program.get_type(args[i]) is Const(value) {
+                                        .add_comptime_tag(const_type_id: args[i], value)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    GenericEnumInstance(id, args) => {
+                        let enum_ = .program.get_enum(id)
+                        for i in 0..args.size() {
+                            if i < enum_.generic_parameters.size() {
+                                let param_type_id = enum_.generic_parameters[i].type_id
+                                if .should_use_comptime_tag(param_type_id) {
+                                    if .program.get_type(args[i]) is Const(value) {
+                                        .add_comptime_tag(const_type_id: args[i], value)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else => {}
+                }
+            }
+
+            for function in module.functions {
+                for specialization in function.generics.specializations {
+                    for i in 0..specialization.size() {
+                        if i < function.generics.params.size() {
+                            let param_type_id = function.generics.params[i].checked_parameter.type_id
+                            if .should_use_comptime_tag(param_type_id) {
+                                if .program.get_type(specialization[i]) is Const(value) {
+                                    .add_comptime_tag(const_type_id: specialization[i], value)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fn sanitize_cpp_identifier(anon name: String) -> String {
+        mut result = StringBuilder::create()
+        for cp in name.code_points() {
+            if (cp >= 'a' and cp <= 'z') or (cp >= 'A' and cp <= 'Z') or (cp >= '0' and cp <= '9') or cp == '_' {
+                result.append(cp)
+            } else {
+                result.append('_')
+            }
+        }
+        return result.to_string()
+    }
+
+    fn codegen_comptime_tag_enums(mut this, output: &mut StringBuilder) throws {
+        for entry in .comptime_tag_enums {
+            let value_type_id = entry.0
+            let const_type_ids = entry.1
+            let type_name = .program.type_name(value_type_id)
+            let sanitized_name = CodeGenerator::sanitize_cpp_identifier(type_name)
+
+            output.appendff("enum class __jakt_comptime_{} : size_t {{\n", sanitized_name)
+            for i in 0..const_type_ids.size() {
+                // Use codegen_type to generate the C++ representation as a comment
+                let value_repr = .codegen_type(const_type_ids[i])
+                output.appendff("__value_{}, // {}\n", i, value_repr)
+            }
+            output.append("};\n")
+        }
+    }
+
+    fn get_comptime_tag_for_const(mut this, type_id: TypeId) throws -> (String, String)? {
+        guard .program.get_type(type_id) is Const(value) else {
+            return None
+        }
+
+        let value_type_id = value.impl.type_id(program: &mut .program)
+        guard .comptime_tag_enums.contains(value_type_id) else {
+            return None
+        }
+
+        let const_type_ids = .comptime_tag_enums[value_type_id]
+        for i in 0..const_type_ids.size() {
+            if const_type_ids[i].equals(type_id) {
+                let type_name = .program.type_name(value_type_id)
+                let sanitized_name = CodeGenerator::sanitize_cpp_identifier(type_name)
+                return (format("__jakt_comptime_{}", sanitized_name), format("__value_{}", i))
+            }
+        }
+
+        return None
+    }
+
     fn generate(compiler: Compiler, anon program: CheckedProgram, debug_info: bool, exported_files: &mut [String:String]) throws -> [String:(String, String)] {
         mut generator = CodeGenerator(
             compiler
@@ -319,6 +451,8 @@ struct CodeGenerator {
             fresh_var_counter: 0
             fresh_label_counter: 0
         )
+
+        generator.collect_comptime_tags()
 
         mut result: [String:(String, String)] = [:]
 
@@ -404,6 +538,12 @@ struct CodeGenerator {
             // We must reserve `output` so that we can add the imported headers later.
             mut after_headers = StringBuilder::create()
             after_headers.append("namespace Jakt {\n")
+
+            // Emit comptime tag enums once in the first module header
+            if module.is_root and not generator.comptime_tags_emitted {
+                generator.codegen_comptime_tag_enums(output: &mut after_headers)
+                generator.comptime_tags_emitted = true
+            }
 
             if not module.is_root {
                 generator.namespace_stack.push(module.name)
@@ -917,6 +1057,21 @@ struct CodeGenerator {
                 if i < function.generics.params.size() {
                     let param_type_id = function.generics.params[i].checked_parameter.type_id
                     if not .program.is_trivial_in_cpp(type_id: param_type_id) {
+                        if .program.get_type(param_type_id) is TypeVariable(is_value, value_type_id) and is_value and value_type_id.has_value() {
+                            if .comptime_tag_enums.contains(value_type_id!) {
+                                if .program.get_type(arg) is TypeVariable(name) {
+                                    if first {
+                                        first = false
+                                    } else {
+                                        output.append(", ")
+                                    }
+                                    let type_name = .program.type_name(value_type_id!)
+                                    let sanitized_name = CodeGenerator::sanitize_cpp_identifier(type_name)
+                                    output.appendff("__jakt_comptime_{} {}", sanitized_name, name)
+                                }
+                                continue
+                            }
+                        }
                         continue
                     }
                 }
@@ -980,6 +1135,14 @@ struct CodeGenerator {
                 if i < function.generics.params.size() {
                     let param_type_id = function.generics.params[i].checked_parameter.type_id
                     if not .program.is_trivial_in_cpp(type_id: param_type_id) {
+                        if .get_comptime_tag_for_const(type_id: specialization2[i]) is Some(tag) {
+                            if first {
+                                first = false
+                            } else {
+                                output.append(", ")
+                            }
+                            output.appendff("{}::{}", tag.0, tag.1)
+                        }
                         continue
                     }
                 }
@@ -1483,6 +1646,11 @@ struct CodeGenerator {
             if .program.is_trivial_in_cpp(type_id: param.type_id) {
                 return true
             }
+            if .program.get_type(param.type_id) is TypeVariable(is_value, value_type_id) and is_value and value_type_id.has_value() {
+                if .comptime_tag_enums.contains(value_type_id!) {
+                    return true
+                }
+            }
         }
         return false
     }
@@ -1491,6 +1659,11 @@ struct CodeGenerator {
         for param in parameters {
             if .program.is_trivial_in_cpp(type_id: param.checked_parameter.type_id) {
                 return true
+            }
+            if .program.get_type(param.checked_parameter.type_id) is TypeVariable(is_value, value_type_id) and is_value and value_type_id.has_value() {
+                if .comptime_tag_enums.contains(value_type_id!) {
+                    return true
+                }
             }
         }
         return false
@@ -1549,6 +1722,25 @@ struct CodeGenerator {
         mut first = true
         for id in parameters {
             if not .program.is_trivial_in_cpp(type_id: id) {
+                // Check if this is a non-trivial comptime value param with a tag enum
+                if .program.get_type(id) is TypeVariable(is_value, value_type_id) and is_value and value_type_id.has_value() {
+                    if .comptime_tag_enums.contains(value_type_id!) {
+                        if first {
+                            first = false
+                        } else {
+                            output.append(",")
+                        }
+                        let type_name = .program.type_name(value_type_id!)
+                        let sanitized_name = CodeGenerator::sanitize_cpp_identifier(type_name)
+                        let tag_enum_name = format("__jakt_comptime_{}", sanitized_name)
+                        output.append(tag_enum_name)
+                        output.append(" ")
+                        let name = .codegen_type(id)
+                        output.append(name)
+                        names.push(name)
+                        continue
+                    }
+                }
                 continue
             }
             if first {
@@ -4772,6 +4964,14 @@ struct CodeGenerator {
                                         if i < struct_.generic_parameters.size() {
                                             let param_type_id = struct_.generic_parameters[i].type_id
                                             if not .program.is_trivial_in_cpp(type_id: param_type_id) {
+                                                if .get_comptime_tag_for_const(type_id: args[i]) is Some(tag) {
+                                                    if not first {
+                                                        output.append(", ")
+                                                    } else {
+                                                        first = false
+                                                    }
+                                                    output.appendff("{}::{}", tag.0, tag.1)
+                                                }
                                                 continue
                                             }
                                         }
@@ -4792,6 +4992,14 @@ struct CodeGenerator {
                                         if i < struct_.generic_parameters.size() {
                                             let param_type_id = struct_.generic_parameters[i].type_id
                                             if not .program.is_trivial_in_cpp(type_id: param_type_id) {
+                                                if .get_comptime_tag_for_const(type_id: args[i]) is Some(tag) {
+                                                    if not first {
+                                                        output.append(", ")
+                                                    } else {
+                                                        first = false
+                                                    }
+                                                    output.appendff("{}::{}", tag.0, tag.1)
+                                                }
                                                 continue
                                             }
                                         }
@@ -4851,6 +5059,9 @@ struct CodeGenerator {
                             if i < callee.generics.params.size() {
                                 let param_type_id = callee.generics.params[i].checked_parameter.type_id
                                 if not .program.is_trivial_in_cpp(type_id: param_type_id) {
+                                    if .get_comptime_tag_for_const(type_id: generic_parameters[i]) is Some(tag) {
+                                        types.push(format("{}::{}", tag.0, tag.1))
+                                    }
                                     continue
                                 }
                             }
@@ -5319,6 +5530,14 @@ struct CodeGenerator {
                 if i < struct_.generic_parameters.size() {
                     let param_type_id = struct_.generic_parameters[i].type_id
                     if not .program.is_trivial_in_cpp(type_id: param_type_id) {
+                        if .get_comptime_tag_for_const(type_id: args[i]) is Some(tag) {
+                            if not first {
+                                output += ","
+                            } else {
+                                first = false
+                            }
+                            output += format("{}::{}", tag.0, tag.1)
+                        }
                         continue
                     }
                 }
@@ -5374,6 +5593,14 @@ struct CodeGenerator {
             if i < enum_.generic_parameters.size() {
                 let param_type_id = enum_.generic_parameters[i].type_id
                 if not .program.is_trivial_in_cpp(type_id: param_type_id) {
+                    if .get_comptime_tag_for_const(type_id: args[i]) is Some(tag) {
+                        if not first {
+                            output.append(", ")
+                        } else {
+                            first = false
+                        }
+                        output.appendff("{}::{}", tag.0, tag.1)
+                    }
                     continue
                 }
             }
@@ -5915,6 +6142,14 @@ struct CodeGenerator {
                 if i < function.generics.params.size() {
                     let param_type_id = function.generics.params[i].checked_parameter.type_id
                     if not .program.is_trivial_in_cpp(type_id: param_type_id) {
+                        if .get_comptime_tag_for_const(type_id: instantiation[i]) is Some(tag) {
+                            if not first {
+                                output.append(", ")
+                            } else {
+                                first = false
+                            }
+                            output.appendff("{}::{}", tag.0, tag.1)
+                        }
                         continue
                     }
                 }
