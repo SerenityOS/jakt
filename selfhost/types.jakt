@@ -3383,9 +3383,13 @@ boxed enum ValueImpl {
         Struct(struct_id) => program.find_or_add_type_id(Type::Struct(struct_id), module_id: struct_id.module)
         Class(struct_id) => program.find_or_add_type_id(Type::Struct(struct_id), module_id: struct_id.module)
         Enum(enum_id) => program.find_or_add_type_id(Type::Enum(enum_id), module_id: enum_id.module)
-        else => {
-            panic("Reflected value type not implemented")
+        RawPtr(to_value) => program.find_or_add_type_id(Type::RawPtr(to_value.type_id(program)), module_id: program.prelude_scope_id().module_id)
+        OptionalSome(value) => {
+            let optional_struct_id = program.find_struct_in_prelude("Optional")
+            yield program.find_or_add_type_id(Type::GenericInstance(id: optional_struct_id, args: [value.impl.type_id(program)]), module_id: optional_struct_id.module)
         }
+        OptionalNone => program.find_or_add_type_id(Type::GenericInstance(id: program.find_struct_in_prelude("Optional"), args: [unknown_type_id()]), module_id: program.prelude_scope_id().module_id)
+        else(type_id) => type_id
     }
 
     fn copy(this) -> ValueImpl => match this {
