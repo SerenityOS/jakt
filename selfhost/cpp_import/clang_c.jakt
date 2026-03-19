@@ -514,6 +514,7 @@ import extern c "clang-c/Index.h" {
     extern fn clang_getCString(anon string: CXString) -> raw c_char
     extern fn clang_disposeString(anon string: CXString)
     extern fn clang_getCanonicalType(anon type: CXType) -> CXType
+    extern fn clang_equalTypes(anon a: CXType, anon b: CXType) -> bool
     extern fn clang_getPointeeType(anon type: CXType) -> CXType
     extern fn clang_CXXMethod_isStatic(anon cursor: CXCursor) -> bool
     extern fn clang_CXXMethod_isVirtual(anon cursor: CXCursor) -> bool
