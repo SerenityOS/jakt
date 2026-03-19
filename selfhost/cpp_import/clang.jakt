@@ -27,8 +27,8 @@ import cpp_import::clang_c {
     clang_EvalResult_getAsStr, clang_EvalResult_getAsUnsigned, clang_EvalResult_getKind
     clang_EvalResult_isUnsignedInt, clang_Type_getNamedType, clang_Type_getNumTemplateArguments
     clang_Type_getSizeOf, clang_Type_getTemplateArgumentAsType, clang_createIndex, clang_disposeIndex
-    clang_disposeString, clang_disposeTokens, clang_disposeTranslationUnit, clang_equalCursors, clang_getArgType
-    clang_getArrayElementType, clang_getArraySize, clang_getCString, clang_getCanonicalCursor
+    clang_disposeString, clang_disposeTokens, clang_disposeTranslationUnit, clang_equalCursors, clang_equalTypes
+    clang_getArgType, clang_getArrayElementType, clang_getArraySize, clang_getCString, clang_getCanonicalCursor
     clang_getCanonicalType, clang_getCursorDefinition, clang_getCursorExtent, clang_getCursorKind
     clang_getCursorKindSpelling, clang_getCursorLocation, clang_getCursorPrettyPrinted
     clang_getCursorPrintingPolicy, clang_getCursorResultType, clang_getCursorSemanticParent, clang_getCursorSpelling
@@ -563,6 +563,104 @@ class CppImportProcessor {
         return new_scope_id
     }
 
+    fn resolve_unexposed_type(
+        mut this
+        program: &mut CheckedProgram
+        scope_id: ScopeId
+        root_scope_id: ScopeId
+        module_id: ModuleId
+        anon t: CXType
+    ) throws -> TypeId {
+        // Try to find a decl for the type, to avoid:
+        // - Unexposed types that are actually elaborated types (e.g. "class Foo" instead of "Foo")
+        // - Random types that happen to have cv-qualifiers or other decorations that cause clang to give us an unexposed type instead of the actual type.
+        mut definition_cursor = clang_getTypeDeclaration(t)
+        if clang_getCursorKind(definition_cursor) is CXCursor_NoDeclFound {
+            let canonical = clang_getCanonicalType(t)
+            if not clang_equalTypes(canonical, t) {
+                definition_cursor = clang_getTypeDeclaration(canonical)
+            }
+        }
+
+        // If we have a valid declaration, handle like CXType_Elaborated.
+        if not (clang_getCursorKind(definition_cursor) is CXCursor_NoDeclFound) {
+            let template_argument_count = clang_Type_getNumTemplateArguments(t)
+
+            let base_type: TypeId? = match template_argument_count > 0 {
+                true => program.find_type_in_scope(
+                    scope_id
+                    name: name_from(definition_cursor)
+                    ignore_mixin_scopes: true
+                    root_scope: root_scope_id
+                )
+                false => program.find_type_in_scope(
+                    scope_id
+                    name: name_from(definition_cursor)
+                    ignore_mixin_scopes: true
+                    root_scope: root_scope_id
+                )
+            }
+
+            return match base_type.has_value() {
+                false => unknown_type_id()
+                true => {
+                    mut type_id = base_type!
+                    let base_usr = string_from(clang_getCursorUSR(cursor: definition_cursor))
+
+                    if base_usr == "c:@N@AK@S@ByteString" {
+                        return program.find_type_in_scope(
+                            scope_id: program.prelude_scope_id()
+                            name: "String"
+                        ) ?? builtin(BuiltinType::JaktString)
+                    }
+
+                    let is_nnrp_class_type = base_usr.starts_with("c:@N@AK@S@NonnullRefPtr>") or base_usr == "c:@N@AK@ST>1#T@NonnullRefPtr"
+                    let is_ak_function = base_usr.starts_with("c:@N@AK@S@Function>")
+
+                    if template_argument_count > 0 {
+                        let count = template_argument_count as! u32
+                        mut args: [TypeId] = []
+                        for i in 0..count {
+                            let type = clang_Type_getTemplateArgumentAsType(t, i)
+                            args.push(.type_from(program, scope_id, root_scope_id, module_id, type))
+                        }
+
+                        if count == 1 and (is_nnrp_class_type or is_ak_function) {
+                            type_id = args[0]
+                        } else {
+                            type_id = program.find_or_add_type_id(
+                                type: match program.get_type(base_type!) {
+                                    Struct(id) | GenericInstance(id) => Type::GenericInstance(id, args)
+                                    Enum(id) | GenericEnumInstance(id) => Type::GenericEnumInstance(id, args)
+                                    else => {
+                                        if .debug_print { eprintln("ICE: Unexposed type is not a struct or enum: {}", program.type_name(base_type!, debug_mode: true)) }
+                                        yield Type::Unknown
+                                    }
+                                }
+                                module_id
+                                only_in_current_module: true
+                            )
+                        }
+                    }
+
+                    yield type_id
+                }
+            }
+        }
+
+        // No declaration found (e.g. type parameters). Fall back to spelling-based lookup.
+        let name = string_from(clang_getTypeSpelling(t))
+        if name.is_empty() {
+            return builtin(BuiltinType::Unknown)
+        }
+        return program.find_type_in_scope(
+            scope_id
+            name
+            ignore_mixin_scopes: true
+            root_scope: root_scope_id
+        ) ?? builtin(BuiltinType::Unknown)
+    }
+
     fn type_from(
         mut this
         program: &mut CheckedProgram
@@ -668,37 +766,44 @@ class CppImportProcessor {
                         mut type_id = base_type!
                         let base_usr = string_from(clang_getCursorUSR(cursor: definition_cursor))
 
-                        // NonnullRefPtr<T> where T is a class -> T
-                        let is_nnrp_class_type = base_usr.starts_with("c:@N@AK@S@NonnullRefPtr>") or base_usr == "c:@N@AK@ST>1#T@NonnullRefPtr"
-                        // Function<T> -> T
-                        let is_ak_function = base_usr.starts_with("c:@N@AK@S@Function>")
+                        if base_usr == "c:@N@AK@S@ByteString" {
+                            type_id = program.find_type_in_scope(
+                                scope_id: program.prelude_scope_id()
+                                name: "String"
+                            ) ?? builtin(BuiltinType::JaktString)
+                        } else {
+                            // NonnullRefPtr<T> where T is a class -> T
+                            let is_nnrp_class_type = base_usr.starts_with("c:@N@AK@S@NonnullRefPtr>") or base_usr == "c:@N@AK@ST>1#T@NonnullRefPtr"
+                            // Function<T> -> T
+                            let is_ak_function = base_usr.starts_with("c:@N@AK@S@Function>")
 
-                        // Check template params
-                        if template_argument_count > 0 {
-                            let count = template_argument_count as! u32
-                            mut args: [TypeId] = []
-                            for i in 0..count {
-                                let type = clang_Type_getTemplateArgumentAsType(t, i)
-                                args.push(.type_from(program, scope_id, root_scope_id, module_id, type))
-                            }
+                            // Check template params
+                            if template_argument_count > 0 {
+                                let count = template_argument_count as! u32
+                                mut args: [TypeId] = []
+                                for i in 0..count {
+                                    let type = clang_Type_getTemplateArgumentAsType(t, i)
+                                    args.push(.type_from(program, scope_id, root_scope_id, module_id, type))
+                                }
 
-                            if count == 1 and (is_nnrp_class_type or is_ak_function) {
-                                // Special case: Treat NNRP<T> as T when T is a class type
-                                // Special case: Treat Function<Fn> as Fn.
-                                type_id = args[0]
-                            } else {
-                                type_id = program.find_or_add_type_id(
-                                    type: match program.get_type(base_type!) {
-                                        Struct(id) | GenericInstance(id) => Type::GenericInstance(id, args)
-                                        Enum(id) | GenericEnumInstance(id) => Type::GenericEnumInstance(id, args)
-                                        else => {
-                                            if .debug_print { eprintln("ICE: Elaborated type is not a struct or enum: {}", program.type_name(base_type!, debug_mode: true)) }
-                                            yield Type::Unknown
+                                if count == 1 and (is_nnrp_class_type or is_ak_function) {
+                                    // Special case: Treat NNRP<T> as T when T is a class type
+                                    // Special case: Treat Function<Fn> as Fn.
+                                    type_id = args[0]
+                                } else {
+                                    type_id = program.find_or_add_type_id(
+                                        type: match program.get_type(base_type!) {
+                                            Struct(id) | GenericInstance(id) => Type::GenericInstance(id, args)
+                                            Enum(id) | GenericEnumInstance(id) => Type::GenericEnumInstance(id, args)
+                                            else => {
+                                                if .debug_print { eprintln("ICE: Elaborated type is not a struct or enum: {}", program.type_name(base_type!, debug_mode: true)) }
+                                                yield Type::Unknown
+                                            }
                                         }
-                                    }
-                                    module_id
-                                    only_in_current_module: true
-                                )
+                                        module_id
+                                        only_in_current_module: true
+                                    )
+                                }
                             }
                         }
 
@@ -707,16 +812,7 @@ class CppImportProcessor {
                 }
             }
             CXType_Unexposed => {
-                let name = string_from(clang_getTypeSpelling(t))
-                yield match name.is_empty() {
-                    true => builtin(BuiltinType::Unknown)
-                    false => program.find_type_in_scope(
-                        scope_id
-                        name
-                        ignore_mixin_scopes: true
-                        root_scope: root_scope_id
-                    ) ?? builtin(BuiltinType::Unknown)
-                }
+                yield .resolve_unexposed_type(program, scope_id, root_scope_id, module_id, t)
             }
             CXType_LValueReference => program.find_or_add_type_id(
                 type: Type::Reference(
