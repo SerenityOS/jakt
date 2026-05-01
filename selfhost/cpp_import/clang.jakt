@@ -1741,6 +1741,8 @@ class CppImportProcessor {
             is_method and clang_CXXMethod_isStatic(cursor)
         ) or not is_method
 
+        let is_virtual = clang_CXXMethod_isVirtual(cursor)
+
         if not this_type.has_value() and (kind is Constructor or kind is Destructor) {
             if .debug_print { eprintln("[ICE] Constructor or destructor ({}) without a this type", name_from(cursor)) }
             return
@@ -1907,7 +1909,7 @@ class CppImportProcessor {
             is_instantiated: true
             parsed_function: None
             is_comptime: false
-            is_virtual: false
+            is_virtual: is_virtual
             is_override: false
             is_unsafe: false
             has_varargs

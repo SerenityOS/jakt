@@ -1,0 +1,14 @@
+/// Expect:
+/// - output: "From the child\n"
+/// - cppincludes: "."
+
+import extern "polymorphism_override_cpp_method.h"
+
+class Child : Parent {
+    public override fn f(mut this) { print("From the child\n"); }
+}
+
+fn main() {
+    mut c = Child()
+    c.f()
+}
