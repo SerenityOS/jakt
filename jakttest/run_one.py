@@ -104,6 +104,8 @@ def run_regular_test(params: RegularTestParams):
                     "-R",
                     params.runtime_path_for_stdlib,
                     params.cpp_export_gen,
+                    "-I",
+                    params.cpp_include
                 ],
                 check=True,
                 stderr=stderr,
@@ -127,7 +129,7 @@ def run_regular_test(params: RegularTestParams):
                     "-Wno-user-defined-literals",
                     "-Wno-deprecated-declarations",
                     "-Iruntime",
-                    params.cpp_include,
+                    f"-I{params.cpp_include}",
                     params.cpp_export_include,
                     "-DJAKT_CONTINUE_ON_PANIC",
                     "-o",
@@ -246,7 +248,7 @@ def main():
     relevant_cpp_files = [Path(test_file.parent, x).resolve() for x in args.cpp_link.split(":") if len(x) > 0]
 
     if args.cpp_include:
-        cpp_include = f"-I{Path(test_file.parent, args.cpp_include)}"
+        cpp_include = f"{Path(test_file.parent, args.cpp_include)}"
 
     if args.cpp_export_dir:
         path = temp_dir / args.cpp_export_dir
