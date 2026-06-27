@@ -92,14 +92,21 @@ class DirectoryIterator implements(ThrowingIterable<(Path, bool)>) {
 
         mut builder = StringBuilder::create()
         mut is_directory = false
+        let dir_handle = .dir_fd
 
         unsafe {
             builder.append_c_string((*file).d_name)
 
             // FIXME: Extern constant support
             cpp {
-                "if ((*file).d_type == DT_DIR)"
-                "is_directory = true;"
+                "struct stat st;"
+                "if ((*file).d_type == DT_DIR) {"
+                "    is_directory = true;"
+                "} else if (((*file).d_type == DT_LNK || (*file).d_type == DT_UNKNOWN)"
+                "           && fstatat(dirfd(dir_handle), (*file).d_name, &st, 0) == 0"
+                "           && S_ISDIR(st.st_mode)) {"
+                "    is_directory = true;"
+                "}"
             }
         }
 
