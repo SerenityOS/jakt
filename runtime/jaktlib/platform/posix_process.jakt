@@ -43,6 +43,11 @@ fn start_background_process(anon args: [String]) throws -> Process {
             }
         }
     }
+    unsafe {
+        cpp {
+            "call_args[i] = nullptr;"
+        }
+    }
 
     let pid = fork()
     if pid == -1i32 {
