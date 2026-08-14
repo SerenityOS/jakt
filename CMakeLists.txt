@@ -14,6 +14,8 @@ set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 
+option(SERENITY_SOURCE_DIR PATH "Path of an existing SerenityOS checkout to pull AK files from")
+
 find_program(CCACHE_PROGRAM ccache)
 if(CCACHE_PROGRAM)
     set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_PROGRAM}" CACHE FILEPATH "Path to a compiler launcher program, e.g. ccache")
@@ -26,9 +28,18 @@ SET(CMAKE_FIND_PACKAGE_SORT_ORDER NATURAL)
 SET(CMAKE_FIND_PACKAGE_SORT_DIRECTION DEC)
 # cmake takes a long time to find cURL if this is off (see PR #1616)
 set(CURL_NO_CURL_CMAKE ON)
-find_package(Clang CONFIG
-  PATHS /opt/homebrew/opt/llvm
-)
+
+if (${SERENITY_SOURCE_DIR})
+    find_package(Clang CONFIG
+      PATHS "${SERENITY_SOURCE_DIR}/Toolchain/Local/clang" NO_DEFAULT_PATH
+    )
+endif()
+
+if(NOT Clang_FOUND)
+    find_package(Clang CONFIG
+      PATHS /opt/homebrew/opt/llvm
+    )
+endif()
 
 set(JAKT_CPP_AUTO_IMPORT_PROCESSOR_DEFAULT none)
 if (Clang_FOUND)
@@ -50,7 +61,6 @@ include(GNUInstallDirs)
 include("cmake/symlink.cmake")
 
 set(FINAL_STAGE "1" CACHE STRING "Compiler stage to stop at, either 1 (default) or 2)")
-option(SERENITY_SOURCE_DIR PATH "Path of an existing SerenityOS checkout to pull AK files from")
 set(CPP_AUTO_IMPORT_PROCESSOR "${JAKT_CPP_AUTO_IMPORT_PROCESSOR_DEFAULT}" CACHE STRING "'import extern' processor to use (default=none/clang/libcpp/none)")
 
 set(JAKT_USING_CLANG OFF)
