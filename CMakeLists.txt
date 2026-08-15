@@ -14,7 +14,7 @@ set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 
-option(SERENITY_SOURCE_DIR PATH "Path of an existing SerenityOS checkout to pull AK files from")
+set(SERENITY_SOURCE_DIR "" CACHE FILEPATH "Path of an existing SerenityOS checkout to pull AK files and libclang from")
 
 find_program(CCACHE_PROGRAM ccache)
 if(CCACHE_PROGRAM)
@@ -29,7 +29,7 @@ SET(CMAKE_FIND_PACKAGE_SORT_DIRECTION DEC)
 # cmake takes a long time to find cURL if this is off (see PR #1616)
 set(CURL_NO_CURL_CMAKE ON)
 
-if (${SERENITY_SOURCE_DIR})
+if (SERENITY_SOURCE_DIR)
     find_package(Clang CONFIG
       PATHS "${SERENITY_SOURCE_DIR}/Toolchain/Local/clang" NO_DEFAULT_PATH
     )
