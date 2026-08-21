@@ -33,6 +33,9 @@ if (SERENITY_SOURCE_DIR)
     find_package(Clang CONFIG
       PATHS "${SERENITY_SOURCE_DIR}/Toolchain/Local/clang" NO_DEFAULT_PATH
     )
+    if(Clang_FOUND)
+        set(CMAKE_INSTALL_RPATH_USE_LINK_PATH ON)
+    endif()
 endif()
 
 if(NOT Clang_FOUND)
