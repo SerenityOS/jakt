@@ -119,7 +119,7 @@ def run_regular_test(params: RegularTestParams):
         try:
             command = [
                     params.cpp_compiler,
-                    f"--target={params.target_triple}",
+                    f"--target={abbreviate_triple(params.target_triple)}",
                     "-fdiagnostics-color=always",
                     "-std=c++23",
                     "-Wno-unknown-warning-option",
@@ -189,6 +189,13 @@ def parse_line_col(arg: str):
         raise argparse.ArgumentTypeError("Expected format 'line:column' with integer values")
 
     return line, column
+
+
+def abbreviate_triple(triple: str) -> str:
+    parts = triple.split('-')
+    if len(parts) == 4:
+        return '-'.join(parts[0:3])
+    return triple
 
 
 def main():

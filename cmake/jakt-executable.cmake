@@ -4,7 +4,12 @@
 #
 
 # FIXME: Should this live in a toolchain file?
-set(JAKT_TARGET_TRIPLE_IN "${CMAKE_SYSTEM_PROCESSOR}-unknown-${CMAKE_SYSTEM_NAME}-unknown")
+if(APPLE)
+    set(triple_vendor "apple")
+else()
+    set(triple_vendor "unknown")
+endif()
+set(JAKT_TARGET_TRIPLE_IN "${CMAKE_SYSTEM_PROCESSOR}-${triple_vendor}-${CMAKE_SYSTEM_NAME}-unknown")
 string(TOLOWER ${JAKT_TARGET_TRIPLE_IN} JAKT_DEFAULT_TARGET_TRIPLE)
 set(JAKT_TARGET_TRIPLE "${JAKT_DEFAULT_TARGET_TRIPLE}" CACHE STRING "Target triple for jakt compiler")
 

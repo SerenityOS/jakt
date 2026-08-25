@@ -444,14 +444,20 @@ inline ErrorOr<ByteString> target_triple_string()
 #    elif defined(_WIN32)
     return ByteString("i686-unknown-windows-unknown"sv);
 #    elif defined(__linux__)
+#        if defined(__x86_64__)
     return ByteString("x86_64-unknown-linux-unknown"sv);
+#        elif defined(__aarch64__)
+    return ByteString("aarch64-unknown-linux-unknown"sv);
+#        else
+    return ByteString("unknown-unknown-linux-unknown"sv);
+#        endif
 #    elif defined(__OpenBSD__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
     return ByteString("x86_64-unknown-bsd-unknown"sv);
 #    elif defined(__APPLE__)
 #        if defined(__arm64__)
-    return ByteString("arm64-unknown-darwin-unknown"sv);
+    return ByteString("arm64-apple-darwin-unknown"sv);
 #        else
-    return ByteString("x86_64-unknown-darwin-unknown"sv);
+    return ByteString("x86_64-apple-darwin-unknown"sv);
 #        endif
 #    elif defined(__serenity__)
 #        if defined(__i686__)
